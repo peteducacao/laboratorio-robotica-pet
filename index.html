@@ -9,7 +9,7 @@
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="styles.css?v=20">
 <link rel="stylesheet" href="answer-key.css?v=17">
-<script defer src="app.js?v=20"></script>
+<script defer src="app.js?v=22"></script>
 <script defer src="answer-key.js?v=17"></script>
 </head>
 <body>
@@ -59,7 +59,6 @@
         <button id="checkBtn" class="simulation-toggle" type="button" aria-pressed="false"><span class="sim-icon" id="simIcon">▶</span> <span id="simLabel">Iniciar simulação</span></button>
       </div>
       <div class="toolbar-zoom" aria-label="Navegação da bancada">
-        <button class="control-btn pan-mode-btn" type="button" id="panModeBtn" aria-pressed="false" title="Mover a bancada sem arrastar peças ou fios">✋ <span>Mover</span></button>
         <button class="control-btn zoom-btn" id="zoomOut" aria-label="Diminuir zoom">−</button>
         <span id="zoomLabel" class="zoom-label">100%</span>
         <button class="control-btn zoom-btn" id="zoomIn" aria-label="Aumentar zoom">+</button>
@@ -89,7 +88,7 @@
           <label for="zoomSlider">Zoom da bancada</label>
           <div class="canvas-zoom-row"><span>−</span><input type="range" id="zoomSlider" min="4" max="240" step="1" value="83" aria-label="Ajustar zoom da bancada"/><span>+</span></div>
           <div class="canvas-zoom-actions"><button type="button" id="zoomFitPart">Enquadrar peça</button><button type="button" id="zoomFitAll">Ver montagem</button></div>
-          <small>Bancada sem limites: arraste o fundo ou use Mover. No computador, Espaço + arrastar; roda do mouse para mover; Ctrl + roda para ampliar. No celular, use dois dedos.</small>
+          <small>Bancada sem limites: arraste o fundo para mover. No computador, Espaço + arrastar e Ctrl + roda para zoom. No celular, arraste o fundo ou use dois dedos para mover e ampliar.</small>
         </div>
         <div class="canvas-corner" id="canvasHint">Fio: toque no pino → marque as curvas → toque no outro pino</div>
       </div>
@@ -129,6 +128,6 @@
 </div>
 <div id="toast" class="toast" role="status" aria-live="polite"></div>
 <div id="dragGhost" class="drag-ghost" hidden></div>
-<dialog id="guideDialog"><div class="dialog-head"><h2>Como usar o TinkerPET</h2><button id="closeGuide" type="button" aria-label="Fechar">×</button></div><p><b>Agora a bancada começa vazia, igual a um laboratório de montagem.</b></p><ol><li>Abra a gaveta pela seta na lateral esquerda do meio da tela. Arraste uma peça do catálogo ou toque para adicioná-la.</li><li>Arraste cada componente pela imagem. A bancada não tem limites: solte as peças em qualquer posição, inclusive à esquerda ou acima da posição inicial.</li><li>Para navegar, arraste o fundo vazio, use o botão Mover, ou mantenha Espaço pressionado enquanto arrasta. Roda do mouse desloca a visão; Ctrl + roda amplia. No celular, dois dedos movimentam e dão zoom.</li><li>Toque no primeiro terminal para começar um fio contínuo. Toque em pontos vazios da bancada para fixar curvas. Toque no segundo terminal para finalizar. Também pode arrastar diretamente entre dois terminais. Use Desfazer para retirar a última curva.</li><li>Selecione as gangorras para ligá-las e ajuste o LM2596 para 5 V.</li><li>Quando tudo estiver conectado, toque em <b>Iniciar simulação</b> e pilote o carrinho virtual.</li></ol><p>A simulação é educativa e não representa todas as leis elétricas ou a execução real do firmware ESP32. Ferramentas, soldas e medições físicas exigem supervisão.</p><button id="startGuide" class="run-btn">Vamos montar!</button></dialog>
+<dialog id="guideDialog"><div class="dialog-head"><h2>Como usar o TinkerPET</h2><button id="closeGuide" type="button" aria-label="Fechar">×</button></div><p><b>Agora a bancada começa vazia, igual a um laboratório de montagem.</b></p><ol><li>Abra a gaveta pela seta na lateral esquerda do meio da tela. Arraste uma peça do catálogo ou toque para adicioná-la.</li><li>Arraste cada componente pela imagem. A bancada não tem limites: solte as peças em qualquer posição, inclusive à esquerda ou acima da posição inicial.</li><li>Para navegar, arraste o fundo vazio ou mantenha Espaço pressionado enquanto arrasta no computador. Roda do mouse desloca a visão; Ctrl + roda amplia. No celular, dois dedos movimentam e dão zoom.</li><li>Toque no primeiro terminal para começar um fio contínuo. Toque em pontos vazios da bancada para fixar curvas. Toque no segundo terminal para finalizar. Também pode arrastar diretamente entre dois terminais. Use Desfazer para retirar a última curva.</li><li>Selecione as gangorras para ligá-las e ajuste o LM2596 para 5 V.</li><li>Quando tudo estiver conectado, toque em <b>Iniciar simulação</b> e pilote o carrinho virtual.</li></ol><p>A simulação é educativa e não representa todas as leis elétricas ou a execução real do firmware ESP32. Ferramentas, soldas e medições físicas exigem supervisão.</p><button id="startGuide" class="run-btn">Vamos montar!</button></dialog>
 <footer>✳ TinkerPET • Laboratório virtual do PET Educação — UFS <span>Sem vídeos · Arraste, monte, experimente.</span></footer>
 </body></html>
