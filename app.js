@@ -249,6 +249,7 @@ function renderProgress(){
  const progress=inAssembly?partsDone/9:total/EXPECTED.length;
  Q('progressBar').style.width=Math.round(progress*100)+'%';
  Q('connectionsCount').textContent=inAssembly?partsDone+' / 9 peças':total+' / '+EXPECTED.length+' fios';
+ Q('progressCaption').textContent=inAssembly?'Componentes':'Conexões corretas';
  const badge=Q('validationBadge');badge.className='validation-badge'+(ready()?' ok':errors?' error':'');
  badge.textContent=ready()?'✓ Circuito pronto para iniciar':errors?errors+' ligação(ões) fora do esquema':state.parts.length<9?'Peças na bancada: '+state.parts.length+' / 9':'Faltam '+missing().length+' ligações';
  const missionTitle=Q('missionTitle'),missionText=Q('missionText');
@@ -629,7 +630,7 @@ function switchView(play){
  const sim=Q('checkBtn');sim.classList.toggle('is-running',play);
  sim.setAttribute('aria-pressed',String(play));
  Q('simLabel').textContent=play?'Parar simulação':'Iniciar simulação';
- sim.querySelector('.sim-icon').textContent=play?'■':'▶';
+ Q('simIcon').textContent=play?'■':'▶';
  Q('editTab').classList.toggle('active',!play);Q('playTab').classList.toggle('active',play);
  if(play){car.x=150;car.y=447;car.a=0;car.finished=false;Q('driveReadout').textContent=ready()?'Pronto para pilotar':'Aguardando montagem';}
  if(!play) syncMotorAnimation(0,0);
