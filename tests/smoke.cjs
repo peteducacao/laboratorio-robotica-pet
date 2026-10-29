@@ -11,9 +11,14 @@ new vm.Script(js);
 const types=vm.runInNewContext('['+js.match(/const TYPES=\[([\s\S]*?)\];/)[1]+']');
 const edges=vm.runInNewContext('['+js.match(/const EXPECTED=\[([\s\S]*?)\];/)[1]+']');
 assert.equal(types.find(t=>t.kind==='motor').name,'Motor DC','motor deve ser comum, não TT');
-assert.equal(types.find(t=>t.kind==='motor').img,'assets/motor-dc.svg');
-const motorSvg=fs.readFileSync(path.join(base,'assets/motor-dc.svg'),'utf8');
-assert(motorSvg.includes('Motor DC')&&motorSvg.includes('terminals')&&motorSvg.includes('shaft'),'ilustração deve incluir motor, contatos e eixo');
+assert.equal(types.find(t=>t.kind==='motor').img,'assets/motor-frontal.svg');
+const front=fs.readFileSync(path.join(base,'assets/motor-frontal.svg'),'utf8');
+const side=fs.readFileSync(path.join(base,'assets/motor-lateral.svg'),'utf8');
+assert(front.includes('Motor DC'),'imagem frontal do motor');
+assert(front.includes('terminals')||front.includes('terminais'),'vista frontal com terminais');
+assert(side.includes('Motor DC')&&side.includes('terminais'),'vista lateral com terminais');
+assert(js.includes('function toggleMotorView('),'alternar vistas do motor');
+
 assert(html.includes('id="preview-ml"')&&html.includes('id="preview-mr"'),'painel dos dois motores');
 assert(css.includes('.demo-running')&&css.includes('motor-shaft-spinner'),'prévia do eixo animado');
 assert.equal(types.length,6);
@@ -65,6 +70,10 @@ function click(id){send('click',id,{});}
 assert.equal(saved().parts.length,0,'bancada deve começar vazia');
 for(const t of types)for(let i=0;i<t.ids.length;i++)add(t.kind);
 assert.equal(saved().parts.length,9,'adicionar 9 peças pelo catálogo');
+send('click','inspectorBody',{target:{closest(q){return q==='[data-motor-view]'?{dataset:{motorView:'ml'}}:null;}}});
+assert.equal(saved().parts.find(p=>p.id==='ml').view,'side','trocar para vista lateral');
+send('click','inspectorBody',{target:{closest(q){return q==='[data-motor-view]'?{dataset:{motorView:'ml'}}:null;}}});
+assert.equal(saved().parts.find(p=>p.id==='ml').view,'front','voltar para vista frontal');
 add('esp');assert.equal(saved().parts.length,9,'evitar esp32 duplicado');
 connect('esp.D27','drv.IN4');
 click('checkBtn');
