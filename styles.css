@@ -6,3 +6,85 @@
 
 /* Conexoes ficam atras das placas: o terminal GND continua tocavel mesmo com outro fio. */
 @media(max-width:820px){.catalog{gap:5px;max-height:calc(100dvh - 270px)}.catalog-card{min-height:61px;padding:6px}.catalog-card img{width:48px;height:45px}}
+
+
+/* v3 — bancada de componentes livres e gaveta estilo Tinkercad */
+.studio{grid-template-columns:minmax(0,1fr) 266px;position:relative}
+.library{position:fixed;left:0;top:66px;bottom:0;z-index:80;width:min(322px,calc(100vw - 50px));transform:translateX(-102%);transition:transform .22s ease;background:#fff;box-shadow:15px 0 35px #152d412a;border-right:1px solid #dbe4ec}
+.library.open{transform:translateX(0)}
+.drawer-handle{position:fixed;left:0;top:51%;z-index:82;transform:translateY(-50%);width:36px;height:92px;border:1px solid #afc2cf;border-left:0;border-radius:0 13px 13px 0;background:#fff;box-shadow:3px 3px 12px #183d4c24;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:10px;color:#217b81;touch-action:manipulation}
+.drawer-handle span{font-size:20px;line-height:1}.drawer-handle small{font-size:9px;writing-mode:vertical-rl;letter-spacing:.14em;font-weight:800}
+.drawer-handle.open{left:min(322px,calc(100vw - 50px));background:#d8f1e8;border-color:#a8d4c7}
+.drawer-handle.open span{transform:rotate(180deg)}
+.side-backdrop:not([hidden]){position:fixed;display:block;inset:66px 0 0;background:#142d3a49;z-index:77}
+.close-library{display:grid;place-items:center}
+.library-head{padding:20px 15px 12px}
+.library-head h2{font-size:20px}
+.library-search{margin:0 13px 9px}
+.library-intro{padding:0 16px 12px;font-size:11px;line-height:1.45}
+.catalog{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));align-content:start;gap:7px;max-height:none;flex:1;padding:6px 13px 18px;overflow-y:auto;overscroll-behavior:contain}
+.catalog-card{display:flex;flex-direction:column;gap:4px;justify-content:center;align-items:center;border:1px solid #e1e8ed;border-radius:8px;background:#f8fafb;padding:9px 5px;min-height:128px;touch-action:none;cursor:grab;box-shadow:none}
+.catalog-card:hover{background:#eaf4f5;border-color:#8bbdbb}
+.catalog-card img{width:100%;height:73px;max-width:118px;object-fit:contain;background:transparent;mix-blend-mode:multiply;border:0;border-radius:0;filter:contrast(1.05)}
+.catalog-card-text{text-align:center;flex:none}
+.catalog-card strong{font-size:11px;font-weight:800;line-height:1.3}
+.catalog-card small{font-size:9px;margin-top:3px;letter-spacing:0}
+.catalog-plus{position:absolute;right:7px;top:4px;font-size:13px;color:#518f8c}
+.library-footer{margin:6px 12px 12px}
+.world{background-color:#f1f5f7;background-image:radial-gradient(circle,#c4d3de 1.1px,transparent 1.1px);background-size:20px 20px}
+.viewport{background:#e9eff3;min-height:420px}
+.world-note .empty-icon{border:2px dashed #9fb4c0}
+.part,.part.selected{border:0!important;min-width:0;width:var(--part-w,180px);height:var(--part-h,190px);background:transparent!important;border-radius:0!important;box-shadow:none!important;overflow:visible;outline:none;cursor:grab}
+.part.selected::after{content:"";position:absolute;pointer-events:none;inset:0;border:1.5px dashed #2c91aa;border-radius:10px}
+.part-head{position:absolute;left:0;top:0;right:0;height:27px;min-height:0;display:flex;justify-content:center;align-items:center;padding:1px 3px;border:0;background:transparent;z-index:2;pointer-events:none}
+.part-head strong{font-size:10px;font-weight:800;color:#456579;text-shadow:0 1px white;white-space:nowrap;max-width:95%;text-align:center}
+.part-remove{position:absolute;right:-8px;top:-8px;z-index:15;pointer-events:auto;width:24px;height:24px;background:#fff;color:#ad5b5b;border-radius:50%;border:1px solid #e2bcbc;box-shadow:0 2px 6px #213b3c25;display:none}
+.part.selected .part-remove{display:block}
+.part-image{position:absolute;top:30px;left:20px;right:20px;height:calc(100% - 48px);margin:0;padding:4px;border:0;background:transparent!important;overflow:visible;display:flex;justify-content:center;align-items:center;pointer-events:none}
+.part-image img{max-height:100%;max-width:100%;width:100%;height:100%;object-fit:contain;mix-blend-mode:multiply;filter:contrast(1.08) saturate(1.08) drop-shadow(0 5px 4px #253c4227)}
+.part-label{display:none}
+.part-pins{position:absolute;inset:0;padding:0;display:block;pointer-events:none}
+.pin-btn{position:absolute;left:var(--pin-x,50%);top:var(--pin-y,50%);transform:translate(-50%,-50%);width:var(--pin-w,49px);height:27px;min-height:27px;padding:0 2px;display:flex;flex-direction:row;align-items:center;justify-content:center;gap:4px;background:#ffffffea;border:1px solid #b9ced7;border-radius:8px;box-shadow:0 1px 4px #18323f30;color:#1e6478;font-size:9px;font-weight:800;pointer-events:auto;touch-action:none;z-index:5;white-space:nowrap}
+.pin-btn .pin-dot{height:9px;width:9px;flex-shrink:0;border:2px solid #f9e2ac;background:#bf8d39;box-shadow:0 0 0 1px #8b6834}
+.pin-btn:active,.pin-btn:hover{background:#e6faff;border-color:#4f98bb}
+.pin-btn.selected{background:#cff2fa;border-color:#189fc3;box-shadow:0 0 0 3px #21a2c66b}
+.pin-btn.connected{background:#d8f1db;border-color:#74ba88}
+.pin-btn.invalid{background:#fff0ed;border-color:#dc827f}
+.part-actions{position:absolute;left:0;right:0;bottom:-18px;margin:0;padding:0 6px;pointer-events:auto;z-index:10}
+.part-switch{box-shadow:0 1px 4px #2443}
+.part-voltage{background:#ffffffef;padding:4px 7px;border:1px solid #c5d7de;border-radius:8px;box-shadow:0 2px 5px #253d3c22}
+.part-voltage input{width:72px}
+.part[data-kind="battery"] .part-image{left:20px;right:20px;top:20px;bottom:2px;height:auto}
+.part[data-kind="switch"] .part-image{left:20px;right:20px;top:24px;bottom:22px;height:auto}
+.part[data-kind="motor"] .part-image{left:14px;right:14px;top:22px;bottom:5px;height:auto}
+.part[data-kind="buck"] .part-image{left:18px;right:18px;top:22px;bottom:28px;height:auto}
+.part[data-kind="driver"] .part-image{left:25px;right:25px;top:20px;bottom:7px;height:auto}
+.part[data-kind="esp"] .part-image{left:27px;right:27px;top:25px;bottom:8px;height:auto}
+.wire-line{stroke-width:5;filter:drop-shadow(0 1px 1px #172c3c40)}
+.wire-target{stroke-width:17}
+.mission-strip{border-radius:8px}
+.status-box{line-height:1.5}
+@media(max-width:1190px){.studio{display:grid;grid-template-columns:minmax(0,1fr)}.inspector{grid-column:1}.library{position:fixed;width:min(322px,calc(100vw - 50px))}}
+@media(max-width:820px){
+ .studio{display:block}
+ .library{top:66px;bottom:0;box-shadow:15px 0 35px #152d412a;transform:translateX(-102%);width:min(290px,calc(100vw - 50px))}
+ .drawer-handle.open{left:min(290px,calc(100vw - 50px))}
+ .catalog{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));max-height:none;gap:7px}
+ .catalog-card{min-height:126px;padding:7px 4px}
+ .catalog-card img{width:100%;max-width:110px;height:75px}
+ .inspector{max-height:none}
+ .viewport{height:58dvh;min-height:400px}
+ .side-backdrop:not([hidden]){top:66px}
+}
+@media(max-width:520px){
+ .library{top:61px;width:min(285px,calc(100vw - 48px))}
+ .drawer-handle{top:50%;width:34px;height:94px}
+ .drawer-handle.open{left:min(285px,calc(100vw - 48px))}
+ .side-backdrop:not([hidden]){top:61px}
+ .viewport{height:62dvh;min-height:420px}
+ .world{background-size:20px 20px}
+ .canvas-corner{max-width:170px}
+ .mission-strip{padding:9px}
+ .part-head strong{font-size:11px}
+ .pin-btn{height:29px;min-height:29px;font-size:9px}
+}
