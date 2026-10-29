@@ -37,7 +37,7 @@ const Q=id=>document.getElementById(id);
 const WORLD={w:1900,h:1450};
 const COLORS=['#ed654d','#316fc0','#1f434c','#32a47b','#e5a13d','#a378c8'];
 let state={parts:[],wires:[],voltage:4,switches:{s1:false,s2:false},wireColor:COLORS[0],selected:null,startPort:null,inspector:'parts',completed:false,bends:[]};
-let zoom=1,panX=0,panY=0,gesture=null,history=[],toastTimer=0,previewPoint=null,drawPending=false;
+let zoom=1,panX=0,panY=0,gesture=null,history=[],future=[],toastTimer=0,previewPoint=null,drawPending=false;
 const activeTouches=new Map();
 let pinch=null;
 let gestureBlockedUntil=0;
@@ -60,18 +60,37 @@ function safeRestore(){
  }catch(err){console.warn('Progresso indisponível',err);}
 }
 function persist(){
- try{localStorage.setItem('tinkerpet-v2',JSON.stringify({parts:state.parts,wires:state.wires,voltage:state.voltage,switches:state.switches,wireColor:state.wireColor}));Q('savedIndicator').textContent='● Salvo';}catch(e){Q('savedIndicator').textContent='● Não salvo';}
+ try{localStorage.setItem('tinkerpet-v2',JSON.stringify({parts:state.parts,wires:state.wires,voltage:state.voltage,switches:state.switches,wireColor:state.wireColor}));Q('savedIndicator').textContent='● Salvo automaticamente';}catch(e){Q('savedIndicator').textContent='● Não salvo';}
 }
-function snapshot(){history.push(JSON.stringify({parts:state.parts,wires:state.wires,voltage:state.voltage,switches:state.switches}));if(history.length>35)history.shift();}
+function historyState(){return JSON.stringify({parts:state.parts,wires:state.wires,voltage:state.voltage,switches:state.switches});}
+function updateHistoryButtons(){
+ const undoBtn=Q('undoBtn'),redoBtn=Q('redoBtn'),delBtn=Q('deleteBtn');
+ if(undoBtn)undoBtn.disabled=!(history.length||state.startPort);
+ if(redoBtn)redoBtn.disabled=future.length===0;
+ if(delBtn)delBtn.disabled=!byPart(state.selected);
+}
+function snapshot(){
+ history.push(historyState());if(history.length>45)history.shift();
+ future=[];updateHistoryButtons();
+}
+function restoreHistory(s){
+ Object.assign(state,JSON.parse(s),{startPort:null,bends:[],selected:null,completed:false});
+ previewPoint=null;renderAll();updateHistoryButtons();
+}
 function undo(){
  if(state.startPort){
-  if(state.bends.length){state.bends.pop();previewPoint=null;requestDraw();message('Última curva retirada.');}
+  if(state.bends.length){state.bends.pop();previewPoint=null;requestDraw();message('Última curva removida.');}
   else{cancelPendingWire();message('Fio cancelado.');}
-  return;
+  updateHistoryButtons();return;
  }
- if(!history.length){message('Nada para desfazer.');return;}
- const s=JSON.parse(history.pop());Object.assign(state,s,{startPort:null,bends:[],selected:null,completed:false});
- renderAll();message('Última alteração desfeita.');
+ if(!history.length)return;
+ future.push(historyState());
+ restoreHistory(history.pop());message('Desfeito.');
+}
+function redo(){
+ if(!future.length)return;
+ history.push(historyState());
+ restoreHistory(future.pop());message('Refeito.');
 }
 const limit=(x,min,max)=>Math.max(min,Math.min(max,x));
 const partName=id=>{const base=byId[id];return base?base.name+(base.ids.length>1?' '+(base.ids.indexOf(id)+1):''):id;};
@@ -160,9 +179,11 @@ function renderParts(){
   layer.append(card);
  }
  Q('worldNote').hidden=state.parts.length>0;
- requestDraw();
+ updateHistoryButtons();requestDraw();
 }
 function renderColors(){
+ const dropdown=Q('wireColorSelect');if(dropdown)dropdown.value=state.wireColor;
+ const preview=Q('wireColorPreview');if(preview)preview.style.background=state.wireColor;
  Q('colorPalette').replaceChildren();
  COLORS.forEach((c,i)=>{
   const b=document.createElement('button');b.type='button';b.className='swatch'+(state.wireColor===c?' active':'');b.title='Fio '+(i+1);b.style.background=c;b.dataset.color=c;b.setAttribute('aria-label','Selecionar cor '+(i+1));b.setAttribute('aria-pressed',String(state.wireColor===c));Q('colorPalette').append(b);
@@ -223,7 +244,11 @@ function demoMotor(id){
 function renderProgress(){
  const total=countGood(),errors=mistakes().length;
  Q('connectionsCount').textContent=total+' / '+EXPECTED.length;
- Q('progressBar').style.width=total/EXPECTED.length*100+'%';
+ const partsDone=state.parts.length;
+ const inAssembly=partsDone<9;
+ const progress=inAssembly?partsDone/9:total/EXPECTED.length;
+ Q('progressBar').style.width=Math.round(progress*100)+'%';
+ Q('connectionsCount').textContent=inAssembly?partsDone+' / 9 peças':total+' / '+EXPECTED.length+' fios';
  const badge=Q('validationBadge');badge.className='validation-badge'+(ready()?' ok':errors?' error':'');
  badge.textContent=ready()?'✓ Circuito pronto para iniciar':errors?errors+' ligação(ões) fora do esquema':state.parts.length<9?'Peças na bancada: '+state.parts.length+' / 9':'Faltam '+missing().length+' ligações';
  const missionTitle=Q('missionTitle'),missionText=Q('missionText');
@@ -553,7 +578,7 @@ function pointerUp(e){
   // Em toque simples, o evento click chama connect; não resetar a origem aqui.
  }else if(g.type==='move'){
   if(g.moved)persist();
-  else{state.selected=g.partId;renderParts();renderInspector();}
+  else{state.selected=g.partId;renderParts();renderInspector();if(zoom<.68&&byId[g.partId].kind==='esp')focusPart(g.partId);}
  }else if(g.type==='pan'&&!g.moved){
   if(state.startPort){
    const pos=worldXY(e.clientX,e.clientY);
@@ -579,6 +604,10 @@ function check(){
 }
 function switchView(play){
  Q('buildPanel').hidden=play;Q('playPanel').hidden=!play;
+ const sim=Q('checkBtn');sim.classList.toggle('is-running',play);
+ sim.setAttribute('aria-pressed',String(play));
+ Q('simLabel').textContent=play?'Parar simulação':'Iniciar simulação';
+ sim.querySelector('.sim-icon').textContent=play?'■':'▶';
  Q('editTab').classList.toggle('active',!play);Q('playTab').classList.toggle('active',play);
  if(play){car.x=150;car.y=447;car.a=0;car.finished=false;Q('driveReadout').textContent=ready()?'Pronto para pilotar':'Aguardando montagem';}
  if(!play) syncMotorAnimation(0,0);
@@ -674,11 +703,21 @@ function bind(){
  Q('inspectorPartsTab').addEventListener('click',()=>{state.inspector='parts';renderInspector();});
  Q('inspectorWiresTab').addEventListener('click',()=>{state.inspector='wires';renderInspector();});
  Q('colorPalette').addEventListener('click',e=>{const swatch=e.target.closest('[data-color]');if(swatch){state.wireColor=swatch.dataset.color;renderColors();requestDraw();persist();}});
+ Q('wireColorSelect').addEventListener('change',e=>{if(COLORS.includes(e.target.value)){state.wireColor=e.target.value;renderColors();requestDraw();persist();}});
  Q('undoBtn').addEventListener('click',undo);
+ Q('redoBtn').addEventListener('click',redo);
+ Q('deleteBtn').addEventListener('click',()=>{
+  const selected=byPart(state.selected);
+  if(selected)removePart(selected.id);
+  else message('Selecione uma peça para excluir.',true);
+ });
  Q('clearBtn').addEventListener('click',()=>{if(!state.parts.length)return;if(confirm('Apagar todas as peças e fios da bancada?')){snapshot();state.parts=[];state.wires=[];state.selected=null;state.startPort=null;state.bends=[];previewPoint=null;state.switches={s1:false,s2:false};state.voltage=4;refresh();message('Bancada limpa. Comece de novo!');}});
  Q('hintBtn').addEventListener('click',hint);
  Q('saveBtn').addEventListener('click',()=>{persist();message('Seu projeto foi salvo neste navegador.',true);});
- Q('checkBtn').addEventListener('click',()=>{if(check()){switchView(true);message('Circuito conferido! Carrinho liberado.',true);}});
+ Q('checkBtn').addEventListener('click',()=>{
+  if(!Q('playPanel').hidden){switchView(false);message('Simulação encerrada.');return;}
+  if(check()){switchView(true);message('Circuito conferido! Carrinho liberado.',true);}
+ });
  Q('playTab').addEventListener('click',()=>{switchView(true);if(!ready())message('Monte o circuito e use a dica para descobrir o que falta.',true);});
  Q('editTab').addEventListener('click',()=>switchView(false));Q('backBtn').addEventListener('click',()=>switchView(false));Q('goToBuild').addEventListener('click',()=>switchView(false));
  Q('zoomIn').addEventListener('click',()=>zoomTo(1.25));
