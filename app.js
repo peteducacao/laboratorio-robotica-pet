@@ -6,7 +6,7 @@ const TYPES=[
  {kind:'driver',name:'Ponte H MX1508',img:'assets/mx1508-desenhado.svg',ids:['drv'],pins:[['VCC','VCC +'],['GND','GND −'],['IN1','IN1'],['IN2','IN2'],['IN3','IN3'],['IN4','IN4'],['OUT1','A • 1'],['OUT2','A • 2'],['OUT3','B • 1'],['OUT4','B • 2']],info:'A ponte H recebe os sinais do ESP32 e controla os dois motores. Cada motor utiliza um par de saídas.',tip:'As saídas A e B têm dois bornes cada; a numeração 1 e 2 aqui é didática.'},
  {kind:'buck',name:'Regulador LM2596',img:'assets/lm2596-desenhado.svg',ids:['lm'],pins:[['INP','IN +'],['INN','IN −'],['OUTP','OUT +'],['OUTN','OUT −']],info:'Regulador de tensão. Neste projeto, a saída para o ESP32 deve ser ajustada para 5,0 V.',tip:'Na montagem real, um responsável deve medir 5 V com multímetro antes de conectar VIN.'},
  {kind:'battery',name:'Bateria 9 V',img:'assets/bateria-9v-desenhada.svg',ids:['b1','b2'],pins:[['POS','+'],['NEG','−']],info:'Duas baterias em circuitos independentes: uma para o ESP32 e outra para os motores.',tip:'A bateria 1 alimenta o LM2596 por uma gangorra; a bateria 2 alimenta a ponte H pela outra.'},
- {kind:'switch',name:'Chave gangorra',img:'assets/gangorra-desenhada.svg',ids:['s1','s2'],pins:[['IN','IN'],['OUT','OUT']],info:'Chave física liga/desliga, instalada em série com o fio positivo da sua bateria.',tip:'São duas chaves: uma alimenta o regulador do ESP32 e a outra alimenta a ponte H.'},
+ {kind:'switch',name:'Chave gangorra',img:'assets/gangorra-desenhada.svg',ids:['s1','s2'],pins:[['IN','IN +'],['OUT','SAÍDA'],['LEDG','LED −']],info:'Gangorra iluminada de 3 terminais: entrada positiva, saída comutada e negativo opcional do LED. A tecla bascula ao ligar.',tip:'O terceiro contato acende o indicador quando ligado ao negativo da bateria correspondente. Confirme o esquema do seu modelo físico antes de montar.'},
  {kind:'motor',name:'Motor DC',img:'assets/motor-frontal.svg',ids:['ml','mr'],pins:[['A','+'],['B','−']],info:'Motor DC com caixa de redução amarela, eixo lateral para a roda e dois contatos no motor metálico. Na simulação, a ponte H controla o sentido de giro.',tip:'Os dois contatos ficam ao lado do motor metálico, identificados em vermelho e preto. O eixo de saída fica na caixa amarela.'}
 ];
 const byKind=Object.fromEntries(TYPES.map(p=>[p.kind,p]));
@@ -15,7 +15,7 @@ const PART_LAYOUTS={
  driver:{w:250,h:317,pins:{VCC:[24.3,84.5],GND:[34.7,84.5],IN1:[45,84.5],IN2:[55.3,84.5],IN3:[65.7,84.5],IN4:[76,84.5],OUT1:[25.3,12.9],OUT2:[40.7,12.9],OUT3:[58.7,12.9],OUT4:[73.7,12.9]}},
  buck:{w:288,h:180,pins:{INP:[14.72,35.1],INN:[14.72,63.1],OUTP:[85,35.1],OUTN:[85,63.1]}},
  battery:{w:170,h:228,pins:{POS:[30.6,7.4],NEG:[68.6,7.4]}},
- switch:{w:205,h:146,pins:{IN:[8,60],OUT:[92,60]}},
+ switch:{w:205,h:165,pins:{IN:[25,89.8],OUT:[50,89.8],LEDG:[75,89.8]}},
  motor:{w:190,h:405,pins:{A:[18,85],B:[18,80]}},
  motorSide:{w:340,h:170,pins:{A:[96,42],B:[96,63]}}
 };
@@ -29,7 +29,9 @@ const EXPECTED=[
 const key=(a,b)=>[a,b].sort().join('|');
 const canonicalPort=p=>p==='esp.GND2'?'esp.GND':p;
 const electricalKey=(a,b)=>key(canonicalPort(a),canonicalPort(b));
-const valid=new Set(EXPECTED.map(([a,b])=>electricalKey(a,b)));
+const OPTIONAL=[['b1.NEG','s1.LEDG'],['b2.NEG','s2.LEDG']];
+const REQUIRED=new Set(EXPECTED.map(([a,b])=>electricalKey(a,b)));
+const valid=new Set([...EXPECTED,...OPTIONAL].map(([a,b])=>electricalKey(a,b)));
 const allPorts=new Set(TYPES.flatMap(t=>t.ids.flatMap(id=>t.pins.map(p=>id+'.'+p[0]))));
 const Q=id=>document.getElementById(id);
 const WORLD={w:1900,h:1450};
@@ -75,7 +77,7 @@ function imageUrl(p){return p.img.startsWith('assets/')?p.img:ROOT+p.img;}
 function motorImage(p){return p.view==='side'?'assets/motor-lateral.svg':'assets/motor-frontal.svg';}
 function partLayout(p){return p.kind==='motor'&&p.view==='side'?PART_LAYOUTS.motorSide:PART_LAYOUTS[p.kind];}
 function message(msg,toast=false){Q('statusText').textContent=msg;if(toast){const el=Q('toast');el.textContent=msg;el.classList.add('show');clearTimeout(toastTimer);toastTimer=setTimeout(()=>el.classList.remove('show'),2600);}}
-function countGood(){return state.wires.filter(w=>valid.has(electricalKey(w.a,w.b))).length;}
+function countGood(){return new Set(state.wires.filter(w=>REQUIRED.has(electricalKey(w.a,w.b))).map(w=>electricalKey(w.a,w.b))).size;}
 function mistakes(){return state.wires.filter(w=>!valid.has(electricalKey(w.a,w.b)));}
 function missing(){const wired=new Set(state.wires.map(w=>electricalKey(w.a,w.b)));return EXPECTED.filter(([a,b])=>!wired.has(electricalKey(a,b)));}
 function ready(){return state.parts.length===9&&missing().length===0&&mistakes().length===0&&Math.abs(state.voltage-5)<.01&&state.switches.s1&&state.switches.s2;}
@@ -100,7 +102,12 @@ function renderParts(){
   const t=byKind[p.kind],layout=partLayout(p),card=document.createElement('article');
   if(p.kind==='motor')card.dataset.motorView=p.view==='side'?'side':'front';
   if(p.kind==='esp')card.dataset.boardModel='devkit30';
-  if(p.kind==='switch')card.dataset.powered=state.switches[p.id]?'on':'off';
+  if(p.kind==='switch'){
+    card.dataset.powered=state.switches[p.id]?'on':'off';
+    const battery=p.id==='s1'?'b1':'b2';
+    const ledConnected=state.wires.some(w=>electricalKey(w.a,w.b)===electricalKey(battery+'.NEG',p.id+'.LEDG'));
+    card.dataset.indicator=state.switches[p.id]&&ledConnected?'on':'off';
+  }
   card.className='part'+(state.selected===p.id?' selected':'');
   card.dataset.part=p.id;card.dataset.kind=p.kind;card.style.left=p.x+'px';card.style.top=p.y+'px';
   card.style.setProperty('--part-w',layout.w+'px');card.style.setProperty('--part-h',layout.h+'px');
@@ -138,7 +145,8 @@ function renderParts(){
    const actions=document.createElement('div');actions.className='part-actions';
    const toggle=document.createElement('button');toggle.type='button';toggle.dataset.toggle=p.id;
    toggle.className='part-switch'+(state.switches[p.id]?' on':'');
-   toggle.textContent=state.switches[p.id]?'LIGADA':'DESLIGADA';
+   toggle.textContent=state.switches[p.id]?'I':'O';
+   toggle.setAttribute('aria-pressed',String(state.switches[p.id]));
    toggle.setAttribute('aria-label',(state.switches[p.id]?'Desligar':'Ligar')+' gangorra '+partName(p.id));
    actions.append(toggle);card.append(actions);
   }
@@ -319,6 +327,13 @@ function drawWires(){
   path.setAttribute('class','wire-line'+(valid.has(electricalKey(w.a,w.b))?'':' wire-error'));
   path.setAttribute('stroke',w.color);
   svg.append(hit,path);
+  for(const p of [a,b]){
+   const terminal=document.createElementNS('http://www.w3.org/2000/svg','circle');
+   terminal.setAttribute('cx',String(Math.round(p.x)));terminal.setAttribute('cy',String(Math.round(p.y)));
+   terminal.setAttribute('r','6');terminal.setAttribute('fill',w.color);
+   terminal.setAttribute('stroke','white');terminal.setAttribute('stroke-width','2');
+   terminal.setAttribute('class','wire-end-cap');svg.append(terminal);
+  }
  }
  if(state.startPort){
   const origin=getPortPos(state.startPort);
