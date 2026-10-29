@@ -46,8 +46,8 @@
  }
  const escapeSvg=s=>String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
  function makeSvg(){
-  const out=['<svg xmlns="http://www.w3.org/2000/svg" width="1240" height="1730" viewBox="0 0 1240 1730">',
-   '<rect width="1240" height="1730" fill="#f3f7f9"/>',
+  const out=['<svg xmlns="http://www.w3.org/2000/svg" width="1240" height="1810" viewBox="0 0 1240 1810">',
+   '<rect width="1240" height="1810" fill="#f3f7f9"/>',
    '<rect width="1240" height="124" fill="#193b4b"/>',
    '<text x="56" y="69" font-size="44" font-weight="bold" font-family="Arial,sans-serif" fill="#fff">TinkerPET | Gabarito de conexões</text>',
    '<text x="58" y="103" font-size="20" font-family="Arial,sans-serif" fill="#cce9e8">PET Educação - UFS | Carrinho ESP32 | 17 fios obrigatórios</text>'];
@@ -71,7 +71,7 @@
   out.push('<rect x="47" y="'+(y+6)+'" width="1146" height="108" rx="17" fill="#dff2ec"/>');
   out.push('<text x="78" y="'+(y+48)+'" font-size="25" font-family="Arial,sans-serif" font-weight="bold" fill="#285e52">Antes de testar</text>');
   out.push('<text x="78" y="'+(y+83)+'" font-size="19" font-family="Arial,sans-serif" fill="#315c54">Ajuste o LM2596 para 5 V, ligue as duas chaves e confira os pinos GND.</text>');
-  out.push('<text x="58" y="1697" font-size="19" font-family="Arial,sans-serif" fill="#577983">Opcionais: bateria 1 NEG → gangorra 1 LED−; bateria 2 NEG → gangorra 2 LED−.</text>');
+  out.push('<text x="58" y="1770" font-size="19" font-family="Arial,sans-serif" fill="#577983">Opcionais: bateria 1 NEG → gangorra 1 LED−; bateria 2 NEG → gangorra 2 LED−.</text>');
   out.push('</svg>');return out.join('');
  }
  function open(){
