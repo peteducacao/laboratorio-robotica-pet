@@ -112,3 +112,33 @@
  .answer-board-scroll{overflow:visible!important;max-height:none!important;border:0!important;border-radius:0!important;box-shadow:none!important}
  .answer-board svg{width:100%!important;height:auto!important;max-height:170mm!important}
 }
+
+/* v17 — leitura por circuitos, identificação individual e controles de toque */
+.answer-filter-head{display:flex;justify-content:space-between;gap:10px;align-items:baseline;margin:5px 0 9px}
+.answer-filter-head b{font-size:13px;color:#264d58}
+.answer-filter-head span{font-size:11px;color:#61818a}
+.answer-filters{display:flex;align-items:center;gap:7px;overflow-x:auto;padding:3px 0 9px;scrollbar-width:thin;scroll-snap-type:x proximity}
+.answer-filter{flex:none;min-height:41px;border:1px solid #c5d8de;background:#fff;color:#3a5b68;border-radius:10px;padding:9px 14px;font-size:12px;font-weight:850;cursor:pointer;scroll-snap-align:start}
+.answer-filter:hover{background:#eaf6f4}
+.answer-filter.is-active{background:#1d766d;color:#fff;border-color:#1d766d;box-shadow:0 2px 8px #1d766d22}
+.answer-wire-picker{display:flex;gap:7px;overflow-x:auto;padding:1px 0 11px;scrollbar-width:thin;scroll-snap-type:x proximity}
+.answer-wire-choice{flex:none;display:inline-flex;align-items:center;min-height:35px;max-width:350px;white-space:nowrap;padding:7px 11px;border:1px solid #d6e3e7;border-left:6px solid var(--wire-color);border-radius:9px;background:#fff;color:#395b66;font-size:11px;font-weight:800;cursor:pointer;scroll-snap-align:start}
+.answer-wire-choice:hover{background:#f1f9f8}
+.answer-wire-choice.is-active{outline:2px solid var(--wire-color);outline-offset:-1px;background:#f0f7f7;color:#183e48}
+.answer-selected-info{border-left:5px solid var(--wire-color,#1b8374);background:#eef6f6;border-radius:8px;padding:10px 13px;margin-bottom:10px;color:#315762;font-size:12px;font-weight:700;line-height:1.45;min-height:37px}
+.answer-svg-wire{cursor:pointer;pointer-events:stroke}
+.answer-svg-wire:hover{stroke-width:15}
+.answer-board-scroll{max-height:58dvh}
+.answer-row{border-left:4px solid var(--section-color)}
+@media(max-width:700px){
+ .answer-filter-head{display:block;margin-bottom:6px}
+ .answer-filter-head span{display:block;margin-top:3px;font-size:10px}
+ .answer-filters{gap:6px;padding-bottom:9px}
+ .answer-filter{padding:8px 12px;min-height:40px;font-size:11px}
+ .answer-wire-choice{max-width:290px;min-height:38px;font-size:11px}
+ .answer-selected-info{font-size:11px;padding:9px;line-height:1.5}
+ .answer-board-scroll{max-height:55dvh}
+}
+@media print{
+ .answer-filter-head,.answer-filters,.answer-wire-picker,.answer-selected-info{display:none!important}
+}
