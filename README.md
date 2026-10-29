@@ -9,9 +9,9 @@ Aplicação interativa do **PET Educação — UFS**. O projeto reproduz, de for
 ## Como usar
 
 1. Comece com uma **bancada vazia**.
-2. Abra o catálogo de componentes (menu lateral). No celular, toque em ☰. **Arraste** as peças para a bancada; como alternativa de acessibilidade, toque em uma peça para adicioná-la automaticamente.
-3. **Arraste peças já colocadas** para reorganizar a montagem. Para navegar, arraste uma área vazia da bancada. Use os botões +, − e ⛶ para zoom/ajuste.
-4. **Crie fios** tocando em um terminal e depois em outro. Escolha a cor do fio na barra inferior. Para remover uma ligação, toque nela ou use a aba **Fios**.
+2. Abra o catálogo usando a **seta fixa no centro da borda esquerda**. Funciona no celular, tablet e computador sem depender do menu superior. **Arraste** a imagem da peça para a bancada ou toque nela para adicioná-la automaticamente.
+3. **Arraste os componentes soltos pela imagem**, sem cartões ao redor. Os terminais aparecem sobrepostos às fotografias da placa. Arraste uma área vazia da bancada para navegar e use +, − e ⛶ para ajustar o zoom.
+4. **Crie fios** tocando em um terminal e depois em outro, ou arrastando de um contato ao outro. Os caminhos usam segmentos ortogonais; escolha a cor na barra inferior. Para remover, toque no fio, abra **Fios**, ou use **Desfazer**.
 5. Use a aba de propriedades para aprender sobre o componente selecionado.
 6. Coloque as 9 peças, conecte os **17 pares de terminais** do projeto e ajuste **5,0 V na saída do LM2596**.
 7. Ligue as duas gangorras e escolha **Iniciar simulação** para ir à pista.
@@ -45,7 +45,7 @@ Rodar os testes: `node tests/smoke.cjs`. O GitHub Actions executa o teste após 
 
 ### Limitações conhecidas / possíveis evoluções
 
-- As peças usam fotos e terminais didáticos, e não modelos 3D editáveis.
+- As peças usam fotos reais da montagem de referência e **terminais interativos posicionados por aproximação**; não são modelos eletrônicos 3D nem uma representação exata de cada contato físico da placa. Confira sempre a serigrafia na peça real.
 - As conexões são criadas por dois toques, não por um motor elétrico de circuitos universais.
 - A pista é virtual e independente de um carrinho físico.
 - Sensores virtuais adicionais só devem ser habilitados quando o protótipo real também os utilizar.
