@@ -39,7 +39,7 @@ const WORLD={w:1900,h:1450};
 const COLORS=['#ed654d','#316fc0','#1f434c','#32a47b','#e5a13d','#a378c8'];
 let state={parts:[],wires:[],voltage:4,switches:{s1:false,s2:false},wireColor:COLORS[0],selected:null,startPort:null,inspector:'parts',completed:false,bends:[],selectedWire:null};
 let zoom=1,panX=0,panY=0,gesture=null,history=[],future=[],toastTimer=0,previewPoint=null,previewSnapPort=null,drawPending=false;
-let panMode=false,spaceHeld=false;
+let spaceHeld=false;
 let recentTap=null,doubleTapRestore=null;
 const activeTouches=new Map();
 let pinch=null;
@@ -626,14 +626,6 @@ function startPan(e){
  if(e.cancelable!==false)e.preventDefault();
  gesture={type:'pan',pointer:e.pointerId,startX:e.clientX,startY:e.clientY,x:panX,y:panY,moved:false};
 }
-function setPanMode(enabled){
- panMode=!!enabled;
- const button=Q('panModeBtn'),v=Q('viewport');
- button.setAttribute('aria-pressed',String(panMode));
- button.classList.toggle('is-active',panMode);
- v.classList.toggle('pan-active',panMode);
- Q('canvasHint').textContent=panMode?'Mover bancada: arraste em qualquer lugar. Toque em Mover novamente para conectar fios.':'Fio: toque no pino → marque as curvas → toque no outro pino';
-}
 function partDown(e){
  if(pinch||activeTouches.size>=2||Date.now()<gestureBlockedUntil)return;
  if(e.button!==undefined&&e.button!==0)return;
@@ -655,7 +647,7 @@ function viewportDown(e){
  if(pinch||activeTouches.size>=2||Date.now()<gestureBlockedUntil)return;
  if(e.button!==undefined&&e.button!==0&&e.button!==1)return;
  if(e.target.closest('.canvas-zoom-button,.canvas-zoom-panel,button,input'))return;
- if(panMode||spaceHeld||e.button===1){startPan(e);return;}
+ if(spaceHeld||e.button===1){startPan(e);return;}
  if(e.target.closest('.part,.wire-target'))return;
  if(!state.startPort){const selected=wireAt(e.clientX,e.clientY);if(selected>=0){selectWire(selected);return;}}
  e.preventDefault();
@@ -762,7 +754,7 @@ function pointerUp(e){
  }else if(g.type==='bend'){
   const pin=nearestPort(e.clientX,e.clientY,state.startPort);
   if(pin)connect(pin);else{const pos=worldXY(e.clientX,e.clientY);addCorner(pos.x,pos.y);}
- }else if(g.type==='pan'&&!g.moved&&!panMode&&!spaceHeld){
+ }else if(g.type==='pan'&&!g.moved&&!spaceHeld){
   const wire=wireAt(e.clientX,e.clientY);
   if(wire>=0)selectWire(wire);
   else{state.selected=null;state.selectedWire=null;renderParts();renderInspector();updateHistoryButtons();requestDraw();}
@@ -870,7 +862,7 @@ function bind(){
  Q('partsLayer').addEventListener('pointerdown',e=>{
    if(pinch||activeTouches.size>=2||Date.now()<gestureBlockedUntil)return;
    // A ferramenta mão não deve desativar o seletor de tensão ou as teclas das gangorras.
-   if((panMode||spaceHeld||e.button===1)&&!e.target.closest('input,select,[data-toggle],[data-remove]')){startPan(e);return;}
+   if((spaceHeld||e.button===1)&&!e.target.closest('input,select,[data-toggle],[data-remove]')){startPan(e);return;}
    const port=e.target.closest('[data-port]');
    if(port&&e.button!==2){
      gesture={type:'wire',pointer:e.pointerId,port:port.dataset.port,startX:e.clientX,startY:e.clientY,moved:false};
@@ -886,7 +878,7 @@ function bind(){
  Q('partsLayer').addEventListener('click',e=>{
   const pin=e.target.closest('[data-port]');if(pin){
     e.stopPropagation();
-    if(panMode||spaceHeld||Date.now()<suppressPortClickUntil)return;
+    if(spaceHeld||Date.now()<suppressPortClickUntil)return;
     // Em telas pequenas o espaçamento físico dos 30 contatos diminui bastante.
     // O primeiro toque aproxima a placa; o próximo faz a ligação com precisão.
     if(e.isTrusted&&zoom<.69&&pin.dataset.port.startsWith('esp.')){
@@ -902,7 +894,7 @@ function bind(){
  Q('partsLayer').addEventListener('input',e=>{if(e.target.id==='voltageInput'){state.voltage=Number(e.target.value);const out=Q('voltageOutput');if(out)out.textContent=state.voltage.toFixed(1).replace('.',',')+' V';renderProgress();persist();updateTrackLock();}});
  Q('partsLayer').addEventListener('change',e=>{if(e.target.id==='voltageInput')message('LM2596 ajustado para '+state.voltage.toFixed(1).replace('.',',')+' V.');});
  Q('wireSvg').addEventListener('click',e=>{
-   if(panMode||spaceHeld)return;
+   if(spaceHeld)return;
    const target=e.target.closest('[data-wire-index]');if(!target)return;
    e.stopPropagation?.();
    const i=Number(target.dataset.wireIndex);
@@ -935,7 +927,6 @@ function bind(){
  Q('zoomIn').addEventListener('click',()=>zoomTo(1.25));
  Q('zoomOut').addEventListener('click',()=>zoomTo(.8));
  Q('fitBtn').addEventListener('click',fitCamera);
- Q('panModeBtn').addEventListener('click',()=>setPanMode(!panMode));
  Q('zoomTool').addEventListener('click',()=>{Q('zoomPopover').hidden=!Q('zoomPopover').hidden;});
  Q('zoomSlider').addEventListener('input',e=>cameraZoom(Number(e.target.value)/100));
  Q('zoomFitPart').addEventListener('click',()=>{const p=byPart(state.selected);if(p)focusPart(p.id);else fitCamera();Q('zoomPopover').hidden=true;});
@@ -959,7 +950,6 @@ function bind(){
   if(e.key===' '&&Q('playPanel').hidden&&!e.target.closest('input,textarea,select,button')){
    e.preventDefault();spaceHeld=true;Q('viewport').classList.add('pan-space');return;
   }
-  if(e.key==='Escape'&&panMode){setPanMode(false);return;}
   if(e.key==='Escape'&&state.startPort){e.preventDefault();cancelPendingWire();message('Fio cancelado.');return;}
   if(e.key==='Backspace'&&state.startPort&&!e.target.closest('input,textarea,select')){
    e.preventDefault();
