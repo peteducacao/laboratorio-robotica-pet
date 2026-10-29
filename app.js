@@ -249,8 +249,27 @@ function worldXY(clientX,clientY){
  return {x:(clientX-r.left-panX)/zoom,y:(clientY-r.top-panY)/zoom};
 }
 function centerPart(kind){
- const v=Q('viewport').getBoundingClientRect(),at=worldXY(v.left+v.width*.5,v.top+Math.min(v.height*.5,260));
- return addPart(kind,at.x-99+(state.parts.length%3)*15,at.y-110+(state.parts.length%3)*15);
+ // Distribui as peças em espaços livres em vez de empilhá-las no celular.
+ const v=Q('viewport').getBoundingClientRect();
+ const center=worldXY(v.left+v.width/2,v.top+v.height/2);
+ const slots=[[65,65],[300,65],[535,65],[770,65],[990,65],[65,420],[300,420],[535,420],[770,420]];
+ const empty=slots.filter(([x,y])=>!state.parts.some(p=>Math.abs(p.x-x)<180&&Math.abs(p.y-y)<205));
+ const target=(empty.length?empty:slots).sort((a,b)=>{
+  const da=Math.hypot(a[0]+99-center.x,a[1]+130-center.y);
+  const db=Math.hypot(b[0]+99-center.x,b[1]+130-center.y);
+  return da-db;
+ })[0];
+ if(!target)return false;
+ const added=addPart(kind,target[0],target[1]);
+ if(added){
+  const sx=panX+(target[0]+99)*zoom,sy=panY+(target[1]+130)*zoom;
+  if(sx<75||sx>v.width-75||sy<100||sy>v.height-75){
+   panX=v.width/2-(target[0]+99)*zoom;
+   panY=v.height/2-(target[1]+130)*zoom;
+   camera();
+  }
+ }
+ return added;
 }
 function libraryOpen(open){
  const yes=!!open;
