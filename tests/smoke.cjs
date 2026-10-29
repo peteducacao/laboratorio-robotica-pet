@@ -28,6 +28,12 @@ assert(js.includes('function toggleMotorView('),'alternar vistas do motor');
 
 assert(html.includes('id="preview-ml"')&&html.includes('id="preview-mr"'),'painel dos dois motores');
 assert(css.includes('.demo-running')&&css.includes('motor-shaft-spinner'),'prévia do eixo animado');
+for(const file of ['mx1508-desenhado.svg','lm2596-desenhado.svg','bateria-9v-desenhada.svg','gangorra-desenhada.svg']){
+ const svg=fs.readFileSync(path.join(base,'assets',file),'utf8');
+ assert(svg.includes('<svg')&&svg.includes('</svg>'),file+' presente');
+}
+for(const kind of ['driver','buck','battery','switch'])assert(types.find(t=>t.kind===kind).img.startsWith('assets/'),kind+' usa desenho vetorial');
+
 assert.equal(types.length,6);
 assert.equal(types.reduce((sum,t)=>sum+t.ids.length,0),9);
 assert.equal(edges.length,17);
@@ -82,6 +88,35 @@ assert.equal(saved().parts.find(p=>p.id==='ml').view,'side','trocar para vista l
 send('click','inspectorBody',{target:{closest(q){return q==='[data-motor-view]'?{dataset:{motorView:'ml'}}:null;}}});
 assert.equal(saved().parts.find(p=>p.id==='ml').view,'front','voltar para vista frontal');
 add('esp');assert.equal(saved().parts.length,9,'evitar esp32 duplicado');
+
+// Testa o fluxo real de toque: pino inicial → dois cliques na bancada → pino final.
+function tapPin(port){
+ const id=++pointer;
+ const target={closest(sel){return sel==='[data-port]'?{dataset:{port}}:null}};
+ send('pointerdown','partsLayer',{button:0,pointerId:id,clientX:100,clientY:100,target});
+ send('pointerup','window',{pointerId:id,clientX:100,clientY:100});
+ send('click','partsLayer',{target,stopPropagation(){}});
+}
+function tapCanvas(x,y){
+ const id=++pointer;
+ send('pointerdown','viewport',{button:0,pointerId:id,clientX:x,clientY:y,preventDefault(){},target:{closest(){return null}}});
+ send('pointerup','window',{pointerId:id,clientX:x,clientY:y});
+}
+tapPin('b1.POS');
+assert.equal(saved().wires.length,0,'primeiro pino não fecha a ligação');
+tapCanvas(205,180);
+tapCanvas(295,240);
+assert.equal(saved().wires.length,0,'curvas devem ficar pendentes até o segundo pino');
+tapPin('s1.IN');
+assert.equal(saved().wires.length,1,'segundo pino finaliza ligação');
+assert.equal(saved().wires[0].via.length,2,'guardar duas curvas');
+const curved=JSON.stringify(saved().wires[0].via);
+click('saveBtn');
+assert.equal(JSON.stringify(saved().wires[0].via),curved,'persistir curvas da ligação');
+assert(!js.includes("setAttribute('stroke-dasharray'"),'nenhum fio tracejado');
+connect('b1.POS','s1.IN'); // remove a ligação de teste antes da montagem completa
+assert.equal(saved().wires.length,0,'fio existente pode ser removido');
+
 connect('esp.D27','drv.IN4');
 click('checkBtn');
 assert.equal(nodes.playPanel.hidden,true,'não liberar circuito com fio errado');
