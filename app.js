@@ -32,7 +32,7 @@ const electricalKey=(a,b)=>key(canonicalPort(a),canonicalPort(b));
 const valid=new Set(EXPECTED.map(([a,b])=>electricalKey(a,b)));
 const allPorts=new Set(TYPES.flatMap(t=>t.ids.flatMap(id=>t.pins.map(p=>id+'.'+p[0]))));
 const Q=id=>document.getElementById(id);
-const WORLD={w:1200,h:780};
+const WORLD={w:1900,h:1450};
 const COLORS=['#ed654d','#316fc0','#1f434c','#32a47b','#e5a13d','#a378c8'];
 let state={parts:[],wires:[],voltage:4,switches:{s1:false,s2:false},wireColor:COLORS[0],selected:null,startPort:null,inspector:'parts',completed:false,bends:[]};
 let zoom=1,panX=0,panY=0,gesture=null,history=[],toastTimer=0,previewPoint=null,drawPending=false;
@@ -182,11 +182,11 @@ function inspectorPart(p){
 }
 function inspectorWires(){
  const body=Q('inspectorBody');body.replaceChildren();
- if(!state.wires.length){body.innerHTML='<div class="inspect-empty"><span>〰</span><h3>Nenhum fio ainda</h3><p>Toque em dois terminais da bancada para criar uma ligação.</p></div>';return;}
+ if(!state.wires.length){body.innerHTML='<div class="inspect-empty"><span>〰</span><h3>Nenhum fio ainda</h3><p>Toque num terminal, marque as curvas na bancada e finalize no outro terminal.</p></div>';return;}
  state.wires.forEach((w,i)=>{
   const row=document.createElement('div');row.className='wire-item';
   const dot=document.createElement('span');dot.className='wire-dot';dot.style.background=w.color;
-  const names=document.createElement('div');names.className='wire-names';names.textContent=portName(w.a)+' → '+portName(w.b)+(valid.has(electricalKey(w.a,w.b))?' · ✓':' · Rever');
+  const names=document.createElement('div');names.className='wire-names';names.textContent=portName(w.a)+' → '+portName(w.b)+(w.via&&w.via.length?' · '+w.via.length+' curva(s)':'')+(valid.has(electricalKey(w.a,w.b))?' · ✓':' · Rever');
   const btn=document.createElement('button');btn.type='button';btn.dataset.removeWire=String(i);btn.title='Remover fio';btn.textContent='×';
   row.append(dot,names,btn);body.append(row);
  });
@@ -236,7 +236,7 @@ function addPart(kind,x,y){
  const ix=state.parts.length;
  const layout=PART_LAYOUTS[kind];state.parts.push({id,kind,x:limit(Math.round(x),0,WORLD.w-layout.w),y:limit(Math.round(y),0,WORLD.h-layout.h),view:'front'});
  state.selected=id;state.inspector='parts';state.completed=false;state.startPort=null;refresh();
- message(partName(id)+' adicionado. Arraste pelo corpo para mudar de lugar.',true);
+ message(partName(id)+' adicionado. Arraste pela imagem; toque nos contatos para ligar os fios.',true);
  return true;
 }
 function removePart(id){
@@ -345,8 +345,8 @@ function camera(){
  const w=Q('world');w.style.transform='translate('+panX+'px,'+panY+'px) scale('+zoom+')';
  Q('zoomLabel').textContent=Math.round(zoom*100)+'%';
  const note=Q('worldNote'),v=Q('viewport');
- note.style.left=limit((v.clientWidth/2-panX)/zoom,150,1000)+'px';
- note.style.top=limit((v.clientHeight/2-panY)/zoom,170,600)+'px';
+ note.style.left=limit((v.clientWidth/2-panX)/zoom,150,WORLD.w-150)+'px';
+ note.style.top=limit((v.clientHeight/2-panY)/zoom,170,WORLD.h-170)+'px';
  requestDraw();
 }
 function fitCamera(){
@@ -367,23 +367,28 @@ function worldXY(clientX,clientY){
  return {x:(clientX-r.left-panX)/zoom,y:(clientY-r.top-panY)/zoom};
 }
 function centerPart(kind){
- // Distribui as peças em espaços livres em vez de empilhá-las no celular.
  const v=Q('viewport').getBoundingClientRect();
  const center=worldXY(v.left+v.width/2,v.top+v.height/2);
- const slots=[[65,65],[300,65],[535,65],[770,65],[990,65],[65,420],[300,420],[535,420],[770,420]];
- const empty=slots.filter(([x,y])=>!state.parts.some(p=>Math.abs(p.x-x)<180&&Math.abs(p.y-y)<205));
- const target=(empty.length?empty:slots).sort((a,b)=>{
-  const da=Math.hypot(a[0]+99-center.x,a[1]+130-center.y);
-  const db=Math.hypot(b[0]+99-center.x,b[1]+130-center.y);
-  return da-db;
- })[0];
- if(!target)return false;
- const added=addPart(kind,target[0],target[1]);
+ const size=PART_LAYOUTS[kind];if(!size)return false;
+ const spaces=[];
+ for(let y=24;y<=WORLD.h-size.h-24;y+=125){
+  for(let x=24;x<=WORLD.w-size.w-24;x+=125){
+   const clear=state.parts.every(p=>{
+    const d=partLayout(p),pad=26;
+    return x+size.w+pad<=p.x||p.x+d.w+pad<=x||y+size.h+pad<=p.y||p.y+d.h+pad<=y;
+   });
+   if(clear)spaces.push({x,y,d:Math.hypot(x+size.w/2-center.x,y+size.h/2-center.y)});
+  }
+ }
+ if(!spaces.length){message('Bancada cheia. Mova algumas peças para liberar espaço.',true);return false;}
+ spaces.sort((a,b)=>a.d-b.d);
+ const target=spaces[0];
+ const added=addPart(kind,target.x,target.y);
  if(added){
-  const sx=panX+(target[0]+99)*zoom,sy=panY+(target[1]+130)*zoom;
-  if(sx<75||sx>v.width-75||sy<100||sy>v.height-75){
-   panX=v.width/2-(target[0]+99)*zoom;
-   panY=v.height/2-(target[1]+130)*zoom;
+  const sx=panX+(target.x+size.w/2)*zoom,sy=panY+(target.y+size.h/2)*zoom;
+  if(sx<70||sx>v.width-70||sy<80||sy>v.height-80){
+   panX=v.width/2-(target.x+size.w/2)*zoom;
+   panY=v.height/2-(target.y+size.h/2)*zoom;
    camera();
   }
  }
@@ -457,7 +462,7 @@ function pointerUp(e){
   if(!g.moved){centerPart(g.kind);libraryOpen(false);}
   else{
    const box=Q('viewport').getBoundingClientRect();
-   if(e.clientX>=box.left&&e.clientX<=box.right&&e.clientY>=box.top&&e.clientY<=box.bottom){const p=worldXY(e.clientX,e.clientY);addPart(g.kind,p.x-99,p.y-100);libraryOpen(false);}
+   if(e.clientX>=box.left&&e.clientX<=box.right&&e.clientY>=box.top&&e.clientY<=box.bottom){const p=worldXY(e.clientX,e.clientY);addPart(g.kind,p.x-PART_LAYOUTS[g.kind].w/2,p.y-PART_LAYOUTS[g.kind].h/2);libraryOpen(false);}
    else message('Solte a peça sobre a bancada para adicioná-la.',true);
   }
  }else if(g.type==='wire'){
