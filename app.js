@@ -7,7 +7,7 @@ const TYPES=[
  {kind:'buck',name:'Regulador LM2596',img:'conversor-step-down-lm2596.webp',ids:['lm'],pins:[['INP','IN +'],['INN','IN −'],['OUTP','OUT +'],['OUTN','OUT −']],info:'Regulador de tensão. Neste projeto, a saída para o ESP32 deve ser ajustada para 5,0 V.',tip:'Na montagem real, um responsável deve medir 5 V com multímetro antes de conectar VIN.'},
  {kind:'battery',name:'Bateria 9 V',img:'bateria-9v.jpg',ids:['b1','b2'],pins:[['POS','+'],['NEG','−']],info:'Duas baterias em circuitos independentes: uma para o ESP32 e outra para os motores.',tip:'A bateria 1 alimenta o LM2596 por uma gangorra; a bateria 2 alimenta a ponte H pela outra.'},
  {kind:'switch',name:'Chave gangorra',img:'interruptor-gangorra-kcd11-101.jpg',ids:['s1','s2'],pins:[['IN','IN'],['OUT','OUT']],info:'Chave física liga/desliga, instalada em série com o fio positivo da sua bateria.',tip:'São duas chaves: uma alimenta o regulador do ESP32 e a outra alimenta a ponte H.'},
- {kind:'motor',name:'Motor DC TT',img:'motor-dc-tt.jpg',ids:['ml','mr'],pins:[['A','A'],['B','B']],info:'Motor DC amarelo que movimenta uma roda. São dois motores, cada um ligado a uma saída da MX1508.',tip:'Um motor é ligado à saída A e o outro à saída B da ponte H.'}
+ {kind:'motor',name:'Motor DC',img:'assets/motor-dc.svg',ids:['ml','mr'],pins:[['A','+'],['B','−']],info:'Motor de corrente contínua com escovas, corpo metálico, eixo dianteiro e dois terminais traseiros. O sentido de giro muda conforme o comando da ponte H.',tip:'Os contatos ficam nas duas abas metálicas traseiras: superior (+, vermelho) e inferior (−, preto). A ponte H pode inverter o sentido do giro.'}
 ];
 const byKind=Object.fromEntries(TYPES.map(p=>[p.kind,p]));
 const PART_LAYOUTS={
@@ -16,7 +16,7 @@ const PART_LAYOUTS={
  buck:{w:195,h:158,pins:{INP:[13,35],INN:[13,65],OUTP:[87,35],OUTN:[87,65]}},
  battery:{w:148,h:181,pins:{POS:[31,22],NEG:[69,22]}},
  switch:{w:156,h:142,pins:{IN:[27,72],OUT:[73,72]}},
- motor:{w:179,h:157,pins:{A:[29,77],B:[71,77]}}
+ motor:{w:226,h:168,pins:{A:[14,40],B:[14,68]}}
 };
 const byId=Object.fromEntries(TYPES.flatMap(p=>p.ids.map(id=>[id,p])));
 const EXPECTED=[
@@ -59,7 +59,7 @@ function undo(){if(!history.length){message('Nada para desfazer.');return;}const
 const limit=(x,min,max)=>Math.max(min,Math.min(max,x));
 const partName=id=>{const base=byId[id];return base?base.name+(base.ids.length>1?' '+(base.ids.indexOf(id)+1):''):id;};
 const portName=id=>{const [part,code]=id.split('.');const t=byId[part];const p=t&&t.pins.find(x=>x[0]===code);return partName(part)+' · '+(p?p[1]:code);};
-function imageUrl(p){return ROOT+p.img;}
+function imageUrl(p){return p.img.startsWith('assets/')?p.img:ROOT+p.img;}
 function message(msg,toast=false){Q('statusText').textContent=msg;if(toast){const el=Q('toast');el.textContent=msg;el.classList.add('show');clearTimeout(toastTimer);toastTimer=setTimeout(()=>el.classList.remove('show'),2600);}}
 function countGood(){return state.wires.filter(w=>valid.has(key(w.a,w.b))).length;}
 function mistakes(){return state.wires.filter(w=>!valid.has(key(w.a,w.b)));}
@@ -96,6 +96,10 @@ function renderParts(){
   const imgbox=document.createElement('div');imgbox.className='part-image';
   const img=document.createElement('img');img.src=imageUrl(t);img.alt='';img.draggable=false;
   imgbox.append(img);
+  if(p.kind==='motor'){
+   const rotor=document.createElement('span');rotor.className='motor-shaft-spinner';rotor.setAttribute('aria-hidden','true');
+   imgbox.append(rotor);
+  }
   const pins=document.createElement('div');pins.className='part-pins';
   t.pins.forEach(([code,txt])=>{
    const id=p.id+'.'+code,connected=state.wires.some(w=>w.a===id||w.b===id),wrong=mistakes().some(w=>w.a===id||w.b===id);
@@ -400,6 +404,7 @@ function switchView(play){
  Q('buildPanel').hidden=play;Q('playPanel').hidden=!play;
  Q('editTab').classList.toggle('active',!play);Q('playTab').classList.toggle('active',play);
  if(play){car.x=150;car.y=447;car.a=0;car.finished=false;Q('driveReadout').textContent=ready()?'Pronto para pilotar':'Aguardando montagem';}
+ if(!play) syncMotorAnimation(0,0);
  updateTrackLock();if(play)drawTrack();
 }
 function updateTrackLock(){Q('trackLock').hidden=ready();if(!ready())Object.keys(keys).forEach(k=>keys[k]=false);}
@@ -421,10 +426,24 @@ function drawTrack(){
  ctx.fillStyle='#efcd74';ctx.fillRect(-14,-31,8,5);ctx.fillRect(6,-31,8,5);ctx.restore();
  if(car.finished){rr(286,234,387,93,17,'#163644');ctx.fillStyle='#bcec8b';ctx.textAlign='center';ctx.font='bold 26px sans-serif';ctx.fillText('🏁 VOCÊ CONSEGUIU!',480,268);ctx.fillStyle='white';ctx.font='17px sans-serif';ctx.fillText('Parabéns! Missão concluída.',480,301);ctx.textAlign='left';}
 }
+function syncMotorAnimation(v,turn){
+ // Comandos educativos de um sistema de tração diferencial: o eixo anima ao receber um comando.
+ const velocities={ml:v+turn,mr:v-turn};
+ for(const id of ['ml','mr']){
+  const motor=Q('preview-'+id);
+  if(!motor)continue;
+  const speed=ready()&&!Q('playPanel').hidden&&!car.finished?velocities[id]:0;
+  motor.classList.toggle('running',Math.abs(speed)>.01);
+  motor.classList.toggle('reverse',speed<0);
+  const status=Q('motor-status-'+id);
+  if(status)status.textContent=Math.abs(speed)<.01?'Parado':speed<0?'Giro reverso':'Girando';
+ }
+}
 function drive(time){
  const dt=Math.min(.05,(time-lastFrame)/1000||0);lastFrame=time;
  if(!Q('playPanel').hidden&&ready()&&!car.finished){
   const v=(keys.up?1:0)-(keys.down?1:0),turn=(keys.right?1:0)-(keys.left?1:0);
+  syncMotorAnimation(v,turn);
   car.a+=turn*2.8*dt*(v<0?-1:1);
   if(v){
    const x=car.x,y=car.y;
@@ -438,7 +457,7 @@ function drive(time){
  }
  requestAnimationFrame(drive);
 }
-function resetDrive(){car.x=150;car.y=447;car.a=0;car.finished=false;Object.keys(keys).forEach(k=>keys[k]=false);Q('driveReadout').textContent='Pronto para pilotar';drawTrack();}
+function resetDrive(){car.x=150;car.y=447;car.a=0;car.finished=false;Object.keys(keys).forEach(k=>keys[k]=false);syncMotorAnimation(0,0);Q('driveReadout').textContent='Pronto para pilotar';drawTrack();}
 function bind(){
  Q('menuBtn').addEventListener('click',()=>libraryOpen(!Q('library').classList.contains('open')));
  Q('drawerHandle').addEventListener('click',()=>libraryOpen(!Q('library').classList.contains('open')));
