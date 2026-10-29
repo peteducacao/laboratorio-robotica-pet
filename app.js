@@ -37,7 +37,7 @@ const Q=id=>document.getElementById(id);
 const WORLD={w:1900,h:1450};
 const COLORS=['#ed654d','#316fc0','#1f434c','#32a47b','#e5a13d','#a378c8'];
 let state={parts:[],wires:[],voltage:4,switches:{s1:false,s2:false},wireColor:COLORS[0],selected:null,startPort:null,inspector:'parts',completed:false,bends:[],selectedWire:null};
-let zoom=1,panX=0,panY=0,gesture=null,history=[],future=[],toastTimer=0,previewPoint=null,drawPending=false;
+let zoom=1,panX=0,panY=0,gesture=null,history=[],future=[],toastTimer=0,previewPoint=null,previewSnapPort=null,drawPending=false;
 const activeTouches=new Map();
 let pinch=null;
 let gestureBlockedUntil=0;
@@ -287,7 +287,7 @@ function removePart(id){
  state.completed=false;refresh();message(partName(id)+' removido.');
 }
 function cancelPendingWire(){
- state.startPort=null;state.bends=[];previewPoint=null;renderParts();requestDraw();updateHistoryButtons();
+ state.startPort=null;state.bends=[];previewPoint=null;previewSnapPort=null;renderParts();requestDraw();updateHistoryButtons();
 }
 function tipOrigin(){
  if(!state.startPort)return null;
@@ -297,36 +297,52 @@ function tipOrigin(){
 function lastWireTip(){
  return state.bends.at(-1)||tipOrigin();
 }
-function projectFromTip(from,wanted){
+function previousWirePoint(){
+ if(!state.startPort)return null;
+ if(state.bends.length>1)return state.bends.at(-2);
+ return state.bends.length?tipOrigin():getPortPos(state.startPort);
+}
+function projectFromTip(from,wanted,previous=null){
  if(!from||!wanted)return null;
- const dx=wanted.x-from.x,dy=wanted.y-from.y;
- return Math.abs(dx)>=Math.abs(dy)?
-   {x:limit(Math.round(wanted.x),0,WORLD.w),y:Math.round(from.y)}:
-   {x:Math.round(from.x),y:limit(Math.round(wanted.y),0,WORLD.h)};
+ const dx=wanted.x-from.x,dy=wanted.y-from.y,xFirst=Math.abs(dx)>=Math.abs(dy);
+ if(previous){
+  const vx=from.x-previous.x,vy=from.y-previous.y;
+  // O jumper só cresce da última ponta: não pode percorrer o trecho de volta.
+  if(Math.abs(vx)>Math.abs(vy)&&xFirst&&dx*vx<=0){
+   if(Math.abs(dy)<12)return null;
+   return {x:Math.round(from.x),y:limit(Math.round(wanted.y),0,WORLD.h)};
+  }
+  if(Math.abs(vy)>=Math.abs(vx)&&!xFirst&&dy*vy<=0){
+   if(Math.abs(dx)<12)return null;
+   return {x:limit(Math.round(wanted.x),0,WORLD.w),y:Math.round(from.y)};
+  }
+ }
+ return xFirst?{x:limit(Math.round(wanted.x),0,WORLD.w),y:Math.round(from.y)}:
+  {x:Math.round(from.x),y:limit(Math.round(wanted.y),0,WORLD.h)};
 }
 function addCorner(x,y){
  if(!state.startPort)return;
- const last=lastWireTip(),pt=projectFromTip(last,{x,y});
+ const last=lastWireTip(),pt=projectFromTip(last,{x,y},previousWirePoint());
  if(!pt||Math.hypot(pt.x-last.x,pt.y-last.y)<12){
   previewPoint=null;requestDraw();return;
  }
  if(state.bends.length>=24){message('Limite de curvas: finalize em um pino.',true);return;}
  // Cada clique só prolonga a ponta atual: nunca muda um segmento anterior.
- state.bends.push(pt);previewPoint=null;requestDraw();
+ state.bends.push(pt);previewPoint=null;previewSnapPort=null;requestDraw();
  message('Ponta fixada. Toque em outra posição para continuar ou no pino de destino para terminar.');
 }
 function connect(id){
  const part=id.split('.')[0];if(!exists(part))return;
  state.selected=part;state.selectedWire=null;state.inspector='parts';
  if(!state.startPort){
-  state.startPort=id;state.bends=[];previewPoint=null;updateHistoryButtons();
+  state.startPort=id;state.bends=[];previewPoint=null;previewSnapPort=null;updateHistoryButtons();
   message('Fio iniciado em '+portName(id)+'. Toque na bancada para criar curvas, depois no pino de destino.');
   renderParts();renderInspector();requestDraw();return;
  }
  const first=state.startPort;
  if(id===first){cancelPendingWire();message('Ligação cancelada.');return;}
  const via=state.bends.map(p=>({x:p.x,y:p.y}));
- state.startPort=null;state.bends=[];previewPoint=null;
+ state.startPort=null;state.bends=[];previewPoint=null;previewSnapPort=null;
  const index=state.wires.findIndex(w=>electricalKey(w.a,w.b)===electricalKey(first,id));
  snapshot();
  if(index>=0){state.wires.splice(index,1);message('Ligação existente removida.');}
@@ -376,7 +392,15 @@ function wireRoutePoints(start,via,end,startPort,endPort){
   else push({x:last.x,y:endStub.y});
   push(endStub);push(target);
  }
- return pts;
+ // Elimina trechos consecutivos duplicados e evita a ponta parecer dois fios.
+ const clean=[];
+ for(const pt of pts){
+  const p={x:Math.round(pt.x),y:Math.round(pt.y)},a=clean.at(-1),b=clean.at(-2);
+  if(a&&a.x===p.x&&a.y===p.y)continue;
+  if(b&&((b.x===a.x&&a.x===p.x)||(b.y===a.y&&a.y===p.y)))clean[clean.length-1]=p;
+  else clean.push(p);
+ }
+ return clean;
 }
 function wirePath(pts){
  return pts.length?'M'+pts.map(p=>Math.round(p.x)+' '+Math.round(p.y)).join(' L'):'';
@@ -424,14 +448,14 @@ function drawWires(){
  if(state.startPort){
   const start=getPortPos(state.startPort);
   if(!start)return;
-  const last=lastWireTip(),target=previewPoint?projectFromTip(last,previewPoint):null;
-  const pts=[...state.bends];if(target&&Math.hypot(target.x-last.x,target.y-last.y)>2)pts.push(target);
+  const last=lastWireTip(),target=previewPoint?projectFromTip(last,previewPoint,previousWirePoint()):null;
+  const pts=[...state.bends];if(!previewSnapPort&&target&&Math.hypot(target.x-last.x,target.y-last.y)>2)pts.push(target);
   const preview=document.createElementNS(ns,'path');
-  preview.setAttribute('d',wireRoute(start,pts,null,state.startPort,null));
+  preview.setAttribute('d',wireRoute(start,pts,previewSnapPort?getPortPos(previewSnapPort):null,state.startPort,previewSnapPort));
   preview.setAttribute('class','wire-line wire-pending');
   preview.setAttribute('stroke',state.wireColor);svg.append(preview);
   cap(start,state.wireColor,'wire-end-cap');
-  cap(pts.at(-1)||last,state.wireColor,'wire-active-tip');
+  cap((previewSnapPort&&getPortPos(previewSnapPort))||pts.at(-1)||last,state.wireColor,'wire-active-tip');
  }
 }
 function requestDraw(){if(drawPending)return;drawPending=true;requestAnimationFrame(drawWires);}
@@ -479,7 +503,7 @@ function trackingTouchDown(e){
  if(activeTouches.size>=2){
   const ps=[...activeTouches.values()].slice(0,2),cx=(ps[0].x+ps[1].x)/2,cy=(ps[0].y+ps[1].y)/2,r=Q('viewport').getBoundingClientRect();
   pinch={distance:Math.max(1,Math.hypot(ps[1].x-ps[0].x,ps[1].y-ps[0].y)),zoom,wx:(cx-r.left-panX)/zoom,wy:(cy-r.top-panY)/zoom};
-  gesture=null;previewPoint=null;gestureBlockedUntil=Date.now()+420;suppressPortClickUntil=gestureBlockedUntil;
+  gesture=null;previewPoint=null;previewSnapPort=null;gestureBlockedUntil=Date.now()+420;suppressPortClickUntil=gestureBlockedUntil;
  }
 }
 function trackingTouchMove(e){
