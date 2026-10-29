@@ -21,7 +21,7 @@ O projeto salva automaticamente a montagem no navegador. O botão **Desfazer** r
 
 ## Componentes presentes
 
-- 1 ESP32 DevKit (VIN, GND, D27, D26, D32, D18)
+- 1 ESP32 DevKit V1 de 30 pinos: todos os contatos têm seus nomes no próprio desenho. O carrinho usa VIN, GND, D27, D26, D32 e D18; ambos os GND físicos são aceitos.
 - 1 ponte H MX1508 (VCC, GND, IN1–IN4 e duas saídas para motores)
 - 1 LM2596 (IN+, IN−, OUT+, OUT−)
 - 2 baterias representadas como 9 V
