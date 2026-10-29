@@ -615,6 +615,8 @@ function centerPart(kind){
 }
 function libraryOpen(open){
  const yes=!!open;
+ // Encerrar o foco da busca ao fechar a gaveta evita teclado preso no Android.
+ if(!yes)Q('componentSearch').blur?.();
  Q('library').classList.toggle('open',yes);
  Q('sideBackdrop').hidden=!yes;
  Q('menuBtn').setAttribute('aria-expanded',String(yes));
@@ -747,7 +749,12 @@ function pointerUp(e){
      }else{previewPoint=null;requestDraw();}
    }
   }
-  // Em toque simples, o evento click chama connect; não resetar a origem aqui.
+  // O preventDefault do touch suprime o click sintético em alguns celulares.
+  // Por isso o toque simples também é tratado aqui, sem depender do navegador.
+  if(!g.moved&&e.pointerType==='touch'){
+   suppressPortClickUntil=Date.now()+350;
+   connect(g.port);
+  }
  }else if(g.type==='move'){
   if(g.moved)persist();
   else{state.selected=g.partId;renderParts();renderInspector();}
@@ -855,7 +862,7 @@ window.tinkerpetAnswerData={
 function bind(){
  Q('menuBtn').addEventListener('click',()=>libraryOpen(!Q('library').classList.contains('open')));
  Q('drawerHandle').addEventListener('click',()=>libraryOpen(!Q('library').classList.contains('open')));
- Q('openComponentPicker').addEventListener('click',()=>{libraryOpen(true);Q('componentSearch').focus?.();});
+ Q('openComponentPicker').addEventListener('click',()=>libraryOpen(true));
  Q('closeLibrary').addEventListener('click',()=>libraryOpen(false));Q('sideBackdrop').addEventListener('click',()=>libraryOpen(false));
  Q('componentSearch').addEventListener('input',renderCatalog);
  Q('catalog').addEventListener('pointerdown',paletteDown);
@@ -865,6 +872,14 @@ function bind(){
    if((spaceHeld||e.button===1)&&!e.target.closest('input,select,[data-toggle],[data-remove]')){startPan(e);return;}
    const port=e.target.closest('[data-port]');
    if(port&&e.button!==2){
+     // Android: os bornes são botões, não campos de texto. Evita foco/teclado
+     // sem perder o toque simples, que é finalizado em pointerUp.
+     if(e.pointerType==='touch'){
+      const active=document.activeElement;
+      if(active&&(/^(INPUT|TEXTAREA|SELECT)$/.test(active.tagName)||active.isContentEditable))active.blur?.();
+      Q('componentSearch').blur?.();
+      if(e.cancelable!==false)e.preventDefault();
+     }
      gesture={type:'wire',pointer:e.pointerId,port:port.dataset.port,startX:e.clientX,startY:e.clientY,moved:false};
      requestDraw();return;
    }
