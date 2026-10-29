@@ -160,7 +160,9 @@ function renderParts(){
    const id=p.id+'.'+code,connected=state.wires.some(w=>w.a===id||w.b===id),wrong=mistakes().some(w=>w.a===id||w.b===id);
    const at=layout.pins[code]||[50,50];
    const btn=document.createElement('button');btn.type='button';
-   btn.className='pin-btn'+(state.startPort===id?' selected':'')+(connected?' connected':'')+(wrong?' invalid':'');
+   const miss=validationActive&&missing().some(([a,b])=>a===id||b===id);
+   const good=validationActive&&connected&&!wrong;
+   btn.className='pin-btn'+(state.startPort===id?' selected':'')+(connected?' connected':'')+(wrong?' invalid':'')+(miss?' diagnostic-missing':'')+(good?' diagnostic-correct':'');
    btn.style.setProperty('--pin-x',at[0]+'%');btn.style.setProperty('--pin-y',at[1]+'%');
    btn.dataset.port=id;btn.title=portName(id);btn.setAttribute('aria-label','Conectar terminal '+portName(id));
    const dot=document.createElement('span');dot.className='pin-dot';btn.append(dot,document.createTextNode(txt));
@@ -269,7 +271,7 @@ function renderProgress(){
  else if(!state.switches.s1||!state.switches.s2||Math.abs(state.voltage-5)>.01){Q('stepNumber').textContent='03';missionTitle.textContent='Hora de ligar a energia';missionText.textContent='Ajuste 5 V na LM2596 e ligue as duas gangorras.';}
  else {Q('stepNumber').textContent='04';missionTitle.textContent='Tudo pronto para testar!';missionText.textContent='Toque em Iniciar simulação para dirigir o carrinho.';}
 }
-function refresh(){renderCatalog();renderParts();renderColors();renderInspector();renderProgress();persist();updateTrackLock();}
+function refresh(){renderCatalog();renderParts();renderColors();renderInspector();renderProgress();persist();updateTrackLock();renderDiagnostics();renderEnergyFlow();}
 function renderAll(){refresh();}
 function addPart(kind,x,y){
  const t=byKind[kind];if(!t)return false;
@@ -450,7 +452,7 @@ function drawWires(){
   const d=wirePath(points);
   const line=document.createElementNS(ns,'path');
   line.setAttribute('d',d);
-  line.setAttribute('class','wire-line'+(valid.has(electricalKey(w.a,w.b))?'':' wire-error')+(state.selectedWire===i?' wire-selected':''));
+  line.setAttribute('class','wire-line'+(valid.has(electricalKey(w.a,w.b))?'':' wire-error')+(state.selectedWire===i?' wire-selected':'')+(validationActive&&!valid.has(electricalKey(w.a,w.b))?' diagnostic-wire-error':''));
   line.setAttribute('stroke',w.color);svg.append(line);
   cap(a,w.color,'wire-end-cap');cap(b,w.color,'wire-end-cap');
   // Alvo para tocar e selecionar o fio. Não cobre os furos dos pinos.
@@ -862,6 +864,81 @@ function pointerUp(e){
  }
 
 }
+
+function hasWired(a,b){return state.wires.some(w=>electricalKey(w.a,w.b)===electricalKey(a,b));}
+function renderEnergyFlow(){
+ const panel=Q('flowPanel');panel.hidden=!flowVisible;
+ Q('flowBtn').setAttribute('aria-pressed',String(flowVisible));
+ Q('flowBtn').classList.toggle('is-active',flowVisible);
+ if(!flowVisible)return;
+ const root=Q('flowContent');root.replaceChildren();
+ const sw1=exists('b1')&&exists('s1')&&hasWired('b1.POS','s1.IN')&&state.switches.s1;
+ const buck=sw1&&exists('lm')&&hasWired('s1.OUT','lm.INP')&&hasWired('b1.NEG','lm.INN');
+ const esp= buck&&state.voltage===5&&exists('esp')&&hasWired('lm.OUTP','esp.VIN')&&hasWired('lm.OUTN','esp.GND');
+ const sw2=exists('b2')&&exists('s2')&&hasWired('b2.POS','s2.IN')&&state.switches.s2;
+ const driver=sw2&&exists('drv')&&hasWired('s2.OUT','drv.VCC')&&hasWired('b2.NEG','drv.GND')&&hasWired('esp.GND','drv.GND')&&esp;
+ const motorA=driver&&['D27','D26'].every((p,i)=>hasWired('esp.'+p,'drv.IN'+(i+1)))&&hasWired('drv.OUT1','ml.A')&&hasWired('drv.OUT2','ml.B');
+ const motorB=driver&&['D32','D18'].every((p,i)=>hasWired('esp.'+p,'drv.IN'+(i+3)))&&hasWired('drv.OUT3','mr.A')&&hasWired('drv.OUT4','mr.B');
+ const rows=[
+  {name:'Sistema ESP32',steps:[['Bateria 1',exists('b1')],['Gangorra 1',sw1],['LM2596',buck],['5,0 V',buck&&state.voltage===5],['ESP32',esp]]},
+  {name:'Sistema de motores',steps:[['Bateria 2',exists('b2')],['Gangorra 2',sw2],['Ponte H + GND',driver],['Motor 1',motorA],['Motor 2',motorB]]}
+ ];
+ for(const row of rows){
+  const track=document.createElement('div');track.className='flow-track';
+  const heading=document.createElement('strong');heading.textContent=row.name;track.append(heading);
+  const seq=document.createElement('div');seq.className='flow-sequence';
+  row.steps.forEach(([label,on],i)=>{
+   if(i){const arrow=document.createElement('span');arrow.className='flow-arrow';arrow.textContent='→';seq.append(arrow);}
+   const item=document.createElement('span');item.className='flow-stage '+(on?'is-on':'is-off');
+   item.textContent=(on?'● ':'○ ')+label;seq.append(item);
+  });
+  track.append(seq);root.append(track);
+ }
+ const foot=document.createElement('p');foot.className='flow-foot';
+ foot.textContent=!state.switches.s1||!state.switches.s2?
+  'Chave desligada interrompe o percurso da alimentação representada.':
+  state.voltage!==5?'Saída LM2596 fora de 5 V: simulação do ESP32 bloqueada.':
+  !hasWired('esp.GND','drv.GND')?'GND comum ausente: ponte H não recebe referência dos sinais.':
+  ready()?'Todos os percursos previstos estão completos. A pista pode iniciar.':
+  'Percurso incompleto: confira fios, GND e pinos de comando destacados na verificação.';
+ root.append(foot);
+}
+function renderDiagnostics(){
+ const panel=Q('diagnosticsPanel');panel.hidden=!validationActive;
+ if(!validationActive)return;
+ panel.replaceChildren();
+ const heading=document.createElement('div');heading.className='diagnostics-head';
+ const title=document.createElement('strong');title.textContent=ready()?'✓ Circuito conferido':'Conferência da montagem';
+ const dismiss=document.createElement('button');dismiss.type='button';dismiss.textContent='×';dismiss.title='Ocultar conferência';
+ dismiss.addEventListener('click',()=>{validationActive=false;renderParts();renderDiagnostics();requestDraw();});
+ heading.append(title,dismiss);panel.append(heading);
+ const list=document.createElement('div');list.className='diagnostics-list';
+ const results=[];
+ for(const w of mistakes())results.push({label:'Revisar fio: '+portName(w.a)+' → '+portName(w.b),
+  part:w.a.split('.')[0],wire:state.wires.indexOf(w),status:'bad'});
+ for(const [a,b] of missing())results.push({label:'Falta: '+portName(a)+' → '+portName(b),
+  part:a.split('.')[0],status:'missing'});
+ for(const type of TYPES)for(const id of type.ids)if(!exists(id))results.push({label:'Adicionar: '+partName(id),status:'missing'});
+ if(state.voltage!==5)results.push({label:'Regulador: ajuste LM2596 para 5,0 V',part:'lm',status:'bad'});
+ for(const id of ['s1','s2'])if(!state.switches[id])results.push({label:'Ligar '+partName(id),part:id,status:'bad'});
+ if(!results.length)results.push({label:'Todas as 17 conexões, 9 peças e condições de alimentação estão corretas.',status:'ok'});
+ const count=document.createElement('small');count.textContent=results.length===1&&results[0].status==='ok'?'Tudo correto':results.length+' ponto(s) para conferir';
+ panel.append(count);
+ results.forEach(item=>{
+  const button=document.createElement('button');button.type='button';
+  button.className='diagnostics-row '+item.status;button.textContent=item.label;
+  button.addEventListener('click',()=>{
+   if(Number.isInteger(item.wire)){selectWire(item.wire);state.inspector='wires';renderInspector();}
+   if(item.part&&exists(item.part))focusPart(item.part);
+  });
+  list.append(button);
+ });
+ panel.append(list);
+}
+function showDiagnostics(){
+ validationActive=true;
+ renderParts();renderDiagnostics();requestDraw();renderEnergyFlow();
+}
 function hint(){
  if(state.parts.length<9){const next=TYPES.find(t=>t.ids.some(id=>!exists(id)));message('Pegue no catálogo: '+next.name+'. Toque para adicionar ou arraste para a bancada.',true);return;}
  const wrong=mistakes()[0];if(wrong){message('Revise este fio: '+portName(wrong.a)+' → '+portName(wrong.b)+'.',true);return;}
@@ -871,6 +948,7 @@ function hint(){
  message('Tudo correto! Toque em Iniciar simulação.',true);
 }
 function check(){
+ showDiagnostics();
  if(state.parts.length<9){message('Primeiro coloque todas as 9 peças. Ainda faltam '+(9-state.parts.length)+'.',true);return false;}
  if(mistakes().length){message('Existem '+mistakes().length+' fio(s) ligado(s) a terminais que não combinam. Revise os fios.',true);state.inspector='wires';renderInspector();return false;}
  const m=missing();if(m.length){message('Faltam '+m.length+' ligações. Dica: '+portName(m[0][0])+' → '+portName(m[0][1])+'.',true);return false;}
@@ -992,7 +1070,7 @@ function bind(){
   const del=e.target.closest('[data-remove]');if(del){removePart(del.dataset.remove);return;}
   const toggler=e.target.closest('[data-toggle]');if(toggler){snapshot();state.switches[toggler.dataset.toggle]=!state.switches[toggler.dataset.toggle];refresh();message('Gangorra '+(state.switches[toggler.dataset.toggle]?'ligada':'desligada')+'.');return;}
  });
- Q('partsLayer').addEventListener('input',e=>{if(e.target.id==='voltageInput'){state.voltage=Number(e.target.value);const out=Q('voltageOutput');if(out)out.textContent=state.voltage.toFixed(1).replace('.',',')+' V';renderProgress();persist();updateTrackLock();}});
+ Q('partsLayer').addEventListener('input',e=>{if(e.target.id==='voltageInput'){state.voltage=Number(e.target.value);const out=Q('voltageOutput');if(out)out.textContent=state.voltage.toFixed(1).replace('.',',')+' V';renderProgress();persist();updateTrackLock();renderDiagnostics();renderEnergyFlow();}});
  Q('partsLayer').addEventListener('change',e=>{if(e.target.id==='voltageInput')message('LM2596 ajustado para '+state.voltage.toFixed(1).replace('.',',')+' V.');});
  Q('wireSvg').addEventListener('pointerdown',e=>{
   const handle=e.target.closest('[data-wire-handle]');
@@ -1048,6 +1126,7 @@ function bind(){
   connect(button.dataset.precisionPort);closePrecision();setToolMode('connect');
  });
  Q('organizeBtn').addEventListener('click',organizeWorkspace);
+ Q('flowBtn').addEventListener('click',()=>{flowVisible=!flowVisible;renderEnergyFlow();});
  Q('zoomTool').addEventListener('click',()=>{Q('zoomPopover').hidden=!Q('zoomPopover').hidden;});
  Q('zoomSlider').addEventListener('input',e=>cameraZoom(Number(e.target.value)/100));
  Q('zoomFitPart').addEventListener('click',()=>{const p=byPart(state.selected);if(p)focusPart(p.id);else fitCamera();Q('zoomPopover').hidden=true;});
