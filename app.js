@@ -407,7 +407,7 @@ function switchView(play){
  if(!play) syncMotorAnimation(0,0);
  updateTrackLock();if(play)drawTrack();
 }
-function updateTrackLock(){Q('trackLock').hidden=ready();if(!ready())Object.keys(keys).forEach(k=>keys[k]=false);}
+function updateTrackLock(){Q('trackLock').hidden=ready();if(!ready()){Object.keys(keys).forEach(k=>keys[k]=false);syncMotorAnimation(0,0);}}
 const ctx=Q('track').getContext('2d');
 const obstacles=[{x:300,y:280,r:26},{x:458,y:180,r:27},{x:585,y:365,r:27},{x:727,y:265,r:25}];
 function rr(x,y,w,h,r,c){ctx.fillStyle=c;ctx.beginPath();ctx.roundRect(x,y,w,h,r);ctx.fill();}
@@ -433,10 +433,13 @@ function syncMotorAnimation(v,turn){
   const motor=Q('preview-'+id);
   if(!motor)continue;
   const speed=ready()&&!Q('playPanel').hidden&&!car.finished?velocities[id]:0;
-  motor.classList.toggle('running',Math.abs(speed)>.01);
-  motor.classList.toggle('reverse',speed<0);
+  const motion=Math.abs(speed)<.01?'idle':speed<0?'reverse':'forward';
+  if(motor.dataset.motion===motion)continue;
+  motor.dataset.motion=motion;
+  motor.classList.toggle('running',motion!=='idle');
+  motor.classList.toggle('reverse',motion==='reverse');
   const status=Q('motor-status-'+id);
-  if(status)status.textContent=Math.abs(speed)<.01?'Parado':speed<0?'Giro reverso':'Girando';
+  if(status)status.textContent=motion==='idle'?'Parado':motion==='reverse'?'Giro reverso':'Girando';
  }
 }
 function drive(time){
@@ -452,7 +455,7 @@ function drive(time){
    if(obstacles.some(o=>Math.hypot(car.x-o.x,car.y-o.y)<o.r+25)){car.x=x;car.y=y;Q('driveReadout').textContent='Desvie do obstáculo!';}
    else Q('driveReadout').textContent=v>0?'Avançando':'Marcha à ré';
   }
-  if(Math.hypot(car.x-820,car.y-111)<53){car.finished=true;Object.keys(keys).forEach(k=>keys[k]=false);Q('driveReadout').textContent='🏆 Chegada!';message('Parabéns! Você concluiu a pista!',true);}
+  if(Math.hypot(car.x-820,car.y-111)<53){car.finished=true;Object.keys(keys).forEach(k=>keys[k]=false);syncMotorAnimation(0,0);Q('driveReadout').textContent='🏆 Chegada!';message('Parabéns! Você concluiu a pista!',true);}
   drawTrack();
  }
  requestAnimationFrame(drive);
