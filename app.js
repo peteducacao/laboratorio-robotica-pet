@@ -472,7 +472,7 @@ function drawWires(){
    const point=w.via[k],handle=document.createElementNS(ns,'circle');
    handle.setAttribute('cx',String(Math.round(point.x)));
    handle.setAttribute('cy',String(Math.round(point.y)));
-   handle.setAttribute('r','15');
+   handle.setAttribute('r',String(Math.max(15,12/zoom)));
    handle.setAttribute('class','wire-edit-handle');
    handle.dataset.wireHandle=String(k);handle.dataset.wireIndex=String(i);
    handle.setAttribute('aria-label','Arrastar curva '+(k+1)+' do fio');
@@ -732,7 +732,7 @@ function paletteDown(e){
 function viewportDown(e){
  if(pinch||activeTouches.size>=2||Date.now()<gestureBlockedUntil)return;
  if(e.button!==undefined&&e.button!==0&&e.button!==1)return;
- if(e.target.closest('.canvas-zoom-button,.canvas-zoom-panel,button,input'))return;
+ if(e.target.closest('.canvas-zoom-button,.canvas-zoom-panel,.precision-panel,.diagnostics-panel,button,input'))return;
  if(panMode||spaceHeld||e.button===1){startPan(e);return;}
  if(e.target.closest('.part,.wire-target'))return;
  if(!state.startPort){const selected=wireAt(e.clientX,e.clientY);if(selected>=0){selectWire(selected);return;}}
@@ -1044,7 +1044,17 @@ function bind(){
    if((panMode||spaceHeld||e.button===1)&&!e.target.closest('input,select,[data-toggle],[data-remove]')){startPan(e);return;}
    const port=e.target.closest('[data-port]');
    if(port&&e.button!==2){
+     if(toolMode==='precision'){showPrecision(port.dataset.port.split('.')[0]);gesture=null;return;}
      gesture={type:'wire',pointer:e.pointerId,port:port.dataset.port,startX:e.clientX,startY:e.clientY,moved:false};
+     if(e.pointerType==='touch'){
+      clearTimeout(pressTimer);pressTarget=port.dataset.port;
+      pressTimer=setTimeout(()=>{
+       if(gesture&&gesture.type==='wire'&&!gesture.moved&&pressTarget===port.dataset.port){
+        gesture=null;showPrecision(port.dataset.port.split('.')[0]);
+        suppressPortClickUntil=Date.now()+500;
+       }
+      },560);
+     }
      requestDraw();return;
    }
    partDown(e);
