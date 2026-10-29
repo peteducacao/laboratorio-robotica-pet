@@ -23,7 +23,7 @@ Laboratório educativo e responsivo do **PET Educação — UFS**, publicado em 
 | 1 | Ponte H MX1508 | placa vermelha, bornes de motor, VCC, GND e IN1–IN4 |
 | 1 | Regulador LM2596 | placa azul, entrada/saída IN± e OUT±, ajuste virtual |
 | 2 | Bateria 9 V | polo positivo e negativo integrados à imagem |
-| 2 | Gangorra | dois contatos e tecla liga/desliga interativa |
+| 2 | Gangorra iluminada | três contatos: entrada positiva, saída comutada e negativo opcional da luz indicadora; tecla basculante animada |
 | 2 | Motor DC com redução | engrenagem amarela, duas vistas e contatos, prévia animada |
 
 A logo do PET Educação foi copiada do catálogo original. **Nenhum arquivo do catálogo foi alterado.** O simulador agora armazena seus quatro desenhos complementares em:
@@ -36,3 +36,11 @@ O arquivo `tests/smoke.cjs` é executado no GitHub Actions a cada commit na rami
 **Limites educativos:** os desenhos representam componentes para montagem virtual e validação lógica; não há cálculo de corrente, simulação de curto-circuito, reprodução do firmware ESP32, Wi-Fi real ou avaliação da segurança elétrica. A pista é virtual. Na montagem real, fontes, reguladores, motores e solda exigem supervisão e medições adequadas.
 
 Referência do projeto físico: [Carrinho Wi-Fi ESP32 — Fundamentos de Prototipagem e Fabricação Digital](https://gabrieljsantos.github.io/Fundamentos-de-Prototipagem-e-Fabrica--o-Digital/conteudos/08-carrinho-wifi-esp32-pet-v1.html).
+
+## Revisão visual e elétrica da v9
+
+- A alimentação positiva é vermelha e o negativo/GND é preto. **As duas baterias ilustradas são de 9 V**, não fontes de 5 V; apenas a saída do LM2596 é ajustada para 5 V para alimentar VIN do ESP32.
+- A ponte H MX1508 recebe o positivo da bateria dos motores no terminal + e o negativo no terminal −. Os comandos chegam em IN1–IN4.
+- A gangorra ilustrada agora é um **modelo iluminado de três terminais**: IN (positivo de entrada), OUT (saída comutada) e LED− (retorno opcional do indicador). As 17 ligações de funcionamento continuam obrigatórias; um fio adicional para LED− em cada gangorra é aceito e acende o indicador quando ligada. **Não assuma que todos os modelos reais de três terminais usam a mesma pinagem: consulte o esquema impresso na peça real.**
+- O interruptor bascula visualmente ao ligar e desligar. As conexões são desenhadas sobre os pontos reais dos terminais e as linhas são contínuas, sem traços interrompidos.
+- Removidas legendas excessivas de bobinas e capacitores dos desenhos.
