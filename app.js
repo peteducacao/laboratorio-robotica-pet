@@ -653,8 +653,9 @@ function paletteDown(e){
 function viewportDown(e){
  if(pinch||activeTouches.size>=2||Date.now()<gestureBlockedUntil)return;
  if(e.button!==undefined&&e.button!==0&&e.button!==1)return;
- if(e.target.closest('.canvas-zoom-button,.canvas-zoom-panel,button,input,.part,.wire-target'))return;
+ if(e.target.closest('.canvas-zoom-button,.canvas-zoom-panel,button,input'))return;
  if(panMode||spaceHeld||e.button===1){startPan(e);return;}
+ if(e.target.closest('.part,.wire-target'))return;
  if(!state.startPort){const selected=wireAt(e.clientX,e.clientY);if(selected>=0){selectWire(selected);return;}}
  e.preventDefault();
  gesture={type:state.startPort?'bend':'pan',pointer:e.pointerId,startX:e.clientX,startY:e.clientY,x:panX,y:panY,moved:false};
@@ -839,7 +840,8 @@ function bind(){
  Q('catalog').addEventListener('pointerdown',paletteDown);
  Q('partsLayer').addEventListener('pointerdown',e=>{
    if(pinch||activeTouches.size>=2||Date.now()<gestureBlockedUntil)return;
-   if(panMode||spaceHeld||e.button===1){startPan(e);return;}
+   // A ferramenta mão não deve desativar o seletor de tensão ou as teclas das gangorras.
+   if((panMode||spaceHeld||e.button===1)&&!e.target.closest('input,select,[data-toggle],[data-remove]')){startPan(e);return;}
    const port=e.target.closest('[data-port]');
    if(port&&e.button!==2){
      gesture={type:'wire',pointer:e.pointerId,port:port.dataset.port,startX:e.clientX,startY:e.clientY,moved:false};
@@ -871,6 +873,7 @@ function bind(){
  Q('partsLayer').addEventListener('input',e=>{if(e.target.id==='voltageInput'){state.voltage=Number(e.target.value);const out=Q('voltageOutput');if(out)out.textContent=state.voltage.toFixed(1).replace('.',',')+' V';renderProgress();persist();updateTrackLock();}});
  Q('partsLayer').addEventListener('change',e=>{if(e.target.id==='voltageInput')message('LM2596 ajustado para '+state.voltage.toFixed(1).replace('.',',')+' V.');});
  Q('wireSvg').addEventListener('click',e=>{
+   if(panMode||spaceHeld)return;
    const target=e.target.closest('[data-wire-index]');if(!target)return;
    e.stopPropagation?.();
    const i=Number(target.dataset.wireIndex);
