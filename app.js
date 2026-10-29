@@ -10,6 +10,14 @@ const TYPES=[
  {kind:'motor',name:'Motor DC TT',img:'motor-dc-tt.jpg',ids:['ml','mr'],pins:[['A','A'],['B','B']],info:'Motor DC amarelo que movimenta uma roda. São dois motores, cada um ligado a uma saída da MX1508.',tip:'Um motor é ligado à saída A e o outro à saída B da ponte H.'}
 ];
 const byKind=Object.fromEntries(TYPES.map(p=>[p.kind,p]));
+const PART_LAYOUTS={
+ esp:{w:190,h:239,pins:{VIN:[12,31],GND:[12,47],D27:[12,63],D26:[88,31],D32:[88,47],D18:[88,63]}},
+ driver:{w:196,h:244,pins:{VCC:[12,27],GND:[12,41],IN1:[12,55],IN2:[12,69],IN3:[12,83],IN4:[88,83],OUT1:[88,27],OUT2:[88,41],OUT3:[88,55],OUT4:[88,69]}},
+ buck:{w:195,h:158,pins:{INP:[13,35],INN:[13,65],OUTP:[87,35],OUTN:[87,65]}},
+ battery:{w:148,h:181,pins:{POS:[31,22],NEG:[69,22]}},
+ switch:{w:156,h:142,pins:{IN:[27,72],OUT:[73,72]}},
+ motor:{w:179,h:157,pins:{A:[29,77],B:[71,77]}}
+};
 const byId=Object.fromEntries(TYPES.flatMap(p=>p.ids.map(id=>[id,p])));
 const EXPECTED=[
  ['b1.POS','s1.IN'],['s1.OUT','lm.INP'],['b1.NEG','lm.INN'],['lm.OUTP','esp.VIN'],['lm.OUTN','esp.GND'],
@@ -75,31 +83,45 @@ function renderCatalog(){
 function renderParts(){
  const layer=Q('partsLayer');layer.replaceChildren();
  for(const p of state.parts){
-  const t=byKind[p.kind],card=document.createElement('article');
+  const t=byKind[p.kind],layout=PART_LAYOUTS[p.kind],card=document.createElement('article');
   card.className='part'+(state.selected===p.id?' selected':'');
-  card.dataset.part=p.id;card.style.left=p.x+'px';card.style.top=p.y+'px';card.style.zIndex=state.selected===p.id?'5':'3';
+  card.dataset.part=p.id;card.dataset.kind=p.kind;card.style.left=p.x+'px';card.style.top=p.y+'px';
+  card.style.setProperty('--part-w',layout.w+'px');card.style.setProperty('--part-h',layout.h+'px');
+  card.style.zIndex=state.selected===p.id?'5':'3';
   const head=document.createElement('div');head.className='part-head';
   const title=document.createElement('strong');title.textContent=partName(p.id);
-  const del=document.createElement('button');del.type='button';del.className='part-remove';del.dataset.remove=p.id;del.title='Remover peça';del.setAttribute('aria-label','Remover '+partName(p.id));del.textContent='×';
+  const del=document.createElement('button');del.type='button';del.className='part-remove';del.dataset.remove=p.id;
+  del.title='Remover peça';del.setAttribute('aria-label','Remover '+partName(p.id));del.textContent='×';
   head.append(title,del);
   const imgbox=document.createElement('div');imgbox.className='part-image';
-  const img=document.createElement('img');img.src=imageUrl(t);img.alt='';img.draggable=false;imgbox.append(img);
-  const label=document.createElement('div');label.className='part-label';label.textContent='TERMINAIS DE CONEXÃO';
+  const img=document.createElement('img');img.src=imageUrl(t);img.alt='';img.draggable=false;
+  imgbox.append(img);
   const pins=document.createElement('div');pins.className='part-pins';
   t.pins.forEach(([code,txt])=>{
    const id=p.id+'.'+code,connected=state.wires.some(w=>w.a===id||w.b===id),wrong=mistakes().some(w=>w.a===id||w.b===id);
-   const btn=document.createElement('button');btn.type='button';btn.className='pin-btn'+(state.startPort===id?' selected':'')+(connected?' connected':'')+(wrong?' invalid':'');btn.dataset.port=id;btn.title=portName(id);btn.setAttribute('aria-label','Conectar terminal '+portName(id));
-   const dot=document.createElement('span');dot.className='pin-dot';btn.append(dot,document.createTextNode(txt));pins.append(btn);
+   const at=layout.pins[code]||[50,50];
+   const btn=document.createElement('button');btn.type='button';
+   btn.className='pin-btn'+(state.startPort===id?' selected':'')+(connected?' connected':'')+(wrong?' invalid':'');
+   btn.style.setProperty('--pin-x',at[0]+'%');btn.style.setProperty('--pin-y',at[1]+'%');
+   btn.dataset.port=id;btn.title=portName(id);btn.setAttribute('aria-label','Conectar terminal '+portName(id));
+   const dot=document.createElement('span');dot.className='pin-dot';btn.append(dot,document.createTextNode(txt));
+   pins.append(btn);
   });
-  card.append(head,imgbox,label,pins);
+  card.append(head,imgbox,pins);
   if(p.kind==='switch'){
-   const actions=document.createElement('div');actions.className='part-actions';const toggle=document.createElement('button');toggle.type='button';toggle.dataset.toggle=p.id;toggle.className='part-switch'+(state.switches[p.id]?' on':'');toggle.textContent=state.switches[p.id]?'● LIGADA':'○ DESLIGADA';actions.append(toggle);card.append(actions);
+   const actions=document.createElement('div');actions.className='part-actions';
+   const toggle=document.createElement('button');toggle.type='button';toggle.dataset.toggle=p.id;
+   toggle.className='part-switch'+(state.switches[p.id]?' on':'');
+   toggle.textContent=state.switches[p.id]?'● LIGADA':'○ DESLIGADA';
+   actions.append(toggle);card.append(actions);
   }
   if(p.kind==='buck'){
    const wrap=document.createElement('div');wrap.className='part-actions';
    const meter=document.createElement('label');meter.className='part-voltage';meter.textContent='Saída';
-   const range=document.createElement('input');range.type='range';range.min='3';range.max='6';range.step='.5';range.value=state.voltage;range.id='voltageInput';range.setAttribute('aria-label','Saída em volts');
-   const out=document.createElement('output');out.id='voltageOutput';out.textContent=state.voltage.toFixed(1).replace('.',',')+' V';
+   const range=document.createElement('input');range.type='range';range.min='3';range.max='6';range.step='.5';
+   range.value=state.voltage;range.id='voltageInput';range.setAttribute('aria-label','Saída em volts');
+   const out=document.createElement('output');out.id='voltageOutput';
+   out.textContent=state.voltage.toFixed(1).replace('.',',')+' V';
    meter.append(range,out);wrap.append(meter);card.append(wrap);
   }
   layer.append(card);
@@ -202,7 +224,10 @@ function getPortPos(id){
  const box=el.getBoundingClientRect(),w=Q('world').getBoundingClientRect();
  return {x:(box.left+box.width/2-w.left)/zoom,y:(box.top+box.height/2-w.top)/zoom};
 }
-function wireCurve(a,b){const d=Math.min(100,Math.max(30,Math.abs(b.x-a.x)*.4));return 'M'+a.x+' '+a.y+' C'+(a.x+d)+' '+a.y+' '+(b.x-d)+' '+b.y+' '+b.x+' '+b.y;}
+function wireCurve(a,b){
+ const mid=Math.round((a.x+b.x)/2);
+ return 'M'+Math.round(a.x)+' '+Math.round(a.y)+' L'+mid+' '+Math.round(a.y)+' L'+mid+' '+Math.round(b.y)+' L'+Math.round(b.x)+' '+Math.round(b.y);
+}
 function drawWires(){
  drawPending=false;
  const svg=Q('wireSvg');svg.replaceChildren();
@@ -276,6 +301,9 @@ function libraryOpen(open){
  Q('library').classList.toggle('open',yes);
  Q('sideBackdrop').hidden=!yes;
  Q('menuBtn').setAttribute('aria-expanded',String(yes));
+ Q('drawerHandle').setAttribute('aria-expanded',String(yes));
+ Q('drawerHandle').setAttribute('aria-label',yes?'Fechar componentes':'Abrir componentes');
+ Q('drawerHandle').classList.toggle('open',yes);
 }
 function partDown(e){
  if(e.button!==undefined&&e.button!==0)return;
@@ -299,6 +327,7 @@ function viewportDown(e){
  e.preventDefault();
  gesture={type:'pan',pointer:e.pointerId,startX:e.clientX,startY:e.clientY,x:panX,y:panY,moved:false};
 }
+let suppressPortClickUntil=0;
 function pointerMove(e){
  if(gesture&&e.pointerId===gesture.pointer){
   const g=gesture,dx=e.clientX-g.startX,dy=e.clientY-g.startY;
@@ -315,6 +344,8 @@ function pointerMove(e){
     if(el){el.style.left=p.x+'px';el.style.top=p.y+'px';}
     requestDraw();
    }
+  }else if(g.type==='wire'){
+   if(g.moved){previewPoint=worldXY(e.clientX,e.clientY);requestDraw();}
   }else if(g.type==='pan'){if(g.moved){panX=g.x+dx;panY=g.y+dy;camera();}}
  }else if(state.startPort){
   const r=Q('viewport').getBoundingClientRect();
@@ -331,6 +362,16 @@ function pointerUp(e){
    if(e.clientX>=box.left&&e.clientX<=box.right&&e.clientY>=box.top&&e.clientY<=box.bottom){const p=worldXY(e.clientX,e.clientY);addPart(g.kind,p.x-99,p.y-100);libraryOpen(false);}
    else message('Solte a peça sobre a bancada para adicioná-la.',true);
   }
+ }else if(g.type==='wire'){
+  if(g.moved){
+   const found=document.elementFromPoint?document.elementFromPoint(e.clientX,e.clientY):null;
+   const to=found&&found.closest?found.closest('[data-port]'):null;
+   const from=g.port;
+   state.startPort=null;previewPoint=null;
+   suppressPortClickUntil=Date.now()+400;
+   if(to&&to.dataset.port!==from){connect(from);connect(to.dataset.port);}
+   else{state.startPort=from;renderParts();requestDraw();message('Toque no segundo terminal para completar o fio.');}
+  }else{state.startPort=null;previewPoint=null;}
  }else if(g.type==='move'){
   if(g.moved)persist();
   else{state.selected=g.partId;renderParts();renderInspector();}
@@ -400,16 +441,28 @@ function drive(time){
 function resetDrive(){car.x=150;car.y=447;car.a=0;car.finished=false;Object.keys(keys).forEach(k=>keys[k]=false);Q('driveReadout').textContent='Pronto para pilotar';drawTrack();}
 function bind(){
  Q('menuBtn').addEventListener('click',()=>libraryOpen(!Q('library').classList.contains('open')));
+ Q('drawerHandle').addEventListener('click',()=>libraryOpen(!Q('library').classList.contains('open')));
  Q('closeLibrary').addEventListener('click',()=>libraryOpen(false));Q('sideBackdrop').addEventListener('click',()=>libraryOpen(false));
  Q('componentSearch').addEventListener('input',renderCatalog);
  Q('catalog').addEventListener('pointerdown',paletteDown);
- Q('partsLayer').addEventListener('pointerdown',partDown);
+ Q('partsLayer').addEventListener('pointerdown',e=>{
+   const port=e.target.closest('[data-port]');
+   if(port&&e.button!==2){
+     gesture={type:'wire',pointer:e.pointerId,port:port.dataset.port,startX:e.clientX,startY:e.clientY,moved:false};
+     state.startPort=port.dataset.port;requestDraw();return;
+   }
+   partDown(e);
+ });
  Q('viewport').addEventListener('pointerdown',viewportDown);
  window.addEventListener('pointermove',pointerMove);
  window.addEventListener('pointerup',pointerUp);
  window.addEventListener('pointercancel',pointerUp);
  Q('partsLayer').addEventListener('click',e=>{
-  const pin=e.target.closest('[data-port]');if(pin){e.stopPropagation();connect(pin.dataset.port);return;}
+  const pin=e.target.closest('[data-port]');if(pin){
+    e.stopPropagation();
+    if(Date.now()<suppressPortClickUntil)return;
+    connect(pin.dataset.port);return;
+  }
   const del=e.target.closest('[data-remove]');if(del){removePart(del.dataset.remove);return;}
   const toggler=e.target.closest('[data-toggle]');if(toggler){snapshot();state.switches[toggler.dataset.toggle]=!state.switches[toggler.dataset.toggle];refresh();message('Gangorra '+(state.switches[toggler.dataset.toggle]?'ligada':'desligada')+'.');return;}
  });
