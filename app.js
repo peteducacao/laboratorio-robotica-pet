@@ -723,6 +723,15 @@ function drive(time){
  requestAnimationFrame(drive);
 }
 function resetDrive(){car.x=150;car.y=447;car.a=0;car.finished=false;Object.keys(keys).forEach(k=>keys[k]=false);syncMotorAnimation(0,0);Q('driveReadout').textContent='Pronto para pilotar';drawTrack();}
+window.tinkerpetAnswerData={
+ groups:[
+ {title:'Alimentação do ESP32',from:0,to:5,color:'#d9634e',info:'Bateria 1, gangorra e regulador LM2596'},
+ {title:'Energia dos motores',from:5,to:9,color:'#d38f39',info:'Bateria 2, gangorra, ponte H e GND comum'},
+ {title:'Sinais de controle',from:9,to:13,color:'#3d84b8',info:'GPIOs da ESP32 ligados à ponte H'},
+ {title:'Saídas para os motores',from:13,to:17,color:'#229786',info:'Ponte H conectada aos dois motores DC'}
+ ],
+ connections:EXPECTED.map(([a,b],i)=>({n:i+1,from:portName(a),to:portName(b)}))
+};
 function bind(){
  Q('menuBtn').addEventListener('click',()=>libraryOpen(!Q('library').classList.contains('open')));
  Q('drawerHandle').addEventListener('click',()=>libraryOpen(!Q('library').classList.contains('open')));
