@@ -203,3 +203,91 @@
 .part[data-kind="esp"][data-board-model="devkit30"] .pin-btn.invalid{
  background:rgba(255,114,104,.28);outline:3px solid #df645b;
 }
+
+
+/* TinkerPET v8 · componentes desenhados sem cartões; pinos sobre os bornes reais */
+.part[data-kind="driver"] .part-image,
+.part[data-kind="buck"] .part-image,
+.part[data-kind="battery"] .part-image,
+.part[data-kind="switch"] .part-image {
+ position:absolute;inset:0;height:100%;width:100%;padding:0;margin:0;
+ display:flex;align-items:center;justify-content:center;background:transparent;
+}
+.part[data-kind="driver"] .part-image img,
+.part[data-kind="buck"] .part-image img,
+.part[data-kind="battery"] .part-image img,
+.part[data-kind="switch"] .part-image img {
+ width:100%;height:100%;max-width:100%;max-height:100%;object-fit:contain;
+ mix-blend-mode:normal;filter:drop-shadow(0 4px 4px rgba(23,47,61,.17));
+}
+.part[data-kind="driver"] .part-head,
+.part[data-kind="buck"] .part-head,
+.part[data-kind="battery"] .part-head,
+.part[data-kind="switch"] .part-head {top:-15px;pointer-events:none}
+.part[data-kind="driver"] .pin-btn,
+.part[data-kind="buck"] .pin-btn,
+.part[data-kind="battery"] .pin-btn,
+.part[data-kind="switch"] .pin-btn {
+ width:35px;height:39px;min-height:39px;border-radius:50%;padding:0;
+ background:transparent;box-shadow:none;border:0;font-size:0;color:transparent;
+ touch-action:none;
+}
+.part[data-kind="driver"] .pin-dot,
+.part[data-kind="buck"] .pin-dot,
+.part[data-kind="battery"] .pin-dot,
+.part[data-kind="switch"] .pin-dot {opacity:0}
+.part[data-kind="driver"] .pin-btn:hover,
+.part[data-kind="buck"] .pin-btn:hover,
+.part[data-kind="battery"] .pin-btn:hover,
+.part[data-kind="switch"] .pin-btn:hover,
+.part[data-kind="driver"] .pin-btn:focus-visible,
+.part[data-kind="buck"] .pin-btn:focus-visible,
+.part[data-kind="battery"] .pin-btn:focus-visible,
+.part[data-kind="switch"] .pin-btn:focus-visible {
+ background:rgba(35,185,203,.17);outline:2px solid #23a4c0;outline-offset:0;
+}
+.part[data-kind="driver"] .pin-btn.selected,
+.part[data-kind="buck"] .pin-btn.selected,
+.part[data-kind="battery"] .pin-btn.selected,
+.part[data-kind="switch"] .pin-btn.selected {
+ background:rgba(102,221,230,.26);outline:3px solid #19adba;
+}
+.part[data-kind="driver"] .pin-btn.connected:not(.selected),
+.part[data-kind="buck"] .pin-btn.connected:not(.selected),
+.part[data-kind="battery"] .pin-btn.connected:not(.selected),
+.part[data-kind="switch"] .pin-btn.connected:not(.selected) {
+ background:rgba(96,221,142,.23);outline:2px solid #42ae75;
+}
+.part[data-kind="driver"] .pin-btn.invalid,
+.part[data-kind="buck"] .pin-btn.invalid,
+.part[data-kind="battery"] .pin-btn.invalid,
+.part[data-kind="switch"] .pin-btn.invalid {
+ outline:3px solid #e46d59;background:rgba(235,112,98,.26);
+}
+.part[data-kind="buck"] .part-actions{
+ position:absolute;left:50%;bottom:-26px;right:auto;transform:translateX(-50%);
+ z-index:10;width:max-content;padding:0;
+}
+.part[data-kind="buck"] .part-voltage {padding:5px 9px;border-radius:9px}
+.part[data-kind="switch"] .part-actions{
+ position:absolute;z-index:8;inset:18% 20% 20% 20%;padding:0;
+ display:flex;align-items:center;justify-content:center;pointer-events:none;
+}
+.part[data-kind="switch"] .part-switch {
+ position:relative;pointer-events:auto;width:100%;height:100%;
+ padding:0;border:0;background:transparent!important;color:transparent!important;
+ font-size:0;box-shadow:none;border-radius:12px;outline-offset:4px;
+}
+.part[data-kind="switch"] .part-switch::after {
+ content:"";position:absolute;right:10px;top:9px;width:12px;height:12px;
+ border-radius:50%;background:#9caab2;box-shadow:0 0 0 2px #4a5862;
+}
+.part[data-kind="switch"][data-powered="on"] .part-switch::after {
+ background:#9df26c;box-shadow:0 0 0 2px #3d8254,0 0 10px rgba(121,250,118,.8);
+}
+.part[data-kind="switch"][data-powered="on"] .part-image img{filter:brightness(1.13) drop-shadow(0 4px 4px rgba(23,47,61,.18))}
+.wire-line{stroke-width:5;stroke-linecap:round;stroke-linejoin:round;fill:none}
+.wire-line.wire-error{filter:drop-shadow(0 0 3px rgba(229,95,79,.7))}
+.wire-line.wire-pending{stroke-width:4.5;opacity:.84}
+.wire-corner{stroke:white;stroke-width:1.8;pointer-events:none}
+.wire-target{stroke:transparent;stroke-width:19;pointer-events:stroke}
