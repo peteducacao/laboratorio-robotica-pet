@@ -148,6 +148,11 @@ function inspectorPart(p){
  const note=document.createElement('div');note.className='inspect-pins';note.textContent='✳ '+t.tip;
  const pins=document.createElement('p');pins.className='inspect-paragraph';pins.textContent=t.pins.length+' terminais disponíveis. Toque em um terminal na bancada para começar a ligação.';
  const actions=document.createElement('div');actions.className='inspect-actions';
+ if(p.kind==='motor'){
+  const demo=document.createElement('button');demo.type='button';demo.className='inspect-action';demo.dataset.demoMotor=p.id;
+  demo.textContent='▶ Ver o eixo girar (prévia visual)';
+  actions.append(demo);
+ }
  const remove=document.createElement('button');remove.type='button';remove.className='inspect-action';remove.dataset.remove=p.id;remove.textContent='✕ Remover da bancada';
  actions.append(remove);body.append(img,name,tag,para,note,pins,actions);
 }
@@ -171,6 +176,13 @@ function renderInspector(){
  const p=byPart(state.selected);
  if(p){inspectorPart(p);return;}
  body.innerHTML='<div class="inspect-empty"><span>⌁</span><h3>Selecione uma peça</h3><p>Coloque um componente na bancada e toque nele para descobrir sua função e seus terminais.</p></div>';
+}
+function demoMotor(id){
+ const el=[...Q('partsLayer').querySelectorAll('.part')].find(p=>p.dataset.part===id);
+ if(!el)return;
+ el.classList.add('demo-running');
+ message('Prévia visual: observe o eixo do '+partName(id)+' girando. A montagem ainda precisa do circuito.',true);
+ setTimeout(()=>el.classList.remove('demo-running'),3500);
 }
 function renderProgress(){
  const total=countGood(),errors=mistakes().length;
@@ -491,7 +503,7 @@ function bind(){
  Q('partsLayer').addEventListener('input',e=>{if(e.target.id==='voltageInput'){state.voltage=Number(e.target.value);const out=Q('voltageOutput');if(out)out.textContent=state.voltage.toFixed(1).replace('.',',')+' V';renderProgress();persist();updateTrackLock();}});
  Q('partsLayer').addEventListener('change',e=>{if(e.target.id==='voltageInput')message('LM2596 ajustado para '+state.voltage.toFixed(1).replace('.',',')+' V.');});
  Q('wireSvg').addEventListener('click',e=>{const el=e.target.closest('[data-wire-index]');if(el)removeWire(Number(el.dataset.wireIndex));});
- Q('inspectorBody').addEventListener('click',e=>{const del=e.target.closest('[data-remove]');if(del)removePart(del.dataset.remove);const w=e.target.closest('[data-remove-wire]');if(w)removeWire(Number(w.dataset.removeWire));});
+ Q('inspectorBody').addEventListener('click',e=>{const demo=e.target.closest('[data-demo-motor]');if(demo){demoMotor(demo.dataset.demoMotor);return;}const del=e.target.closest('[data-remove]');if(del)removePart(del.dataset.remove);const w=e.target.closest('[data-remove-wire]');if(w)removeWire(Number(w.dataset.removeWire));});
  Q('inspectorPartsTab').addEventListener('click',()=>{state.inspector='parts';renderInspector();});
  Q('inspectorWiresTab').addEventListener('click',()=>{state.inspector='wires';renderInspector();});
  Q('colorPalette').addEventListener('click',e=>{const swatch=e.target.closest('[data-color]');if(swatch){state.wireColor=swatch.dataset.color;renderColors();persist();}});
