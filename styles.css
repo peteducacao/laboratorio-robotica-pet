@@ -88,3 +88,51 @@
  .part-head strong{font-size:11px}
  .pin-btn{height:29px;min-height:29px;font-size:9px}
 }
+
+
+/* Motor DC escovado: objeto vetorial com terminais de contato integrados */
+.part[data-kind="motor"]{width:var(--part-w,226px);height:var(--part-h,168px);overflow:visible}
+.part[data-kind="motor"] .part-head{top:-16px}
+.part[data-kind="motor"] .part-image{left:10px;right:10px;top:0;bottom:0;height:auto;padding:0;overflow:visible}
+.part[data-kind="motor"] .part-image img{mix-blend-mode:normal;filter:drop-shadow(0 5px 4px rgba(39,60,74,.16));width:100%;height:100%;object-fit:contain}
+.part[data-kind="motor"] .pin-btn{
+  min-width:38px;min-height:38px;width:38px;height:38px;border:0;border-radius:50%;
+  background:transparent;box-shadow:none;padding:0;color:transparent;font-size:0;z-index:6;
+}
+.part[data-kind="motor"] .pin-dot{
+  height:14px;width:14px;border:2px solid #fff9eb;box-shadow:0 0 0 2px #314e60,0 1px 4px rgba(0,0,0,.25);
+  background:#d5ab4e;transition:transform .15s,background .15s;
+}
+.part[data-kind="motor"] .pin-btn[data-port$=".A"] .pin-dot{background:#e36142}
+.part[data-kind="motor"] .pin-btn[data-port$=".B"] .pin-dot{background:#304759}
+.part[data-kind="motor"] .pin-btn:hover .pin-dot,
+.part[data-kind="motor"] .pin-btn:focus-visible .pin-dot,
+.part[data-kind="motor"] .pin-btn.selected .pin-dot{transform:scale(1.3);background:#41ca9d}
+.part[data-kind="motor"] .pin-btn.connected .pin-dot{box-shadow:0 0 0 3px #46a56f}
+.part[data-kind="motor"] .pin-btn.invalid .pin-dot{box-shadow:0 0 0 3px #dd6b6b}
+.part[data-kind="motor"] .part-pins{overflow:visible}
+.motor-shaft-spinner{
+ position:absolute;pointer-events:none;
+ width:14px;height:14px;left:94%;top:73%;
+ border:3px dashed #17485f;border-top-color:#f5fafb;border-right-color:#84d3ee;
+ border-radius:50%;opacity:0;
+ transform:translate(-50%,-50%);
+ animation:motor-shaft-rotate .23s linear infinite;
+ animation-play-state:paused;
+}
+@keyframes motor-shaft-rotate{0%{transform:translate(-50%,-50%) rotate(0deg)}100%{transform:translate(-50%,-50%) rotate(360deg)}}
+@keyframes motor-shaft-reverse{0%{transform:translate(-50%,-50%) rotate(0deg)}100%{transform:translate(-50%,-50%) rotate(-360deg)}}
+.motor-dashboard{display:flex;flex-direction:column;gap:9px;width:100%;margin:8px 0}
+.motor-dashboard-item{display:flex;align-items:center;gap:8px;background:#f1f6f8;border:1px solid #dbe7ea;border-radius:10px;padding:7px 9px;min-height:82px}
+.motor-dashboard-picture{flex:0 0 92px;width:92px;height:65px;position:relative}
+.motor-dashboard-picture img{display:block;max-width:100%;width:100%;height:100%;object-fit:contain}
+.motor-dashboard-picture .motor-shaft-spinner{left:94%;top:73%;height:11px;width:11px;border-width:2px}
+.motor-dashboard-item strong{font-size:11px;line-height:1.3;display:block;text-align:left;color:#365a66}
+.motor-dashboard-item small{display:block;font-size:10px;color:#7b8f98;margin-top:5px;text-align:left}
+.motor-dashboard-item.running{border-color:#9ddabe;background:#edf9f0}
+.motor-dashboard-item.running .motor-shaft-spinner{opacity:1;animation-play-state:running}
+.motor-dashboard-item.running.reverse .motor-shaft-spinner{animation-name:motor-shaft-reverse}
+.motor-dashboard-item.running small{color:#22826b;font-weight:800}
+@media(max-width:820px){.motor-dashboard{flex-direction:row;gap:6px}.motor-dashboard-item{flex:1;min-width:0}.motor-dashboard-picture{flex:0 0 60px;width:60px;height:48px}.motor-dashboard-picture .motor-shaft-spinner{height:9px;width:9px}}
+@media(max-width:420px){.motor-dashboard{flex-direction:column}.motor-dashboard-picture{width:90px;height:60px;flex-basis:90px}.motor-dashboard-item{min-height:74px}}
+@media(prefers-reduced-motion:reduce){.motor-dashboard-item.running .motor-shaft-spinner{animation-duration:1.2s}}
