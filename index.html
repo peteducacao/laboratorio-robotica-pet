@@ -7,8 +7,8 @@
 <link rel="icon" href="assets/logo-pet.svg" type="image/svg+xml">
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="styles.css?v=3">
-<script defer src="app.js?v=3"></script>
+<link rel="stylesheet" href="styles.css?v=4">
+<script defer src="app.js?v=4"></script>
 </head>
 <body>
 <header class="app-header">
@@ -82,6 +82,16 @@
           <div class="dpad" aria-label="Controle direcional">
             <button class="up" data-drive="up" aria-label="Acelerar">▲</button><button class="left" data-drive="left" aria-label="Virar à esquerda">◀</button><button class="stop" data-drive="stop" aria-label="Parar">■</button><button class="right" data-drive="right" aria-label="Virar à direita">▶</button><button class="down" data-drive="down" aria-label="Marcha à ré">▼</button>
           </div>
+          <div class="motor-dashboard" aria-label="Motores DC animados">
+  <div class="motor-dashboard-item" id="preview-ml">
+    <div class="motor-dashboard-picture"><img src="assets/motor-dc.svg" alt="Motor DC esquerdo"><span class="motor-shaft-spinner" aria-hidden="true"></span></div>
+    <div><strong>Motor esquerdo</strong><small id="motor-status-ml">Parado</small></div>
+  </div>
+  <div class="motor-dashboard-item" id="preview-mr">
+    <div class="motor-dashboard-picture"><img src="assets/motor-dc.svg" alt="Motor DC direito"><span class="motor-shaft-spinner" aria-hidden="true"></span></div>
+    <div><strong>Motor direito</strong><small id="motor-status-mr">Parado</small></div>
+  </div>
+</div>
           <button class="tool-btn reset-drive" id="restartDrive" type="button">↺ Reiniciar pista</button>
           <p>A pista é virtual. Nenhum comando é enviado ao carrinho físico.</p>
         </div>
