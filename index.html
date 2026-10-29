@@ -7,8 +7,8 @@
 <link rel="icon" href="assets/logo-pet.svg" type="image/svg+xml">
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="styles.css?v=9">
-<script defer src="app.js?v=9"></script>
+<link rel="stylesheet" href="styles.css?v=10">
+<script defer src="app.js?v=10"></script>
 </head>
 <body>
 <header class="app-header">
@@ -66,6 +66,13 @@
           <div id="wirePreview" class="wire-preview" hidden></div>
         </div>
         <div class="canvas-label"><span class="status-dot"></span> BANCADA VIRTUAL <small>1900 × 1450</small></div>
+        <button type="button" id="zoomTool" class="canvas-zoom-button" aria-label="Abrir lupa e controle de zoom" title="Lupa e zoom">⌕</button>
+        <div id="zoomPopover" class="canvas-zoom-panel" hidden>
+          <label for="zoomSlider">Zoom da bancada</label>
+          <div class="canvas-zoom-row"><span>−</span><input type="range" id="zoomSlider" min="17" max="240" step="1" value="83" aria-label="Ajustar zoom da bancada"/><span>+</span></div>
+          <div class="canvas-zoom-actions"><button type="button" id="zoomFitPart">Enquadrar peça</button><button type="button" id="zoomFitAll">Ver montagem</button></div>
+          <small>Dois dedos: aproximar, afastar ou mover a bancada.</small>
+        </div>
         <div class="canvas-corner">Fio: escolha um pino, clique para fazer curvas e termine em outro pino</div>
       </div>
       <div class="bottom-controls">
