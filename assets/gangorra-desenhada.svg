@@ -9,6 +9,8 @@
 <path d="M66 45 H207 L192 152 H77Z" fill="url(#rocker)" stroke="#1d252b" stroke-width="3"/>
 <path d="M78 55 L197 55" stroke="#bac4c8" stroke-width="3" opacity=".5"/>
 <path d="M84 146 L188 146" stroke="#070e13" stroke-width="5" opacity=".75"/>
+<text x="26" y="87" font-family="Arial" font-size="13" font-weight="bold" fill="#3b4c5b" text-anchor="middle">IN</text>
+<text x="250" y="87" font-family="Arial" font-size="13" font-weight="bold" fill="#3b4c5b" text-anchor="middle">OUT</text>
 <text x="133" y="92" font-family="Arial" font-size="38" font-weight="bold" fill="#e5ecf0" text-anchor="middle">I</text>
 <text x="135" y="146" font-family="Arial" font-size="35" font-weight="bold" fill="#bcc7cc" text-anchor="middle">O</text>
 </svg>
