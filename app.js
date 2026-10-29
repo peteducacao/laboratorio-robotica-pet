@@ -3,19 +3,19 @@
 const ROOT='https://raw.githubusercontent.com/gabrieljsantos/Fundamentos-de-Prototipagem-e-Fabrica--o-Digital/main/assets/images/componentes/';
 const TYPES=[
  {kind:'esp',name:'ESP32 DevKit V1',img:'assets/esp32-devkit-v1-30p.svg',ids:['esp'],pins:[["VIN","VIN"],["GND","GND"],["D13","D13"],["D12","D12"],["D14","D14"],["D27","D27"],["D26","D26"],["D25","D25"],["D33","D33"],["D32","D32"],["D35","D35"],["D34","D34"],["VN","VN"],["VP","VP"],["EN","EN"],["3V3","3V3"],["GND2","GND"],["D15","D15"],["D2","D2"],["D4","D4"],["RX2","RX2"],["TX2","TX2"],["D5","D5"],["D18","D18"],["D19","D19"],["D21","D21"],["RX0","RX0"],["TX0","TX0"],["D22","D22"],["D23","D23"]],info:'Placa de 30 pinos com USB à esquerda e nomes em cada contato. Os dois GND são equivalentes.',tip:'Neste carrinho: VIN recebe 5 V, GND comum, D27→IN1, D26→IN2, D32→IN3 e D18→IN4.'},
- {kind:'driver',name:'Ponte H MX1508',img:'driver-motor-mx1508.jpg',ids:['drv'],pins:[['VCC','VCC +'],['GND','GND −'],['IN1','IN1'],['IN2','IN2'],['IN3','IN3'],['IN4','IN4'],['OUT1','A • 1'],['OUT2','A • 2'],['OUT3','B • 1'],['OUT4','B • 2']],info:'A ponte H recebe os sinais do ESP32 e controla os dois motores. Cada motor utiliza um par de saídas.',tip:'As saídas A e B têm dois bornes cada; a numeração 1 e 2 aqui é didática.'},
- {kind:'buck',name:'Regulador LM2596',img:'conversor-step-down-lm2596.webp',ids:['lm'],pins:[['INP','IN +'],['INN','IN −'],['OUTP','OUT +'],['OUTN','OUT −']],info:'Regulador de tensão. Neste projeto, a saída para o ESP32 deve ser ajustada para 5,0 V.',tip:'Na montagem real, um responsável deve medir 5 V com multímetro antes de conectar VIN.'},
- {kind:'battery',name:'Bateria 9 V',img:'bateria-9v.jpg',ids:['b1','b2'],pins:[['POS','+'],['NEG','−']],info:'Duas baterias em circuitos independentes: uma para o ESP32 e outra para os motores.',tip:'A bateria 1 alimenta o LM2596 por uma gangorra; a bateria 2 alimenta a ponte H pela outra.'},
- {kind:'switch',name:'Chave gangorra',img:'interruptor-gangorra-kcd11-101.jpg',ids:['s1','s2'],pins:[['IN','IN'],['OUT','OUT']],info:'Chave física liga/desliga, instalada em série com o fio positivo da sua bateria.',tip:'São duas chaves: uma alimenta o regulador do ESP32 e a outra alimenta a ponte H.'},
+ {kind:'driver',name:'Ponte H MX1508',img:'assets/mx1508-desenhado.svg',ids:['drv'],pins:[['VCC','VCC +'],['GND','GND −'],['IN1','IN1'],['IN2','IN2'],['IN3','IN3'],['IN4','IN4'],['OUT1','A • 1'],['OUT2','A • 2'],['OUT3','B • 1'],['OUT4','B • 2']],info:'A ponte H recebe os sinais do ESP32 e controla os dois motores. Cada motor utiliza um par de saídas.',tip:'As saídas A e B têm dois bornes cada; a numeração 1 e 2 aqui é didática.'},
+ {kind:'buck',name:'Regulador LM2596',img:'assets/lm2596-desenhado.svg',ids:['lm'],pins:[['INP','IN +'],['INN','IN −'],['OUTP','OUT +'],['OUTN','OUT −']],info:'Regulador de tensão. Neste projeto, a saída para o ESP32 deve ser ajustada para 5,0 V.',tip:'Na montagem real, um responsável deve medir 5 V com multímetro antes de conectar VIN.'},
+ {kind:'battery',name:'Bateria 9 V',img:'assets/bateria-9v-desenhada.svg',ids:['b1','b2'],pins:[['POS','+'],['NEG','−']],info:'Duas baterias em circuitos independentes: uma para o ESP32 e outra para os motores.',tip:'A bateria 1 alimenta o LM2596 por uma gangorra; a bateria 2 alimenta a ponte H pela outra.'},
+ {kind:'switch',name:'Chave gangorra',img:'assets/gangorra-desenhada.svg',ids:['s1','s2'],pins:[['IN','IN'],['OUT','OUT']],info:'Chave física liga/desliga, instalada em série com o fio positivo da sua bateria.',tip:'São duas chaves: uma alimenta o regulador do ESP32 e a outra alimenta a ponte H.'},
  {kind:'motor',name:'Motor DC',img:'assets/motor-frontal.svg',ids:['ml','mr'],pins:[['A','+'],['B','−']],info:'Motor de corrente contínua com escovas, corpo metálico, eixo dianteiro e dois terminais traseiros. O sentido de giro muda conforme o comando da ponte H.',tip:'Os contatos ficam nas duas abas metálicas traseiras: superior (+, vermelho) e inferior (−, preto). A ponte H pode inverter o sentido do giro.'}
 ];
 const byKind=Object.fromEntries(TYPES.map(p=>[p.kind,p]));
 const PART_LAYOUTS={
  esp:{w:790,h:365,pins:{"VIN":[14.4,18.5],"GND":[19.43,18.5],"D13":[24.46,18.5],"D12":[29.49,18.5],"D14":[34.52,18.5],"D27":[39.55,18.5],"D26":[44.58,18.5],"D25":[49.61,18.5],"D33":[54.64,18.5],"D32":[59.67,18.5],"D35":[64.7,18.5],"D34":[69.73,18.5],"VN":[74.76,18.5],"VP":[79.79,18.5],"EN":[84.82,18.5],"3V3":[14.4,85.7],"GND2":[19.43,85.7],"D15":[24.46,85.7],"D2":[29.49,85.7],"D4":[34.52,85.7],"RX2":[39.55,85.7],"TX2":[44.58,85.7],"D5":[49.61,85.7],"D18":[54.64,85.7],"D19":[59.67,85.7],"D21":[64.7,85.7],"RX0":[69.73,85.7],"TX0":[74.76,85.7],"D22":[79.79,85.7],"D23":[84.82,85.7]}},
- driver:{w:196,h:244,pins:{VCC:[12,27],GND:[12,41],IN1:[12,55],IN2:[12,69],IN3:[12,83],IN4:[88,83],OUT1:[88,27],OUT2:[88,41],OUT3:[88,55],OUT4:[88,69]}},
- buck:{w:195,h:158,pins:{INP:[13,35],INN:[13,65],OUTP:[87,35],OUTN:[87,65]}},
- battery:{w:148,h:181,pins:{POS:[31,22],NEG:[69,22]}},
- switch:{w:156,h:142,pins:{IN:[27,72],OUT:[73,72]}},
+ driver:{w:250,h:317,pins:{VCC:[24.3,84.5],GND:[34.7,84.5],IN1:[45,84.5],IN2:[55.3,84.5],IN3:[65.7,84.5],IN4:[76,84.5],OUT1:[25.3,12.9],OUT2:[40.7,12.9],OUT3:[58.7,12.9],OUT4:[73.7,12.9]}},
+ buck:{w:288,h:180,pins:{INP:[14.72,35.1],INN:[14.72,63.1],OUTP:[85,35.1],OUTN:[85,63.1]}},
+ battery:{w:170,h:228,pins:{POS:[30.6,7.4],NEG:[68.6,7.4]}},
+ switch:{w:205,h:146,pins:{IN:[8,60],OUT:[92,60]}},
  motor:{w:190,h:405,pins:{A:[18,85],B:[18,80]}},
  motorSide:{w:340,h:170,pins:{A:[96,42],B:[96,63]}}
 };
@@ -91,6 +91,7 @@ function renderParts(){
   const t=byKind[p.kind],layout=partLayout(p),card=document.createElement('article');
   if(p.kind==='motor')card.dataset.motorView=p.view==='side'?'side':'front';
   if(p.kind==='esp')card.dataset.boardModel='devkit30';
+  if(p.kind==='switch')card.dataset.powered=state.switches[p.id]?'on':'off';
   card.className='part'+(state.selected===p.id?' selected':'');
   card.dataset.part=p.id;card.dataset.kind=p.kind;card.style.left=p.x+'px';card.style.top=p.y+'px';
   card.style.setProperty('--part-w',layout.w+'px');card.style.setProperty('--part-h',layout.h+'px');
@@ -128,7 +129,8 @@ function renderParts(){
    const actions=document.createElement('div');actions.className='part-actions';
    const toggle=document.createElement('button');toggle.type='button';toggle.dataset.toggle=p.id;
    toggle.className='part-switch'+(state.switches[p.id]?' on':'');
-   toggle.textContent=state.switches[p.id]?'● LIGADA':'○ DESLIGADA';
+   toggle.textContent=state.switches[p.id]?'LIGADA':'DESLIGADA';
+   toggle.setAttribute('aria-label',(state.switches[p.id]?'Desligar':'Ligar')+' gangorra '+partName(p.id));
    actions.append(toggle);card.append(actions);
   }
   if(p.kind==='buck'){
