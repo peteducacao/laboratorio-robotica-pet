@@ -164,7 +164,7 @@ assert(js.includes("node.setAttribute('stroke','none')"),'pino fica preenchido s
 assert(js.includes("projectFromTip(last,{x,y},previousWirePoint())"),'curva respeita sentido da última ponta');
 assert(js.includes('function nearestPort('),'pino atrai fio quando ponta está próxima');
 assert(js.includes('function wireAt('),'seleciona fio por toque no caminho');
-assert(html.includes('answer-key.js?v=13'),'gabarito carrega na bancada');
+assert(html.includes('answer-key.js?v='),'gabarito carrega na bancada');
 assert(answerKey.includes("value!=='peteduca'"),'gabarito requer senha');
 assert(answerKey.includes("TinkerPET-gabarito.svg"),'gabarito pode ser baixado');
 connect('b1.POS','s1.IN'); // remove a ligação de teste antes da montagem completa
@@ -210,5 +210,59 @@ send('input','zoomSlider',{target:{value:'25'}});
 assert.equal(nodes.zoomSlider.value,'25','lupa permite reduzir o zoom até 25%');
 send('click','zoomFitAll',{});
 assert(Number(nodes.zoomSlider.value)>=17,'enquadramento calcula um zoom válido');
+
+
+ // Gabarito: testa abertura, senha, 17 linhas, download, impressão e bloqueio ao reabrir.
+ class KeyNode {
+  constructor(name){this.name=name;this.events={};this.children=[];this.hidden=false;this.open=false;this.value='';this.textContent='';this.style={setProperty(){}};}
+  addEventListener(type,fn){this.events[type]=fn;}
+  setAttribute(){}
+  append(...children){this.children.push(...children);}
+  replaceChildren(...children){this.children=children;}
+  querySelector(selector){return keyNode(selector.slice(1));}
+  insertBefore(child){this.children.unshift(child);}
+  focus(){}
+  showModal(){this.open=true;}
+  close(){this.open=false;}
+  click(){this.events.click?.({preventDefault(){}});}
+  remove(){}
+ }
+ const keyNodes=new Map();
+ const keyNode=id=>{if(!keyNodes.has(id))keyNodes.set(id,new KeyNode(id));return keyNodes.get(id);};
+ const keyDoc={
+  createElement(name){const node=new KeyNode(name);if(name==='dialog')keyNodes.set('dialogRoot',node);return node;},
+  querySelector(query){return query==='.header-end'?keyNode('headerEnd'):null;},
+  body:keyNode('keyBody')
+ };
+ let downloaded=null,printed=false;
+ const keyWindow={tinkerpetAnswerData:win.tinkerpetAnswerData,print(){printed=true}};
+ vm.runInNewContext(answerKey,{
+  window:keyWindow,document:keyDoc,Blob,
+  URL:{createObjectURL(blob){downloaded=blob;return 'blob:gabarito'},revokeObjectURL(){}},
+  setTimeout(){return 1}
+ });
+ assert.equal(keyDoc.querySelector('.header-end').children.length,1,'botão Gabarito aparece no cabeçalho');
+ const answerButton=keyDoc.querySelector('.header-end').children[0];
+ const keyDialog=keyNode('dialogRoot');
+ answerButton.click();
+ assert.equal(keyDialog.open,true,'gabarito abre na bancada');
+ assert.equal(keyNode('answerContent').hidden,true,'conteúdo fica protegido até digitar senha');
+ keyNode('answerPassword').value='nao-e-a-senha';
+ keyNode('answerForm').events.submit({preventDefault(){}});
+ assert.equal(keyNode('answerContent').hidden,true,'senha incorreta não revela conteúdo');
+ assert(keyNode('answerError').textContent.includes('incorreta'),'senha incorreta dá aviso');
+ keyNode('answerPassword').value='peteduca';
+ keyNode('answerForm').events.submit({preventDefault(){}});
+ assert.equal(keyNode('answerContent').hidden,false,'senha correta revela gabarito');
+ assert.equal(keyNode('answerGroups').children.length,4,'quatro grupos de conexões');
+ assert.equal(keyNode('answerGroups').children.reduce((n,g)=>n+g.children.filter(c=>c.className==='answer-row').length,0),17,'gabarito mostra 17 fios');
+ keyNode('answerDownload').click();
+ assert(downloaded&&downloaded.size>4000,'download SVG tem conteúdo vetorial');
+ keyNode('answerPrint').click();
+ assert(printed,'gabarito oferece imprimir / salvar PDF');
+ keyNode('answerClose').click();
+ assert.equal(keyDialog.open,false,'gabarito fecha');
+ answerButton.click();
+ assert.equal(keyNode('answerContent').hidden,true,'nova abertura pede senha novamente');
 
 console.log('PASS: bancada vazia, 9 peças, catálogo, limite, 17 fios, erro, 5 V, duas gangorras, pista e salvamento.');
