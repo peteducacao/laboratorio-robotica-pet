@@ -41,7 +41,7 @@ let state={parts:[],wires:[],voltage:4,switches:{s1:false,s2:false},wireColor:CO
 let zoom=1,panX=0,panY=0,gesture=null,history=[],future=[],toastTimer=0,previewPoint=null,previewSnapPort=null,drawPending=false;
 let panMode=false,spaceHeld=false;
 let recentTap=null,doubleTapRestore=null;
-let toolMode='connect',validationActive=false,flowVisible=false,precisionOpenFor=null,pressTimer=null,pressTarget=null;
+let toolMode='connect',validationActive=false,flowVisible=false,precisionOpenFor=null,pressTimer=null,pressTarget=null,editingWire=-1;
 const activeTouches=new Map();
 let pinch=null;
 let gestureBlockedUntil=0;
@@ -223,8 +223,9 @@ function inspectorWires(){
   const row=document.createElement('div');row.className='wire-item';
   const dot=document.createElement('span');dot.className='wire-dot';dot.style.background=w.color;
   const names=document.createElement('div');names.className='wire-names';names.textContent=portName(w.a)+' → '+portName(w.b)+(w.via&&w.via.length?' · '+w.via.length+' curva(s)':'')+(valid.has(electricalKey(w.a,w.b))?' · ✓':' · Rever');
+  const edit=document.createElement('button');edit.type='button';edit.dataset.editWire=String(i);edit.title='Ajustar curvas do fio';edit.textContent='✎';
   const btn=document.createElement('button');btn.type='button';btn.dataset.removeWire=String(i);btn.title='Remover fio';btn.textContent='×';
-  row.append(dot,names,btn);body.append(row);
+  row.append(dot,names,edit,btn);body.append(row);
  });
 }
 function renderInspector(){
@@ -356,7 +357,24 @@ function connect(id){
  }
  state.completed=false;refresh();
 }
-function removeWire(i){if(!state.wires[i])return;snapshot();state.wires.splice(i,1);state.selectedWire=null;state.completed=false;refresh();message('Fio removido.');}
+function editWire(i){
+ const wire=state.wires[i];if(!wire)return;
+ state.selectedWire=i;state.selected=null;state.inspector='wires';
+ editingWire=i;
+ // Um jumper reto também pode ter sua rota ajustada: cria corredor central.
+ if(!wire.via.length){
+  const a=getPortPos(wire.a),b=getPortPos(wire.b);
+  if(a&&b){
+   snapshot();
+   const bus=(a.y+b.y)/2;
+   wire.via=[{x:Math.round(a.x),y:Math.round(bus)},{x:Math.round(b.x),y:Math.round(bus)}];
+   persist();
+  }
+ }
+ renderInspector();renderParts();requestDraw();
+ message('Arraste os pontos laranja para reorganizar o fio sem desconectá-lo.',true);
+}
+function removeWire(i){if(!state.wires[i])return;snapshot();state.wires.splice(i,1);state.selectedWire=null;editingWire=-1;state.completed=false;refresh();message('Fio removido.');}
 function getPortPos(id){
  const [partId,pinId]=id.split('.');
  const p=byPart(partId);if(!p)return null;
@@ -447,6 +465,16 @@ function drawWires(){
    hit.dataset.wireIndex=String(i);
    hit.setAttribute('aria-label','Selecionar fio '+portName(w.a)+' a '+portName(w.b));
    svg.append(hit);
+  }
+  if(editingWire===i&&state.selectedWire===i)for(let k=0;k<(w.via||[]).length;k++){
+   const point=w.via[k],handle=document.createElementNS(ns,'circle');
+   handle.setAttribute('cx',String(Math.round(point.x)));
+   handle.setAttribute('cy',String(Math.round(point.y)));
+   handle.setAttribute('r','15');
+   handle.setAttribute('class','wire-edit-handle');
+   handle.dataset.wireHandle=String(k);handle.dataset.wireIndex=String(i);
+   handle.setAttribute('aria-label','Arrastar curva '+(k+1)+' do fio');
+   svg.append(handle);
   }
  }
  if(state.startPort){
@@ -573,7 +601,7 @@ function wireAt(clientX,clientY){
 }
 function selectWire(i){
  if(!state.wires[i])return;
- state.selectedWire=i;state.selected=null;state.inspector='wires';
+ editingWire=-1;state.selectedWire=i;state.selected=null;state.inspector='wires';
  renderParts();renderInspector();updateHistoryButtons();requestDraw();
  message('Fio selecionado. Use Excluir para apagá-lo.',true);
 }
@@ -727,6 +755,22 @@ function pointerMove(e){
     if(el){el.style.left=p.x+'px';el.style.top=p.y+'px';}
     requestDraw();
    }
+  }else if(g.type==='wire-edit'){
+   const wire=state.wires[g.wireIndex];if(!wire)return;
+   if(g.moved&&!g.saved){snapshot();g.saved=true;}
+   if(g.moved){
+    const dx=Math.round((e.clientX-g.startX)/zoom),dy=Math.round((e.clientY-g.startY)/zoom);
+    if(g.original.length===2&&g.original[0].y===g.original[1].y){
+     wire.via[0].y=g.original[0].y+dy;
+     wire.via[1].y=g.original[1].y+dy;
+    }else if(wire.via[g.handle]){
+     const old=g.original[g.handle];
+     wire.via[g.handle]={x:old.x+dx,y:old.y+dy};
+    }
+    requestDraw();
+   }
+  }else if(g.type==='wire-edit'){
+   if(g.moved){persist();message('Curva reposicionada; terminais preservados.');}
   }else if(g.type==='wire'){
    if(g.moved){
     if(!state.startPort){state.startPort=g.port;state.bends=[];}
@@ -950,6 +994,15 @@ function bind(){
  });
  Q('partsLayer').addEventListener('input',e=>{if(e.target.id==='voltageInput'){state.voltage=Number(e.target.value);const out=Q('voltageOutput');if(out)out.textContent=state.voltage.toFixed(1).replace('.',',')+' V';renderProgress();persist();updateTrackLock();}});
  Q('partsLayer').addEventListener('change',e=>{if(e.target.id==='voltageInput')message('LM2596 ajustado para '+state.voltage.toFixed(1).replace('.',',')+' V.');});
+ Q('wireSvg').addEventListener('pointerdown',e=>{
+  const handle=e.target.closest('[data-wire-handle]');
+  if(!handle||e.button!==0)return;
+  e.preventDefault();e.stopPropagation?.();
+  const index=Number(handle.dataset.wireIndex),wire=state.wires[index];
+  if(!wire)return;
+  gesture={type:'wire-edit',pointer:e.pointerId,wireIndex:index,handle:Number(handle.dataset.wireHandle),
+   startX:e.clientX,startY:e.clientY,original:wire.via.map(p=>({...p})),moved:false};
+ });
  Q('wireSvg').addEventListener('click',e=>{
    if(panMode||spaceHeld)return;
    const target=e.target.closest('[data-wire-index]');if(!target)return;
@@ -958,7 +1011,8 @@ function bind(){
    if(!state.wires[i])return;
    selectWire(i);
  });
- Q('inspectorBody').addEventListener('click',e=>{const view=e.target.closest('[data-motor-view]');if(view){toggleMotorView(view.dataset.motorView);return;}const demo=e.target.closest('[data-demo-motor]');if(demo){demoMotor(demo.dataset.demoMotor);return;}const del=e.target.closest('[data-remove]');if(del)removePart(del.dataset.remove);const w=e.target.closest('[data-remove-wire]');if(w)removeWire(Number(w.dataset.removeWire));});
+ Q('inspectorBody').addEventListener('click',e=>{const view=e.target.closest('[data-motor-view]');if(view){toggleMotorView(view.dataset.motorView);return;}const demo=e.target.closest('[data-demo-motor]');if(demo){demoMotor(demo.dataset.demoMotor);return;}const del=e.target.closest('[data-remove]');if(del)removePart(del.dataset.remove);const adjust=e.target.closest('[data-edit-wire]');if(adjust){editWire(Number(adjust.dataset.editWire));return;}
+ const w=e.target.closest('[data-remove-wire]');if(w)removeWire(Number(w.dataset.removeWire));});
  Q('inspectorPartsTab').addEventListener('click',()=>{state.inspector='parts';renderInspector();});
  Q('inspectorWiresTab').addEventListener('click',()=>{state.inspector='wires';renderInspector();});
  Q('colorPalette').addEventListener('click',e=>{const swatch=e.target.closest('[data-color]');if(swatch){state.wireColor=swatch.dataset.color;renderColors();requestDraw();persist();}});
