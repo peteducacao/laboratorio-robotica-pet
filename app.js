@@ -253,10 +253,10 @@ function renderProgress(){
  const inAssembly=partsDone<9;
  const progress=inAssembly?partsDone/9:total/EXPECTED.length;
  Q('progressBar').style.width=Math.round(progress*100)+'%';
- Q('connectionsCount').textContent=inAssembly?partsDone+' / 9 peças':total+' / '+EXPECTED.length+' fios';
+ Q('connectionsCount').textContent=inAssembly?partsDone+'/9':total+'/'+EXPECTED.length;
  Q('progressCaption').textContent=inAssembly?'Componentes':'Conexões corretas';
  const badge=Q('validationBadge');badge.className='validation-badge'+(ready()?' ok':errors?' error':'');
- badge.textContent=ready()?'✓ Circuito pronto para iniciar':errors?errors+' ligação(ões) fora do esquema':state.parts.length<9?'Peças na bancada: '+state.parts.length+' / 9':'Faltam '+missing().length+' ligações';
+ badge.textContent=ready()?'✓ Circuito pronto para iniciar':errors?errors+' ligação(ões) fora do esquema':state.parts.length<9?'Continue adicionando componentes':'Faltam '+missing().length+' ligações';
  const missionTitle=Q('missionTitle'),missionText=Q('missionText');
  if(!state.parts.length){Q('stepNumber').textContent='01';missionTitle.textContent='Sua bancada está vazia';missionText.textContent='Arraste as peças do catálogo e solte onde quiser.';}
  else if(state.parts.length<9){Q('stepNumber').textContent='01';missionTitle.textContent='Monte seu conjunto de peças';missionText.textContent='Você colocou '+state.parts.length+' das 9 peças. Continue arrastando do menu.';}
