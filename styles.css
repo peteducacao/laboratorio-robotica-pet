@@ -296,3 +296,6 @@
 /* Bancada virtual expandida para acomodar nove componentes sem empilhar */
 .world{width:1900px;height:1450px}
 .wire-svg,.parts-layer{width:100%;height:100%}
+
+/* Arrastar itens entre a gaveta e a bancada também no celular */
+.drag-ghost{z-index:120}
