@@ -7,7 +7,7 @@ const TYPES=[
  {kind:'buck',name:'Regulador LM2596',img:'conversor-step-down-lm2596.webp',ids:['lm'],pins:[['INP','IN +'],['INN','IN −'],['OUTP','OUT +'],['OUTN','OUT −']],info:'Regulador de tensão. Neste projeto, a saída para o ESP32 deve ser ajustada para 5,0 V.',tip:'Na montagem real, um responsável deve medir 5 V com multímetro antes de conectar VIN.'},
  {kind:'battery',name:'Bateria 9 V',img:'bateria-9v.jpg',ids:['b1','b2'],pins:[['POS','+'],['NEG','−']],info:'Duas baterias em circuitos independentes: uma para o ESP32 e outra para os motores.',tip:'A bateria 1 alimenta o LM2596 por uma gangorra; a bateria 2 alimenta a ponte H pela outra.'},
  {kind:'switch',name:'Chave gangorra',img:'interruptor-gangorra-kcd11-101.jpg',ids:['s1','s2'],pins:[['IN','IN'],['OUT','OUT']],info:'Chave física liga/desliga, instalada em série com o fio positivo da sua bateria.',tip:'São duas chaves: uma alimenta o regulador do ESP32 e a outra alimenta a ponte H.'},
- {kind:'motor',name:'Motor DC',img:'assets/motor-dc.svg',ids:['ml','mr'],pins:[['A','+'],['B','−']],info:'Motor de corrente contínua com escovas, corpo metálico, eixo dianteiro e dois terminais traseiros. O sentido de giro muda conforme o comando da ponte H.',tip:'Os contatos ficam nas duas abas metálicas traseiras: superior (+, vermelho) e inferior (−, preto). A ponte H pode inverter o sentido do giro.'}
+ {kind:'motor',name:'Motor DC',img:'assets/motor-frontal.svg',ids:['ml','mr'],pins:[['A','+'],['B','−']],info:'Motor de corrente contínua com escovas, corpo metálico, eixo dianteiro e dois terminais traseiros. O sentido de giro muda conforme o comando da ponte H.',tip:'Os contatos ficam nas duas abas metálicas traseiras: superior (+, vermelho) e inferior (−, preto). A ponte H pode inverter o sentido do giro.'}
 ];
 const byKind=Object.fromEntries(TYPES.map(p=>[p.kind,p]));
 const PART_LAYOUTS={
@@ -16,7 +16,8 @@ const PART_LAYOUTS={
  buck:{w:195,h:158,pins:{INP:[13,35],INN:[13,65],OUTP:[87,35],OUTN:[87,65]}},
  battery:{w:148,h:181,pins:{POS:[31,22],NEG:[69,22]}},
  switch:{w:156,h:142,pins:{IN:[27,72],OUT:[73,72]}},
- motor:{w:226,h:168,pins:{A:[14,40],B:[14,68]}}
+ motor:{w:190,h:405,pins:{A:[15,89],B:[15,83]}},
+ motorSide:{w:340,h:170,pins:{A:[96,42],B:[96,63]}}
 };
 const byId=Object.fromEntries(TYPES.flatMap(p=>p.ids.map(id=>[id,p])));
 const EXPECTED=[
@@ -44,7 +45,7 @@ function safeRestore(){
   const s=JSON.parse(localStorage.getItem('tinkerpet-v2')||'null');
   if(!s||!Array.isArray(s.parts)||!Array.isArray(s.wires))return;
   const names=new Set();
-  state.parts=s.parts.filter(p=>p&&byId[p.id]&&!names.has(p.id)&&names.add(p.id)&&Number.isFinite(p.x)&&Number.isFinite(p.y)).map(p=>({id:p.id,kind:byId[p.id].kind,x:limit(p.x,0,1002),y:limit(p.y,0,490)}));
+  state.parts=s.parts.filter(p=>p&&byId[p.id]&&!names.has(p.id)&&names.add(p.id)&&Number.isFinite(p.x)&&Number.isFinite(p.y)).map(p=>({id:p.id,kind:byId[p.id].kind,x:limit(p.x,0,1002),y:limit(p.y,0,465),view:byId[p.id].kind==='motor'&&p.view==='side'?'side':'front'}));
   state.wires=s.wires.filter(w=>w&&allPorts.has(w.a)&&allPorts.has(w.b)&&w.a!==w.b&&exists(w.a.split('.')[0])&&exists(w.b.split('.')[0])).slice(0,80).map(w=>({a:w.a,b:w.b,color:COLORS.includes(w.color)?w.color:COLORS[0]}));
   if(Number.isFinite(s.voltage))state.voltage=limit(s.voltage,3,6);
   if(s.switches)state.switches={s1:!!s.switches.s1,s2:!!s.switches.s2};
@@ -60,6 +61,8 @@ const limit=(x,min,max)=>Math.max(min,Math.min(max,x));
 const partName=id=>{const base=byId[id];return base?base.name+(base.ids.length>1?' '+(base.ids.indexOf(id)+1):''):id;};
 const portName=id=>{const [part,code]=id.split('.');const t=byId[part];const p=t&&t.pins.find(x=>x[0]===code);return partName(part)+' · '+(p?p[1]:code);};
 function imageUrl(p){return p.img.startsWith('assets/')?p.img:ROOT+p.img;}
+function motorImage(p){return p.view==='side'?'assets/motor-lateral.svg':'assets/motor-frontal.svg';}
+function partLayout(p){return p.kind==='motor'&&p.view==='side'?PART_LAYOUTS.motorSide:PART_LAYOUTS[p.kind];}
 function message(msg,toast=false){Q('statusText').textContent=msg;if(toast){const el=Q('toast');el.textContent=msg;el.classList.add('show');clearTimeout(toastTimer);toastTimer=setTimeout(()=>el.classList.remove('show'),2600);}}
 function countGood(){return state.wires.filter(w=>valid.has(key(w.a,w.b))).length;}
 function mistakes(){return state.wires.filter(w=>!valid.has(key(w.a,w.b)));}
@@ -83,7 +86,8 @@ function renderCatalog(){
 function renderParts(){
  const layer=Q('partsLayer');layer.replaceChildren();
  for(const p of state.parts){
-  const t=byKind[p.kind],layout=PART_LAYOUTS[p.kind],card=document.createElement('article');
+  const t=byKind[p.kind],layout=partLayout(p),card=document.createElement('article');
+  if(p.kind==='motor')card.dataset.motorView=p.view==='side'?'side':'front';
   card.className='part'+(state.selected===p.id?' selected':'');
   card.dataset.part=p.id;card.dataset.kind=p.kind;card.style.left=p.x+'px';card.style.top=p.y+'px';
   card.style.setProperty('--part-w',layout.w+'px');card.style.setProperty('--part-h',layout.h+'px');
@@ -94,7 +98,7 @@ function renderParts(){
   del.title='Remover peça';del.setAttribute('aria-label','Remover '+partName(p.id));del.textContent='×';
   head.append(title,del);
   const imgbox=document.createElement('div');imgbox.className='part-image';
-  const img=document.createElement('img');img.src=imageUrl(t);img.alt='';img.draggable=false;
+  const img=document.createElement('img');img.src=p.kind==='motor'?motorImage(p):imageUrl(t);img.alt='';img.draggable=false;
   imgbox.append(img);
   if(p.kind==='motor'){
    const rotor=document.createElement('span');rotor.className='motor-shaft-spinner';rotor.setAttribute('aria-hidden','true');
@@ -141,7 +145,7 @@ function renderColors(){
 }
 function inspectorPart(p){
  const t=byId[p.id];const body=Q('inspectorBody');body.replaceChildren();
- const img=document.createElement('img');img.className='inspect-image';img.src=imageUrl(t);img.alt=partName(p.id);
+ const img=document.createElement('img');img.className='inspect-image';img.src=p.kind==='motor'?motorImage(p):imageUrl(t);img.alt=partName(p.id);
  const name=document.createElement('div');name.className='inspect-name';name.textContent=partName(p.id);
  const tag=document.createElement('p');tag.className='inspect-type';tag.textContent='COMPONENTE SELECIONADO';
  const para=document.createElement('p');para.className='inspect-paragraph';para.textContent=t.info;
@@ -149,6 +153,7 @@ function inspectorPart(p){
  const pins=document.createElement('p');pins.className='inspect-paragraph';pins.textContent=t.pins.length+' terminais disponíveis. Toque em um terminal na bancada para começar a ligação.';
  const actions=document.createElement('div');actions.className='inspect-actions';
  if(p.kind==='motor'){
+  const change=document.createElement('button');change.type='button';change.className='inspect-action';change.dataset.motorView=p.id;change.textContent=p.view==='side'?'↻ Ver vista frontal':'↻ Ver vista lateral';actions.append(change);
   const demo=document.createElement('button');demo.type='button';demo.className='inspect-action';demo.dataset.demoMotor=p.id;
   demo.textContent='▶ Ver o eixo girar (prévia visual)';
   actions.append(demo);
@@ -177,6 +182,12 @@ function renderInspector(){
  if(p){inspectorPart(p);return;}
  body.innerHTML='<div class="inspect-empty"><span>⌁</span><h3>Selecione uma peça</h3><p>Coloque um componente na bancada e toque nele para descobrir sua função e seus terminais.</p></div>';
 }
+function toggleMotorView(id){
+ const part=byPart(id);if(!part||part.kind!=='motor')return;
+ snapshot();part.view=part.view==='side'?'front':'side';
+ const layout=partLayout(part);part.x=limit(part.x,0,WORLD.w-layout.w);part.y=limit(part.y,0,WORLD.h-layout.h);
+ refresh();message('Motor: vista '+(part.view==='side'?'lateral':'frontal')+'. Os fios foram preservados.',true);
+}
 function demoMotor(id){
  const el=[...Q('partsLayer').querySelectorAll('.part')].find(p=>p.dataset.part===id);
  if(!el)return;
@@ -204,7 +215,7 @@ function addPart(kind,x,y){
  const id=t.ids.find(id=>!exists(id));if(!id){message('Você já colocou todas as peças deste tipo.',true);return false;}
  snapshot();
  const ix=state.parts.length;
- state.parts.push({id,kind,x:limit(Math.round(x),0,1002),y:limit(Math.round(y),0,465)});
+ const layout=PART_LAYOUTS[kind];state.parts.push({id,kind,x:limit(Math.round(x),0,WORLD.w-layout.w),y:limit(Math.round(y),0,WORLD.h-layout.h),view:'front'});
  state.selected=id;state.inspector='parts';state.completed=false;state.startPort=null;refresh();
  message(partName(id)+' adicionado. Arraste pelo corpo para mudar de lugar.',true);
  return true;
@@ -354,8 +365,9 @@ function pointerMove(e){
    const p=byPart(g.partId);if(!p)return;
    if(g.moved&&!g.saved){snapshot();g.saved=true;}
    if(g.moved){
-    p.x=limit(Math.round(g.partX+dx/zoom),0,1002);
-    p.y=limit(Math.round(g.partY+dy/zoom),0,465);
+    const dim=partLayout(p);
+    p.x=limit(Math.round(g.partX+dx/zoom),0,WORLD.w-dim.w);
+    p.y=limit(Math.round(g.partY+dy/zoom),0,WORLD.h-dim.h);
     const el=[...Q('partsLayer').querySelectorAll('.part')].find(node=>node.dataset.part===p.id);
     if(el){el.style.left=p.x+'px';el.style.top=p.y+'px';}
     requestDraw();
@@ -503,7 +515,7 @@ function bind(){
  Q('partsLayer').addEventListener('input',e=>{if(e.target.id==='voltageInput'){state.voltage=Number(e.target.value);const out=Q('voltageOutput');if(out)out.textContent=state.voltage.toFixed(1).replace('.',',')+' V';renderProgress();persist();updateTrackLock();}});
  Q('partsLayer').addEventListener('change',e=>{if(e.target.id==='voltageInput')message('LM2596 ajustado para '+state.voltage.toFixed(1).replace('.',',')+' V.');});
  Q('wireSvg').addEventListener('click',e=>{const el=e.target.closest('[data-wire-index]');if(el)removeWire(Number(el.dataset.wireIndex));});
- Q('inspectorBody').addEventListener('click',e=>{const demo=e.target.closest('[data-demo-motor]');if(demo){demoMotor(demo.dataset.demoMotor);return;}const del=e.target.closest('[data-remove]');if(del)removePart(del.dataset.remove);const w=e.target.closest('[data-remove-wire]');if(w)removeWire(Number(w.dataset.removeWire));});
+ Q('inspectorBody').addEventListener('click',e=>{const view=e.target.closest('[data-motor-view]');if(view){toggleMotorView(view.dataset.motorView);return;}const demo=e.target.closest('[data-demo-motor]');if(demo){demoMotor(demo.dataset.demoMotor);return;}const del=e.target.closest('[data-remove]');if(del)removePart(del.dataset.remove);const w=e.target.closest('[data-remove-wire]');if(w)removeWire(Number(w.dataset.removeWire));});
  Q('inspectorPartsTab').addEventListener('click',()=>{state.inspector='parts';renderInspector();});
  Q('inspectorWiresTab').addEventListener('click',()=>{state.inspector='wires';renderInspector();});
  Q('colorPalette').addEventListener('click',e=>{const swatch=e.target.closest('[data-color]');if(swatch){state.wireColor=swatch.dataset.color;renderColors();persist();}});
