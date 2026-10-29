@@ -60,3 +60,9 @@
  .answer-group,.answer-info{break-inside:avoid}
  .answer-head,.answer-summary b,.answer-group,.answer-info{print-color-adjust:exact;-webkit-print-color-adjust:exact}
 }
+
+@media(max-width:520px){
+ .app-header .autosave-indicator{position:absolute!important;width:1px!important;height:1px!important;overflow:hidden!important;clip-path:inset(50%)!important}
+ .app-header .header-start,.app-header .header-end{gap:6px}
+ .app-header .answer-key-trigger{flex-shrink:0}
+}
