@@ -69,3 +69,7 @@ No cabeçalho da bancada, o botão **🔒 Gabarito** abre uma janela protegida p
 ### Gabarito visual v15
 
 O circuito pronto é renderizado em SVG na própria página, a partir das coordenadas das nove peças e das 17 arestas de validação de `app.js`. A ligação de terra para a ponte H usa o pino **GND2**, equivalente ao GND. Nenhuma peça é adicionada à área de trabalho do aluno ao abrir o gabarito. A versão para impressão mostra o diagrama visual, sem substituir a bancada por uma tabela de texto.
+
+### Conferência de fios por etapa (v17)
+
+Na janela do **Gabarito visual**, os 17 fios têm cores individuais: os GPIOs IN1–IN4 possuem quatro cores diferentes, o **Motor 1** usa tons verdes e o **Motor 2**, tons laranja. As duas gangorras exibem rótulos alinhados aos contatos **IN, OUT e LED−**. Acima da bancada estão filtros por **Tudo**, **Energia ESP32**, **Energia motores**, **Comandos**, **Motor 1** e **Motor 2**, que ocultam fios de outros grupos. Sob os filtros, basta tocar no número de uma ligação para ver **somente aquele fio**, com a descrição de origem e destino. Tocar novamente restaura o grupo. Os arquivos PNG/SVG e a impressão reproduzem a visualização selecionada. A montagem interativa original do estudante não é modificada.
