@@ -119,6 +119,15 @@ assert.equal(nodes.sideBackdrop.hidden,false,'+ abre a gaveta de peças');
 click('closeLibrary');
 assert.equal(nodes.sideBackdrop.hidden,true,'gaveta pode ser fechada');
 assert.equal(saved().parts.length,0,'bancada deve começar vazia');
+// O catálogo não deve abrir teclado automaticamente no celular.
+let autoFocuses=0,blurCalls=0;
+nodes.componentSearch.focus=()=>{autoFocuses++;};
+nodes.componentSearch.blur=()=>{blurCalls++;};
+click('openComponentPicker');
+assert.equal(autoFocuses,0,'abrir catálogo não ativa o teclado por foco automático');
+click('closeLibrary');
+assert(blurCalls>0,'fechar catálogo desfoca o campo de pesquisa');
+
 for(const t of types)for(let i=0;i<t.ids.length;i++)add(t.kind);
 assert.equal(saved().parts.length,9,'adicionar 9 peças pelo catálogo');
 click('undoBtn');
@@ -138,7 +147,7 @@ add('esp');assert.equal(saved().parts.length,9,'evitar esp32 duplicado');
 assert(!js.includes("limit(p.x,0,WORLD"),'componentes não são limitados ao retângulo antigo');
 assert(!js.includes("limit(Math.round(g.partX"),'arrasto não fica preso a limites');
 assert(css.includes('.parts-layer,.wire-svg{overflow:visible!important}'),'fios e peças podem ultrapassar a área antiga');
-assert(html.includes('id="panModeBtn"'),'botão Mover aparece na bancada');
+assert(!html.includes('id="panModeBtn"'),'botão Mover redundante foi retirado');
 function dragEsp(dx,dy){
  const id=++pointer;
  send('pointerdown','partsLayer',{button:0,pointerId:id,clientX:400,clientY:280,preventDefault(){},target:{closest(sel){return sel==='.part'?{dataset:{part:'esp'}}:null;}}});
@@ -155,11 +164,12 @@ assert(saved().parts.find(p=>p.id==='esp').y>1450,'peça pode ir além da borda 
 click('undoBtn');click('undoBtn');
 assert.equal(saved().parts.find(p=>p.id==='esp').x,originalEsp.x,'desfazer recupera posição anterior');
 const panBefore=nodes.world.style.transform;
-click('panModeBtn');
-dragEsp(480,330);
-assert.equal(saved().parts.find(p=>p.id==='esp').x,originalEsp.x,'modo mão não arrasta componentes');
-assert.notEqual(nodes.world.style.transform,panBefore,'modo mão desloca a câmera');
-click('panModeBtn');
+const naturalPanId=++pointer;
+send('pointerdown','viewport',{button:0,pointerId:naturalPanId,clientX:270,clientY:250,preventDefault(){},target:{closest(){return null}}});
+send('pointermove','window',{pointerId:naturalPanId,clientX:520,clientY:420});
+send('pointerup','window',{pointerId:naturalPanId,clientX:520,clientY:420});
+assert.equal(saved().parts.find(p=>p.id==='esp').x,originalEsp.x,'arrastar fundo não move componentes');
+assert.notEqual(nodes.world.style.transform,panBefore,'arrastar fundo move a bancada sem botão extra');
 const wheelBefore=nodes.world.style.transform;
 send('wheel','viewport',{deltaX:0,deltaY:240,shiftKey:false,ctrlKey:false,metaKey:false,clientX:400,clientY:300,preventDefault(){}});
 assert.notEqual(nodes.world.style.transform,wheelBefore,'roda do mouse move a bancada');
@@ -203,15 +213,15 @@ function tapCanvas(x,y){
 }
 tapPin('b1.POS');
 assert.equal(saved().wires.length,0,'primeiro pino não fecha a ligação');
-// Mesmo com um jumper iniciado, a mão arrasta a câmera em vez de criar curva.
-click('panModeBtn');
+// Enquanto um jumper está em andamento, Espaço + arrastar move a câmera.
+send('keydown','doc',{key:' ',preventDefault(){},target:{closest(){return null}}});
 const beforePendingPan=nodes.world.style.transform;
 const panId=++pointer;
 send('pointerdown','viewport',{button:0,pointerId:panId,clientX:250,clientY:260,preventDefault(){},target:{closest(){return null}}});
 send('pointermove','window',{pointerId:panId,clientX:440,clientY:370});
 send('pointerup','window',{pointerId:panId,clientX:440,clientY:370});
-assert.notEqual(nodes.world.style.transform,beforePendingPan,'é possível mover a câmera durante uma ligação');
-click('panModeBtn');
+assert.notEqual(nodes.world.style.transform,beforePendingPan,'Espaço permite mover a câmera durante uma ligação');
+send('keyup','doc',{key:' '});
 tapCanvas(205,180);
 tapCanvas(295,240);
 assert.equal(saved().wires.length,0,'curvas devem ficar pendentes até o segundo pino');
@@ -383,4 +393,16 @@ assert(Number(nodes.zoomSlider.value)>=4,'enquadramento calcula um zoom válido 
  answerButton.click();
  assert.equal(keyNode('answerContent').hidden,true,'nova abertura pede senha novamente');
 
+
+// Em toque móvel no pino o gesto deve terminar no pointerUp (mesmo sem click),
+// e a busca deve ser desfocada para não abrir teclado.
+let preventedPin=false;
+const mobileStart=++pointer;
+const mobilePin={closest(sel){return sel==='[data-port]'?{dataset:{port:'b1.POS'}}:null;}};
+send('pointerdown','partsLayer',{button:0,pointerType:'touch',pointerId:mobileStart,clientX:100,clientY:100,target:mobilePin,
+ preventDefault(){preventedPin=true;}});
+send('pointerup','window',{pointerType:'touch',pointerId:mobileStart,clientX:100,clientY:100});
+assert(preventedPin,'toque em pino impede foco padrão do navegador');
+assert.equal(saved().wires.length,0,'toque simples no pino não cria ligação prematura');
+click('undoBtn');
 console.log('PASS: bancada vazia, 9 peças, catálogo, limite, 17 fios, erro, 5 V, duas gangorras, pista e salvamento.');
