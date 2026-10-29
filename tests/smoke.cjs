@@ -99,6 +99,13 @@ function connect(a,b){
 }
 function toggle(id){send('click','partsLayer',{target:{closest(sel){return sel==='[data-toggle]'?{dataset:{toggle:id}}:null}}});}
 function click(id){send('click',id,{});}
+assert(html.includes('id="openComponentPicker"'),'botão + central na área vazia');
+assert(!html.includes('BANCADA VIRTUAL'),'etiqueta de bancada removida');
+assert(css.includes('.world-note[hidden]{display:none!important}'),'botão central desaparece após adicionar peça');
+click('openComponentPicker');
+assert.equal(nodes.sideBackdrop.hidden,false,'+ abre a gaveta de peças');
+click('closeLibrary');
+assert.equal(nodes.sideBackdrop.hidden,true,'gaveta pode ser fechada');
 assert.equal(saved().parts.length,0,'bancada deve começar vazia');
 for(const t of types)for(let i=0;i<t.ids.length;i++)add(t.kind);
 assert.equal(saved().parts.length,9,'adicionar 9 peças pelo catálogo');
@@ -137,10 +144,22 @@ assert.equal(saved().wires.length,0,'curvas devem ficar pendentes até o segundo
 tapPin('s1.IN');
 assert.equal(saved().wires.length,1,'segundo pino finaliza ligação');
 assert.equal(saved().wires[0].via.length,2,'guardar duas curvas');
+const bends=saved().wires[0].via;
+assert(bends[0].x===bends[1].x||bends[0].y===bends[1].y,'curva nova prolonga apenas a ponta, sem diagonais');
 const curved=JSON.stringify(saved().wires[0].via);
 click('saveBtn');
 assert.equal(JSON.stringify(saved().wires[0].via),curved,'persistir curvas da ligação');
+send('click','wireSvg',{stopPropagation(){},target:{closest(sel){return sel==='[data-wire-index]'?{dataset:{wireIndex:'0'}}:null;}}});
+assert.equal(nodes.deleteBtn.disabled,false,'selecionar um fio ativa o botão Excluir');
+click('deleteBtn');
+assert.equal(saved().wires.length,0,'Excluir apaga o fio selecionado');
+connect('b1.POS','s1.IN');
+assert.equal(saved().wires.length,1,'refazer conexão após exclusão');
 assert(!js.includes("setAttribute('stroke-dasharray'"),'nenhum fio tracejado');
+assert(js.includes("hit.dataset.wireIndex=String(i)"),'fio tem área clicável própria');
+assert(js.includes("setAttribute('r','10')")===false,'encaixe da ponta do jumper não fica como bola gigante');
+assert(js.includes("node.setAttribute('stroke','none')"),'pino fica preenchido sem aro branco');
+assert(js.includes("projectFromTip(last,{x,y})"),'nova curva depende da ponta atual');
 connect('b1.POS','s1.IN'); // remove a ligação de teste antes da montagem completa
 assert.equal(saved().wires.length,0,'fio existente pode ser removido');
 
