@@ -55,7 +55,7 @@ Referência do projeto físico: [Carrinho Wi-Fi ESP32 — Fundamentos de Prototi
 
 ## Gabarito para professores e estudantes
 
-No cabeçalho da bancada, o botão **🔒 Gabarito** abre uma janela protegida por uma **senha didática** definida pelo responsável. Depois de entrar, aparecem as **17 conexões** nas mesmas quatro etapas usadas para montar e validar o circuito, com origem e destino identificados. O gabarito permite **baixar um SVG vetorial** para imprimir e usar **Imprimir / salvar PDF** no próprio navegador.
+No cabeçalho da bancada, o botão **🔒 Gabarito** abre uma janela protegida por uma **senha didática** definida pelo responsável. Depois da senha, a tela mostra **o circuito visual pronto**, com os **nove componentes originais desenhados na bancada e os 17 fios conectados entre os pinos reais**, sem alterar a montagem do estudante. O usuário pode ampliar o desenho, **baixar PNG**, **baixar SVG vetorial** (com componentes incorporados) e **imprimir / salvar PDF**. O texto das ligações fica numa seção **Ver resumo das 17 conexões**, inicialmente recolhida.
 
 **Limitação de segurança:** esta aplicação está no GitHub Pages, que serve arquivos estáticos. A senha protege apenas a interface; quem examina o código-fonte público pode encontrá-la, assim como as respostas. Não use o mecanismo para informações confidenciais.
 
@@ -65,3 +65,7 @@ No cabeçalho da bancada, o botão **🔒 Gabarito** abre uma janela protegida p
 - Encaixe magnético no terminal e curvas criadas apenas a partir da ponta atual, sem retorno sobre os próprios trechos.
 - Botão inicial **+** centralizado e painel de progresso enxuto, como **1/9**.
 - Exclusão do fio selecionado por **Excluir** ou tecla **Delete**.
+
+### Gabarito visual v15
+
+O circuito pronto é renderizado em SVG na própria página, a partir das coordenadas das nove peças e das 17 arestas de validação de `app.js`. A ligação de terra para a ponte H usa o pino **GND2**, equivalente ao GND. Nenhuma peça é adicionada à área de trabalho do aluno ao abrir o gabarito. A versão para impressão mostra o diagrama visual, sem substituir a bancada por uma tabela de texto.
