@@ -139,6 +139,22 @@ assert(!js.includes("limit(p.x,0,WORLD"),'componentes não são limitados ao ret
 assert(!js.includes("limit(Math.round(g.partX"),'arrasto não fica preso a limites');
 assert(css.includes('.parts-layer,.wire-svg{overflow:visible!important}'),'fios e peças podem ultrapassar a área antiga');
 assert(html.includes('id="panModeBtn"'),'botão Mover aparece na bancada');
+function dragEsp(dx,dy){
+ const id=++pointer;
+ send('pointerdown','partsLayer',{button:0,pointerId:id,clientX:400,clientY:280,preventDefault(){},target:{closest(sel){return sel==='.part'?{dataset:{part:'esp'}}:null;}}});
+ send('pointermove','window',{pointerId:id,clientX:400+dx,clientY:280+dy});
+ send('pointerup','window',{pointerId:id,clientX:400+dx,clientY:280+dy});
+}
+const originalEsp=saved().parts.find(p=>p.id==='esp');
+dragEsp(-5000,-4000);
+assert(saved().parts.find(p=>p.id==='esp').x<0,'posições negativas são aceitas');
+assert(saved().parts.find(p=>p.id==='esp').y<0,'peça pode subir além da origem');
+dragEsp(12000,10000);
+assert(saved().parts.find(p=>p.id==='esp').x>1900,'peça pode ir além da borda direita antiga');
+assert(saved().parts.find(p=>p.id==='esp').y>1450,'peça pode ir além da borda inferior antiga');
+click('undoBtn');click('undoBtn');
+assert.equal(saved().parts.find(p=>p.id==='esp').x,originalEsp.x,'desfazer recupera posição anterior');
+
 
 
 // Testa o fluxo real de toque: pino inicial → dois cliques na bancada → pino final.
