@@ -5,7 +5,7 @@
     {id:'s1',name:'Gangorra • ESP',short:'ON / OFF',color:'sw1',pins:[['IN','IN'],['OUT','OUT']],desc:'Chave liga/desliga do circuito do ESP32. Interrompe ou libera a passagem de energia no fio positivo.',tip:'Toque no interruptor para ligar ou desligar. A outra gangorra é independente.'},
     {id:'lm',name:'Regulador LM2596',short:'LM2596',color:'buck',pins:[['INP','IN +'],['INN','IN −'],['OUTP','OUT +'],['OUTN','OUT −']],desc:'Recebe energia da bateria e fornece uma saída ajustável. Neste projeto, a saída para o ESP32 deve estar em 5 V.',tip:'O controle deslizante é uma simulação do ajuste. Na montagem real, confira com multímetro.'},
     {id:'esp',name:'ESP32 • Controle',short:'ESP32',color:'esp',pins:[['VIN','VIN'],['GND','GND'],['D27','D27'],['D26','D26'],['D32','D32'],['D18','D18']],desc:'O cérebro do carrinho. Ele recebe alimentação e envia sinais para a ponte H controlar os motores.',tip:'Neste projeto: D27→IN1, D26→IN2, D32→IN3 e D18→IN4.'},
-    {id:'drv',name:'Ponte H MX1508',short:'MX1508',color:'driver',pins:[['VCC','VCC +'],['GND','GND −'],['IN1','IN1'],['IN2','IN2'],['IN3','IN3'],['IN4','IN4'],['OUT1','OUT1'],['OUT2','OUT2'],['OUT3','OUT3'],['OUT4','OUT4']],desc:'Recebe comandos do ESP32 e controla o sentido de giro dos motores por suas saídas.',tip:'Os pinos IN recebem sinais do ESP32. As saídas OUT vão para os dois motores.'},
+    {id:'drv',name:'Ponte H MX1508',short:'MX1508',color:'driver',pins:[['VCC','VCC +'],['GND','GND −'],['IN1','IN1'],['IN2','IN2'],['IN3','IN3'],['IN4','IN4'],['OUT1','A · 1'],['OUT2','A · 2'],['OUT3','B · 1'],['OUT4','B · 2']],desc:'Recebe comandos do ESP32 e controla o sentido de giro dos motores por suas saídas.',tip:'Os pinos IN recebem sinais do ESP32. As duas saídas de motor possuem um par de bornes cada: Motor A e Motor B. Os bornes individuais não têm esses números escritos na placa real.'},
     {id:'ml',name:'Motor esquerdo',short:'MOTOR',color:'left',pins:[['A','A'],['B','B']],desc:'Motor DC que movimenta uma das rodas. Recebe alimentação de um par de saídas da ponte H.',tip:'A direção depende de como a ponte H comanda os dois fios do motor.'},
     {id:'b2',name:'Bateria 9 V • Motores',short:'9 V',color:'bat2',pins:[['POS','+'],['NEG','−']],desc:'Fonte de alimentação separada para o conjunto de motores, com sua própria gangorra.',tip:'O circuito precisa compartilhar a referência GND com o ESP32.'},
     {id:'s2',name:'Gangorra • Motores',short:'ON / OFF',color:'sw2',pins:[['IN','IN'],['OUT','OUT']],desc:'Chave que liga e desliga a alimentação da ponte H e dos motores.',tip:'Você pode desligar os motores sem desligar o ESP32.'},
@@ -34,6 +34,7 @@
   let courseComplete=false;
   let toastTimer=null;
   let dragged=null;
+  const positions={};
   let viewWidth=window.innerWidth;
   const pinName=id=>{const [p,k]=id.split('.');const item=byId[p];const pin=item&&item.pins.find(x=>x[0]===k);return item?item.name+' · '+(pin?pin[1]:k):id;};
   function restore(){
@@ -72,6 +73,7 @@
       if(p.id==='lm') extra='<div class="module-extra voltage"><label for="voltageInput">Saída</label><input id="voltageInput" type="range" min="3" max="6" step=".5" value="'+voltage+'" aria-label="Ajustar a saída do LM2596 em volts"><output id="voltageOutput">'+voltage.toFixed(1).replace('.',',')+' V</output></div>';
       return '<article class="module mod-'+p.color+'" data-part="'+p.id+'"><div class="module-top"><button type="button" class="module-name" data-detail="'+p.id+'">'+p.name+'</button><span class="drag-handle" role="button" tabindex="0" aria-label="Mover '+p.name+'" title="Arraste para mover">⠿</span></div><div class="illustration"><span class="silk">'+p.short+'</span><span class="board-dot"></span></div><div class="pins">'+pinButtons+'</div>'+extra+'</article>';
     }).join('');
+    Object.entries(positions).forEach(([id,pos])=>{const card=[...document.querySelectorAll('.module')].find(el=>el.dataset.part===id);if(card){card.style.transform='translate('+pos.x+'px,'+pos.y+'px)';card.dataset.dx=String(pos.x);card.dataset.dy=String(pos.y);}});
     requestAnimationFrame(drawWires);
   }
   function showPart(id){
@@ -225,7 +227,7 @@
     dx=Math.max(d.x-(c.left-b.left)+8,Math.min(d.x+(b.right-c.right)-8,dx));
     dy=Math.max(d.y-(c.top-b.top)+8,Math.min(d.y+(b.bottom-c.bottom)-8,dy));
     d.card.style.transform='translate('+dx+'px,'+dy+'px)';
-    d.card.dataset.dx=String(dx);d.card.dataset.dy=String(dy);drawWires();
+    d.card.dataset.dx=String(dx);d.card.dataset.dy=String(dy);positions[d.card.dataset.part]={x:dx,y:dy};drawWires();
   }
   function endDrag(e){if(!dragged||dragged.id!==e.pointerId)return;dragged.card.style.zIndex='';dragged=null;}
   // Pista de brinquedo: modelo cinemático simplificado, sem ligação Wi-Fi real.
@@ -297,7 +299,7 @@
     $('board').addEventListener('pointerdown',beginDrag);
     window.addEventListener('pointermove',dragMove);
     window.addEventListener('pointerup',endDrag);window.addEventListener('pointercancel',endDrag);
-    window.addEventListener('resize',()=>{if((window.innerWidth<=720)!==(viewWidth<=720)){document.querySelectorAll('.module').forEach(c=>{c.style.transform='';delete c.dataset.dx;delete c.dataset.dy;});}viewWidth=window.innerWidth;requestAnimationFrame(drawWires);});
+    window.addEventListener('resize',()=>{if((window.innerWidth<=720)!==(viewWidth<=720)){Object.keys(positions).forEach(k=>delete positions[k]);document.querySelectorAll('.module').forEach(c=>{c.style.transform='';delete c.dataset.dx;delete c.dataset.dy;});}viewWidth=window.innerWidth;requestAnimationFrame(drawWires);});
     window.addEventListener('scroll',drawWires,{passive:true});$('board').addEventListener('scroll',drawWires,{passive:true});
     if(typeof ResizeObserver!=='undefined')new ResizeObserver(drawWires).observe($('board'));
     document.addEventListener('keydown',e=>{
