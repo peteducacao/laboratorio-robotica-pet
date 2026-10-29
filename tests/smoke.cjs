@@ -7,6 +7,8 @@ const base=path.join(__dirname,'..');
 const js=fs.readFileSync(path.join(base,'app.js'),'utf8');
 const html=fs.readFileSync(path.join(base,'index.html'),'utf8');
 const css=fs.readFileSync(path.join(base,'styles.css'),'utf8');
+const answerKey=fs.readFileSync(path.join(base,'answer-key.js'),'utf8');
+new vm.Script(answerKey);
 new vm.Script(js);
 const types=vm.runInNewContext('['+js.match(/const TYPES=\[([\s\S]*?)\];/)[1]+']');
 const edges=vm.runInNewContext('['+js.match(/const EXPECTED=\[([\s\S]*?)\];/)[1]+']');
@@ -159,7 +161,12 @@ assert(!js.includes("setAttribute('stroke-dasharray'"),'nenhum fio tracejado');
 assert(js.includes("hit.dataset.wireIndex=String(i)"),'fio tem área clicável própria');
 assert(js.includes("setAttribute('r','10')")===false,'encaixe da ponta do jumper não fica como bola gigante');
 assert(js.includes("node.setAttribute('stroke','none')"),'pino fica preenchido sem aro branco');
-assert(js.includes("projectFromTip(last,{x,y})"),'nova curva depende da ponta atual');
+assert(js.includes("projectFromTip(last,{x,y},previousWirePoint())"),'curva respeita sentido da última ponta');
+assert(js.includes('function nearestPort('),'pino atrai fio quando ponta está próxima');
+assert(js.includes('function wireAt('),'seleciona fio por toque no caminho');
+assert(html.includes('answer-key.js?v=13'),'gabarito carrega na bancada');
+assert(answerKey.includes("value!=='peteduca'"),'gabarito requer senha');
+assert(answerKey.includes("TinkerPET-gabarito.svg"),'gabarito pode ser baixado');
 connect('b1.POS','s1.IN'); // remove a ligação de teste antes da montagem completa
 assert.equal(saved().wires.length,0,'fio existente pode ser removido');
 
