@@ -7,8 +7,8 @@
 <link rel="icon" href="assets/logo-pet.svg" type="image/svg+xml">
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="styles.css?v=2">
-<script defer src="app.js?v=2"></script>
+<link rel="stylesheet" href="styles.css?v=3">
+<script defer src="app.js?v=3"></script>
 </head>
 <body>
 <header class="app-header">
@@ -29,11 +29,12 @@
       <button id="closeLibrary" class="icon-btn close-library" aria-label="Fechar componentes">×</button>
     </div>
     <div class="library-search"><span>⌕</span><input id="componentSearch" type="search" placeholder="Buscar componente..." aria-label="Buscar componente"></div>
-    <div class="library-intro">Arraste uma peça para a bancada. No celular, também pode <b>tocar para adicionar</b>.</div>
+    <div class="library-intro">Arraste uma peça para a bancada ou toque para adicionar. Depois conecte pelos terminais.</div>
     <div id="catalog" class="catalog" aria-label="Peças disponíveis"></div>
     <div class="library-footer"><b>✳ DICA</b><p>Primeiro coloque as peças. Depois toque em dois terminais para criar um fio.</p></div>
   </aside>
   <div id="sideBackdrop" class="side-backdrop" hidden></div>
+  <button type="button" id="drawerHandle" class="drawer-handle" aria-label="Abrir componentes" aria-controls="library" aria-expanded="false"><span id="drawerArrow">❯</span><small>PEÇAS</small></button>
   <main class="main-work">
     <div class="toolbar">
       <div class="toolbar-left">
@@ -65,7 +66,7 @@
           <div id="wirePreview" class="wire-preview" hidden></div>
         </div>
         <div class="canvas-label"><span class="status-dot"></span> BANCADA VIRTUAL <small>1200 × 780</small></div>
-        <div class="canvas-corner">Arraste peças para mover • arraste o fundo para navegar</div>
+        <div class="canvas-corner">Toque nos contatos para ligar os fios • arraste as peças para posicionar</div>
       </div>
       <div class="bottom-controls">
         <div class="connection-palette"><span>Cor dos fios</span><div id="colorPalette" class="swatches" aria-label="Escolher cor do fio"></div></div>
@@ -95,6 +96,6 @@
 </div>
 <div id="toast" class="toast" role="status" aria-live="polite"></div>
 <div id="dragGhost" class="drag-ghost" hidden></div>
-<dialog id="guideDialog"><div class="dialog-head"><h2>Como usar o TinkerPET</h2><button id="closeGuide" type="button" aria-label="Fechar">×</button></div><p><b>Agora a bancada começa vazia, igual a um laboratório de montagem.</b></p><ol><li>Arraste as peças do catálogo para a bancada. Se estiver no celular, pode tocar numa peça para adicioná-la.</li><li>Arraste cada componente pelo corpo para colocá-lo onde quiser.</li><li>Toque num terminal e depois no terminal de outra peça: o fio aparecerá. Se errar, toque no fio para apagá-lo ou use Desfazer.</li><li>Selecione as gangorras para ligá-las e ajuste o LM2596 para 5 V.</li><li>Quando tudo estiver conectado, toque em <b>Iniciar simulação</b> e pilote o carrinho virtual.</li></ol><p>A simulação é educativa e não representa todas as leis elétricas ou a execução real do firmware ESP32. Ferramentas, soldas e medições físicas exigem supervisão.</p><button id="startGuide" class="run-btn">Vamos montar!</button></dialog>
+<dialog id="guideDialog"><div class="dialog-head"><h2>Como usar o TinkerPET</h2><button id="closeGuide" type="button" aria-label="Fechar">×</button></div><p><b>Agora a bancada começa vazia, igual a um laboratório de montagem.</b></p><ol><li>Abra a gaveta pela seta na lateral esquerda do meio da tela. Arraste uma peça do catálogo ou toque para adicioná-la.</li><li>Arraste cada componente pela imagem, como na bancada do Tinkercad; sem caixas em volta das peças.</li><li>Toque num terminal e depois no outro para criar um fio. Também pode arrastar de um terminal ao outro. Se errar, abra a aba Fios para remover ou toque em Desfazer.</li><li>Selecione as gangorras para ligá-las e ajuste o LM2596 para 5 V.</li><li>Quando tudo estiver conectado, toque em <b>Iniciar simulação</b> e pilote o carrinho virtual.</li></ol><p>A simulação é educativa e não representa todas as leis elétricas ou a execução real do firmware ESP32. Ferramentas, soldas e medições físicas exigem supervisão.</p><button id="startGuide" class="run-btn">Vamos montar!</button></dialog>
 <footer>✳ TinkerPET • Laboratório virtual do PET Educação — UFS <span>Sem vídeos · Arraste, monte, experimente.</span></footer>
 </body></html>
