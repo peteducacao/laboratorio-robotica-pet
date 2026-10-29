@@ -7,10 +7,20 @@
   b1:[100,180],s1:[365,220],lm:[655,205],esp:[1040,130],
   b2:[100,815],s2:[365,855],drv:[1010,820],ml:[1420,775],mr:[1695,775]
  };
- const colors=['#e44f45','#e44f45','#344e61','#e44f45','#344e61',
-               '#e44f45','#e44f45','#344e61','#344e61',
-               '#277cbe','#277cbe','#277cbe','#277cbe',
-               '#169980','#169980','#169980','#169980'];
+ // Cada jumper possui cor identificável; motores usam famílias bem diferentes.
+ const colors=['#ce3638','#e9634b','#36485b','#e59a22','#263d5b',
+               '#d34073','#a349a4','#657684','#465665',
+               '#1767b2','#18a4bf','#8450c4','#c44b9f',
+               '#107b50','#83af28','#ad5312','#eba12a'];
+ const categories=[
+  {id:'all',label:'Tudo',title:'Circuito completo',indices:[...Array(17).keys()]},
+  {id:'esp',label:'Energia ESP32',title:'Bateria 1 → gangorra 1 → LM2596 → ESP32',indices:[0,1,2,3,4]},
+  {id:'motorPower',label:'Energia motores',title:'Bateria 2 → gangorra 2 → ponte H e GND comum',indices:[5,6,7,8]},
+  {id:'control',label:'Comandos',title:'ESP32 → IN1, IN2, IN3 e IN4 da ponte H',indices:[9,10,11,12]},
+  {id:'motor1',label:'Motor 1',title:'Ponte H → motor DC 1 (verde)',indices:[13,14]},
+  {id:'motor2',label:'Motor 2',title:'Ponte H → motor DC 2 (laranja)',indices:[15,16]}
+ ];
+ let activeCategory='all',activeWire=-1;
  const byId=Object.fromEntries(data.components.map(p=>[p.id,p]));
  const btn=document.createElement('button');
  btn.id='answerKeyBtn';btn.type='button';btn.className='answer-key-trigger';
@@ -29,6 +39,10 @@
  '<div id="answerContent" class="answer-content" hidden>'+
  '<div class="answer-visual-top"><span class="answer-counter">✓ 9 peças • 17 fios conectados</span>'+
  '<div class="answer-zoom" aria-label="Ampliar gabarito"><button type="button" id="answerZoomOut" aria-label="Diminuir gabarito">−</button><b id="answerZoomLabel">100%</b><button type="button" id="answerZoomIn" aria-label="Ampliar gabarito">+</button><button type="button" id="answerZoomFit">Enquadrar</button></div></div>'+
+ '<div class="answer-filter-head"><b>Visualizar por circuito</b><span>Escolha uma etapa para esconder os demais fios</span></div>'+
+ '<div id="answerFilters" class="answer-filters" aria-label="Filtros de ligação"></div>'+
+ '<div id="answerWirePicker" class="answer-wire-picker" aria-label="Escolher um fio específico"></div>'+
+ '<div id="answerSelectedInfo" class="answer-selected-info" role="status" aria-live="polite"></div>'+
  '<div class="answer-board-scroll" id="answerBoardScroll" tabindex="0" aria-label="Bancada com carrinho ESP32 montado; use o zoom para ampliar">'+
  '<div class="answer-board" id="answerDiagram"></div></div>'+
  '<div class="answer-actions"><button id="answerPng" type="button" class="answer-main">↓ Baixar imagem PNG</button>'+
@@ -56,24 +70,25 @@
  }
  function bendsFor(i,a,b){
   const x=a.x,y=a.y,X=b.x,Y=b.y;
+  // Corredores separados, incluindo gangorras e pares de cada motor.
   switch(i){
-   case 0:return [[x,112],[316,112],[316,445],[X,445]];
-   case 1:return [[x,454],[615,454],[615,Y]];
-   case 2:return [[x,77],[601,77],[601,Y]];
-   case 3:return [[1003,y],[1003,112],[X,112]];
-   case 4:return [[1016,y],[1016,86],[X,86]];
-   case 5:return [[x,717],[326,717],[326,1072],[X,1072]];
-   case 6:return [[x,1223],[X,1223]];
-   case 7:return [[x,695],[352,695],[352,1267],[X,1267]];
-   case 8:return [[x,552],[1000,552],[1000,1292],[X,1292]];
-   case 9:return [[x,64],[990,64],[990,1155],[X,1155]];
-   case 10:return [[x,49],[979,49],[979,1180],[X,1180]];
-   case 11:return [[x,34],[965,34],[965,1204],[X,1204]];
-   case 12:return [[x,578],[950,578],[950,1238],[X,1238]];
-   case 13:return [[x,713],[1399,713],[1399,Y]];
-   case 14:return [[x,688],[1379,688],[1379,Y]];
-   case 15:return [[x,658],[1668,658],[1668,Y]];
-   case 16:return [[x,629],[1648,629],[1648,Y]];
+   case 0:return [[302,y],[302,Y]];
+   case 1:return [[x,446],[558,446],[558,Y]];
+   case 2:return [[251,y],[251,164],[578,164],[578,Y]];
+   case 3:return [[905,y],[905,158],[X,158]];
+   case 4:return [[885,y],[885,125],[X,125]];
+   case 5:return [[300,y],[300,Y]];
+   case 6:return [[555,y],[555,1176],[X,1176]];
+   case 7:return [[238,y],[238,1250],[X,1250]];
+   case 8:return [[850,y],[850,1298],[X,1298]];
+   case 9:return [[x,94],[914,94],[914,1164],[X,1164]];
+   case 10:return [[x,68],[944,68],[944,1187],[X,1187]];
+   case 11:return [[x,41],[974,41],[974,1209],[X,1209]];
+   case 12:return [[x,495],[1004,495],[1004,1233],[X,1233]];
+   case 13:return [[x,720],[1390,720],[1390,Y]];
+   case 14:return [[x,749],[1360,749],[1360,Y]];
+   case 15:return [[x,620],[1665,620],[1665,Y]];
+   case 16:return [[x,653],[1635,653],[1635,Y]];
    default:return [[x,Y]];
   }
  }
