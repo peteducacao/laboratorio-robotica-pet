@@ -299,3 +299,84 @@
 
 /* Arrastar itens entre a gaveta e a bancada também no celular */
 .drag-ghost{z-index:120}
+
+
+/* TinkerPET v9 — correções dos contatos e interações dos componentes */
+.part[data-kind="buck"] .part-image,
+.part[data-kind="driver"] .part-image,
+.part[data-kind="battery"] .part-image,
+.part[data-kind="switch"] .part-image{
+ position:absolute;inset:0;width:100%;height:100%;padding:0;margin:0;
+}
+.part[data-kind="buck"] .part-image img,
+.part[data-kind="driver"] .part-image img,
+.part[data-kind="battery"] .part-image img,
+.part[data-kind="switch"] .part-image img{
+ width:100%;height:100%;max-width:100%;max-height:100%;
+ object-fit:fill;mix-blend-mode:normal;
+}
+.part[data-kind="buck"] .part-head,
+.part[data-kind="driver"] .part-head,
+.part[data-kind="battery"] .part-head,
+.part[data-kind="switch"] .part-head{top:-21px}
+.part[data-kind="buck"] .part-head strong,
+.part[data-kind="driver"] .part-head strong,
+.part[data-kind="battery"] .part-head strong,
+.part[data-kind="switch"] .part-head strong{
+ background:#f8fbfded;border-radius:12px;padding:2px 8px;
+}
+/* Precisão de toque: o centro do alvo coincide com o centro do borne desenhado. */
+.part[data-kind="buck"] .pin-btn,
+.part[data-kind="driver"] .pin-btn,
+.part[data-kind="battery"] .pin-btn,
+.part[data-kind="switch"] .pin-btn{
+ position:absolute;transform:translate(-50%,-50%);
+ min-height:34px;height:34px;width:34px;
+ background:transparent;border:0;border-radius:50%;padding:0;box-shadow:none;
+}
+.part[data-kind="buck"] .pin-dot,
+.part[data-kind="driver"] .pin-dot,
+.part[data-kind="switch"] .pin-dot{opacity:0}
+.part[data-kind="buck"] .pin-btn:focus-visible,
+.part[data-kind="driver"] .pin-btn:focus-visible,
+.part[data-kind="battery"] .pin-btn:focus-visible,
+.part[data-kind="switch"] .pin-btn:focus-visible{outline:3px solid #159fbc;outline-offset:1px}
+.part[data-kind="battery"] .pin-btn{width:35px;height:35px;min-height:35px}
+.part[data-kind="battery"] .pin-dot{opacity:1;height:13px;width:13px;border:2px solid #fff;box-shadow:0 0 0 2px #243e4a}
+.part[data-kind="battery"] .pin-btn[data-port$=".POS"] .pin-dot{background:#d73536}
+.part[data-kind="battery"] .pin-btn[data-port$=".NEG"] .pin-dot{background:#17232d}
+.part[data-kind="battery"] .pin-btn.connected .pin-dot{box-shadow:0 0 0 2px #37ad72}
+.part[data-kind="switch"] .part-actions{
+ position:absolute;left:23%;right:23%;top:19%;bottom:32%;
+ display:flex;justify-content:center;align-items:center;pointer-events:none;padding:0;
+ z-index:7;
+}
+.part[data-kind="switch"] .part-switch{
+ pointer-events:auto;position:relative;
+ width:100%;height:100%;padding:0;border:1px solid #5e6c78;
+ border-radius:13px;background:linear-gradient(150deg,#34434d,#101920 62%,#1d2c35)!important;
+ color:#e2eaf0!important;font-size:28px!important;font-weight:800!important;
+ box-shadow:inset 0 2px 7px #01060b7a,0 4px 6px #07131b66;
+ transform:perspective(260px) rotateX(16deg) translateY(4px);
+ transition:transform .22s ease,box-shadow .22s ease,background .22s ease;
+}
+.part[data-kind="switch"][data-powered="on"] .part-switch{
+ background:linear-gradient(165deg,#4c6070,#263640 62%,#121c24)!important;
+ transform:perspective(260px) rotateX(-16deg) translateY(-4px);
+ box-shadow:inset 0 -3px 8px #0b1524,0 1px 3px #07131b44;
+}
+.part[data-kind="switch"] .part-switch::after{
+ right:12px;top:12px;width:11px;height:11px;
+ background:#70808b;box-shadow:0 0 0 2px #30424e;
+}
+.part[data-kind="switch"][data-indicator="on"] .part-switch::after{
+ background:#9aff75;box-shadow:0 0 0 2px #387e57,0 0 13px #9aff75;
+}
+.part[data-kind="switch"][data-powered="on"][data-indicator="off"] .part-switch::after{
+ background:#70808b;box-shadow:0 0 0 2px #30424e;
+}
+/* Corrige a linha visual dos fios: acima das peças e fixada ao centro real de cada borne. */
+.wire-svg{z-index:8;pointer-events:none}
+.wire-line{stroke-width:5;stroke-linejoin:round;stroke-linecap:round;fill:none;pointer-events:none}
+.wire-target,.wire-end-cap,.wire-corner{pointer-events:none}
+.wire-end-cap{filter:drop-shadow(0 1px 2px #1536475e)}
