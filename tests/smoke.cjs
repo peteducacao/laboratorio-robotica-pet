@@ -130,6 +130,23 @@ assert(!js.includes("setAttribute('stroke-dasharray'"),'nenhum fio tracejado');
 connect('b1.POS','s1.IN'); // remove a ligação de teste antes da montagem completa
 assert.equal(saved().wires.length,0,'fio existente pode ser removido');
 
+connect('esp.D27','drv.IN4');
+click('checkBtn');
+assert.equal(nodes.playPanel.hidden,true,'não liberar circuito com fio errado');
+connect('esp.D27','drv.IN4');
+for(const [a,b] of edges)connect(a,a==='lm.OUTN'?'esp.GND2':b); // usar o segundo GND real e validar equivalência
+assert.equal(saved().wires.length,17,'criar 17 fios');
+// LED extra é opcional: mantém a validação de 17 fios necessários.
+connect('b1.NEG','s1.LEDG');assert.equal(saved().wires.length,18,'terceiro pino aceita retorno para LED');
+toggle('s1');toggle('s2');
+
+send('input','partsLayer',{target:{id:'voltageInput',value:'5'}});
+click('checkBtn');
+assert.equal(nodes.playPanel.hidden,false,'liberar pista com circuito correto');
+assert.equal(nodes.trackLock.hidden,true,'retirar bloqueio da pista');
+toggle('s1');
+assert.equal(nodes.trackLock.hidden,false,'desligar gangorra bloqueia pista');
+click('saveBtn');assert.equal(saved().parts.length,9,'persistir projeto');
 assert(html.includes('id="zoomSlider"')&&html.includes('id="zoomTool"'),'lupa e barra de zoom presentes');
 assert(!js.includes("title.textContent=partName(p.id)"),'sem nome flutuante no topo das peças');
 assert(!rocker.includes('>IN</text>')&&!rocker.includes('>OUT</text>')&&!rocker.includes('>LED−</text>'),'gangorra sem nomes impressos');
@@ -148,22 +165,4 @@ assert.equal(nodes.zoomSlider.value,'25','lupa permite reduzir o zoom até 25%')
 send('click','zoomFitAll',{});
 assert(Number(nodes.zoomSlider.value)>=17,'enquadramento calcula um zoom válido');
 
-
-connect('esp.D27','drv.IN4');
-click('checkBtn');
-assert.equal(nodes.playPanel.hidden,true,'não liberar circuito com fio errado');
-connect('esp.D27','drv.IN4');
-for(const [a,b] of edges)connect(a,a==='lm.OUTN'?'esp.GND2':b); // usar o segundo GND real e validar equivalência
-assert.equal(saved().wires.length,17,'criar 17 fios');
-// LED extra é opcional: mantém a validação de 17 fios necessários.
-connect('b1.NEG','s1.LEDG');assert.equal(saved().wires.length,18,'terceiro pino aceita retorno para LED');
-toggle('s1');toggle('s2');
-
-send('input','partsLayer',{target:{id:'voltageInput',value:'5'}});
-click('checkBtn');
-assert.equal(nodes.playPanel.hidden,false,'liberar pista com circuito correto');
-assert.equal(nodes.trackLock.hidden,true,'retirar bloqueio da pista');
-toggle('s1');
-assert.equal(nodes.trackLock.hidden,false,'desligar gangorra bloqueia pista');
-click('saveBtn');assert.equal(saved().parts.length,9,'persistir projeto');
 console.log('PASS: bancada vazia, 9 peças, catálogo, limite, 17 fios, erro, 5 V, duas gangorras, pista e salvamento.');
