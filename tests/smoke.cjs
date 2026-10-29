@@ -257,7 +257,8 @@ assert(Number(nodes.zoomSlider.value)>=17,'enquadramento calcula um zoom válido
  const svgBancada=keyNode('answerDiagram').innerHTML;
  assert(svgBancada.includes('<svg'),'gabarito abre circuito visual SVG na própria janela');
  assert.equal((svgBancada.match(/<image /g)||[]).length,9,'gabarito visual apresenta exatamente 9 componentes desenhados');
- assert.equal((svgBancada.match(/<path d=/g)||[]).length,34,'gabarito visual desenha 17 ligações com linha e contorno');
+ assert.equal((svgBancada.match(/stroke-width="17" stroke-linejoin/g)||[]).length,17,'17 contornos de fios');
+ assert.equal((svgBancada.match(/stroke-width="10" stroke-linejoin/g)||[]).length,17,'17 fios visíveis entre os terminais');
  assert(svgBancada.includes('esp32-devkit-v1-30p.svg'),'usa a mesma imagem ESP32 do laboratório');
  assert(svgBancada.includes('mx1508-desenhado.svg'),'usa a ponte H da bancada real');
  assert(!svgBancada.includes('NaN')&&!svgBancada.includes('undefined'),'nenhum terminal ficou sem posição');
