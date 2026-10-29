@@ -653,14 +653,22 @@ function pointerMove(e){
   }else if(g.type==='wire'){
    if(g.moved){
     if(!state.startPort){state.startPort=g.port;state.bends=[];}
-    previewPoint=worldXY(e.clientX,e.clientY);
+    previewSnapPort=nearestPort(e.clientX,e.clientY,g.port);
+    previewPoint=previewSnapPort?null:worldXY(e.clientX,e.clientY);
     requestDraw();
    }
-  }else if(g.type==='bend'){previewPoint=worldXY(e.clientX,e.clientY);requestDraw();}
+  }else if(g.type==='bend'){
+   previewSnapPort=nearestPort(e.clientX,e.clientY,state.startPort);
+   previewPoint=previewSnapPort?null:worldXY(e.clientX,e.clientY);
+   requestDraw();
+  }
   else if(g.type==='pan'){if(g.moved){panX=g.x+dx;panY=g.y+dy;camera();}}
  }else if(state.startPort){
   const r=Q('viewport').getBoundingClientRect();
-  if(e.clientX>=r.left&&e.clientX<=r.right&&e.clientY>=r.top&&e.clientY<=r.bottom){previewPoint=worldXY(e.clientX,e.clientY);requestDraw();}
+  if(e.clientX>=r.left&&e.clientX<=r.right&&e.clientY>=r.top&&e.clientY<=r.bottom){
+   previewSnapPort=nearestPort(e.clientX,e.clientY,state.startPort);
+   previewPoint=previewSnapPort?null:worldXY(e.clientX,e.clientY);requestDraw();
+  }
  }
 }
 function pointerUp(e){
@@ -679,10 +687,10 @@ function pointerUp(e){
    const found=document.elementFromPoint?document.elementFromPoint(e.clientX,e.clientY):null;
    const to=found&&found.closest?found.closest('[data-port]'):null;
    const first=state.startPort||g.port;
+   const destination=(to&&to.dataset.port!==first?to.dataset.port:null)||nearestPort(e.clientX,e.clientY,first);
    suppressPortClickUntil=Date.now()+350;
    if(!state.startPort)connect(first);
-   if(to&&to.dataset.port!==first){
-     connect(to.dataset.port);
+   if(destination){connect(destination);
    }else{
      const box=Q('viewport').getBoundingClientRect();
      if(e.clientX>=box.left&&e.clientX<=box.right&&e.clientY>=box.top&&e.clientY<=box.bottom){
@@ -695,8 +703,13 @@ function pointerUp(e){
   if(g.moved)persist();
   else{state.selected=g.partId;renderParts();renderInspector();if(zoom<.68&&byId[g.partId].kind==='esp')cameraZoom(.95,g.startX,g.startY);}
  }else if(g.type==='bend'){
-  const pos=worldXY(e.clientX,e.clientY);addCorner(pos.x,pos.y);
- }else if(g.type==='pan'&&!g.moved){state.selected=null;renderParts();renderInspector();updateHistoryButtons();}
+  const pin=nearestPort(e.clientX,e.clientY,state.startPort);
+  if(pin)connect(pin);else{const pos=worldXY(e.clientX,e.clientY);addCorner(pos.x,pos.y);}
+ }else if(g.type==='pan'&&!g.moved){
+  const wire=wireAt(e.clientX,e.clientY);
+  if(wire>=0)selectWire(wire);
+  else{state.selected=null;state.selectedWire=null;renderParts();renderInspector();updateHistoryButtons();requestDraw();}
+ }
 
 }
 function hint(){
@@ -833,10 +846,7 @@ function bind(){
    e.stopPropagation?.();
    const i=Number(target.dataset.wireIndex);
    if(!state.wires[i])return;
-   state.selectedWire=i;state.selected=null;state.inspector='wires';
-   renderParts();renderInspector();updateHistoryButtons();
-   message('Fio selecionado. Toque em Excluir para apagá-lo.',true);
-   requestDraw();
+   selectWire(i);
  });
  Q('inspectorBody').addEventListener('click',e=>{const view=e.target.closest('[data-motor-view]');if(view){toggleMotorView(view.dataset.motorView);return;}const demo=e.target.closest('[data-demo-motor]');if(demo){demoMotor(demo.dataset.demoMotor);return;}const del=e.target.closest('[data-remove]');if(del)removePart(del.dataset.remove);const w=e.target.closest('[data-remove-wire]');if(w)removeWire(Number(w.dataset.removeWire));});
  Q('inspectorPartsTab').addEventListener('click',()=>{state.inspector='parts';renderInspector();});
@@ -882,7 +892,11 @@ function bind(){
    else cancelPendingWire();
    return;
   }
-  if(Q('playPanel').hidden||!ready()||e.target.closest('input,textarea,select'))return;
+  if(['Delete','Backspace'].includes(e.key)&&!e.target.closest('input,textarea,select')){
+    if(Number.isInteger(state.selectedWire)&&state.wires[state.selectedWire]){e.preventDefault();removeWire(state.selectedWire);return;}
+    if(byPart(state.selected)){e.preventDefault();removePart(state.selected);return;}
+   }
+   if(Q('playPanel').hidden||!ready()||e.target.closest('input,textarea,select'))return;
   if(binds[e.key]){e.preventDefault();keys[binds[e.key]]=true;}
   if(e.key===' '){e.preventDefault();Object.keys(keys).forEach(k=>keys[k]=false);Q('driveReadout').textContent='Parado';}
  });
