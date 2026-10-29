@@ -7,8 +7,8 @@
 <link rel="icon" href="assets/logo-pet.svg" type="image/svg+xml">
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="styles.css?v=11.5">
-<script defer src="app.js?v=11.5"></script>
+<link rel="stylesheet" href="styles.css?v=12">
+<script defer src="app.js?v=12"></script>
 </head>
 <body>
 <header class="app-header">
@@ -43,7 +43,7 @@
         <button id="playTab" class="legacy-control" hidden>Simulação</button>
         <button id="undoBtn" class="control-btn" type="button" title="Desfazer" aria-label="Desfazer">↶ <span>Desfazer</span></button>
         <button id="redoBtn" class="control-btn" type="button" title="Refazer" aria-label="Refazer">↷ <span>Refazer</span></button>
-        <button id="deleteBtn" class="control-btn delete-btn" type="button" title="Excluir a peça selecionada" aria-label="Excluir a peça selecionada">⌫ <span>Excluir</span></button>
+        <button id="deleteBtn" class="control-btn delete-btn" type="button" title="Excluir peça ou fio selecionado" aria-label="Excluir peça ou fio selecionado">⌫ <span>Excluir</span></button>
         <button id="clearBtn" class="legacy-control" hidden>Limpar</button>
         <label class="wire-color-picker" for="wireColorSelect"><span>Cor do fio</span><span class="wire-color-preview" id="wireColorPreview"></span>
           <select id="wireColorSelect" aria-label="Cor do fio">
@@ -71,12 +71,16 @@
       </div>
       <div id="viewport" class="viewport" aria-label="Bancada vazia. Arraste peças do catálogo para colocar aqui." tabindex="0">
         <div id="world" class="world">
-          <div class="world-note" id="worldNote"><div class="empty-icon">＋</div><strong>Solte suas peças aqui!</strong><span>Arraste do catálogo ou toque numa peça para adicioná-la.</span></div>
+          
           <svg id="wireSvg" class="wire-svg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1900 1450" aria-label="Fios conectados"></svg>
           <div id="partsLayer" class="parts-layer"></div>
           <div id="wirePreview" class="wire-preview" hidden></div>
         </div>
-        <div class="canvas-label"><span class="status-dot"></span> BANCADA VIRTUAL <small>1900 × 1450</small></div>
+        <div class="world-note" id="worldNote">
+          <button id="openComponentPicker" class="empty-add-button" type="button" aria-label="Abrir catálogo para adicionar componentes">+</button>
+          <strong>Adicione seu primeiro componente</strong>
+          <span>Toque no + para escolher uma peça.</span>
+        </div>
         <button type="button" id="zoomTool" class="canvas-zoom-button" aria-label="Abrir lupa e controle de zoom" title="Lupa e zoom">⌕</button>
         <div id="zoomPopover" class="canvas-zoom-panel" hidden>
           <label for="zoomSlider">Zoom da bancada</label>
