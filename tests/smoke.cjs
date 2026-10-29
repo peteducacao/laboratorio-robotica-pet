@@ -20,7 +20,7 @@ for(const id of ['catalog','viewport','world','partsLayer','wireSvg','track','pl
 assert(css.includes('touch-action:none'));
 const listeners={},nodes={},storage={};
 class E{
- constructor(name){this.name=name;this.dataset={};this.style={};this.hidden=false;this.disabled=false;this.children=[];this.textContent='';this.className='';this.value='';this.clientWidth=800;this.clientHeight=610;this.classList={add(){},remove(){},toggle(){},contains(){return false}};}
+ constructor(name){this.name=name;this.dataset={};this.style={setProperty(k,v){this[k]=v}};this.hidden=false;this.disabled=false;this.children=[];this.textContent='';this.className='';this.value='';this.clientWidth=800;this.clientHeight=610;this.classList={add(){},remove(){},toggle(){},contains(){return false}};}
  addEventListener(type,fn){(listeners[this.name+':'+type]??=[]).push(fn);}
  append(...x){this.children.push(...x)}appendChild(x){this.children.push(x)}replaceChildren(...x){this.children=x}setAttribute(){}removeAttribute(){}
  querySelectorAll(){return []}
