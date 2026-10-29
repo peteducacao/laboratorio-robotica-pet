@@ -10,6 +10,13 @@ const css=fs.readFileSync(path.join(base,'styles.css'),'utf8');
 new vm.Script(js);
 const types=vm.runInNewContext('['+js.match(/const TYPES=\[([\s\S]*?)\];/)[1]+']');
 const edges=vm.runInNewContext('['+js.match(/const EXPECTED=\[([\s\S]*?)\];/)[1]+']');
+const esp=types.find(t=>t.kind==='esp');
+assert.equal(esp.pins.length,30,'ESP32 precisa ter 30 contatos físicos na bancada');
+assert(esp.pins.some(([id,label])=>id==='GND2'&&label==='GND'),'dois GND equivalentes');
+const espArt=fs.readFileSync(path.join(base,'assets/esp32-devkit-v1-30p.svg'),'utf8');
+for(const name of ['VIN','3V3','GND','D27','D26','D32','D18','D13','EN','D23']){
+ assert(espArt.includes('>'+name+'</text>'),'nome '+name+' precisa estar impresso na placa');
+}
 assert.equal(types.find(t=>t.kind==='motor').name,'Motor DC','motor deve ser comum, não TT');
 assert.equal(types.find(t=>t.kind==='motor').img,'assets/motor-frontal.svg');
 const front=fs.readFileSync(path.join(base,'assets/motor-frontal.svg'),'utf8');
@@ -79,7 +86,7 @@ connect('esp.D27','drv.IN4');
 click('checkBtn');
 assert.equal(nodes.playPanel.hidden,true,'não liberar circuito com fio errado');
 connect('esp.D27','drv.IN4');
-for(const [a,b] of edges)connect(a,b);
+for(const [a,b] of edges)connect(a,a==='lm.OUTN'?'esp.GND2':b); // usar o segundo GND real e validar equivalência
 assert.equal(saved().wires.length,17,'criar 17 fios');
 toggle('s1');toggle('s2');
 send('input','partsLayer',{target:{id:'voltageInput',value:'5'}});
