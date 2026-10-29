@@ -1,0 +1,116 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#102b38">
+  <meta name="description" content="Construa um carrinho ESP32, descubra as conexões e pilote na pista do Laboratório Virtual PET Educação.">
+  <title>Laboratório PET • Missão Carrinho Wi-Fi</title>
+  <link rel="icon" href="assets/logo-pet.svg" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+  <script defer src="app.js"></script>
+</head>
+<body>
+  <a href="#laboratorio" class="skip">Ir para o laboratório</a>
+  <header class="topbar">
+    <a class="brand" href="./" aria-label="Laboratório PET, página inicial">
+      <span class="brand-logo"><img src="assets/logo-pet.svg" alt="Logo PET Educação"></span>
+      <span><strong>LAB<span class="brand-star">✳</span>PET</strong><small>EDUCAÇÃO · UFS</small></span>
+    </a>
+    <span class="top-pill"><span class="live-dot"></span> OFICINA DIGITAL</span>
+    <button class="top-help" id="helpBtn" type="button" aria-label="Como usar o laboratório">? <span>Como jogar</span></button>
+  </header>
+  <main id="laboratorio" class="app-shell">
+    <aside class="sidebar" aria-label="Missões da oficina">
+      <div class="intro-card">
+        <span class="kicker">PROJETO 01 / CARRINHO WI-FI</span>
+        <h1>Do zero à <em>largada.</em></h1>
+        <p>Descubra as peças, monte o circuito e faça seu carrinho entrar em movimento.</p>
+        <div class="progress-label"><span>Progresso da oficina</span><b id="progressLabel">0%</b></div>
+        <div class="progress-track"><div id="progressBar"></div></div>
+      </div>
+      <nav class="step-nav" aria-label="Etapas">
+        <button type="button" class="step active" data-step="0"><span class="step-icon">01</span><span><strong>Conheça as peças</strong><small>Explore os componentes</small></span><span class="step-mark">→</span></button>
+        <button type="button" class="step" data-step="1"><span class="step-icon">02</span><span><strong>Faça as conexões</strong><small>Ligue os terminais</small></span><span class="step-mark">→</span></button>
+        <button type="button" class="step" data-step="2"><span class="step-icon">03</span><span><strong>Ligue e confira</strong><small>Energia e teste</small></span><span class="step-mark">→</span></button>
+        <button type="button" class="step" data-step="3"><span class="step-icon">04</span><span><strong>Pista de testes</strong><small>Pilote o seu projeto</small></span><span class="step-mark">→</span></button>
+      </nav>
+      <div class="sidebar-note"><span>✦</span><p><strong>Feito para experimentar.</strong> Você pode errar, voltar e tentar quantas vezes quiser.</p></div>
+    </aside>
+    <section class="workarea" aria-label="Área interativa">
+      <div class="workspace-heading">
+        <div><p class="section-eyebrow" id="stepEyebrow">MISSÃO 01 • EXPLORAÇÃO</p><h2 id="stepTitle">Seu laboratório está pronto!</h2><p id="stepDescription">Toque nos componentes para descobrir a função de cada um.</p></div>
+        <button class="btn ghost" id="resetBtn" type="button" title="Reiniciar toda a montagem">↺ <span>Recomeçar</span></button>
+      </div>
+      <div id="buildView">
+        <div class="workbench" id="workbench">
+          <div class="bench-top">
+            <span><span class="bench-indicator"></span> BANCADA DE PROTOTIPAGEM</span>
+            <span id="benchStatus">Exploração livre</span>
+          </div>
+          <div class="board-instruction" id="boardInstruction">Toque numa placa ou componente para saber mais.</div>
+          <div id="board" class="board" aria-label="Bancada com módulos eletrônicos, terminais e fios">
+            <svg id="wireLayer" class="wire-layer" aria-hidden="true"></svg>
+            <div id="modules" class="modules"></div>
+          </div>
+          <div class="bench-foot"><span>✳ Toque nos pinos para conectar</span><span>Desenho didático · escala ilustrativa</span></div>
+        </div>
+        <div class="actionbar">
+          <div class="action-status" id="actionStatus" role="status" aria-live="polite">Comece explorando as placas.</div>
+          <div class="action-buttons">
+            <button class="btn secondary" id="cancelWire" type="button" hidden>Cancelar fio</button>
+            <button class="btn secondary" id="hintBtn" type="button">✧ Dica</button>
+            <button class="btn primary" id="nextBtn" type="button">Próxima etapa <span>↗</span></button>
+          </div>
+        </div>
+        <div class="bottom-grid">
+          <div class="mini-panel">
+            <div class="panel-head"><span class="panel-symbol">✺</span><h3 id="panelTitle">Explore uma peça</h3></div>
+            <p id="panelText">Selecione um componente na bancada para descobrir sua função no carrinho.</p>
+            <div class="small-info" id="panelExtra">Dica: as partes azuis, pretas e vermelhas representam as placas que encontramos na montagem.</div>
+          </div>
+          <div class="mini-panel mission-panel">
+            <div class="panel-head"><span class="panel-symbol">⚡</span><h3>Central de conexões</h3></div>
+            <div class="counter-line"><span>Fios corretos</span><strong id="wireCount">0 / 19</strong></div>
+            <div class="counter-line"><span>Fios para revisar</span><strong id="badCount">0</strong></div>
+            <div class="meter"><div id="wireBar"></div></div>
+            <button id="clearWires" class="text-button" type="button">Limpar todos os fios</button>
+          </div>
+        </div>
+      </div>
+      <section id="driveView" class="drive-view" hidden aria-label="Pista de testes do carrinho">
+        <div class="drive-banner"><span class="drive-light">●</span><div><strong id="driveTitle">A pista está aguardando você!</strong><p id="driveSubtitle">Conclua o circuito para liberar os controles.</p></div></div>
+        <div class="game-layout">
+          <div class="track-wrap">
+            <canvas id="track" width="960" height="560" role="img" aria-label="Pista virtual com carrinho, cones e chegada"></canvas>
+            <div class="track-overlay" id="trackOverlay"><span>🔒</span><strong>Carrinho ainda não liberado</strong><p>Conecte o circuito, ajuste 5 V e ligue as duas gangorras.</p><button class="btn primary" id="goBuild" type="button">Voltar à bancada</button></div>
+          </div>
+          <div class="game-controls">
+            <div class="game-readout"><span>PAINEL DE BORDO</span><strong id="driveReadout">Aguardando montagem</strong><small>Use as setas ou WASD no computador.</small></div>
+            <div class="dpad" aria-label="Controle do carrinho">
+              <button type="button" data-drive="up" class="pad pad-up" aria-label="Acelerar">▲</button>
+              <button type="button" data-drive="left" class="pad pad-left" aria-label="Virar à esquerda">◀</button>
+              <button type="button" data-drive="stop" class="pad pad-stop" aria-label="Parar">■</button>
+              <button type="button" data-drive="right" class="pad pad-right" aria-label="Virar à direita">▶</button>
+              <button type="button" data-drive="down" class="pad pad-down" aria-label="Dar ré">▼</button>
+            </div>
+            <div class="control-actions"><button class="btn secondary" type="button" id="restartTrack">↺ Reiniciar pista</button><button class="btn ghost" type="button" id="returnBench">Editar circuito</button></div>
+            <p class="controls-note">No celular, segure os botões para movimentar. Os controles são virtuais: não conectam ao carrinho físico.</p>
+          </div>
+        </div>
+      </section>
+    </section>
+  </main>
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+  <dialog id="helpDialog" aria-label="Como usar">
+    <div class="dialog-head"><h2>Como funciona o LAB✳PET?</h2><button id="closeHelp" type="button" class="close-help" aria-label="Fechar">×</button></div>
+    <p>Este laboratório é uma <strong>simulação educativa</strong> do carrinho ESP32 — não é um simulador eletrônico de precisão.</p>
+    <ol><li>Toque nas placas para conhecer suas funções.</li><li>Para ligar um fio, toque em um terminal e depois no outro. Toque em uma conexão pronta para removê-la pela lista de fios.</li><li>Na missão 3, ajuste a saída do LM2596 para 5,0 V, ligue as duas gangorras e confira o circuito.</li><li>Na missão 4, pilote o carrinho usando botões na tela ou teclado.</li></ol>
+    <p>As peças são ilustrações inspiradas nas placas reais. A montagem física com eletricidade, solda e ferramentas exige supervisão.</p>
+    <button class="btn primary" id="dismissHelp" type="button">Entendi, vamos construir!</button>
+  </dialog>
+  <footer class="footer"><span>LAB✳PET · PET Educação · UFS</span><span>Aprender fazendo, testar descobrindo.</span></footer>
+</body></html>
