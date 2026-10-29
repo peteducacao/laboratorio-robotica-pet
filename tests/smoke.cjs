@@ -239,6 +239,11 @@ tapCanvas(295,240);
 assert.equal(saved().wires.length,0,'curvas devem ficar pendentes até o segundo pino');
 tapPin('s1.IN');
 assert.equal(saved().wires.length,1,'segundo pino finaliza ligação');
+assert(html.includes('id="diagnosticsPanel"'),'painel de conferência visual presente');
+send('click','inspectorBody',{target:{closest(sel){return sel==='[data-edit-wire]'?{dataset:{editWire:'0'}}:null;}}});
+assert.equal(saved().wires.length,1,'editar fio não desconecta seus terminais');
+assert(saved().wires[0].via.length>=2,'editar fio cria pontos de curva quando necessário');
+
 assert.equal(saved().wires[0].via.length,2,'guardar duas curvas');
 const bends=saved().wires[0].via;
 assert(bends[0].x===bends[1].x||bends[0].y===bends[1].y,'curva nova prolonga apenas a ponta, sem diagonais');
@@ -267,6 +272,8 @@ assert.equal(saved().wires.length,0,'fio existente pode ser removido');
 connect('esp.D27','drv.IN4');
 click('checkBtn');
 assert.equal(nodes.playPanel.hidden,true,'não liberar circuito com fio errado');
+assert.equal(nodes.diagnosticsPanel.hidden,false,'verificação mostra diagnóstico na própria bancada');
+assert(nodes.diagnosticsPanel.children.length>=2,'diagnóstico indica pontos a corrigir');
 connect('esp.D27','drv.IN4');
 for(const [a,b] of edges)connect(a,a==='lm.OUTN'?'esp.GND2':b); // usar o segundo GND real e validar equivalência
 assert.equal(saved().wires.length,17,'criar 17 fios');
@@ -275,6 +282,12 @@ connect('b1.NEG','s1.LEDG');assert.equal(saved().wires.length,18,'terceiro pino 
 toggle('s1');toggle('s2');
 
 send('input','partsLayer',{target:{id:'voltageInput',value:'5'}});
+click('flowBtn');
+assert.equal(nodes.flowPanel.hidden,false,'fluxo educativo pode ser aberto');
+assert.equal(nodes.flowContent.children.length,3,'energia mostra duas cadeias e uma explicação');
+const poweredStages=nodes.flowContent.children[0].children[1].children.filter(x=>x.className?.includes('is-on'));
+assert.equal(poweredStages.length,5,'com ambas gangorras ligadas, ESP32 alimentado e 5V mostra sequência ativa');
+click('flowBtn');assert.equal(nodes.flowPanel.hidden,true,'painel de fluxo pode ser fechado');
 click('checkBtn');
 assert.equal(nodes.playPanel.hidden,false,'liberar pista com circuito correto');
 assert.equal(nodes.trackLock.hidden,true,'retirar bloqueio da pista');
