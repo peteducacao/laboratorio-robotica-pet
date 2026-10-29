@@ -265,7 +265,7 @@ assert(Number(nodes.zoomSlider.value)>=17,'enquadramento calcula um zoom válido
  const visualWires=[...svgBancada.matchAll(/<path d="([^"]+)" fill="none" stroke="(#[a-fA-F0-9]{6})" stroke-width="10"/g)];
  assert.equal(visualWires.length,17,'gabarito usa os 17 fios do projeto');
  for(const wire of visualWires){
-  const points=[...wire[1].matchAll(/[ML](-?\\d+(?:\\.\\d+)?) (-?\\d+(?:\\.\\d+)?)/g)].map(match=>[Number(match[1]),Number(match[2])]);
+  const points=[...wire[1].matchAll(/[ML](-?\d+(?:\.\d+)?) (-?\d+(?:\.\d+)?)/g)].map(match=>[Number(match[1]),Number(match[2])]);
   assert(points.length>=2,'cada fio possui terminais e rota');
   for(let i=1;i<points.length;i++){
    const dx=Math.abs(points[i][0]-points[i-1][0]);
