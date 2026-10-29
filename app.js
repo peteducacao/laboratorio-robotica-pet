@@ -239,7 +239,6 @@ function addPart(kind,x,y){
  const t=byKind[kind];if(!t)return false;
  const id=t.ids.find(id=>!exists(id));if(!id){message('Você já colocou todas as peças deste tipo.',true);return false;}
  snapshot();
- const ix=state.parts.length;
  const layout=PART_LAYOUTS[kind];state.parts.push({id,kind,x:limit(Math.round(x),0,WORLD.w-layout.w),y:limit(Math.round(y),0,WORLD.h-layout.h),view:'front'});
  state.selected=id;state.inspector='parts';state.completed=false;state.startPort=null;refresh();
  message(partName(id)+' adicionado. Arraste pela imagem; toque nos contatos para ligar os fios.',true);
@@ -447,11 +446,15 @@ function centerPart(kind){
  const target=spaces[0];
  const added=addPart(kind,target.x,target.y);
  if(added){
-  const sx=panX+(target.x+size.w/2)*zoom,sy=panY+(target.y+size.h/2)*zoom;
-  if(sx<70||sx>v.width-70||sy<80||sy>v.height-80){
-   panX=v.width/2-(target.x+size.w/2)*zoom;
-   panY=v.height/2-(target.y+size.h/2)*zoom;
-   camera();
+  if(size.w*zoom>v.width-32||size.h*zoom>v.height-65){
+   focusPart(state.selected);
+  }else{
+   const sx=panX+(target.x+size.w/2)*zoom,sy=panY+(target.y+size.h/2)*zoom;
+   if(sx<70||sx>v.width-70||sy<80||sy>v.height-80){
+    panX=v.width/2-(target.x+size.w/2)*zoom;
+    panY=v.height/2-(target.y+size.h/2)*zoom;
+    camera();
+   }
   }
  }
  return added;
