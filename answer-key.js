@@ -94,7 +94,20 @@
   data.connections.forEach((w,i)=>{
    const ports=displayedPorts(i),start=portPosition(ports.a),end=portPosition(ports.b);
    if(!start||!end)return;
-   const points=[start,...bendsFor(i,start,end).map(p=>({x:p[0],y:p[1]})),end];
+   const waypoints=[start,...bendsFor(i,start,end).map(p=>({x:p[0],y:p[1]})),end];
+   // Corrige quaisquer aproximações diagonais: fio sempre horizontal ou vertical.
+   // Bornes laterais de LM2596 e motores recebem a última seção na horizontal.
+   const destination=byId[ports.b.split('.')[0]];
+   const points=[waypoints[0]];
+   waypoints.slice(1).forEach((p,j)=>{
+    const last=points[points.length-1];
+    if(Math.abs(p.x-last.x)>0.01&&Math.abs(p.y-last.y)>0.01){
+     const lastSegment=j===waypoints.length-2;
+     const sideConnection=lastSegment&&['buck','motor'].includes(destination.kind);
+     points.push(sideConnection?{x:last.x,y:p.y}:{x:p.x,y:last.y});
+    }
+    points.push(p);
+   });
    const d=points.map((p,j)=>(j?'L':'M')+p.x.toFixed(1)+' '+p.y.toFixed(1)).join(' ');
    const color=colors[i];
    const label=escaped(w.from+' → '+w.to);
