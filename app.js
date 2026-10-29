@@ -41,6 +41,7 @@ let state={parts:[],wires:[],voltage:4,switches:{s1:false,s2:false},wireColor:CO
 let zoom=1,panX=0,panY=0,gesture=null,history=[],future=[],toastTimer=0,previewPoint=null,previewSnapPort=null,drawPending=false;
 let panMode=false,spaceHeld=false;
 let recentTap=null,doubleTapRestore=null;
+let toolMode='connect',validationActive=false,flowVisible=false,precisionOpenFor=null,pressTimer=null,pressTarget=null;
 const activeTouches=new Map();
 let pinch=null;
 let gestureBlockedUntil=0;
@@ -626,13 +627,52 @@ function startPan(e){
  if(e.cancelable!==false)e.preventDefault();
  gesture={type:'pan',pointer:e.pointerId,startX:e.clientX,startY:e.clientY,x:panX,y:panY,moved:false};
 }
-function setPanMode(enabled){
- panMode=!!enabled;
- const button=Q('panModeBtn'),v=Q('viewport');
- button.setAttribute('aria-pressed',String(panMode));
- button.classList.toggle('is-active',panMode);
- v.classList.toggle('pan-active',panMode);
- Q('canvasHint').textContent=panMode?'Mover bancada: arraste em qualquer lugar. Toque em Mover novamente para conectar fios.':'Fio: toque no pino → marque as curvas → toque no outro pino';
+function setPanMode(enabled){setToolMode(enabled?'move':'connect');}
+function closePrecision(){precisionOpenFor=null;Q('precisionPanel').hidden=true;}
+function setToolMode(mode){
+ if(!['connect','select','move','precision'].includes(mode))return;
+ toolMode=mode;panMode=mode==='move';
+ for(const [name,id] of [['connect','connectModeBtn'],['select','selectModeBtn'],['move','panModeBtn'],['precision','precisionBtn']]){
+  const button=Q(id);button.classList.toggle('is-active',mode===name);button.setAttribute('aria-pressed',String(mode===name));
+ }
+ Q('viewport').classList.toggle('pan-active',panMode);
+ if(mode!=='precision')closePrecision();
+ Q('canvasHint').textContent={
+  connect:'Conectar: toque no pino inicial, faça curvas e termine em outro pino',
+  select:'Selecionar: toque numa peça ou fio e ajuste sua ligação',
+  move:'Mover: arraste a bancada sem deslocar componentes',
+  precision:'Pinos: toque numa peça para ampliar seus terminais'
+ }[mode];
+}
+function showPrecision(id){
+ const part=byPart(id);if(!part)return;
+ precisionOpenFor=id;
+ const panel=Q('precisionPanel'),body=Q('precisionBody');body.replaceChildren();
+ Q('precisionTitle').textContent='⌕ '+partName(id)+' · terminais';
+ const image=document.createElement('img');image.src=part.kind==='motor'?motorImage(part):imageUrl(byKind[part.kind]);
+ image.className='precision-image';image.alt=partName(id);
+ const grid=document.createElement('div');grid.className='precision-pins';
+ byKind[part.kind].pins.forEach(([code,label])=>{
+  const button=document.createElement('button');button.type='button';
+  button.className='precision-pin';button.textContent=label+' · '+code;
+  button.dataset.precisionPort=id+'.'+code;
+  if(state.wires.some(w=>w.a===button.dataset.precisionPort||w.b===button.dataset.precisionPort))button.classList.add('has-wire');
+  grid.append(button);
+ });
+ body.append(image,grid);panel.hidden=false;Q('zoomPopover').hidden=true;
+}
+function organizeWorkspace(){
+ if(state.parts.length===0){message('Adicione uma peça antes de organizar.',true);return;}
+ const positions={
+  b1:{x:-220,y:-480},s1:{x:10,y:-450},lm:{x:320,y:-450},esp:{x:735,y:-530},
+  b2:{x:-220,y:160},s2:{x:10,y:200},drv:{x:780,y:300},ml:{x:1190,y:230},mr:{x:1500,y:230}
+ };
+ snapshot();cancelPendingWire();closePrecision();
+ state.parts.forEach(p=>{const pos=positions[p.id];if(pos){p.x=pos.x;p.y=pos.y;}});
+ state.wires.forEach(w=>{w.via=[];});
+ state.selected=null;state.selectedWire=null;state.completed=false;
+ refresh();fitCamera();
+ message('Bancada organizada. Ligações preservadas; use Desfazer para voltar.',true);
 }
 function partDown(e){
  if(pinch||activeTouches.size>=2||Date.now()<gestureBlockedUntil)return;
@@ -641,9 +681,17 @@ function partDown(e){
  const el=e.target.closest('.part');if(!el)return;
  const p=byPart(el.dataset.part);if(!p)return;
  e.preventDefault();
+ if(toolMode==='precision'){showPrecision(p.id);gesture=null;return;}
  state.selected=p.id;state.selectedWire=null;state.inspector='parts';
  renderInspector();renderParts();
+ if(toolMode==='select'){gesture=null;return;}
  gesture={type:'move',pointer:e.pointerId,partId:p.id,startX:e.clientX,startY:e.clientY,partX:p.x,partY:p.y,moved:false};
+ if(e.pointerType==='touch'){
+  clearTimeout(pressTimer);pressTarget=p.id;
+  pressTimer=setTimeout(()=>{if(gesture&&gesture.type==='move'&&!gesture.moved&&pressTarget===p.id){
+   gesture=null;showPrecision(p.id);
+  }},560);
+ }
 }
 function paletteDown(e){
  if(e.button!==undefined&&e.button!==0)return;
@@ -666,7 +714,7 @@ function pointerMove(e){
  if(trackingTouchMove(e)||pinch)return;
  if(gesture&&e.pointerId===gesture.pointer){
   const g=gesture,dx=e.clientX-g.startX,dy=e.clientY-g.startY;
-  if(Math.hypot(dx,dy)>(g.type==='wire'?12:g.type==='pan'?9:6))g.moved=true;
+  if(Math.hypot(dx,dy)>(g.type==='wire'?12:g.type==='pan'?9:6)){g.moved=true;clearTimeout(pressTimer);pressTarget=null;}
   if(g.type==='catalog'){
    if(g.moved){const ghost=Q('dragGhost');ghost.hidden=false;ghost.textContent=byKind[g.kind].name;ghost.style.left=e.clientX+'px';ghost.style.top=e.clientY+'px';}
   }else if(g.type==='move'){
@@ -728,6 +776,7 @@ function handleDoubleTap(e,g){
  return true;
 }
 function pointerUp(e){
+ clearTimeout(pressTimer);pressTarget=null;
  if(trackingTouchEnd(e)||pinch)return;
  if(!gesture||e.pointerId!==gesture.pointer)return;
  const g=gesture;gesture=null;Q('dragGhost').hidden=true;
@@ -936,6 +985,15 @@ function bind(){
  Q('zoomOut').addEventListener('click',()=>zoomTo(.8));
  Q('fitBtn').addEventListener('click',fitCamera);
  Q('panModeBtn').addEventListener('click',()=>setPanMode(!panMode));
+ Q('connectModeBtn').addEventListener('click',()=>setToolMode('connect'));
+ Q('selectModeBtn').addEventListener('click',()=>setToolMode('select'));
+ Q('precisionBtn').addEventListener('click',()=>setToolMode(toolMode==='precision'?'connect':'precision'));
+ Q('precisionClose').addEventListener('click',closePrecision);
+ Q('precisionBody').addEventListener('click',e=>{
+  const button=e.target.closest('[data-precision-port]');if(!button)return;
+  connect(button.dataset.precisionPort);closePrecision();setToolMode('connect');
+ });
+ Q('organizeBtn').addEventListener('click',organizeWorkspace);
  Q('zoomTool').addEventListener('click',()=>{Q('zoomPopover').hidden=!Q('zoomPopover').hidden;});
  Q('zoomSlider').addEventListener('input',e=>cameraZoom(Number(e.target.value)/100));
  Q('zoomFitPart').addEventListener('click',()=>{const p=byPart(state.selected);if(p)focusPart(p.id);else fitCamera();Q('zoomPopover').hidden=true;});
