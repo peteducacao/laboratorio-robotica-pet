@@ -1,7 +1,17 @@
 'use strict';
 (()=>{
  const data=window.tinkerpetAnswerData;
- if(!data||!Array.isArray(data.connections))return;
+ if(!data||!Array.isArray(data.connections)||!Array.isArray(data.components))return;
+ const WIDTH=2050,HEIGHT=1450;
+ const places={
+  b1:[100,180],s1:[365,220],lm:[655,205],esp:[1040,130],
+  b2:[100,815],s2:[365,855],drv:[1010,820],ml:[1420,775],mr:[1695,775]
+ };
+ const colors=['#e44f45','#e44f45','#344e61','#e44f45','#344e61',
+               '#e44f45','#e44f45','#344e61','#344e61',
+               '#277cbe','#277cbe','#277cbe','#277cbe',
+               '#169980','#169980','#169980','#169980'];
+ const byId=Object.fromEntries(data.components.map(p=>[p.id,p]));
  const btn=document.createElement('button');
  btn.id='answerKeyBtn';btn.type='button';btn.className='answer-key-trigger';
  btn.textContent='🔒 Gabarito';btn.setAttribute('aria-haspopup','dialog');
@@ -9,73 +19,146 @@
  header.insertBefore(btn,header.firstChild);
  const dialog=document.createElement('dialog');
  dialog.id='answerKeyDialog';dialog.className='answer-key-dialog';
- dialog.setAttribute('aria-label','Gabarito de conexões do TinkerPET');
- dialog.innerHTML=`<div class="answer-head"><div><small>PET EDUCAÇÃO • TINKERPET</small><h2>Gabarito de conexões</h2></div><button id="answerClose" type="button" aria-label="Fechar gabarito">×</button></div>
- <form id="answerForm" class="answer-gate" autocomplete="off">
- <div class="answer-lock">🔐</div><h3>Acesso ao gabarito</h3>
- <p>Digite a senha para consultar a montagem correta do carrinho.</p>
- <label for="answerPassword">Senha de acesso</label><input id="answerPassword" type="password" required autocomplete="off" placeholder="Digite a senha">
- <span id="answerError" role="alert"></span><button type="submit" class="answer-main">Desbloquear gabarito</button></form>
- <div id="answerContent" class="answer-content" hidden>
- <div class="answer-summary"><b>17 conexões obrigatórias</b><span>Consulte origem e destino de cada fio, na ordem.</span></div>
- <div id="answerGroups"></div>
- <div class="answer-info"><strong>Antes de testar</strong>
- <p>GND e GND2 da ESP32 são equivalentes. Ajuste o LM2596 para <b>5,0 V</b> e ligue as duas gangorras.</p>
- <p><b>Conexões opcionais:</b> bateria 1 NEG → gangorra 1 LED− e bateria 2 NEG → gangorra 2 LED−.</p></div>
- <div class="answer-actions"><button id="answerDownload" type="button" class="answer-main">↓ Baixar gabarito (SVG)</button>
- <button id="answerPrint" type="button" class="answer-alt">⎙ Imprimir / salvar PDF</button></div></div>`;
+ dialog.setAttribute('aria-label','Gabarito visual: circuito completo do TinkerPET');
+ dialog.innerHTML='<div class="answer-head"><div><small>PET EDUCAÇÃO • TINKERPET</small><h2>Gabarito visual</h2></div><button id="answerClose" type="button" aria-label="Fechar gabarito">×</button></div>'+
+ '<form id="answerForm" class="answer-gate" autocomplete="off">'+
+ '<div class="answer-lock">🔐</div><h3>Acesso ao circuito pronto</h3>'+
+ '<p>Digite a senha para visualizar a bancada completa, com os componentes e os fios conectados.</p>'+
+ '<label for="answerPassword">Senha de acesso</label><input id="answerPassword" type="password" required autocomplete="off" placeholder="Digite a senha">'+
+ '<span id="answerError" role="alert"></span><button type="submit" class="answer-main">Mostrar circuito pronto</button></form>'+
+ '<div id="answerContent" class="answer-content" hidden>'+
+ '<div class="answer-visual-top"><span class="answer-counter">✓ 9 peças • 17 fios conectados</span>'+
+ '<div class="answer-zoom" aria-label="Ampliar gabarito"><button type="button" id="answerZoomOut" aria-label="Diminuir gabarito">−</button><b id="answerZoomLabel">100%</b><button type="button" id="answerZoomIn" aria-label="Ampliar gabarito">+</button><button type="button" id="answerZoomFit">Enquadrar</button></div></div>'+
+ '<div class="answer-board-scroll" id="answerBoardScroll" tabindex="0" aria-label="Bancada com carrinho ESP32 montado; use o zoom para ampliar">'+
+ '<div class="answer-board" id="answerDiagram"></div></div>'+
+ '<div class="answer-actions"><button id="answerPng" type="button" class="answer-main">↓ Baixar imagem PNG</button>'+
+ '<button id="answerDownload" type="button" class="answer-alt">↓ Baixar SVG</button>'+
+ '<button id="answerPrint" type="button" class="answer-alt">⎙ Salvar PDF / imprimir</button></div>'+
+ '<details id="answerDetails" class="answer-details"><summary>Ver resumo das 17 conexões</summary>'+
+ '<div id="answerGroups"></div><div class="answer-info"><strong>Antes de testar</strong>'+
+ '<p>GND e GND2 da ESP32 são equivalentes. Ajuste o LM2596 para <b>5,0 V</b> e ligue as duas gangorras.</p>'+
+ '<p><b>Opcionais:</b> bateria 1 NEG → gangorra 1 LED− e bateria 2 NEG → gangorra 2 LED−.</p></div></details></div>';
  document.body.append(dialog);
  const el=id=>dialog.querySelector('#'+id);
- function render(){
+ const escaped=s=>String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+ let magnification=1;
+ let busy=false;
+ const displayedPorts=i=>{
+  const w=data.connections[i];
+  // Na ligação de terra entre ESP32 e ponte H, usa o segundo GND físico.
+  return {a:i===8?'esp.GND2':w.a,b:w.b};
+ };
+ function portPosition(id){
+  const parts=id.split('.'),part=byId[parts[0]],where=places[parts[0]];
+  if(!part||!where||!part.pins[parts[1]])return null;
+  const pct=part.pins[parts[1]];
+  return {x:where[0]+part.width*pct[0]/100,y:where[1]+part.height*pct[1]/100};
+ }
+ function bendsFor(i,a,b){
+  const x=a.x,y=a.y,X=b.x,Y=b.y;
+  switch(i){
+   case 0:return [[x,112],[316,112],[316,445],[X,445]];
+   case 1:return [[x,454],[615,454],[615,Y]];
+   case 2:return [[x,77],[601,77],[601,Y]];
+   case 3:return [[1003,y],[1003,112],[X,112]];
+   case 4:return [[1016,y],[1016,86],[X,86]];
+   case 5:return [[x,717],[326,717],[326,1072],[X,1072]];
+   case 6:return [[x,1223],[X,1223]];
+   case 7:return [[x,695],[352,695],[352,1267],[X,1267]];
+   case 8:return [[x,552],[1000,552],[1000,1292],[X,1292]];
+   case 9:return [[x,64],[990,64],[990,1155],[X,1155]];
+   case 10:return [[x,49],[979,49],[979,1180],[X,1180]];
+   case 11:return [[x,34],[965,34],[965,1204],[X,1204]];
+   case 12:return [[x,578],[950,578],[950,1238],[X,1238]];
+   case 13:return [[x,713],[1399,713],[1399,Y]];
+   case 14:return [[x,688],[1379,688],[1379,Y]];
+   case 15:return [[x,658],[1668,658],[1668,Y]];
+   case 16:return [[x,629],[1648,629],[1648,Y]];
+   default:return [[x,Y]];
+  }
+ }
+ function makeSvg(embedded={}){
+  const pieces=[];
+  pieces.push('<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 '+WIDTH+' '+HEIGHT+'" width="'+WIDTH+'" height="'+HEIGHT+'" role="img" aria-label="Gabarito visual do carrinho ESP32, com nove componentes reais e dezessete fios conectados">');
+  pieces.push('<defs><pattern id="answerDots" width="28" height="28" patternUnits="userSpaceOnUse"><circle cx="3" cy="3" r="1.45" fill="#ccdce1"/></pattern></defs>');
+  pieces.push('<rect width="'+WIDTH+'" height="'+HEIGHT+'" rx="30" fill="#eef5f6"/>');
+  pieces.push('<rect x="24" y="24" width="2002" height="1402" rx="28" fill="#f8fbfc" stroke="#b4cbd2" stroke-width="3"/>');
+  pieces.push('<rect x="25" y="25" width="2000" height="1400" rx="27" fill="url(#answerDots)"/>');
+  pieces.push('<rect x="55" y="77" width="1938" height="486" rx="27" fill="#e4eff5" fill-opacity=".43" stroke="#d5e5eb" stroke-width="2"/>');
+  pieces.push('<rect x="55" y="600" width="1938" height="725" rx="27" fill="#e4f2ed" fill-opacity=".30" stroke="#d5e6de" stroke-width="2"/>');
+  pieces.push('<text x="75" y="67" fill="#1a5362" font-family="Arial,sans-serif" font-weight="bold" font-size="29">CIRCUITO PRONTO · ESP32</text>');
+  pieces.push('<text x="1280" y="67" fill="#63838c" font-family="Arial,sans-serif" font-size="23">TinkerPET • PET Educação • 9 componentes / 17 conexões</text>');
+  pieces.push('<text x="81" y="146" fill="#347e82" font-family="Arial,sans-serif" font-weight="bold" font-size="20" letter-spacing="2">ALIMENTAÇÃO E CONTROLE</text>');
+  pieces.push('<text x="81" y="678" fill="#347e82" font-family="Arial,sans-serif" font-weight="bold" font-size="20" letter-spacing="2">ALIMENTAÇÃO DOS MOTORES</text>');
+  const contacts=[];
+  data.connections.forEach((w,i)=>{
+   const ports=displayedPorts(i),start=portPosition(ports.a),end=portPosition(ports.b);
+   if(!start||!end)return;
+   const points=[start,...bendsFor(i,start,end).map(p=>({x:p[0],y:p[1]})),end];
+   const d=points.map((p,j)=>(j?'L':'M')+p.x.toFixed(1)+' '+p.y.toFixed(1)).join(' ');
+   const color=colors[i];
+   const label=escaped(w.from+' → '+w.to);
+   pieces.push('<path d="'+d+'" fill="none" stroke="#fff" stroke-width="17" stroke-linejoin="round" stroke-linecap="round"/>');
+   pieces.push('<path d="'+d+'" fill="none" stroke="'+color+'" stroke-width="10" stroke-linejoin="round" stroke-linecap="round"><title>Conexão '+(i+1)+': '+label+'</title></path>');
+   contacts.push({x:start.x,y:start.y,color,label},{x:end.x,y:end.y,color,label});
+  });
+  // Mesmas imagens e pontos reais de conexão usados na bancada editável.
+  data.components.forEach(part=>{
+   const pos=places[part.id],href=embedded[part.image]||part.image;
+   if(!pos)return;
+   pieces.push('<image x="'+pos[0]+'" y="'+pos[1]+'" width="'+part.width+'" height="'+part.height+'" preserveAspectRatio="none" href="'+escaped(href)+'" xlink:href="'+escaped(href)+'"><title>'+escaped(part.name)+'</title></image>');
+   let labelX=pos[0]+part.width/2, labelY=pos[1]-21;
+   if(part.kind==='battery')labelY=pos[1]+part.height+37;
+   if(part.kind==='switch')labelY=pos[1]-22;
+   if(part.kind==='motor')labelY=pos[1]+part.height+36;
+   pieces.push('<rect x="'+(labelX-111)+'" y="'+(labelY-27)+'" width="222" height="39" rx="19" fill="#fff" stroke="#c5d9dd" stroke-width="2"/>');
+   pieces.push('<text x="'+labelX+'" y="'+labelY+'" font-size="20" font-family="Arial,sans-serif" font-weight="bold" fill="#234a57" text-anchor="middle">'+escaped(part.name)+'</text>');
+  });
+  // Pontas preenchidas exatamente no centro dos terminais dos SVGs.
+  contacts.forEach(c=>{
+   pieces.push('<circle cx="'+c.x.toFixed(1)+'" cy="'+c.y.toFixed(1)+'" r="10" fill="'+c.color+'" stroke="#fff" stroke-width="3"><title>'+c.label+'</title></circle>');
+  });
+  pieces.push('<rect x="69" y="1350" width="1912" height="52" rx="20" fill="#e3eff1"/>');
+  const legend=[['#e44f45','Positivo / alimentação'],['#344e61','Negativo / GND'],['#277cbe','GPIO / comando'],['#169980','Saídas dos motores']];
+  legend.forEach((item,i)=>{
+   const x=104+i*473;
+   pieces.push('<path d="M'+x+' 1376 H'+(x+57)+'" stroke="'+item[0]+'" stroke-width="11" stroke-linecap="round"/>');
+   pieces.push('<text x="'+(x+72)+'" y="1384" font-size="22" font-family="Arial,sans-serif" fill="#315d68">'+item[1]+'</text>');
+  });
+  pieces.push('</svg>');
+  return pieces.join('');
+ }
+ function renderSummary(){
   const root=el('answerGroups');root.replaceChildren();
   for(const group of data.groups){
    const section=document.createElement('section');section.className='answer-group';
    section.style.setProperty('--section-color',group.color);
-   const h=document.createElement('h3');h.textContent=group.title;
-   const p=document.createElement('p');p.textContent=group.info;
-   section.append(h,p);
+   const heading=document.createElement('h3');heading.textContent=group.title;
+   const p=document.createElement('p');p.textContent=group.info;section.append(heading,p);
    for(const w of data.connections.slice(group.from,group.to)){
     const row=document.createElement('div');row.className='answer-row';
-    for(const [value,cls] of [[String(w.n).padStart(2,'0'),'answer-n'],[w.from,'answer-port'],['→','answer-arrow'],[w.to,'answer-port']]){
-     const span=document.createElement('span');span.className=cls;span.textContent=value;row.append(span);
+    for(const [v,css] of [[String(w.n).padStart(2,'0'),'answer-n'],[w.from,'answer-port'],['→','answer-arrow'],[w.to,'answer-port']]){
+     const span=document.createElement('span');span.className=css;span.textContent=v;row.append(span);
     }
     section.append(row);
    }
    root.append(section);
   }
  }
- const escapeSvg=s=>String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
- function makeSvg(){
-  const out=['<svg xmlns="http://www.w3.org/2000/svg" width="1240" height="1810" viewBox="0 0 1240 1810">',
-   '<rect width="1240" height="1810" fill="#f3f7f9"/>',
-   '<rect width="1240" height="124" fill="#193b4b"/>',
-   '<text x="56" y="69" font-size="44" font-weight="bold" font-family="Arial,sans-serif" fill="#fff">TinkerPET | Gabarito de conexões</text>',
-   '<text x="58" y="103" font-size="20" font-family="Arial,sans-serif" fill="#cce9e8">PET Educação - UFS | Carrinho ESP32 | 17 fios obrigatórios</text>'];
-  let y=155;
-  for(const g of data.groups){
-   const rows=data.connections.slice(g.from,g.to),height=98+rows.length*56;
-   out.push('<rect x="46" y="'+y+'" width="1148" height="'+height+'" rx="20" fill="#fff" stroke="#d7e5e9" stroke-width="2"/>');
-   out.push('<rect x="46" y="'+y+'" width="12" height="'+height+'" rx="6" fill="'+g.color+'"/>');
-   out.push('<text x="80" y="'+(y+39)+'" font-size="29" font-family="Arial,sans-serif" font-weight="bold" fill="#23414e">'+escapeSvg(g.title)+'</text>');
-   out.push('<text x="81" y="'+(y+69)+'" font-size="19" font-family="Arial,sans-serif" fill="#617f88">'+escapeSvg(g.info)+'</text>');
-   rows.forEach((w,i)=>{
-    const ry=y+109+i*56;
-    if(i%2===0)out.push('<rect x="76" y="'+(ry-32)+'" width="1088" height="48" rx="8" fill="#f3f8f9"/>');
-    out.push('<text x="91" y="'+ry+'" font-size="24" font-family="Arial,sans-serif" font-weight="bold" fill="'+g.color+'">'+String(w.n).padStart(2,'0')+'</text>');
-    out.push('<text x="144" y="'+ry+'" font-size="21" font-family="Arial,sans-serif" fill="#27424c">'+escapeSvg(w.from)+'</text>');
-    out.push('<text x="604" y="'+ry+'" font-size="29" font-family="Arial,sans-serif" fill="'+g.color+'">→</text>');
-    out.push('<text x="674" y="'+ry+'" font-size="21" font-family="Arial,sans-serif" fill="#27424c">'+escapeSvg(w.to)+'</text>');
-   });
-   y+=height+22;
-  }
-  out.push('<rect x="47" y="'+(y+6)+'" width="1146" height="108" rx="17" fill="#dff2ec"/>');
-  out.push('<text x="78" y="'+(y+48)+'" font-size="25" font-family="Arial,sans-serif" font-weight="bold" fill="#285e52">Antes de testar</text>');
-  out.push('<text x="78" y="'+(y+83)+'" font-size="19" font-family="Arial,sans-serif" fill="#315c54">Ajuste o LM2596 para 5 V, ligue as duas chaves e confira os pinos GND.</text>');
-  out.push('<text x="58" y="1770" font-size="19" font-family="Arial,sans-serif" fill="#577983">Opcionais: bateria 1 NEG → gangorra 1 LED−; bateria 2 NEG → gangorra 2 LED−.</text>');
-  out.push('</svg>');return out.join('');
+ function applyZoom(){
+  const board=el('answerDiagram'),svg=board.querySelector('svg');
+  if(svg){svg.style.width=Math.round(100*magnification)+'%';svg.style.height='auto';}
+  el('answerZoomLabel').textContent=Math.round(magnification*100)+'%';
+ }
+ function renderCircuit(){
+  el('answerDiagram').innerHTML=makeSvg();
+  magnification=1;applyZoom();
+  renderSummary();
  }
  function open(){
-  el('answerForm').hidden=false;el('answerContent').hidden=true;el('answerError').textContent='';el('answerPassword').value='';
+  el('answerForm').hidden=false;el('answerContent').hidden=true;
+  el('answerError').textContent='';el('answerPassword').value='';
+  el('answerDetails').open=false;
   dialog.showModal();el('answerPassword').focus();
  }
  btn.addEventListener('click',open);
@@ -87,12 +170,52 @@
    el('answerPassword').value='';el('answerPassword').focus();return;
   }
   el('answerPassword').value='';el('answerError').textContent='';
-  el('answerForm').hidden=true;el('answerContent').hidden=false;render();
+  el('answerForm').hidden=true;el('answerContent').hidden=false;
+  renderCircuit();
  });
- el('answerDownload').addEventListener('click',()=>{
-  const blob=new Blob([makeSvg()],{type:'image/svg+xml;charset=utf-8'});
-  const u=URL.createObjectURL(blob),a=document.createElement('a');a.href=u;a.download='TinkerPET-gabarito.svg';
-  document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(u),1000);
+ el('answerZoomIn').addEventListener('click',()=>{magnification=Math.min(3.5,magnification+.35);applyZoom();});
+ el('answerZoomOut').addEventListener('click',()=>{magnification=Math.max(1,magnification-.35);applyZoom();});
+ el('answerZoomFit').addEventListener('click',()=>{magnification=1;applyZoom();el('answerBoardScroll').scrollLeft=0;});
+ function download(blob,name){
+  const u=URL.createObjectURL(blob),a=document.createElement('a');
+  a.href=u;a.download=name;document.body.append(a);a.click();a.remove();
+  setTimeout(()=>URL.revokeObjectURL(u),1000);
+ }
+ // Um SVG independente precisa incorporar as imagens locais dos componentes.
+ async function withEmbeddedAssets(){
+  const paths=[...new Set(data.components.map(p=>p.image))];
+  const entries=await Promise.all(paths.map(async path=>{
+   const response=await fetch(path);
+   if(!response.ok)throw new Error('Imagem indisponível: '+path);
+   const svg=await response.text();
+   return [path,'data:image/svg+xml;charset=utf-8,'+encodeURIComponent(svg)];
+  }));
+  return makeSvg(Object.fromEntries(entries));
+ }
+ function exportSvg(){
+  const fallback=()=>download(new Blob([makeSvg()],{type:'image/svg+xml;charset=utf-8'}),'TinkerPET-gabarito.svg');
+  if(typeof fetch!=='function'){fallback();return;}
+  withEmbeddedAssets().then(svg=>download(new Blob([svg],{type:'image/svg+xml;charset=utf-8'}),'TinkerPET-gabarito.svg'))
+   .catch(()=>{fallback();alert('Algumas imagens podem exigir abrir o SVG junto aos arquivos do site.');});
+ }
+ el('answerDownload').addEventListener('click',exportSvg);
+ el('answerPng').addEventListener('click',async()=>{
+  if(busy)return;busy=true;
+  const button=el('answerPng');button.disabled=true;button.textContent='Preparando imagem…';
+  let u='';
+  try{
+   const svg=await withEmbeddedAssets();
+   u=URL.createObjectURL(new Blob([svg],{type:'image/svg+xml;charset=utf-8'}));
+   const img=new Image();
+   await new Promise((resolve,reject)=>{img.onload=resolve;img.onerror=reject;img.src=u;});
+   const canvas=document.createElement('canvas');canvas.width=3075;canvas.height=2175;
+   const context=canvas.getContext('2d');if(!context)throw new Error('Canvas indisponível');
+   context.drawImage(img,0,0,canvas.width,canvas.height);
+   const blob=await new Promise(resolve=>canvas.toBlob(resolve,'image/png'));
+   if(!blob)throw new Error('Falha na imagem');
+   download(blob,'TinkerPET-gabarito-visual.png');
+  }catch(err){alert('Não foi possível criar o PNG neste navegador. Use o download SVG ou Salvar PDF.');}
+  finally{if(u)URL.revokeObjectURL(u);button.disabled=false;button.textContent='↓ Baixar imagem PNG';busy=false;}
  });
  el('answerPrint').addEventListener('click',()=>window.print());
 })();
