@@ -154,6 +154,19 @@ assert(saved().parts.find(p=>p.id==='esp').x>1900,'peça pode ir além da borda 
 assert(saved().parts.find(p=>p.id==='esp').y>1450,'peça pode ir além da borda inferior antiga');
 click('undoBtn');click('undoBtn');
 assert.equal(saved().parts.find(p=>p.id==='esp').x,originalEsp.x,'desfazer recupera posição anterior');
+const panBefore=nodes.world.style.transform;
+click('panModeBtn');
+dragEsp(480,330);
+assert.equal(saved().parts.find(p=>p.id==='esp').x,originalEsp.x,'modo mão não arrasta componentes');
+assert.notEqual(nodes.world.style.transform,panBefore,'modo mão desloca a câmera');
+click('panModeBtn');
+const wheelBefore=nodes.world.style.transform;
+send('wheel','viewport',{deltaX:0,deltaY:240,shiftKey:false,ctrlKey:false,metaKey:false,clientX:400,clientY:300,preventDefault(){}});
+assert.notEqual(nodes.world.style.transform,wheelBefore,'roda do mouse move a bancada');
+const zoomBefore=Number(nodes.zoomSlider.value);
+send('wheel','viewport',{deltaX:0,deltaY:-240,shiftKey:false,ctrlKey:true,metaKey:false,clientX:400,clientY:300,preventDefault(){}});
+assert(Number(nodes.zoomSlider.value)>zoomBefore,'Ctrl e roda aplicam zoom na bancada');
+
 
 
 
