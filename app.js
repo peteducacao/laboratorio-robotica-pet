@@ -7,7 +7,7 @@ const TYPES=[
  {kind:'buck',name:'Regulador LM2596',img:'assets/lm2596-desenhado.svg',ids:['lm'],pins:[['INP','IN +'],['INN','IN −'],['OUTP','OUT +'],['OUTN','OUT −']],info:'Regulador de tensão. Neste projeto, a saída para o ESP32 deve ser ajustada para 5,0 V.',tip:'Na montagem real, um responsável deve medir 5 V com multímetro antes de conectar VIN.'},
  {kind:'battery',name:'Bateria 9 V',img:'assets/bateria-9v-desenhada.svg',ids:['b1','b2'],pins:[['POS','+'],['NEG','−']],info:'Duas baterias em circuitos independentes: uma para o ESP32 e outra para os motores.',tip:'A bateria 1 alimenta o LM2596 por uma gangorra; a bateria 2 alimenta a ponte H pela outra.'},
  {kind:'switch',name:'Chave gangorra',img:'assets/gangorra-desenhada.svg',ids:['s1','s2'],pins:[['IN','IN'],['OUT','OUT']],info:'Chave física liga/desliga, instalada em série com o fio positivo da sua bateria.',tip:'São duas chaves: uma alimenta o regulador do ESP32 e a outra alimenta a ponte H.'},
- {kind:'motor',name:'Motor DC',img:'assets/motor-frontal.svg',ids:['ml','mr'],pins:[['A','+'],['B','−']],info:'Motor de corrente contínua com escovas, corpo metálico, eixo dianteiro e dois terminais traseiros. O sentido de giro muda conforme o comando da ponte H.',tip:'Os contatos ficam nas duas abas metálicas traseiras: superior (+, vermelho) e inferior (−, preto). A ponte H pode inverter o sentido do giro.'}
+ {kind:'motor',name:'Motor DC',img:'assets/motor-frontal.svg',ids:['ml','mr'],pins:[['A','+'],['B','−']],info:'Motor DC com caixa de redução amarela, eixo lateral para a roda e dois contatos no motor metálico. Na simulação, a ponte H controla o sentido de giro.',tip:'Os dois contatos ficam ao lado do motor metálico, identificados em vermelho e preto. O eixo de saída fica na caixa amarela.'}
 ];
 const byKind=Object.fromEntries(TYPES.map(p=>[p.kind,p]));
 const PART_LAYOUTS={
@@ -429,7 +429,7 @@ let suppressPortClickUntil=0;
 function pointerMove(e){
  if(gesture&&e.pointerId===gesture.pointer){
   const g=gesture,dx=e.clientX-g.startX,dy=e.clientY-g.startY;
-  if(Math.hypot(dx,dy)>5)g.moved=true;
+  if(Math.hypot(dx,dy)>(g.type==='wire'?12:g.type==='pan'?9:6))g.moved=true;
   if(g.type==='catalog'){
    if(g.moved){const ghost=Q('dragGhost');ghost.hidden=false;ghost.textContent=byKind[g.kind].name;ghost.style.left=e.clientX+'px';ghost.style.top=e.clientY+'px';}
   }else if(g.type==='move'){
