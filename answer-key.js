@@ -135,7 +135,7 @@
   data.components.forEach(part=>{
    const pos=places[part.id],href=embedded[part.image]||part.image;
    if(!pos)return;
-   pieces.push('<image x="'+pos[0]+'" y="'+pos[1]+'" width="'+part.width+'" height="'+part.height+'" preserveAspectRatio="none" href="'+escaped(href)+'" xlink:href="'+escaped(href)+'"><title>'+escaped(part.name)+'</title></image>');
+   pieces.push('<image x="'+pos[0]+'" y="'+pos[1]+'" width="'+part.width+'" height="'+part.height+'" preserveAspectRatio="none" pointer-events="none" href="'+escaped(href)+'" xlink:href="'+escaped(href)+'"><title>'+escaped(part.name)+'</title></image>');
    let labelX=pos[0]+part.width/2, labelY=pos[1]-21;
    if(part.kind==='battery')labelY=pos[1]+part.height+37;
    if(part.kind==='switch')labelY=pos[1]-22;
@@ -167,6 +167,56 @@
   pieces.push('</svg>');
   return pieces.join('');
  }
+ const partLabels={b1:'Bateria 1',s1:'Gangorra 1',lm:'LM2596',esp:'ESP32',
+                   b2:'Bateria 2',s2:'Gangorra 2',drv:'Ponte H',ml:'Motor 1',mr:'Motor 2'};
+ const pinLabels={POS:'+',NEG:'−',INP:'IN+',INN:'IN−',OUTP:'OUT+',OUTN:'OUT−',VCC:'VCC',GND:'GND',GND2:'GND2',
+                  A:'A',B:'B',IN:'IN',OUT:'OUT'};
+ function wireName(i){
+  const w=data.connections[i],a=displayedPorts(i).a,b=w.b;
+  const part=s=>{
+   const parts=s.split('.');
+   return (partLabels[parts[0]]||parts[0])+' '+(pinLabels[parts[1]]||parts[1]);
+  };
+  return part(a)+' → '+part(b);
+ }
+ function showGroup(group){
+  activeCategory=group;activeWire=-1;refresh();
+ }
+ function showWire(i){
+  if(activeWire===i){activeWire=-1;}
+  else{activeWire=i;
+   const category=categories.find(c=>c.id!=='all'&&c.indices.includes(i));
+   if(category)activeCategory=category.id;
+  }
+  refresh();
+ }
+ function renderFilters(){
+  const root=el('answerFilters');root.replaceChildren();
+  for(const category of categories){
+   const button=document.createElement('button');
+   button.type='button';button.textContent=category.label;
+   button.className='answer-filter'+(activeCategory===category.id?' is-active':'');
+   button.setAttribute('aria-pressed',String(activeCategory===category.id));
+   button.addEventListener('click',()=>showGroup(category.id));
+   root.append(button);
+  }
+  const picker=el('answerWirePicker');picker.replaceChildren();
+  const current=categories.find(c=>c.id===activeCategory)||categories[0];
+  for(const i of current.indices){
+   const button=document.createElement('button');button.type='button';
+   button.className='answer-wire-choice'+(activeWire===i?' is-active':'');
+   button.style.setProperty('--wire-color',colors[i]);
+   button.textContent=String(i+1).padStart(2,'0')+' · '+wireName(i);
+   button.setAttribute('title','Destacar fio '+(i+1)+': '+wireName(i));
+   button.setAttribute('aria-pressed',String(activeWire===i));
+   button.addEventListener('click',()=>showWire(i));
+   picker.append(button);
+  }
+  const status=el('answerSelectedInfo');
+  if(activeWire>=0)status.textContent='Fio '+String(activeWire+1).padStart(2,'0')+' • '+wireName(activeWire)+' — toque novamente para ver toda a etapa.';
+  else status.textContent=current.title+' • '+current.indices.length+' fios visíveis. Toque no número de um fio para acompanhá-lo sozinho.';
+  status.style.setProperty('--wire-color',activeWire>=0?colors[activeWire]:'#1b8374');
+ }
  function renderSummary(){
   const root=el('answerGroups');root.replaceChildren();
   for(const group of data.groups){
@@ -176,6 +226,7 @@
    const p=document.createElement('p');p.textContent=group.info;section.append(heading,p);
    for(const w of data.connections.slice(group.from,group.to)){
     const row=document.createElement('div');row.className='answer-row';
+    row.style.setProperty('--section-color',colors[w.n-1]);
     for(const [v,css] of [[String(w.n).padStart(2,'0'),'answer-n'],[w.from,'answer-port'],['→','answer-arrow'],[w.to,'answer-port']]){
      const span=document.createElement('span');span.className=css;span.textContent=v;row.append(span);
     }
@@ -189,10 +240,13 @@
   if(svg){svg.style.width=Math.round(100*magnification)+'%';svg.style.height='auto';}
   el('answerZoomLabel').textContent=Math.round(magnification*100)+'%';
  }
- function renderCircuit(){
+ function refresh(){
   el('answerDiagram').innerHTML=makeSvg();
-  magnification=1;applyZoom();
-  renderSummary();
+  renderFilters();applyZoom();
+ }
+ function renderCircuit(){
+  activeCategory='all';activeWire=-1;magnification=1;
+  renderSummary();refresh();
  }
  function open(){
   el('answerForm').hidden=false;el('answerContent').hidden=true;
@@ -211,6 +265,10 @@
   el('answerPassword').value='';el('answerError').textContent='';
   el('answerForm').hidden=true;el('answerContent').hidden=false;
   renderCircuit();
+ });
+ el('answerDiagram').addEventListener('click',e=>{
+  const index=e.target?.getAttribute?.('data-answer-wire');
+  if(index!==null&&index!==undefined)showWire(Number(index));
  });
  el('answerZoomIn').addEventListener('click',()=>{magnification=Math.min(3.5,magnification+.35);applyZoom();});
  el('answerZoomOut').addEventListener('click',()=>{magnification=Math.max(1,magnification-.35);applyZoom();});
