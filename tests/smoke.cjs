@@ -185,6 +185,15 @@ function tapCanvas(x,y){
 }
 tapPin('b1.POS');
 assert.equal(saved().wires.length,0,'primeiro pino não fecha a ligação');
+// Mesmo com um jumper iniciado, a mão arrasta a câmera em vez de criar curva.
+click('panModeBtn');
+const beforePendingPan=nodes.world.style.transform;
+const panId=++pointer;
+send('pointerdown','viewport',{button:0,pointerId:panId,clientX:250,clientY:260,preventDefault(){},target:{closest(){return null}}});
+send('pointermove','window',{pointerId:panId,clientX:440,clientY:370});
+send('pointerup','window',{pointerId:panId,clientX:440,clientY:370});
+assert.notEqual(nodes.world.style.transform,beforePendingPan,'é possível mover a câmera durante uma ligação');
+click('panModeBtn');
 tapCanvas(205,180);
 tapCanvas(295,240);
 assert.equal(saved().wires.length,0,'curvas devem ficar pendentes até o segundo pino');
