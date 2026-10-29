@@ -1,59 +1,53 @@
-# LAB✳PET — Laboratório Virtual de Robótica
+# TinkerPET — Laboratório Virtual de Robótica
 
-**PET Educação • UFS** · Projeto 01: Carrinho Wi-Fi ESP32
+Aplicação interativa do **PET Educação — UFS**. O projeto reproduz, de forma didática, a montagem de um carrinho Wi-Fi com ESP32 usando uma **bancada vazia, um catálogo lateral e peças arrastáveis**.
 
-Oficina interativa gratuita, feita para funcionar em celular, tablet e computador, sem instalação de aplicativos.
+## Acesse
 
-## O que a primeira versão faz
+[Laboratório TinkerPET](https://peteducacao.github.io/laboratorio-robotica-pet/)
 
-- **9 elementos de bancada:** baterias (2), gangorras (2), LM2596, ESP32, MX1508 e dois motores.
-- **17 ligações educativas** com verificação do esquema, alerta para fios indevidos e dicas.
-- **Gangorras independentes:** uma para o ESP32 e outra para a ponte H/motores.
-- **Ajuste virtual do LM2596:** a missão verifica saída de **5,0 V** para o ESP32.
-- **Pista virtual** com movimento, obstáculos, chegada, setas/WASD e controles por toque.
-- **Progresso salvo localmente** no navegador, inclusive após atualizar a página.
-- Reorganização dos módulos da bancada pelo ícone **⠿**; no celular, toque nos pinos (origem e destino), sem exigir arraste de fio.
-- Dicas progressivas, lista de fios removíveis e opção para recomeçar.
+## Como usar
 
-A interface usa a **logo oficial do PET Educação**, copiada do repositório do catálogo, mas com estilo visual independente.
+1. Comece com uma **bancada vazia**.
+2. Abra o catálogo de componentes (menu lateral). No celular, toque em ☰. **Arraste** as peças para a bancada; como alternativa de acessibilidade, toque em uma peça para adicioná-la automaticamente.
+3. **Arraste peças já colocadas** para reorganizar a montagem. Para navegar, arraste uma área vazia da bancada. Use os botões +, − e ⛶ para zoom/ajuste.
+4. **Crie fios** tocando em um terminal e depois em outro. Escolha a cor do fio na barra inferior. Para remover uma ligação, toque nela ou use a aba **Fios**.
+5. Use a aba de propriedades para aprender sobre o componente selecionado.
+6. Coloque as 9 peças, conecte os **17 pares de terminais** do projeto e ajuste **5,0 V na saída do LM2596**.
+7. Ligue as duas gangorras e escolha **Iniciar simulação** para ir à pista.
+8. Na pista, use WASD, setas ou os controles na tela para pilotar.
 
-## Publicar pelo GitHub Pages
+O projeto salva automaticamente a montagem no navegador. O botão **Desfazer** reverte várias alterações. O botão **Limpar** solicita confirmação.
 
-1. No repositório, acesse **Settings → Pages**.
-2. Em **Build and deployment**, escolha **Deploy from a branch**.
-3. Selecione **main** e **/(root)** e salve.
-4. Após a publicação, o endereço será: https://peteducacao.github.io/laboratorio-robotica-pet/
+## Componentes presentes
 
-Não há banco de dados, backend, login nem compilação. O arquivo inicial é `index.html` e suas dependências são `styles.css`, `app.js` e `assets/logo-pet.svg`.
+- 1 ESP32 DevKit (VIN, GND, D27, D26, D32, D18)
+- 1 ponte H MX1508 (VCC, GND, IN1–IN4 e duas saídas para motores)
+- 1 LM2596 (IN+, IN−, OUT+, OUT−)
+- 2 baterias representadas como 9 V
+- 2 gangorras
+- 2 motores DC TT
 
-## Como testar
+Fotos dos componentes obtidas do repositório público de referência didática do projeto:
+[Fundamentos de Prototipagem e Fabricação Digital — Gabriel J. Santos](https://github.com/gabrieljsantos/Fundamentos-de-Prototipagem-e-Fabrica--o-Digital), arquivos em `assets/images/componentes/`. O projeto usa a logo do PET Educação mantida no catálogo do próprio PET.
 
-1. Em **Conheça as peças**, toque nos nomes das placas e descubra sua função.
-2. Em **Faça as conexões**, toque no terminal de origem e depois no terminal de destino.
-3. Conecte os 17 pares previstos. Fios indevidos aparecem como conexões a revisar; remova-os pela lista.
-4. Ajuste o LM2596 para **5,0 V**, ligue as duas gangorras e clique em **Conferir circuito**.
-5. Dirija até a chegada com **WASD**, **setas** ou os **botões de toque**.
-6. Atualize a página e confira se os fios e a etapa permanecem salvos.
+## Observação técnica
 
-Teste automatizado (sem dependências): `node tests/smoke.cjs`. O GitHub Actions executa esse teste a cada atualização da ramificação principal.
+**Não é uma cópia do código do Tinkercad nem um simulador elétrico de precisão.** É uma ferramenta própria com o fluxo de escolha de peças, arraste, colocação, fios e circuito do carrinho. A validação compara as ligações com o esquema educativo; não calcula corrente, falhas reais, tensão sob carga, choques ou execução do firmware. Os terminais "A • 1" / "A • 2" e "B • 1" / "B • 2" são nomes didáticos para os dois bornes de cada saída da MX1508, que não têm numeração individual.
 
-## Limites desta versão
+Montagens físicas, soldas e medições exigem supervisão de um adulto capacitado. A representação de uma bateria no simulador não é uma aprovação elétrica de seu uso fora dele.
 
-Trata-se de um **modelo educativo de conectividade e comandos**, não de uma emulação do firmware do ESP32 nem de uma simulação elétrica de precisão. Não simula curtos-circuitos, corrente de partida, queda de tensão, consumo da bateria, medições físicas ou conexão Wi-Fi real; os movimentos do carrinho acontecem numa pista digital independente.
+## Desenvolvimento e testes
 
-Os bornes das saídas da MX1508 aparecem como **A · 1, A · 2, B · 1, B · 2** por conveniência didática. Na placa do projeto original, os dois bornes individuais de cada saída **não são numerados**. A correspondência dos sinais de comando usada na oficina é: D27/IN1, D26/IN2, D32/IN3 e D18/IN4.
+Site estático: `index.html`, `styles.css`, `app.js` e logo em `assets/`. Não utiliza backend, conta ou bibliotecas instaladas.
 
-A oficina segue a montagem atualizada fornecida pela equipe: duas baterias ilustradas como 9 V, duas gangorras e LM2596 ajustado para 5 V na alimentação do ESP32. O projeto de origem descreve outra disposição da bateria dos motores; a atualização gráfica da equipe prevalece nesta primeira versão.
+Rodar os testes: `node tests/smoke.cjs`. O GitHub Actions executa o teste após cada atualização.
 
-**Atenção:** montagens físicas com baterias, solda, ferramentas e reguladores devem ser feitas sob supervisão. A leitura do simulador **não valida a segurança elétrica de uma montagem real**.
+### Limitações conhecidas / possíveis evoluções
 
-## Fonte técnica
+- As peças usam fotos e terminais didáticos, e não modelos 3D editáveis.
+- As conexões são criadas por dois toques, não por um motor elétrico de circuitos universais.
+- A pista é virtual e independente de um carrinho físico.
+- Sensores virtuais adicionais só devem ser habilitados quando o protótipo real também os utilizar.
 
-[Carrinho Wi-Fi ESP32 PET v1 — Fundamentos de Prototipagem e Fabricação Digital](https://gabrieljsantos.github.io/Fundamentos-de-Prototipagem-e-Fabrica--o-Digital/conteudos/08-carrinho-wifi-esp32-pet-v1.html).
-
-## Próximas etapas de desenvolvimento
-
-Melhorar os desenhos dos componentes para reproduzir melhor suas placas físicas, permitir edição mais livre da posição dos itens e dos fios, adicionar exercícios por tipo de circuito, melhorar as animações, ampliar a pista e incorporar sensores **somente quando fizerem parte do carrinho real**.
-
----
-*Projeto educativo independente do catálogo de chaveiros. Nenhum arquivo do catálogo foi alterado.*
+O catálogo de chaveiros continua independente: nenhum arquivo daquele repositório foi alterado.
