@@ -66,3 +66,49 @@
  .app-header .header-start,.app-header .header-end{gap:6px}
  .app-header .answer-key-trigger{flex-shrink:0}
 }
+
+/* v15: circuito real da bancada, não uma listagem como gabarito principal */
+.answer-key-dialog{width:min(1480px,calc(100vw - 18px));max-height:96dvh;border-radius:18px}
+.answer-head{padding:15px 22px}
+.answer-head h2{font-size:23px}
+.answer-content{padding:13px 18px 22px}
+.answer-visual-top{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:10px}
+.answer-counter{background:#dff3e9;color:#20745c;border-radius:999px;padding:8px 14px;font-size:12px;font-weight:900}
+.answer-zoom{display:flex;gap:5px;align-items:center}
+.answer-zoom button{min-width:39px;min-height:36px;padding:6px 11px;border-radius:8px;background:#fff;border:1px solid #c7dade;color:#315766;font-size:16px;font-weight:800}
+.answer-zoom button:hover{background:#ecf6f4}
+.answer-zoom button:last-child{font-size:12px}
+.answer-zoom b{font-size:12px;min-width:47px;text-align:center;color:#526e7b}
+.answer-board-scroll{overflow:auto;overscroll-behavior:contain;max-height:67dvh;border:2px solid #c1d6dd;border-radius:16px;background:#eef5f6;box-shadow:inset 0 1px 8px #2d566211}
+.answer-board{width:100%;min-width:0;line-height:0}
+.answer-board svg{display:block;width:100%;height:auto;max-width:none;user-select:none}
+.answer-actions{margin-top:12px;justify-content:center}
+.answer-actions button{min-width:172px}
+.answer-details{margin-top:17px;border-radius:13px;border:1px solid #d5e5e7;background:white;overflow:hidden}
+.answer-details summary{cursor:pointer;padding:15px 18px;font-weight:900;font-size:13px;color:#2e6971;background:#f1f8f7}
+.answer-details[open] summary{border-bottom:1px solid #d9e8e9}
+#answerGroups{padding:16px}
+.answer-details .answer-info{margin:0 16px 16px}
+@media(max-width:700px){
+ .answer-key-dialog{width:calc(100vw - 10px);max-height:97dvh;border-radius:12px}
+ .answer-content{padding:10px}
+ .answer-head h2{font-size:19px}
+ .answer-board-scroll{max-height:60dvh;min-height:200px}
+ .answer-visual-top{gap:8px}
+ .answer-counter{font-size:10px;padding:7px 9px}
+ .answer-zoom button{min-height:35px;min-width:34px}
+ .answer-actions{display:grid;grid-template-columns:1fr 1fr;gap:7px}
+ .answer-actions button{min-width:0;padding:8px 5px;font-size:11px}
+ .answer-actions button:last-child{grid-column:1/-1}
+ #answerGroups{padding:10px}
+}
+@media print{
+ @page{size:A4 landscape;margin:8mm}
+ html,body{width:100%!important;height:auto!important;background:white!important}
+ .answer-key-dialog{width:100%!important;max-height:none!important;border:0!important;padding:0!important;overflow:visible!important}
+ .answer-head{padding:7px 12px!important}
+ .answer-content{padding:7px!important}
+ .answer-visual-top,.answer-zoom,.answer-actions,.answer-details{display:none!important}
+ .answer-board-scroll{overflow:visible!important;max-height:none!important;border:0!important;border-radius:0!important;box-shadow:none!important}
+ .answer-board svg{width:100%!important;height:auto!important;max-height:170mm!important}
+}
