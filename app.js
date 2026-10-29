@@ -38,6 +38,9 @@ const WORLD={w:1900,h:1450};
 const COLORS=['#ed654d','#316fc0','#1f434c','#32a47b','#e5a13d','#a378c8'];
 let state={parts:[],wires:[],voltage:4,switches:{s1:false,s2:false},wireColor:COLORS[0],selected:null,startPort:null,inspector:'parts',completed:false,bends:[]};
 let zoom=1,panX=0,panY=0,gesture=null,history=[],toastTimer=0,previewPoint=null,drawPending=false;
+const activeTouches=new Map();
+let pinch=null;
+let gestureBlockedUntil=0;
 const car={x:150,y:447,a:0,finished:false};
 const keys={up:false,down:false,left:false,right:false};
 let lastFrame=0;
@@ -113,18 +116,13 @@ function renderParts(){
   card.style.setProperty('--part-w',layout.w+'px');card.style.setProperty('--part-h',layout.h+'px');
   card.style.zIndex=state.selected===p.id?'5':'3';
   const head=document.createElement('div');head.className='part-head';
-  const title=document.createElement('strong');title.textContent=partName(p.id);
+  card.setAttribute('aria-label',partName(p.id));
   const del=document.createElement('button');del.type='button';del.className='part-remove';del.dataset.remove=p.id;
   del.title='Remover peça';del.setAttribute('aria-label','Remover '+partName(p.id));del.textContent='×';
-  head.append(title,del);
+  head.append(del);
   const imgbox=document.createElement('div');imgbox.className='part-image';
   const img=document.createElement('img');img.src=p.kind==='motor'?motorImage(p):imageUrl(t);img.alt='';img.draggable=false;
   imgbox.append(img);
-  if(p.kind==='esp'){
-   const label=document.createElement('span');label.className='esp-board-instruction';
-   label.textContent='Toque nos contatos dourados para ligar fios';
-   imgbox.append(label);
-  }
   if(p.kind==='motor'){
    const rotor=document.createElement('span');rotor.className='motor-shaft-spinner';rotor.setAttribute('aria-hidden','true');
    imgbox.append(rotor);
@@ -364,18 +362,67 @@ function camera(){
  note.style.top=limit((v.clientHeight/2-panY)/zoom,170,WORLD.h-170)+'px';
  requestDraw();
 }
-function fitCamera(){
- const vw=Q('viewport').clientWidth;
- zoom=vw<520?.83:limit((vw-55)/WORLD.w,.55,1);
- panX=vw<520?14:Math.max(14,(vw-WORLD.w*zoom)/2);
- panY=vw<520?70:32;
- camera();
+const MIN_ZOOM=.17,MAX_ZOOM=2.4;
+function cameraZoom(nextZoom,clientX,clientY){
+ const r=Q('viewport').getBoundingClientRect(),cx=clientX===undefined?r.left+r.width/2:clientX,cy=clientY===undefined?r.top+r.height/2:clientY;
+ const wx=(cx-r.left-panX)/zoom,wy=(cy-r.top-panY)/zoom;
+ zoom=limit(nextZoom,MIN_ZOOM,MAX_ZOOM);
+ panX=cx-r.left-wx*zoom;panY=cy-r.top-wy*zoom;
+ camera();Q('zoomSlider').value=String(Math.round(zoom*100));
 }
-function zoomTo(factor){
- const rect=Q('viewport').getBoundingClientRect(),cx=rect.width/2,cy=rect.height/2;
- const wx=(cx-panX)/zoom,wy=(cy-panY)/zoom;
- zoom=limit(zoom*factor,.4,1.6);
- panX=cx-wx*zoom;panY=cy-wy*zoom;camera();
+function fitRegion(box){
+ const v=Q('viewport'),w=v.clientWidth,h=v.clientHeight;
+ zoom=limit(Math.min((w-28)/(box.w+90),(h-28)/(box.h+90)),MIN_ZOOM,1.35);
+ panX=w/2-(box.x+box.w/2)*zoom;
+ panY=h/2-(box.y+box.h/2)*zoom;
+ camera();Q('zoomSlider').value=String(Math.round(zoom*100));
+}
+function focusPart(id){
+ const p=byPart(id);if(!p)return;
+ const d=partLayout(p);
+ fitRegion({x:p.x,y:p.y,w:d.w,h:d.h});
+}
+function fitCamera(){
+ if(state.parts.length){
+  const x=Math.min(...state.parts.map(p=>p.x));
+  const y=Math.min(...state.parts.map(p=>p.y));
+  const right=Math.max(...state.parts.map(p=>p.x+partLayout(p).w));
+  const bottom=Math.max(...state.parts.map(p=>p.y+partLayout(p).h));
+  fitRegion({x,y,w:right-x,h:bottom-y});
+ }else fitRegion({x:WORLD.w/2-370,y:WORLD.h/2-250,w:740,h:500});
+}
+function zoomTo(factor){cameraZoom(zoom*factor);}
+function trackingTouchDown(e){
+ if(e.pointerType!=='touch')return;
+ activeTouches.set(e.pointerId,{x:e.clientX,y:e.clientY});
+ if(activeTouches.size>=2){
+  const ps=[...activeTouches.values()].slice(0,2),cx=(ps[0].x+ps[1].x)/2,cy=(ps[0].y+ps[1].y)/2,r=Q('viewport').getBoundingClientRect();
+  pinch={distance:Math.max(1,Math.hypot(ps[1].x-ps[0].x,ps[1].y-ps[0].y)),zoom,wx:(cx-r.left-panX)/zoom,wy:(cy-r.top-panY)/zoom};
+  gesture=null;previewPoint=null;gestureBlockedUntil=Date.now()+420;suppressPortClickUntil=gestureBlockedUntil;
+ }
+}
+function trackingTouchMove(e){
+ if(!activeTouches.has(e.pointerId))return false;
+ activeTouches.set(e.pointerId,{x:e.clientX,y:e.clientY});
+ if(!pinch||activeTouches.size<2)return false;
+ if(e.cancelable)e.preventDefault();
+ const ps=[...activeTouches.values()].slice(0,2);
+ const d=Math.max(1,Math.hypot(ps[1].x-ps[0].x,ps[1].y-ps[0].y));
+ const cx=(ps[0].x+ps[1].x)/2,cy=(ps[0].y+ps[1].y)/2,r=Q('viewport').getBoundingClientRect();
+ zoom=limit(pinch.zoom*d/pinch.distance,MIN_ZOOM,MAX_ZOOM);
+ panX=cx-r.left-pinch.wx*zoom;panY=cy-r.top-pinch.wy*zoom;
+ camera();Q('zoomSlider').value=String(Math.round(zoom*100));
+ return true;
+}
+function trackingTouchEnd(e){
+ if(!activeTouches.has(e.pointerId))return false;
+ const wasPinching=!!pinch;
+ activeTouches.delete(e.pointerId);
+ if(wasPinching){
+  gesture=null;gestureBlockedUntil=Date.now()+420;suppressPortClickUntil=gestureBlockedUntil;
+  if(activeTouches.size<2)pinch=null;
+ }
+ return wasPinching;
 }
 function worldXY(clientX,clientY){
  const r=Q('viewport').getBoundingClientRect();
@@ -419,6 +466,7 @@ function libraryOpen(open){
  Q('drawerHandle').classList.toggle('open',yes);
 }
 function partDown(e){
+ if(pinch||activeTouches.size>=2||Date.now()<gestureBlockedUntil)return;
  if(e.button!==undefined&&e.button!==0)return;
  if(e.target.closest('button,input,label'))return;
  const el=e.target.closest('.part');if(!el)return;
@@ -435,13 +483,15 @@ function paletteDown(e){
  gesture={type:'catalog',pointer:e.pointerId,kind:el.dataset.kind,startX:e.clientX,startY:e.clientY,moved:false};
 }
 function viewportDown(e){
+ if(pinch||activeTouches.size>=2||Date.now()<gestureBlockedUntil)return;
  if(e.button!==undefined&&e.button!==0)return;
- if(e.target.closest('.part')||e.target.closest('.wire-target'))return;
+ if(e.target.closest('.canvas-zoom-button,.canvas-zoom-panel,button,input,.part,.wire-target'))return;
  e.preventDefault();
  gesture={type:'pan',pointer:e.pointerId,startX:e.clientX,startY:e.clientY,x:panX,y:panY,moved:false};
 }
 let suppressPortClickUntil=0;
 function pointerMove(e){
+ if(trackingTouchMove(e)||pinch)return;
  if(gesture&&e.pointerId===gesture.pointer){
   const g=gesture,dx=e.clientX-g.startX,dy=e.clientY-g.startY;
   if(Math.hypot(dx,dy)>(g.type==='wire'?12:g.type==='pan'?9:6))g.moved=true;
@@ -471,6 +521,7 @@ function pointerMove(e){
  }
 }
 function pointerUp(e){
+ if(trackingTouchEnd(e)||pinch)return;
  if(!gesture||e.pointerId!==gesture.pointer)return;
  const g=gesture;gesture=null;Q('dragGhost').hidden=true;
  if(g.type==='catalog'){
@@ -591,6 +642,7 @@ function bind(){
  Q('componentSearch').addEventListener('input',renderCatalog);
  Q('catalog').addEventListener('pointerdown',paletteDown);
  Q('partsLayer').addEventListener('pointerdown',e=>{
+   if(pinch||activeTouches.size>=2||Date.now()<gestureBlockedUntil)return;
    const port=e.target.closest('[data-port]');
    if(port&&e.button!==2){
      gesture={type:'wire',pointer:e.pointerId,port:port.dataset.port,startX:e.clientX,startY:e.clientY,moved:false};
@@ -598,6 +650,7 @@ function bind(){
    }
    partDown(e);
  });
+ Q('viewport').addEventListener('pointerdown',trackingTouchDown,true);
  Q('viewport').addEventListener('pointerdown',viewportDown);
  window.addEventListener('pointermove',pointerMove);
  window.addEventListener('pointerup',pointerUp);
@@ -625,7 +678,13 @@ function bind(){
  Q('checkBtn').addEventListener('click',()=>{if(check()){switchView(true);message('Circuito conferido! Carrinho liberado.',true);}});
  Q('playTab').addEventListener('click',()=>{switchView(true);if(!ready())message('Monte o circuito e use a dica para descobrir o que falta.',true);});
  Q('editTab').addEventListener('click',()=>switchView(false));Q('backBtn').addEventListener('click',()=>switchView(false));Q('goToBuild').addEventListener('click',()=>switchView(false));
- Q('zoomIn').addEventListener('click',()=>zoomTo(1.25));Q('zoomOut').addEventListener('click',()=>zoomTo(.8));Q('fitBtn').addEventListener('click',fitCamera);
+ Q('zoomIn').addEventListener('click',()=>zoomTo(1.25));
+ Q('zoomOut').addEventListener('click',()=>zoomTo(.8));
+ Q('fitBtn').addEventListener('click',fitCamera);
+ Q('zoomTool').addEventListener('click',()=>{Q('zoomPopover').hidden=!Q('zoomPopover').hidden;});
+ Q('zoomSlider').addEventListener('input',e=>cameraZoom(Number(e.target.value)/100));
+ Q('zoomFitPart').addEventListener('click',()=>{const p=byPart(state.selected);if(p)focusPart(p.id);else fitCamera();Q('zoomPopover').hidden=true;});
+ Q('zoomFitAll').addEventListener('click',()=>{fitCamera();Q('zoomPopover').hidden=true;});
  Q('viewport').addEventListener('wheel',e=>{if(e.ctrlKey||e.metaKey){e.preventDefault();zoomTo(e.deltaY<0?1.12:.89);}}, {passive:false});
  Q('guideBtn').addEventListener('click',()=>Q('guideDialog').showModal());
  Q('closeGuide').addEventListener('click',()=>Q('guideDialog').close());
