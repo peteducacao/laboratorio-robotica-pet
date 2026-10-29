@@ -771,8 +771,6 @@ function pointerMove(e){
     }
     requestDraw();
    }
-  }else if(g.type==='wire-edit'){
-   if(g.moved){persist();message('Curva reposicionada; terminais preservados.');}
   }else if(g.type==='wire'){
    if(g.moved){
     if(!state.startPort){state.startPort=g.port;state.bends=[];}
@@ -834,6 +832,8 @@ function pointerUp(e){
    if(e.clientX>=box.left&&e.clientX<=box.right&&e.clientY>=box.top&&e.clientY<=box.bottom){const p=worldXY(e.clientX,e.clientY);addPart(g.kind,p.x-PART_LAYOUTS[g.kind].w/2,p.y-PART_LAYOUTS[g.kind].h/2);libraryOpen(false);}
    else message('Solte a peça sobre a bancada para adicioná-la.',true);
   }
+ }else if(g.type==='wire-edit'){
+  if(g.moved){persist();renderInspector();message('Curva reposicionada; os dois terminais continuam conectados.');}
  }else if(g.type==='wire'){
   if(g.moved){
    const found=document.elementFromPoint?document.elementFromPoint(e.clientX,e.clientY):null;
