@@ -800,7 +800,8 @@ window.tinkerpetAnswerData={
  {title:'Sinais de controle',from:9,to:13,color:'#3d84b8',info:'GPIOs da ESP32 ligados à ponte H'},
  {title:'Saídas para os motores',from:13,to:17,color:'#229786',info:'Ponte H conectada aos dois motores DC'}
  ],
- connections:EXPECTED.map(([a,b],i)=>({n:i+1,from:portName(a),to:portName(b)}))
+ connections:EXPECTED.map(([a,b],i)=>({n:i+1,from:portName(a),to:portName(b),a,b})),
+ components:TYPES.flatMap(t=>t.ids.map(id=>({id,kind:t.kind,name:partName(id),image:t.img,width:PART_LAYOUTS[t.kind].w,height:PART_LAYOUTS[t.kind].h,pins:PART_LAYOUTS[t.kind].pins})))
 };
 function bind(){
  Q('menuBtn').addEventListener('click',()=>libraryOpen(!Q('library').classList.contains('open')));
