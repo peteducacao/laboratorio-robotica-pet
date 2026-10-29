@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 300" role="img" aria-labelledby="title desc">
+<title id="title">Motor DC com caixa de engrenagens amarela, vista lateral</title>
+<desc id="desc">Caixa amarela à esquerda com eixo branco, motor cilíndrico prateado à direita e dois terminais laterais no extremo direito.</desc>
+<defs>
+<linearGradient id="yellow" x1=".12" y1="0" x2=".9" y2="1"><stop stop-color="#fff058"/><stop offset=".2" stop-color="#ffe300"/><stop offset=".75" stop-color="#ffd400"/><stop offset="1" stop-color="#e9b000"/></linearGradient>
+<linearGradient id="steel" x1="0" y1="0" x2=".25" y2="1"><stop stop-color="#a3b0be"/><stop offset=".3" stop-color="#f9ffff"/><stop offset=".65" stop-color="#bac4cd"/><stop offset="1" stop-color="#8392a0"/></linearGradient>
+<linearGradient id="shaft" x1="0" y1="0" x2=".2" y2="1"><stop stop-color="#c2cbd4"/><stop offset=".36" stop-color="#ffffff"/><stop offset=".9" stop-color="#a5b8c4"/></linearGradient>
+</defs>
+<rect x="8" y="125" width="120" height="40" rx="10" fill="url(#shaft)" stroke="#9ba9b4" stroke-width="2"/>
+<path d="M107 85 L133 85 V214 H107Z" fill="#e6ae00" stroke="#cb8f02" stroke-width="3"/>
+<rect x="128" y="51" width="335" height="205" rx="14" fill="url(#yellow)" stroke="#d6a500" stroke-width="3"/>
+<path d="M133 84 H457" stroke="#fff467" stroke-width="7" opacity=".82"/>
+<path d="M137 241 H453" stroke="#daac09" stroke-width="3"/>
+<path d="M158 51 V28 Q159 23 164 23 H183 Q189 23 189 29 V51" fill="#ffdb00" stroke="#d2ac00" stroke-width="2"/>
+<path d="M181 257 V278 Q181 286 189 286 H209 Q219 286 219 277 V257" fill="#ffc700" stroke="#d8a900" stroke-width="2"/>
+<circle cx="200" cy="272" r="7" fill="#cca21b"/>
+<rect x="420" y="62" width="62" height="182" rx="6" fill="#efbd00" stroke="#d3a000" stroke-width="3"/>
+<rect x="482" y="79" width="108" height="150" rx="10" fill="url(#steel)" stroke="#8796a1" stroke-width="3"/>
+<path d="M482 96 H590" stroke="#fff" stroke-width="3" opacity=".7"/>
+<rect x="574" y="80" width="34" height="149" rx="7" fill="#343b45" stroke="#1c2730" stroke-width="2"/>
+<path d="M604 113 H627 L635 122 V136 H604Z" fill="#d43929" stroke="#8b1a14" stroke-width="2"/>
+<circle cx="626" cy="127" r="3" fill="#8a1d18"/>
+<path d="M604 176 H627 L635 184 V198 H604Z" fill="#262e36" stroke="#131a22" stroke-width="2"/>
+<circle cx="627" cy="188" r="3" fill="#8b9eaa"/>
+</svg>
