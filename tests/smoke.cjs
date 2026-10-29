@@ -37,7 +37,9 @@ const doc={
  addEventListener(type,fn){(listeners['doc:'+type]??=[]).push(fn)},
  fonts:null
 };
-// Reproduz o atributo hidden inicial da seção de simulação no HTML.\ndoc.getElementById('playPanel').hidden=true;\nconst win={addEventListener(type,fn){(listeners['window:'+type]??=[]).push(fn)}};
+// Reproduz o atributo hidden inicial da seção de simulação no HTML.
+doc.getElementById('playPanel').hidden=true;
+const win={addEventListener(type,fn){(listeners['window:'+type]??=[]).push(fn)}};
 const store={getItem(k){return storage[k]??null},setItem(k,v){storage[k]=v}};
 const fake={window:win,document:doc,localStorage:store,requestAnimationFrame(){},ResizeObserver:class{observe(){}},console,Math,JSON,confirm(){return true},setTimeout(){return 1},clearTimeout(){}};
 vm.runInNewContext(js,fake);
