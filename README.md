@@ -1,53 +1,38 @@
 # TinkerPET — Laboratório Virtual de Robótica
 
-Aplicação interativa do **PET Educação — UFS**. O projeto reproduz, de forma didática, a montagem de um carrinho Wi-Fi com ESP32 usando uma **bancada vazia, um catálogo lateral e peças arrastáveis**.
+Laboratório educativo e responsivo do **PET Educação — UFS**, publicado em https://peteducacao.github.io/laboratorio-robotica-pet/.
 
-## Acesse
+## Monte o carrinho
+1. Abra a gaveta **PEÇAS** pela seta fixa no meio do canto esquerdo.
+2. Arraste os componentes do catálogo para a bancada (ou toque na peça para adicioná-la sem arrastar).
+3. Organize as imagens soltas na mesa. A bancada de 1900 × 1450 pode ser arrastada e ampliada.
+4. Toque no **primeiro terminal** para iniciar um fio sólido. O fio permanece aberto.
+5. Toque em qualquer lugar livre da bancada para **fixar um ponto de curva**. Continue tocando para criar outros segmentos em ângulo reto.
+6. Toque no **segundo terminal** para encerrar. O caminho completo é salvo e os pontos de curva não se movem quando você solta o dedo.
+7. Se errar antes de finalizar, use **Desfazer** para remover a última curva (ou Escape no teclado para cancelar). Para apagar uma ligação pronta, abra a aba **Fios** e remova pelo ×.
+8. Ajuste o **LM2596 para 5,0 V**, ligue as duas **gangorras** pelo botão sobre a tecla e confira as 17 ligações.
+9. Clique em **Iniciar simulação** e pilote o carrinho na pista com os controles de toque ou as teclas WASD / setas.
 
-[Laboratório TinkerPET](https://peteducacao.github.io/laboratorio-robotica-pet/)
+**Ao mover uma peça já conectada, os fios acompanham a origem e o destino, mantendo os pontos intermediários no lugar.** As cores e rotas concluídas são salvas automaticamente no navegador do dispositivo. Toque em **Salvar** para confirmar.
 
-## Como usar
+## Componentes em desenhos vetoriais próprios
 
-1. Comece com uma **bancada vazia**. No catálogo, procure por **Motor DC** (não Motor TT).
-2. Abra o catálogo usando a **seta fixa no centro da borda esquerda**. Funciona no celular, tablet e computador sem depender do menu superior. **Arraste** a imagem da peça para a bancada ou toque nela para adicioná-la automaticamente.
-3. **Arraste os componentes soltos pela imagem**, sem cartões ao redor. Os terminais aparecem sobrepostos às fotografias da placa. Arraste uma área vazia da bancada para navegar e use +, − e ⛶ para ajustar o zoom.
-4. **Crie fios** tocando em um terminal e depois em outro, ou arrastando de um contato ao outro. Os caminhos usam segmentos ortogonais; escolha a cor na barra inferior. Para remover, toque no fio, abra **Fios**, ou use **Desfazer**.
-5. Use a aba de propriedades para aprender sobre o componente selecionado.
-6. Coloque as 9 peças, conecte os **17 pares de terminais** do projeto e ajuste **5,0 V na saída do LM2596**.
-7. Ligue as duas gangorras e escolha **Iniciar simulação** para ir à pista.
-8. Na pista, use WASD, setas ou os controles na tela para pilotar.
+| Quantidade | Componente | Características |
+|---|---|---|
+| 1 | ESP32 DevKit V1 | 30 pinos com nomes impressos no desenho; VIN, dois GND, GPIOs |
+| 1 | Ponte H MX1508 | placa vermelha, bornes de motor, VCC, GND e IN1–IN4 |
+| 1 | Regulador LM2596 | placa azul, entrada/saída IN± e OUT±, ajuste virtual |
+| 2 | Bateria 9 V | polo positivo e negativo integrados à imagem |
+| 2 | Gangorra | dois contatos e tecla liga/desliga interativa |
+| 2 | Motor DC com redução | engrenagem amarela, duas vistas e contatos, prévia animada |
 
-O projeto salva automaticamente a montagem no navegador. O botão **Desfazer** reverte várias alterações. O botão **Limpar** solicita confirmação.
+A logo do PET Educação foi copiada do catálogo original. **Nenhum arquivo do catálogo foi alterado.** O simulador agora armazena seus quatro desenhos complementares em:
+`assets/mx1508-desenhado.svg`, `assets/lm2596-desenhado.svg`, `assets/bateria-9v-desenhada.svg`, `assets/gangorra-desenhada.svg`.
 
-## Componentes presentes
+## Verificação
 
-- 1 ESP32 DevKit V1 de 30 pinos: todos os contatos têm seus nomes no próprio desenho. O carrinho usa VIN, GND, D27, D26, D32 e D18; ambos os GND físicos são aceitos.
-- 1 ponte H MX1508 (VCC, GND, IN1–IN4 e duas saídas para motores)
-- 1 LM2596 (IN+, IN−, OUT+, OUT−)
-- 2 baterias representadas como 9 V
-- 2 gangorras
-- 2 motores DC comuns com escovas, corpo cilíndrico prateado e duas abas elétricas traseiras
+O arquivo `tests/smoke.cjs` é executado no GitHub Actions a cada commit na ramificação `main`. O teste verifica as 9 peças, todos os terminais, circuitos incompletos, duas gangorras, saída de 5 V, pino GND alternativo, fios com curvas por toque, salvamento e desbloqueio da pista.
 
-As imagens dos demais componentes foram obtidas do repositório público de referência didática do projeto:
-[Fundamentos de Prototipagem e Fabricação Digital — Gabriel J. Santos](https://github.com/gabrieljsantos/Fundamentos-de-Prototipagem-e-Fabrica--o-Digital), arquivos em `assets/images/componentes/`. O motor DC usa uma ilustração vetorial própria em `assets/motor-dc.svg` com dois pontos de contato integrados e indicador de rotação na pista. O projeto usa a logo do PET Educação mantida no catálogo do próprio PET.
+**Limites educativos:** os desenhos representam componentes para montagem virtual e validação lógica; não há cálculo de corrente, simulação de curto-circuito, reprodução do firmware ESP32, Wi-Fi real ou avaliação da segurança elétrica. A pista é virtual. Na montagem real, fontes, reguladores, motores e solda exigem supervisão e medições adequadas.
 
-## Observação técnica
-
-**Não é uma cópia do código do Tinkercad nem um simulador elétrico de precisão.** É uma ferramenta própria com o fluxo de escolha de peças, arraste, colocação, fios e circuito do carrinho. A validação compara as ligações com o esquema educativo; não calcula corrente, falhas reais, tensão sob carga, choques ou execução do firmware. Os terminais "A • 1" / "A • 2" e "B • 1" / "B • 2" são nomes didáticos para os dois bornes de cada saída da MX1508, que não têm numeração individual.
-
-Montagens físicas, soldas e medições exigem supervisão de um adulto capacitado. A representação de uma bateria no simulador não é uma aprovação elétrica de seu uso fora dele.
-
-## Desenvolvimento e testes
-
-Site estático: `index.html`, `styles.css`, `app.js` e logo em `assets/`. Não utiliza backend, conta ou bibliotecas instaladas.
-
-Rodar os testes: `node tests/smoke.cjs`. O GitHub Actions executa o teste após cada atualização.
-
-### Limitações conhecidas / possíveis evoluções
-
-- O motor DC comum foi redesenhado como componente vetorial isolado, com dois contatos na região das abas traseiras; seu indicador de eixo gira no painel da simulação quando são dados comandos de movimento. Os demais componentes ainda usam fotografias com terminais didáticos aproximados, não modelos 3D elétricos completos.
-- As conexões são criadas por dois toques, não por um motor elétrico de circuitos universais.
-- A pista é virtual e independente de um carrinho físico.
-- Sensores virtuais adicionais só devem ser habilitados quando o protótipo real também os utilizar.
-
-O catálogo de chaveiros continua independente: nenhum arquivo daquele repositório foi alterado.
+Referência do projeto físico: [Carrinho Wi-Fi ESP32 — Fundamentos de Prototipagem e Fabricação Digital](https://gabrieljsantos.github.io/Fundamentos-de-Prototipagem-e-Fabrica--o-Digital/conteudos/08-carrinho-wifi-esp32-pet-v1.html).
