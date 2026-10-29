@@ -533,6 +533,38 @@ function worldXY(clientX,clientY){
  const r=Q('viewport').getBoundingClientRect();
  return {x:(clientX-r.left-panX)/zoom,y:(clientY-r.top-panY)/zoom};
 }
+// Encaixe magnético em pixels da tela, mesmo com zoom.
+function nearestPort(clientX,clientY,exclude){
+ const r=Q('viewport').getBoundingClientRect();let distance=19*19,chosen=null;
+ for(const part of state.parts)for(const [pin] of byKind[part.kind].pins){
+  const id=part.id+'.'+pin;if(id===exclude)continue;
+  const point=getPortPos(id);if(!point)continue;
+  const dx=r.left+panX+point.x*zoom-clientX,dy=r.top+panY+point.y*zoom-clientY,d=dx*dx+dy*dy;
+  if(d<distance){distance=d;chosen=id;}
+ }
+ return chosen;
+}
+function wireAt(clientX,clientY){
+ const p=worldXY(clientX,clientY),tolerance=17/zoom;
+ let min=tolerance*tolerance,result=-1;
+ state.wires.forEach((w,i)=>{
+  const a=getPortPos(w.a),b=getPortPos(w.b);if(!a||!b)return;
+  const points=wireRoutePoints(a,w.via||[],b,w.a,w.b);
+  for(let j=1;j<points.length;j++){
+   const u=points[j-1],v=points[j],dx=v.x-u.x,dy=v.y-u.y,len=dx*dx+dy*dy;
+   const along=len?limit(((p.x-u.x)*dx+(p.y-u.y)*dy)/len,0,1):0;
+   const d=(p.x-u.x-along*dx)**2+(p.y-u.y-along*dy)**2;
+   if(d<min){min=d;result=i;}
+  }
+ });
+ return result;
+}
+function selectWire(i){
+ if(!state.wires[i])return;
+ state.selectedWire=i;state.selected=null;state.inspector='wires';
+ renderParts();renderInspector();updateHistoryButtons();requestDraw();
+ message('Fio selecionado. Use Excluir para apagá-lo.',true);
+}
 function centerPart(kind){
  const v=Q('viewport').getBoundingClientRect();
  const center=worldXY(v.left+v.width/2,v.top+v.height/2);
@@ -595,6 +627,7 @@ function viewportDown(e){
  if(pinch||activeTouches.size>=2||Date.now()<gestureBlockedUntil)return;
  if(e.button!==undefined&&e.button!==0)return;
  if(e.target.closest('.canvas-zoom-button,.canvas-zoom-panel,button,input,.part,.wire-target'))return;
+ if(!state.startPort){const selected=wireAt(e.clientX,e.clientY);if(selected>=0){selectWire(selected);return;}}
  e.preventDefault();
  gesture={type:state.startPort?'bend':'pan',pointer:e.pointerId,startX:e.clientX,startY:e.clientY,x:panX,y:panY,moved:false};
 }
