@@ -170,6 +170,24 @@ assert(Number(nodes.zoomSlider.value)>zoomBefore,'Ctrl e roda aplicam zoom na ba
 
 
 
+// Dois duplos toques consecutivos no celular alternam entre zoom e vista anterior.
+function doubleTap(x,y){
+ for(let i=0;i<2;i++){
+  const id=++pointer;
+  send('pointerdown','viewport',{pointerType:'touch',pointerId:id,button:0,clientX:x,clientY:y,preventDefault(){},target:{closest(){return null}}});
+  send('pointerup','window',{pointerType:'touch',pointerId:id,button:0,clientX:x,clientY:y,preventDefault(){}});
+ }
+}
+const beforeDoubleTap=nodes.world.style.transform,initialDoubleZoom=Number(nodes.zoomSlider.value);
+doubleTap(430,290);
+assert(Number(nodes.zoomSlider.value)>initialDoubleZoom,'primeiro toque duplo amplia a bancada');
+assert.notEqual(nodes.world.style.transform,beforeDoubleTap,'a câmera realmente se aproxima');
+doubleTap(430,290);
+assert.equal(nodes.world.style.transform,beforeDoubleTap,'segundo toque duplo restaura zoom e enquadramento');
+assert.equal(Number(nodes.zoomSlider.value),initialDoubleZoom,'valor de zoom também é restaurado');
+assert(css.includes('.pin-btn.connected:not(.selected)'),'pinos ligados não recebem aro verde');
+assert(css.includes('.pin-btn.connected .pin-dot'),'terminais de motores e baterias mantêm cor neutra ao ligar');
+
 // Testa o fluxo real de toque: pino inicial → dois cliques na bancada → pino final.
 function tapPin(port){
  const id=++pointer;
