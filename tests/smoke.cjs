@@ -286,6 +286,28 @@ assert(Number(nodes.zoomSlider.value)>=17,'enquadramento calcula um zoom válido
  for(const asset of ['bateria-9v-desenhada.svg','gangorra-desenhada.svg','motor-frontal.svg']){
   assert(svgBancada.includes(asset),'gabarito usa o componente original '+asset);
  }
+ assert.equal(new Set(visualWires.map(w=>w[2])).size,17,'cada uma das 17 ligações possui cor diferenciada');
+ assert(svgBancada.includes('>IN</text>')&&svgBancada.includes('>OUT</text>')&&svgBancada.includes('>LED−</text>'),'gabarito identifica os pinos das duas gangorras');
+ const filterBtns=keyNode('answerFilters').children;
+ assert.equal(filterBtns.length,6,'seis opções de visualização do circuito');
+ const countVisible=()=>((keyNode('answerDiagram').innerHTML.match(/stroke-width="10" stroke-linejoin/g)||[]).length);
+ const motor1=filterBtns.find(b=>b.textContent==='Motor 1');
+ motor1.click();assert.equal(countVisible(),2,'filtro motor 1 oculta os outros quinze fios');
+ assert.equal(keyNode('answerWirePicker').children.length,2,'motor 1 oferece seus dois fios separadamente');
+ keyNode('answerWirePicker').children[0].click();
+ assert.equal(countVisible(),1,'toque no fio destaca só aquela conexão');
+ assert(keyNode('answerSelectedInfo').textContent.includes('Motor 1'),'fio selecionado exibe origem e destino');
+ keyNode('answerWirePicker').children[0].click();
+ assert.equal(countVisible(),2,'segundo toque restaura o grupo');
+ keyNode('answerFilters').children.find(b=>b.textContent==='Motor 2').click();
+ assert.equal(countVisible(),2,'motor 2 tem grupo próprio');
+ assert(!keyNode('answerDiagram').innerHTML.includes('stroke="#107b50" stroke-width="10"'),'motor 2 não compartilha os fios verdes do motor 1');
+ keyNode('answerFilters').children.find(b=>b.textContent==='Comandos').click();
+ assert.equal(countVisible(),4,'filtro de comando mostra quatro GPIOs e somente eles');
+ keyNode('answerFilters').children.find(b=>b.textContent==='Energia ESP32').click();
+ assert.equal(countVisible(),5,'filtro de alimentação ESP32 mostra os cinco fios');
+ keyNode('answerFilters').children.find(b=>b.textContent==='Tudo').click();
+ assert.equal(countVisible(),17,'voltar à visão geral recupera as 17 ligações');
  assert(!keyNode('answerDetails').open,'resumo em texto começa recolhido');
 
  assert.equal(keyNode('answerGroups').children.length,4,'quatro grupos de conexões');
