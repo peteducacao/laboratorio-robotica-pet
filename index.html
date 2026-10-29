@@ -7,19 +7,20 @@
 <link rel="icon" href="assets/logo-pet.svg" type="image/svg+xml">
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="styles.css?v=10">
-<script defer src="app.js?v=10"></script>
+<link rel="stylesheet" href="styles.css?v=11">
+<script defer src="app.js?v=11"></script>
 </head>
 <body>
 <header class="app-header">
   <div class="header-start">
-    <button id="menuBtn" class="icon-btn mobile-menu" aria-label="Abrir lista de componentes" aria-expanded="false">☰</button>
+    <button id="menuBtn" class="icon-btn mobile-menu legacy-control" aria-label="Abrir lista de componentes" aria-expanded="false" hidden>☰</button>
     <a href="./" class="brand"><img src="assets/logo-pet.svg" alt="PET Educação"><span><strong>Tinker<span>PET</span></strong><small>LABORATÓRIO DE ROBÓTICA · UFS</small></span></a>
     <span class="header-tag">PROJETO 01</span>
   </div>
   <div class="header-end">
-    <button id="guideBtn" class="header-btn" title="Instruções">❔ <span>Como usar</span></button>
-    <button id="saveBtn" class="header-btn" title="Salvar a montagem">▣ <span>Salvar</span></button>
+    <span class="autosave-indicator" id="savedIndicator" aria-live="polite">● Salvo automaticamente</span>
+    <button id="guideBtn" class="legacy-control" hidden>Ajuda</button>
+    <button id="saveBtn" class="legacy-control" hidden>Salvar</button>
   </div>
 </header>
 <div class="studio">
@@ -36,27 +37,37 @@
   <div id="sideBackdrop" class="side-backdrop" hidden></div>
   <button type="button" id="drawerHandle" class="drawer-handle" aria-label="Abrir componentes" aria-controls="library" aria-expanded="false"><span id="drawerArrow">❯</span><small>PEÇAS</small></button>
   <main class="main-work">
-    <div class="toolbar">
+    <div class="toolbar" role="toolbar" aria-label="Ferramentas da bancada">
       <div class="toolbar-left">
-        <button class="mode-btn active" id="editTab" type="button">⌘ <span>Montagem</span></button>
-        <button class="mode-btn" id="playTab" type="button">▶ <span>Simulação</span></button>
-        <span class="toolbar-divider"></span>
-        <button class="tool-btn" id="undoBtn" type="button" title="Desfazer última ação">↶ <span>Desfazer</span></button>
-        <button class="tool-btn" id="clearBtn" type="button" title="Limpar toda a bancada">▤ <span>Limpar</span></button>
+        <button id="editTab" class="legacy-control" hidden>Montagem</button>
+        <button id="playTab" class="legacy-control" hidden>Simulação</button>
+        <button id="undoBtn" class="control-btn" type="button" title="Desfazer" aria-label="Desfazer">↶ <span>Desfazer</span></button>
+        <button id="redoBtn" class="control-btn" type="button" title="Refazer" aria-label="Refazer">↷ <span>Refazer</span></button>
+        <button id="deleteBtn" class="control-btn delete-btn" type="button" title="Excluir a peça selecionada" aria-label="Excluir a peça selecionada">⌫ <span>Excluir</span></button>
+        <button id="clearBtn" class="legacy-control" hidden>Limpar</button>
+        <label class="wire-color-picker" for="wireColorSelect"><span>Cor do fio</span><span class="wire-color-preview" id="wireColorPreview"></span>
+          <select id="wireColorSelect" aria-label="Cor do fio">
+            <option value="#ed654d">Vermelho</option><option value="#316fc0">Azul</option><option value="#1f434c">Preto</option>
+            <option value="#32a47b">Verde</option><option value="#e5a13d">Amarelo</option><option value="#a378c8">Roxo</option>
+          </select>
+        </label>
       </div>
       <div class="toolbar-right">
-        <span id="savedIndicator" class="save-indicator">● Salvo</span>
-        <button class="tool-btn zoom-btn" id="zoomOut" aria-label="Diminuir zoom">−</button>
+        <button id="hintBtn" class="control-btn hint-btn" type="button" title="Mostrar dica">💡 <span>Dica</span></button>
+        <button id="checkBtn" class="simulation-toggle" type="button" aria-pressed="false"><span class="sim-icon">▶</span> <span id="simLabel">Iniciar simulação</span></button>
+      </div>
+      <div class="toolbar-zoom" aria-label="Zoom da bancada">
+        <button class="control-btn zoom-btn" id="zoomOut" aria-label="Diminuir zoom">−</button>
         <span id="zoomLabel" class="zoom-label">100%</span>
-        <button class="tool-btn zoom-btn" id="zoomIn" aria-label="Aumentar zoom">+</button>
-        <button class="tool-btn zoom-btn" id="fitBtn" aria-label="Ajustar bancada à tela" title="Ajustar à tela">⛶</button>
+        <button class="control-btn zoom-btn" id="zoomIn" aria-label="Aumentar zoom">+</button>
+        <button class="control-btn zoom-btn" id="fitBtn" aria-label="Enquadrar montagem" title="Enquadrar montagem">⛶</button>
       </div>
     </div>
     <section class="workspace-region" id="buildPanel" aria-label="Bancada virtual">
       <div class="mission-strip">
         <span class="strip-number" id="stepNumber">01</span>
         <div class="mission-copy"><strong id="missionTitle">Sua bancada está vazia</strong><span id="missionText">Escolha as peças no catálogo e coloque-as onde quiser.</span></div>
-        <button id="hintBtn" class="hint-btn" type="button">✧ Dica</button>
+        <div class="inspector-bottom"><div class="progress-head"><span>Conexões corretas</span><b id="connectionsCount">0 / 17</b></div><div class="progress-track"><div id="progressBar"></div></div><div id="validationBadge" class="validation-badge">Aguardando montagem</div></div>
       </div>
       <div id="viewport" class="viewport" aria-label="Bancada vazia. Arraste peças do catálogo para colocar aqui." tabindex="0">
         <div id="world" class="world">
@@ -73,12 +84,11 @@
           <div class="canvas-zoom-actions"><button type="button" id="zoomFitPart">Enquadrar peça</button><button type="button" id="zoomFitAll">Ver montagem</button></div>
           <small>Dois dedos: aproximar, afastar ou mover a bancada.</small>
         </div>
-        <div class="canvas-corner">Fio: escolha um pino, clique para fazer curvas e termine em outro pino</div>
+        <div class="canvas-corner" id="canvasHint">Fio: toque no pino → marque as curvas → toque no outro pino</div>
       </div>
       <div class="bottom-controls">
-        <div class="connection-palette"><span>Cor dos fios</span><div id="colorPalette" class="swatches" aria-label="Escolher cor do fio"></div></div>
-        <div class="status-box" role="status" aria-live="polite" id="statusText">Adicione o ESP32, o LM2596 e os demais componentes.</div>
-        <button id="checkBtn" class="run-btn" type="button">▶ Iniciar simulação</button>
+        <div id="colorPalette" class="legacy-control" hidden></div>
+        <div class="status-box" role="status" aria-live="polite" id="statusText">Arraste as peças para a bancada e conecte os terminais.</div>
       </div>
     </section>
     <section id="playPanel" class="play-panel" hidden aria-label="Simulação do carrinho">
@@ -108,7 +118,6 @@
   <aside class="inspector" aria-label="Informações e conexões">
     <div class="inspector-tabs"><button id="inspectorPartsTab" class="active" type="button">Propriedades</button><button id="inspectorWiresTab" type="button">Fios <span id="wiresBadge">0</span></button></div>
     <div id="inspectorBody" class="inspector-body"><div class="inspect-empty"><span>⌁</span><h3>Escolha uma peça</h3><p>Ao selecionar um componente, você verá seus pinos e sua função.</p></div></div>
-    <div class="inspector-bottom"><div class="progress-head"><span>Conexões corretas</span><b id="connectionsCount">0 / 17</b></div><div class="progress-track"><div id="progressBar"></div></div><div id="validationBadge" class="validation-badge">Aguardando montagem</div></div>
   </aside>
 </div>
 <div id="toast" class="toast" role="status" aria-live="polite"></div>
