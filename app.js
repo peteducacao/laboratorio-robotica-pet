@@ -16,7 +16,7 @@ const PART_LAYOUTS={
  buck:{w:195,h:158,pins:{INP:[13,35],INN:[13,65],OUTP:[87,35],OUTN:[87,65]}},
  battery:{w:148,h:181,pins:{POS:[31,22],NEG:[69,22]}},
  switch:{w:156,h:142,pins:{IN:[27,72],OUT:[73,72]}},
- motor:{w:190,h:405,pins:{A:[15,89],B:[15,83]}},
+ motor:{w:190,h:405,pins:{A:[18,85],B:[18,80]}},
  motorSide:{w:340,h:170,pins:{A:[96,42],B:[96,63]}}
 };
 const byId=Object.fromEntries(TYPES.flatMap(p=>p.ids.map(id=>[id,p])));
