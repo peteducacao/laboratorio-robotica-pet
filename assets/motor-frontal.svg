@@ -1,0 +1,41 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 640" role="img" aria-labelledby="title desc">
+<title id="title">Motor DC com caixa de engrenagens amarela, vista frontal</title>
+<desc id="desc">Caixa amarela na parte superior, eixo transversal, motor metálico na parte inferior com dois contatos vermelho e preto na lateral esquerda.</desc>
+<defs>
+ <linearGradient id="yellow" x1="0" x2=".9" y1="0" y2=".7"><stop stop-color="#fff35c"/><stop offset=".19" stop-color="#ffe600"/><stop offset=".75" stop-color="#ffd600"/><stop offset="1" stop-color="#dda000"/></linearGradient>
+ <linearGradient id="frontcap" x1="0" y1="0" x2="1" y2=".6"><stop stop-color="#ffed37"/><stop offset=".55" stop-color="#ffd200"/><stop offset="1" stop-color="#ebae00"/></linearGradient>
+ <linearGradient id="metal" x1="0" y1="0" x2="1" y2="0"><stop stop-color="#728293"/><stop offset=".18" stop-color="#e8f0f5"/><stop offset=".46" stop-color="#cad4dd"/><stop offset=".75" stop-color="#8d9baa"/><stop offset="1" stop-color="#f6f8fa"/></linearGradient>
+ <linearGradient id="shaft" x1="0" y1="0" x2="1" y2="0"><stop stop-color="#a5b4c1"/><stop offset=".32" stop-color="#faffff"/><stop offset=".75" stop-color="#cbd3dc"/><stop offset="1" stop-color="#718391"/></linearGradient>
+ <filter id="shadow"><feGaussianBlur stdDeviation="2"/></filter>
+</defs>
+<!-- Gearbox transverse axle, behind the body -->
+<rect x="9" y="144" width="282" height="34" rx="10" fill="url(#shaft)" stroke="#b1bec7" stroke-width="2"/>
+<rect x="140" y="37" width="20" height="60" rx="3" fill="url(#frontcap)" stroke="#ebbb00" stroke-width="2"/>
+<rect x="158" y="240" width="106" height="28" rx="6" fill="url(#frontcap)" stroke="#cb9400" stroke-width="2"/>
+<!-- Main yellow rectangular gearbox -->
+<rect x="57" y="90" width="188" height="325" rx="15" fill="#a07900" opacity=".18" transform="translate(1 5)"/>
+<rect x="51" y="82" width="197" height="333" rx="15" fill="url(#yellow)" stroke="#d5a300" stroke-width="2.4"/>
+<path d="M59 107 H238" stroke="#fff47e" stroke-width="7" opacity=".92"/>
+<path d="M57 405 H240" stroke="#e8ae00" stroke-width="3"/>
+<path d="M239 99 V390" stroke="#efad05" stroke-width="5" opacity=".5"/>
+<path d="M64 113 V390" stroke="#fff07b" stroke-width="5" opacity=".6"/>
+<!-- Lower gearbox dome -->
+<path d="M62 413 Q68 404 84 409 L216 409 Q234 410 240 426 L239 479 Q237 490 224 490 L73 490 Q59 486 59 471Z" fill="url(#frontcap)" stroke="#cf9f00" stroke-width="2.6"/>
+<path d="M61 424 Q140 386 238 427" stroke="#ffec3d" stroke-width="8" opacity=".6" fill="none"/>
+<path d="M72 487 H231" stroke="#d7a600" stroke-width="3"/>
+<!-- Silvery motor body -->
+<rect x="72" y="493" width="158" height="91" rx="9" fill="url(#metal)" stroke="#8494a0" stroke-width="3"/>
+<rect x="76" y="493" width="11" height="89" fill="#f7fafb" opacity=".45"/>
+<path d="M225 495 V582" stroke="#71818d" stroke-width="5"/>
+<path d="M77 535 H226" stroke="#fcffff" stroke-width="2" opacity=".52"/>
+<!-- Rear electrical terminals integrated in side of metal motor -->
+<path d="M78 519 L53 519 L42 530 L42 538 L76 538Z" fill="#222d35" stroke="#111e29" stroke-width="2"/>
+<circle cx="45" cy="533" r="5" fill="#20242b" stroke="#e1e5e8" stroke-width="1.5"/>
+<path d="M78 554 L53 554 L42 563 L42 571 L76 571Z" fill="#de3c31" stroke="#93231c" stroke-width="2"/>
+<circle cx="45" cy="567" r="5" fill="#b52d28" stroke="#ff9f83" stroke-width="1.5"/>
+<rect x="75" y="578" width="156" height="26" rx="3" fill="#27313a"/>
+<path d="M91 587 H213" stroke="#525f6a" stroke-width="2"/>
+<!-- Mechanical shaft at bottom -->
+<rect x="144" y="601" width="15" height="36" rx="2" fill="url(#shaft)" stroke="#738896" stroke-width="1.5"/>
+<path d="M146 603 V633" stroke="#fff" stroke-width="2" opacity=".6"/>
+</svg>
