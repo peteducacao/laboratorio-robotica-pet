@@ -92,7 +92,7 @@
    default:return [[x,Y]];
   }
  }
- function makeSvg(embedded={}){
+ function makeSvg(embedded={},category=activeCategory,wire=activeWire){
   const pieces=[];
   pieces.push('<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 '+WIDTH+' '+HEIGHT+'" width="'+WIDTH+'" height="'+HEIGHT+'" role="img" aria-label="Gabarito visual do carrinho ESP32, com nove componentes reais e dezessete fios conectados">');
   pieces.push('<defs><pattern id="answerDots" width="28" height="28" patternUnits="userSpaceOnUse"><circle cx="3" cy="3" r="1.45" fill="#ccdce1"/></pattern></defs>');
@@ -107,6 +107,7 @@
   pieces.push('<text x="81" y="678" fill="#347e82" font-family="Arial,sans-serif" font-weight="bold" font-size="20" letter-spacing="2">ALIMENTAÇÃO DOS MOTORES</text>');
   const contacts=[];
   data.connections.forEach((w,i)=>{
+   if(wire>=0?i!==wire:category!=='all'&&!categories.find(c=>c.id===category).indices.includes(i))return;
    const ports=displayedPorts(i),start=portPosition(ports.a),end=portPosition(ports.b);
    if(!start||!end)return;
    const waypoints=[start,...bendsFor(i,start,end).map(p=>({x:p[0],y:p[1]})),end];
@@ -127,7 +128,7 @@
    const color=colors[i];
    const label=escaped(w.from+' → '+w.to);
    pieces.push('<path d="'+d+'" fill="none" stroke="#fff" stroke-width="17" stroke-linejoin="round" stroke-linecap="round"/>');
-   pieces.push('<path d="'+d+'" fill="none" stroke="'+color+'" stroke-width="10" stroke-linejoin="round" stroke-linecap="round"><title>Conexão '+(i+1)+': '+label+'</title></path>');
+   pieces.push('<path d="'+d+'" fill="none" stroke="'+color+'" stroke-width="10" stroke-linejoin="round" stroke-linecap="round" data-answer-wire="'+i+'" class="answer-svg-wire"><title>Fio '+(i+1)+': '+label+'</title></path>');
    contacts.push({x:start.x,y:start.y,color,label},{x:end.x,y:end.y,color,label});
   });
   // Mesmas imagens e pontos reais de conexão usados na bancada editável.
@@ -146,12 +147,22 @@
   contacts.forEach(c=>{
    pieces.push('<circle cx="'+c.x.toFixed(1)+'" cy="'+c.y.toFixed(1)+'" r="10" fill="'+c.color+'" stroke="#fff" stroke-width="3"><title>'+c.label+'</title></circle>');
   });
-  pieces.push('<rect x="69" y="1350" width="1912" height="52" rx="20" fill="#e3eff1"/>');
-  const legend=[['#e44f45','Positivo / alimentação'],['#344e61','Negativo / GND'],['#277cbe','GPIO / comando'],['#169980','Saídas dos motores']];
+  // Nos dois interruptores, os três terminais ficam nomeados e alinhados aos pinos reais.
+  for(const id of ['s1','s2']){
+   for(const [pin,label] of [['IN','IN'],['OUT','OUT'],['LEDG','LED−']]){
+    const p=portPosition(id+'.'+pin),x=p.x,y=p.y+38;
+    const accent=pin==='LEDG'?'#607582':id==='s1'?'#bb453b':'#b23a75';
+    pieces.push('<path d="M'+p.x+' '+(p.y+10)+' V'+(y-16)+'" stroke="'+accent+'" stroke-width="2"/>');
+    pieces.push('<rect x="'+(x-30)+'" y="'+(y-16)+'" width="60" height="29" rx="9" fill="#fff" stroke="'+accent+'" stroke-width="2"/>');
+    pieces.push('<text x="'+x+'" y="'+(y+4)+'" font-family="Arial,sans-serif" font-weight="bold" font-size="17" fill="'+accent+'" text-anchor="middle">'+label+'</text>');
+   }
+  }
+  pieces.push('<rect x="69" y="1346" width="1912" height="58" rx="20" fill="#e3eff1"/>');
+  const legend=[['#ce3638','ESP32 / energia'],['#d34073','Motores / energia'],['#1767b2','Comandos'],['#107b50','Motor 1'],['#eba12a','Motor 2']];
   legend.forEach((item,i)=>{
-   const x=104+i*473;
-   pieces.push('<path d="M'+x+' 1376 H'+(x+57)+'" stroke="'+item[0]+'" stroke-width="11" stroke-linecap="round"/>');
-   pieces.push('<text x="'+(x+72)+'" y="1384" font-size="22" font-family="Arial,sans-serif" fill="#315d68">'+item[1]+'</text>');
+   const x=99+i*378;
+   pieces.push('<path d="M'+x+' 1376 H'+(x+54)+'" stroke="'+item[0]+'" stroke-width="11" stroke-linecap="round"/>');
+   pieces.push('<text x="'+(x+67)+'" y="1384" font-size="21" font-family="Arial,sans-serif" fill="#315d68">'+item[1]+'</text>');
   });
   pieces.push('</svg>');
   return pieces.join('');
