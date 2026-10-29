@@ -569,3 +569,46 @@
  .toolbar-left .control-btn{min-width:43px}
  .wire-color-picker>span:first-child{display:none}
 }
+
+
+/* v12 — tela inicial clicável e terminais/jumpers sem curvas dispersas */
+.viewport{position:relative}
+.world-note{
+ position:absolute!important;z-index:20!important;top:50%!important;left:50%!important;
+ transform:translate(-50%,-50%)!important;
+ display:flex;align-items:center;justify-content:center;gap:11px;
+ width:min(340px,calc(100% - 32px));max-width:none;
+ padding:8px 12px;text-align:center;pointer-events:auto!important;
+ background:transparent;color:#6b8898;
+}
+.world-note[hidden]{display:none!important}
+.empty-add-button{
+ display:grid;place-items:center;width:92px;height:92px;
+ flex:none;border:2px dashed #8db7c1;border-radius:23px;
+ background:#eff8f8e8;color:#258a96;font-size:68px;font-weight:400;
+ line-height:1;padding:0 0 8px;cursor:pointer;touch-action:manipulation;
+ transition:background .15s,border-color .15s,transform .15s;
+}
+.empty-add-button:hover,.empty-add-button:focus-visible{
+ border-color:#229faa;background:#d9f5f3;transform:scale(1.04);
+ outline:3px solid #48b5b340;outline-offset:3px;
+}
+.world-note strong{font-size:17px;color:#456d7c;font-weight:800}
+.world-note span{font-size:12px;line-height:1.5}
+.canvas-label{display:none!important}
+.wire-svg{z-index:8;pointer-events:none}
+.wire-line,.wire-line.wire-pending{stroke-width:9!important;stroke-linecap:round!important;stroke-linejoin:round!important;pointer-events:none!important;fill:none!important}
+.wire-line.wire-selected{stroke-width:12!important;filter:drop-shadow(0 0 5px #149eac96)}
+.wire-end-cap,.wire-active-tip{pointer-events:none!important;stroke:none!important}
+.wire-active-tip{filter:drop-shadow(0 0 4px #f5faff)}
+.wire-target{
+ pointer-events:stroke!important;stroke:transparent!important;
+ stroke-width:24!important;fill:none!important;cursor:pointer;
+}
+.wire-target:hover{stroke:#ffffff10!important}
+.wire-target:focus-visible{outline:2px solid #309eb4}
+@media(max-width:520px){
+ .world-note{gap:9px}
+ .empty-add-button{width:86px;height:86px;font-size:62px}
+ .world-note strong{font-size:15px}
+}
