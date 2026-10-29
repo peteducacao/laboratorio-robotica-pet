@@ -7,9 +7,9 @@
 <link rel="icon" href="assets/logo-pet.svg" type="image/svg+xml">
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="styles.css?v=21">
+<link rel="stylesheet" href="styles.css?v=20">
 <link rel="stylesheet" href="answer-key.css?v=17">
-<script defer src="app.js?v=21"></script>
+<script defer src="app.js?v=20"></script>
 <script defer src="answer-key.js?v=17"></script>
 </head>
 <body>
@@ -47,8 +47,6 @@
         <button id="redoBtn" class="control-btn" type="button" title="Refazer" aria-label="Refazer">↷ <span>Refazer</span></button>
         <button id="deleteBtn" class="control-btn delete-btn" type="button" title="Excluir peça ou fio selecionado" aria-label="Excluir peça ou fio selecionado">⌫ <span>Excluir</span></button>
         <button id="clearBtn" class="legacy-control" hidden>Limpar</button>
-        <button id="organizeBtn" class="control-btn organize-btn" type="button" title="Organizar as peças, preservando os fios e permitindo desfazer">▦ <span>Organizar</span></button>
-        <button id="flowBtn" class="control-btn flow-btn" type="button" aria-pressed="false" title="Mostrar o fluxo didático da alimentação elétrica">⚡ <span>Energia</span></button>
         <label class="wire-color-picker" for="wireColorSelect"><span>Cor do fio</span><span class="wire-color-preview" id="wireColorPreview"></span>
           <select id="wireColorSelect" aria-label="Cor do fio">
             <option value="#ed654d">Vermelho</option><option value="#316fc0">Azul</option><option value="#1f434c">Preto</option>
@@ -60,10 +58,7 @@
         <button id="hintBtn" class="control-btn hint-btn" type="button" title="Mostrar dica">💡 <span>Dica</span></button>
         <button id="checkBtn" class="simulation-toggle" type="button" aria-pressed="false"><span class="sim-icon" id="simIcon">▶</span> <span id="simLabel">Iniciar simulação</span></button>
       </div>
-      <div class="toolbar-zoom" aria-label="Ferramentas da bancada">
-        <button class="control-btn mode-switch is-active" id="connectModeBtn" type="button" aria-pressed="true" title="Conectar jumpers entre terminais">⌁ <span>Conectar</span></button>
-        <button class="control-btn mode-switch" id="selectModeBtn" type="button" aria-pressed="false" title="Selecionar peças e fios sem conectá-los">◎ <span>Selecionar</span></button>
-        <button class="control-btn mode-switch" id="precisionBtn" type="button" aria-pressed="false" title="Lupa de precisão: toque na peça para escolher um pino">⌕ <span>Pinos</span></button>
+      <div class="toolbar-zoom" aria-label="Navegação da bancada">
         <button class="control-btn pan-mode-btn" type="button" id="panModeBtn" aria-pressed="false" title="Mover a bancada sem arrastar peças ou fios">✋ <span>Mover</span></button>
         <button class="control-btn zoom-btn" id="zoomOut" aria-label="Diminuir zoom">−</button>
         <span id="zoomLabel" class="zoom-label">100%</span>
@@ -77,22 +72,12 @@
         <div class="mission-copy"><strong id="missionTitle">Sua bancada está vazia</strong><span id="missionText">Escolha as peças no catálogo e coloque-as onde quiser.</span></div>
         <div class="inspector-bottom"><div class="progress-head"><span id="progressCaption">Componentes</span><b id="connectionsCount">0 / 9 peças</b></div><div class="progress-track"><div id="progressBar"></div></div><div id="validationBadge" class="validation-badge">Aguardando montagem</div></div>
       </div>
-      <div id="flowPanel" class="flow-panel" hidden aria-label="Visualização didática de energia e sinais">
-        <div class="flow-panel-head"><strong>⚡ Percurso da alimentação</strong><span>Modelo educativo — não calcula corrente, tensão real nem executa firmware</span></div>
-        <div id="flowContent" class="flow-content" role="status" aria-live="polite"></div>
-      </div>
       <div id="viewport" class="viewport" aria-label="Área infinita de montagem. Arraste as peças e mova a bancada para qualquer direção." tabindex="0">
         <div id="world" class="world">
           
           <svg id="wireSvg" class="wire-svg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1900 1450" aria-label="Fios conectados"></svg>
           <div id="partsLayer" class="parts-layer"></div>
           <div id="wirePreview" class="wire-preview" hidden></div>
-        </div>
-        <div id="diagnosticsPanel" class="diagnostics-panel" hidden aria-label="Conferência do circuito" role="status"></div>
-        <div id="precisionPanel" class="precision-panel" hidden aria-label="Lupa de terminais">
-          <div class="precision-head"><strong id="precisionTitle">Terminais ampliados</strong><button type="button" id="precisionClose" aria-label="Fechar lupa de terminais">×</button></div>
-          <div id="precisionBody" class="precision-body"></div>
-          <small>Toque no nome do pino para conectá-lo com precisão.</small>
         </div>
         <div class="world-note" id="worldNote">
           <button id="openComponentPicker" class="empty-add-button" type="button" aria-label="Abrir catálogo para adicionar componentes">+</button>
@@ -144,6 +129,6 @@
 </div>
 <div id="toast" class="toast" role="status" aria-live="polite"></div>
 <div id="dragGhost" class="drag-ghost" hidden></div>
-<dialog id="guideDialog"><div class="dialog-head"><h2>Como usar o TinkerPET</h2><button id="closeGuide" type="button" aria-label="Fechar">×</button></div><p><b>Agora a bancada começa vazia, igual a um laboratório de montagem.</b></p><ol><li>Abra a gaveta pela seta na lateral esquerda do meio da tela. Arraste uma peça do catálogo ou toque para adicioná-la.</li><li>Use Conectar, Selecionar, Mover ou Pinos (lupa de precisão). Toque em Organizar para alinhar as peças, ou Energia para acompanhar o percurso didático da alimentação.</li><li>Arraste cada componente pela imagem. A bancada não tem limites: solte as peças em qualquer posição, inclusive à esquerda ou acima da posição inicial.</li><li>Para navegar, arraste o fundo vazio, use o botão Mover, ou mantenha Espaço pressionado enquanto arrasta. Roda do mouse desloca a visão; Ctrl + roda amplia. No celular, dois dedos movimentam e dão zoom.</li><li>Toque no primeiro terminal para começar um fio contínuo. Toque em pontos vazios da bancada para fixar curvas. Toque no segundo terminal para finalizar. Também pode arrastar diretamente entre dois terminais. Use Desfazer para retirar a última curva.</li><li>Selecione as gangorras para ligá-las e ajuste o LM2596 para 5 V.</li><li>Quando tudo estiver conectado, toque em <b>Iniciar simulação</b> e pilote o carrinho virtual.</li></ol><p>A simulação é educativa e não representa todas as leis elétricas ou a execução real do firmware ESP32. Ferramentas, soldas e medições físicas exigem supervisão.</p><button id="startGuide" class="run-btn">Vamos montar!</button></dialog>
+<dialog id="guideDialog"><div class="dialog-head"><h2>Como usar o TinkerPET</h2><button id="closeGuide" type="button" aria-label="Fechar">×</button></div><p><b>Agora a bancada começa vazia, igual a um laboratório de montagem.</b></p><ol><li>Abra a gaveta pela seta na lateral esquerda do meio da tela. Arraste uma peça do catálogo ou toque para adicioná-la.</li><li>Arraste cada componente pela imagem. A bancada não tem limites: solte as peças em qualquer posição, inclusive à esquerda ou acima da posição inicial.</li><li>Para navegar, arraste o fundo vazio, use o botão Mover, ou mantenha Espaço pressionado enquanto arrasta. Roda do mouse desloca a visão; Ctrl + roda amplia. No celular, dois dedos movimentam e dão zoom.</li><li>Toque no primeiro terminal para começar um fio contínuo. Toque em pontos vazios da bancada para fixar curvas. Toque no segundo terminal para finalizar. Também pode arrastar diretamente entre dois terminais. Use Desfazer para retirar a última curva.</li><li>Selecione as gangorras para ligá-las e ajuste o LM2596 para 5 V.</li><li>Quando tudo estiver conectado, toque em <b>Iniciar simulação</b> e pilote o carrinho virtual.</li></ol><p>A simulação é educativa e não representa todas as leis elétricas ou a execução real do firmware ESP32. Ferramentas, soldas e medições físicas exigem supervisão.</p><button id="startGuide" class="run-btn">Vamos montar!</button></dialog>
 <footer>✳ TinkerPET • Laboratório virtual do PET Educação — UFS <span>Sem vídeos · Arraste, monte, experimente.</span></footer>
 </body></html>
