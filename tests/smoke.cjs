@@ -52,6 +52,16 @@ assert(css.includes('.wire-svg{z-index:8;pointer-events:none}'),'fios desenhados
 assert.equal(types.length,6);
 assert.equal(types.reduce((sum,t)=>sum+t.ids.length,0),9);
 assert.equal(edges.length,17);
+// Os quatro comandos e as saídas do MX1508 são conferidos com a imagem de referência.
+// As chaves e baterias devem continuar sendo as peças originais do TinkerPET.
+for(const [origin,target] of [
+ ['esp.D27','drv.IN1'],['esp.D26','drv.IN2'],
+ ['esp.D32','drv.IN3'],['esp.D18','drv.IN4'],
+ ['drv.OUT1','ml.A'],['drv.OUT2','ml.B'],
+ ['drv.OUT3','mr.A'],['drv.OUT4','mr.B'],
+ ['b1.POS','s1.IN'],['s1.OUT','lm.INP'],
+ ['b2.POS','s2.IN'],['s2.OUT','drv.VCC']
+])assert(edges.some(([a,b])=>a===origin&&b===target),'ligação da referência: '+origin+' → '+target);
 const ports=new Set(types.flatMap(t=>t.ids.flatMap(id=>t.pins.map(p=>id+'.'+p[0]))));
 for(const [a,b] of edges){assert(ports.has(a));assert(ports.has(b));}
 assert.equal(new Set(edges.map(([a,b])=>[a,b].sort().join('|'))).size,17);
