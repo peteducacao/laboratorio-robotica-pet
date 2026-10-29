@@ -134,6 +134,12 @@ assert.equal(saved().parts.find(p=>p.id==='ml').view,'side','trocar para vista l
 send('click','inspectorBody',{target:{closest(q){return q==='[data-motor-view]'?{dataset:{motorView:'ml'}}:null;}}});
 assert.equal(saved().parts.find(p=>p.id==='ml').view,'front','voltar para vista frontal');
 add('esp');assert.equal(saved().parts.length,9,'evitar esp32 duplicado');
+// O canvas aceita coordenadas negativas e não corta o SVG nas bordas antigas.
+assert(!js.includes("limit(p.x,0,WORLD"),'componentes não são limitados ao retângulo antigo');
+assert(!js.includes("limit(Math.round(g.partX"),'arrasto não fica preso a limites');
+assert(css.includes('.parts-layer,.wire-svg{overflow:visible!important}'),'fios e peças podem ultrapassar a área antiga');
+assert(html.includes('id="panModeBtn"'),'botão Mover aparece na bancada');
+
 
 // Testa o fluxo real de toque: pino inicial → dois cliques na bancada → pino final.
 function tapPin(port){
