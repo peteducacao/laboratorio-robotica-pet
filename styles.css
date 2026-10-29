@@ -136,3 +136,7 @@
 @media(max-width:820px){.motor-dashboard{flex-direction:row;gap:6px}.motor-dashboard-item{flex:1;min-width:0}.motor-dashboard-picture{flex:0 0 60px;width:60px;height:48px}.motor-dashboard-picture .motor-shaft-spinner{height:9px;width:9px}}
 @media(max-width:420px){.motor-dashboard{flex-direction:column}.motor-dashboard-picture{width:90px;height:60px;flex-basis:90px}.motor-dashboard-item{min-height:74px}}
 @media(prefers-reduced-motion:reduce){.motor-dashboard-item.running .motor-shaft-spinner{animation-duration:1.2s}}
+
+/* Prévia independente da montagem: animar eixo do componente selecionado. */
+.part[data-kind="motor"].demo-running .motor-shaft-spinner{opacity:1;animation-play-state:running}
+.part[data-kind="motor"].demo-running .part-image img{filter:drop-shadow(0 4px 5px rgba(27,143,168,.34))}
