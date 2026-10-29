@@ -262,6 +262,20 @@ assert(Number(nodes.zoomSlider.value)>=17,'enquadramento calcula um zoom válido
  assert(svgBancada.includes('esp32-devkit-v1-30p.svg'),'usa a mesma imagem ESP32 do laboratório');
  assert(svgBancada.includes('mx1508-desenhado.svg'),'usa a ponte H da bancada real');
  assert(!svgBancada.includes('NaN')&&!svgBancada.includes('undefined'),'nenhum terminal ficou sem posição');
+ const visualWires=[...svgBancada.matchAll(/<path d="([^"]+)" fill="none" stroke="(#[a-fA-F0-9]{6})" stroke-width="10"/g)];
+ assert.equal(visualWires.length,17,'gabarito usa os 17 fios do projeto');
+ for(const wire of visualWires){
+  const points=[...wire[1].matchAll(/[ML](-?\\d+(?:\\.\\d+)?) (-?\\d+(?:\\.\\d+)?)/g)].map(match=>[Number(match[1]),Number(match[2])]);
+  assert(points.length>=2,'cada fio possui terminais e rota');
+  for(let i=1;i<points.length;i++){
+   const dx=Math.abs(points[i][0]-points[i-1][0]);
+   const dy=Math.abs(points[i][1]-points[i-1][1]);
+   assert(dx<.01||dy<.01,'gabarito não usa diagonais nas ligações');
+  }
+ }
+ for(const asset of ['bateria-9v-desenhada.svg','gangorra-desenhada.svg','motor-frontal.svg']){
+  assert(svgBancada.includes(asset),'gabarito usa o componente original '+asset);
+ }
  assert(!keyNode('answerDetails').open,'resumo em texto começa recolhido');
 
  assert.equal(keyNode('answerGroups').children.length,4,'quatro grupos de conexões');
