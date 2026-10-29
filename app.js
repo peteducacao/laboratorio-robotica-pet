@@ -245,7 +245,7 @@ function removePart(id){
  state.parts=state.parts.filter(p=>p.id!==id);
  state.wires=state.wires.filter(w=>w.a.split('.')[0]!==id&&w.b.split('.')[0]!==id);
  if(state.selected===id)state.selected=null;
- if(state.startPort&&state.startPort.split('.')[0]===id)state.startPort=null;
+ if(state.startPort&&state.startPort.split('.')[0]===id){state.startPort=null;state.bends=[];previewPoint=null;}
  if(id==='s1'||id==='s2')state.switches[id]=false;
  state.completed=false;refresh();message(partName(id)+' removido.');
 }
@@ -439,7 +439,11 @@ function pointerMove(e){
     requestDraw();
    }
   }else if(g.type==='wire'){
-   if(g.moved){previewPoint=worldXY(e.clientX,e.clientY);requestDraw();}
+   if(g.moved){
+    if(!state.startPort){state.startPort=g.port;state.bends=[];}
+    previewPoint=worldXY(e.clientX,e.clientY);
+    requestDraw();
+   }
   }else if(g.type==='pan'){if(g.moved){panX=g.x+dx;panY=g.y+dy;camera();}}
  }else if(state.startPort){
   const r=Q('viewport').getBoundingClientRect();
@@ -460,18 +464,27 @@ function pointerUp(e){
   if(g.moved){
    const found=document.elementFromPoint?document.elementFromPoint(e.clientX,e.clientY):null;
    const to=found&&found.closest?found.closest('[data-port]'):null;
-   const from=g.port;
-   state.startPort=null;previewPoint=null;
-   suppressPortClickUntil=Date.now()+400;
-   if(to&&to.dataset.port!==from){connect(from);connect(to.dataset.port);}
-   else{state.startPort=from;renderParts();requestDraw();message('Toque no segundo terminal para completar o fio.');}
-  }else{state.startPort=null;previewPoint=null;}
+   const first=state.startPort||g.port;
+   suppressPortClickUntil=Date.now()+350;
+   if(!state.startPort)connect(first);
+   if(to&&to.dataset.port!==first){
+     connect(to.dataset.port);
+   }else{
+     const box=Q('viewport').getBoundingClientRect();
+     if(e.clientX>=box.left&&e.clientX<=box.right&&e.clientY>=box.top&&e.clientY<=box.bottom){
+       const pos=worldXY(e.clientX,e.clientY);addCorner(pos.x,pos.y);
+     }else{previewPoint=null;requestDraw();}
+   }
+  }
+  // Em toque simples, o evento click chama connect; não resetar a origem aqui.
  }else if(g.type==='move'){
   if(g.moved)persist();
   else{state.selected=g.partId;renderParts();renderInspector();}
  }else if(g.type==='pan'&&!g.moved){
-  if(state.startPort){state.startPort=null;previewPoint=null;renderParts();requestDraw();message('Fio cancelado.');}
-  else{state.selected=null;renderParts();renderInspector();}
+  if(state.startPort){
+   const pos=worldXY(e.clientX,e.clientY);
+   addCorner(pos.x,pos.y);
+  }else{state.selected=null;renderParts();renderInspector();}
  }
 }
 function hint(){
@@ -561,7 +574,7 @@ function bind(){
    const port=e.target.closest('[data-port]');
    if(port&&e.button!==2){
      gesture={type:'wire',pointer:e.pointerId,port:port.dataset.port,startX:e.clientX,startY:e.clientY,moved:false};
-     state.startPort=port.dataset.port;requestDraw();return;
+     requestDraw();return;
    }
    partDown(e);
  });
@@ -584,9 +597,9 @@ function bind(){
  Q('inspectorBody').addEventListener('click',e=>{const view=e.target.closest('[data-motor-view]');if(view){toggleMotorView(view.dataset.motorView);return;}const demo=e.target.closest('[data-demo-motor]');if(demo){demoMotor(demo.dataset.demoMotor);return;}const del=e.target.closest('[data-remove]');if(del)removePart(del.dataset.remove);const w=e.target.closest('[data-remove-wire]');if(w)removeWire(Number(w.dataset.removeWire));});
  Q('inspectorPartsTab').addEventListener('click',()=>{state.inspector='parts';renderInspector();});
  Q('inspectorWiresTab').addEventListener('click',()=>{state.inspector='wires';renderInspector();});
- Q('colorPalette').addEventListener('click',e=>{const swatch=e.target.closest('[data-color]');if(swatch){state.wireColor=swatch.dataset.color;renderColors();persist();}});
+ Q('colorPalette').addEventListener('click',e=>{const swatch=e.target.closest('[data-color]');if(swatch){state.wireColor=swatch.dataset.color;renderColors();requestDraw();persist();}});
  Q('undoBtn').addEventListener('click',undo);
- Q('clearBtn').addEventListener('click',()=>{if(!state.parts.length)return;if(confirm('Apagar todas as peças e fios da bancada?')){snapshot();state.parts=[];state.wires=[];state.selected=null;state.startPort=null;state.switches={s1:false,s2:false};state.voltage=4;refresh();message('Bancada limpa. Comece de novo!');}});
+ Q('clearBtn').addEventListener('click',()=>{if(!state.parts.length)return;if(confirm('Apagar todas as peças e fios da bancada?')){snapshot();state.parts=[];state.wires=[];state.selected=null;state.startPort=null;state.bends=[];previewPoint=null;state.switches={s1:false,s2:false};state.voltage=4;refresh();message('Bancada limpa. Comece de novo!');}});
  Q('hintBtn').addEventListener('click',hint);
  Q('saveBtn').addEventListener('click',()=>{persist();message('Seu projeto foi salvo neste navegador.',true);});
  Q('checkBtn').addEventListener('click',()=>{if(check()){switchView(true);message('Circuito conferido! Carrinho liberado.',true);}});
@@ -600,7 +613,13 @@ function bind(){
  Q('restartDrive').addEventListener('click',resetDrive);
  const binds={ArrowUp:'up',w:'up',W:'up',ArrowDown:'down',s:'down',S:'down',ArrowLeft:'left',a:'left',A:'left',ArrowRight:'right',d:'right',D:'right'};
  document.addEventListener('keydown',e=>{
-  if(e.key==='Escape'&&state.startPort){state.startPort=null;previewPoint=null;renderParts();requestDraw();return;}
+  if(e.key==='Escape'&&state.startPort){e.preventDefault();cancelPendingWire();message('Fio cancelado.');return;}
+  if(e.key==='Backspace'&&state.startPort&&!e.target.closest('input,textarea,select')){
+   e.preventDefault();
+   if(state.bends.length){state.bends.pop();previewPoint=null;requestDraw();message('Última curva retirada.');}
+   else cancelPendingWire();
+   return;
+  }
   if(Q('playPanel').hidden||!ready()||e.target.closest('input,textarea,select'))return;
   if(binds[e.key]){e.preventDefault();keys[binds[e.key]]=true;}
   if(e.key===' '){e.preventDefault();Object.keys(keys).forEach(k=>keys[k]=false);Q('driveReadout').textContent='Parado';}
