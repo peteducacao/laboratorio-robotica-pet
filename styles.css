@@ -640,3 +640,23 @@
 .pan-mode-btn.is-active{background:#1a807a;color:#fff;border-color:#1a807a}
 .pan-mode-btn span{font-size:11px}
 @media(max-width:620px){.pan-mode-btn{min-width:38px;padding:5px 7px}.pan-mode-btn span{display:none}}
+
+/* v20: jumper conectado preenche o pino, sem auréola/círculo verde.
+   A cor física do polo e do fio permanece visível. */
+.part .pin-btn.connected:not(.selected){
+ background:transparent!important;
+ border-color:transparent!important;
+ outline:none!important;
+ box-shadow:none!important;
+}
+.part[data-kind="motor"] .pin-btn.connected .pin-dot{
+ box-shadow:0 0 0 2px #314e60,0 1px 4px rgba(0,0,0,.25)!important;
+}
+.part[data-kind="battery"] .pin-btn.connected .pin-dot{
+ box-shadow:0 0 0 2px #243e4a!important;
+}
+/* Dois toques são tratados pela bancada, não pelo zoom nativo do navegador. */
+#viewport,#viewport .world,#viewport .parts-layer,#viewport .part{
+ touch-action:none!important;
+ -webkit-tap-highlight-color:transparent;
+}
