@@ -254,7 +254,7 @@ send('pointerup','window',pinchEvent(9001,100,100));
 send('input','zoomSlider',{target:{value:'25'}});
 assert.equal(nodes.zoomSlider.value,'25','lupa permite reduzir o zoom até 25%');
 send('click','zoomFitAll',{});
-assert(Number(nodes.zoomSlider.value)>=17,'enquadramento calcula um zoom válido');
+assert(Number(nodes.zoomSlider.value)>=4,'enquadramento calcula um zoom válido sem forçar o limite antigo');
 
 
  // Gabarito: testa abertura, senha, 17 linhas, download, impressão e bloqueio ao reabrir.
