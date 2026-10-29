@@ -1,19 +1,18 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 255 340" role="img" aria-labelledby="t d"><title id="t">Bateria de 9 volts</title><desc id="d">Bateria 9 V retangular ilustrada com polo positivo pequeno e polo negativo maior na parte superior.</desc>
-<defs><linearGradient id="case" x1="0" y1="0" x2="1" y2=".6"><stop stop-color="#facf20"/><stop offset=".16" stop-color="#eab111"/><stop offset=".62" stop-color="#e9b71e"/><stop offset="1" stop-color="#986918"/></linearGradient><linearGradient id="black" x1="0" y1="0" x2="1" y2=".4"><stop stop-color="#38444b"/><stop offset=".6" stop-color="#191c21"/><stop offset="1" stop-color="#50585c"/></linearGradient><linearGradient id="term" x1="0" y1="0" x2="1" y2=".8"><stop stop-color="#e9f0f4"/><stop offset=".5" stop-color="#7f8b94"/><stop offset="1" stop-color="#c6d2db"/></linearGradient><filter id="shadow"><feDropShadow dy="4" stdDeviation="3" flood-opacity=".2"/></filter></defs>
-<path d="M32 54 L51 39 H214 L228 53 V312 L211 328 H48 L32 314Z" fill="url(#case)" stroke="#a97b1b" stroke-width="4" filter="url(#shadow)"/>
-<path d="M32 58 L51 43 L214 43 L228 53 L208 69 H47 Z" fill="url(#black)"/>
-<rect x="51" y="7" width="55" height="37" rx="7" fill="url(#term)" stroke="#778891" stroke-width="4"/>
-<circle cx="78" cy="16" r="13" fill="#e0eced" stroke="#9ca9ae" stroke-width="4"/>
-<rect x="146" y="13" width="58" height="30" rx="7" fill="#8999a0" stroke="#65757e" stroke-width="4"/>
-<circle cx="175" cy="21" r="14" fill="#202c30" stroke="#c2d2d6" stroke-width="7"/>
-<path d="M47 69 V307 L34 314 V59 Z" fill="#edcb42" opacity=".46"/>
-<path d="M210 68 V316 L227 307 V53 Z" fill="#b48118" opacity=".42"/>
-<rect x="56" y="88" width="146" height="189" rx="7" fill="url(#black)"/>
-<path d="M56 105 H202 M56 255 H202" stroke="#ecc329" stroke-width="6"/>
-<text x="129" y="147" font-family="Arial" font-weight="900" font-size="38" text-anchor="middle" fill="#ffe15b">9V</text>
-<text x="129" y="174" font-family="Arial" font-weight="bold" font-size="14" text-anchor="middle" fill="white">BATERIA</text>
-<text x="129" y="211" font-family="Arial" font-size="18" text-anchor="middle" fill="#f3ce44">PET EDUCAÇÃO</text>
-<text x="129" y="239" font-family="Arial" font-size="11" text-anchor="middle" fill="#d6e0dc">ILUSTRAÇÃO DIDÁTICA</text>
-<text x="79" y="46" font-family="Arial" font-weight="bold" font-size="11" text-anchor="middle" fill="#fff">+</text>
-<text x="173" y="46" font-family="Arial" font-weight="bold" font-size="11" text-anchor="middle" fill="#fff">−</text>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 255 340" role="img" aria-labelledby="title desc">
+<title id="title">Bateria de 9 volts</title><desc id="desc">Bateria de 9 V com terminal positivo vermelho e negativo preto na parte superior.</desc>
+<defs><linearGradient id="gold" x1="0" y1="0" x2="1" y2=".9"><stop stop-color="#ffe25a"/><stop offset=".6" stop-color="#e8b323"/><stop offset="1" stop-color="#a97818"/></linearGradient><linearGradient id="black" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#3e484e"/><stop offset=".5" stop-color="#1a2229"/><stop offset="1" stop-color="#48545e"/></linearGradient><filter id="sh"><feDropShadow dy="4" stdDeviation="3" flood-opacity=".22"/></filter></defs>
+<path d="M32 54L50 40H214L228 54V310L211 329H48L32 313Z" fill="url(#gold)" stroke="#a87920" stroke-width="4" filter="url(#sh)"/>
+<path d="M32 58L50 43H214L228 54L207 68H47Z" fill="url(#black)"/>
+<!-- Correct polarity: red positive, dark negative -->
+<rect x="50" y="8" width="58" height="37" rx="7" fill="#d83b3c" stroke="#a82227" stroke-width="3"/>
+<circle cx="78" cy="16" r="13" fill="#f06a5b" stroke="#a71d29" stroke-width="3"/>
+<text x="78" y="30" fill="white" font-size="22" font-weight="bold" text-anchor="middle">+</text>
+<rect x="146" y="12" width="58" height="33" rx="7" fill="#1f2b34" stroke="#0d151d" stroke-width="3"/>
+<circle cx="175" cy="21" r="13" fill="#141d25" stroke="#687884" stroke-width="3"/>
+<text x="175" y="27" fill="#fff" font-size="20" font-weight="bold" text-anchor="middle">−</text>
+<rect x="55" y="89" width="148" height="184" rx="7" fill="url(#black)" stroke="#dba92c" stroke-width="2"/>
+<path d="M56 104H202M56 253H202" stroke="#f1c74a" stroke-width="5"/>
+<text x="129" y="159" fill="#ffde58" font-family="Arial" font-size="49" font-weight="bold" text-anchor="middle">9 V</text>
+<text x="129" y="198" fill="#f5f7f7" font-family="Arial" font-size="17" text-anchor="middle">PET EDUCAÇÃO</text>
+<text x="129" y="232" fill="#d0d6dc" font-family="Arial" font-size="11" text-anchor="middle">FONTE DO CIRCUITO</text>
 </svg>
