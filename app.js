@@ -2,7 +2,7 @@
 (() => {
 const ROOT='https://raw.githubusercontent.com/gabrieljsantos/Fundamentos-de-Prototipagem-e-Fabrica--o-Digital/main/assets/images/componentes/';
 const TYPES=[
- {kind:'esp',name:'ESP32 DevKit',img:'placa-esp32-devkit.webp',ids:['esp'],pins:[['VIN','VIN'],['GND','GND'],['D27','D27'],['D26','D26'],['D32','D32'],['D18','D18']],info:'O cérebro do carrinho: recebe energia de 5 V em VIN e comanda a ponte H por quatro GPIO.',tip:'D27→IN1 • D26→IN2 • D32→IN3 • D18→IN4.'},
+ {kind:'esp',name:'ESP32 DevKit V1',img:'assets/esp32-devkit-v1-30p.svg',ids:['esp'],pins:[["VIN","VIN"],["GND","GND"],["D13","D13"],["D12","D12"],["D14","D14"],["D27","D27"],["D26","D26"],["D25","D25"],["D33","D33"],["D32","D32"],["D35","D35"],["D34","D34"],["VN","VN"],["VP","VP"],["EN","EN"],["3V3","3V3"],["GND2","GND"],["D15","D15"],["D2","D2"],["D4","D4"],["RX2","RX2"],["TX2","TX2"],["D5","D5"],["D18","D18"],["D19","D19"],["D21","D21"],["RX0","RX0"],["TX0","TX0"],["D22","D22"],["D23","D23"]],info:'Placa de 30 pinos com USB à esquerda e nomes em cada contato. Os dois GND são equivalentes.',tip:'Neste carrinho: VIN recebe 5 V, GND comum, D27→IN1, D26→IN2, D32→IN3 e D18→IN4.'},
  {kind:'driver',name:'Ponte H MX1508',img:'driver-motor-mx1508.jpg',ids:['drv'],pins:[['VCC','VCC +'],['GND','GND −'],['IN1','IN1'],['IN2','IN2'],['IN3','IN3'],['IN4','IN4'],['OUT1','A • 1'],['OUT2','A • 2'],['OUT3','B • 1'],['OUT4','B • 2']],info:'A ponte H recebe os sinais do ESP32 e controla os dois motores. Cada motor utiliza um par de saídas.',tip:'As saídas A e B têm dois bornes cada; a numeração 1 e 2 aqui é didática.'},
  {kind:'buck',name:'Regulador LM2596',img:'conversor-step-down-lm2596.webp',ids:['lm'],pins:[['INP','IN +'],['INN','IN −'],['OUTP','OUT +'],['OUTN','OUT −']],info:'Regulador de tensão. Neste projeto, a saída para o ESP32 deve ser ajustada para 5,0 V.',tip:'Na montagem real, um responsável deve medir 5 V com multímetro antes de conectar VIN.'},
  {kind:'battery',name:'Bateria 9 V',img:'bateria-9v.jpg',ids:['b1','b2'],pins:[['POS','+'],['NEG','−']],info:'Duas baterias em circuitos independentes: uma para o ESP32 e outra para os motores.',tip:'A bateria 1 alimenta o LM2596 por uma gangorra; a bateria 2 alimenta a ponte H pela outra.'},
@@ -11,7 +11,7 @@ const TYPES=[
 ];
 const byKind=Object.fromEntries(TYPES.map(p=>[p.kind,p]));
 const PART_LAYOUTS={
- esp:{w:190,h:239,pins:{VIN:[12,31],GND:[12,47],D27:[12,63],D26:[88,31],D32:[88,47],D18:[88,63]}},
+ esp:{w:790,h:365,pins:{"VIN":[14.4,18.5],"GND":[19.43,18.5],"D13":[24.46,18.5],"D12":[29.49,18.5],"D14":[34.52,18.5],"D27":[39.55,18.5],"D26":[44.58,18.5],"D25":[49.61,18.5],"D33":[54.64,18.5],"D32":[59.67,18.5],"D35":[64.7,18.5],"D34":[69.73,18.5],"VN":[74.76,18.5],"VP":[79.79,18.5],"EN":[84.82,18.5],"3V3":[14.4,85.7],"GND2":[19.43,85.7],"D15":[24.46,85.7],"D2":[29.49,85.7],"D4":[34.52,85.7],"RX2":[39.55,85.7],"TX2":[44.58,85.7],"D5":[49.61,85.7],"D18":[54.64,85.7],"D19":[59.67,85.7],"D21":[64.7,85.7],"RX0":[69.73,85.7],"TX0":[74.76,85.7],"D22":[79.79,85.7],"D23":[84.82,85.7]}},
  driver:{w:196,h:244,pins:{VCC:[12,27],GND:[12,41],IN1:[12,55],IN2:[12,69],IN3:[12,83],IN4:[88,83],OUT1:[88,27],OUT2:[88,41],OUT3:[88,55],OUT4:[88,69]}},
  buck:{w:195,h:158,pins:{INP:[13,35],INN:[13,65],OUTP:[87,35],OUTN:[87,65]}},
  battery:{w:148,h:181,pins:{POS:[31,22],NEG:[69,22]}},
@@ -27,7 +27,9 @@ const EXPECTED=[
  ['drv.OUT1','ml.A'],['drv.OUT2','ml.B'],['drv.OUT3','mr.A'],['drv.OUT4','mr.B']
 ];
 const key=(a,b)=>[a,b].sort().join('|');
-const valid=new Set(EXPECTED.map(([a,b])=>key(a,b)));
+const canonicalPort=p=>p==='esp.GND2'?'esp.GND':p;
+const electricalKey=(a,b)=>key(canonicalPort(a),canonicalPort(b));
+const valid=new Set(EXPECTED.map(([a,b])=>electricalKey(a,b)));
 const allPorts=new Set(TYPES.flatMap(t=>t.ids.flatMap(id=>t.pins.map(p=>id+'.'+p[0]))));
 const Q=id=>document.getElementById(id);
 const WORLD={w:1200,h:780};
@@ -45,7 +47,7 @@ function safeRestore(){
   const s=JSON.parse(localStorage.getItem('tinkerpet-v2')||'null');
   if(!s||!Array.isArray(s.parts)||!Array.isArray(s.wires))return;
   const names=new Set();
-  state.parts=s.parts.filter(p=>p&&byId[p.id]&&!names.has(p.id)&&names.add(p.id)&&Number.isFinite(p.x)&&Number.isFinite(p.y)).map(p=>({id:p.id,kind:byId[p.id].kind,x:limit(p.x,0,1002),y:limit(p.y,0,465),view:byId[p.id].kind==='motor'&&p.view==='side'?'side':'front'}));
+  state.parts=s.parts.filter(p=>p&&byId[p.id]&&!names.has(p.id)&&names.add(p.id)&&Number.isFinite(p.x)&&Number.isFinite(p.y)).map(p=>({id:p.id,kind:byId[p.id].kind,x:limit(p.x,0,WORLD.w-PART_LAYOUTS[byId[p.id].kind].w),y:limit(p.y,0,WORLD.h-PART_LAYOUTS[byId[p.id].kind].h),view:byId[p.id].kind==='motor'&&p.view==='side'?'side':'front'}));
   state.wires=s.wires.filter(w=>w&&allPorts.has(w.a)&&allPorts.has(w.b)&&w.a!==w.b&&exists(w.a.split('.')[0])&&exists(w.b.split('.')[0])).slice(0,80).map(w=>({a:w.a,b:w.b,color:COLORS.includes(w.color)?w.color:COLORS[0]}));
   if(Number.isFinite(s.voltage))state.voltage=limit(s.voltage,3,6);
   if(s.switches)state.switches={s1:!!s.switches.s1,s2:!!s.switches.s2};
@@ -64,9 +66,9 @@ function imageUrl(p){return p.img.startsWith('assets/')?p.img:ROOT+p.img;}
 function motorImage(p){return p.view==='side'?'assets/motor-lateral.svg':'assets/motor-frontal.svg';}
 function partLayout(p){return p.kind==='motor'&&p.view==='side'?PART_LAYOUTS.motorSide:PART_LAYOUTS[p.kind];}
 function message(msg,toast=false){Q('statusText').textContent=msg;if(toast){const el=Q('toast');el.textContent=msg;el.classList.add('show');clearTimeout(toastTimer);toastTimer=setTimeout(()=>el.classList.remove('show'),2600);}}
-function countGood(){return state.wires.filter(w=>valid.has(key(w.a,w.b))).length;}
-function mistakes(){return state.wires.filter(w=>!valid.has(key(w.a,w.b)));}
-function missing(){const wired=new Set(state.wires.map(w=>key(w.a,w.b)));return EXPECTED.filter(([a,b])=>!wired.has(key(a,b)));}
+function countGood(){return state.wires.filter(w=>valid.has(electricalKey(w.a,w.b))).length;}
+function mistakes(){return state.wires.filter(w=>!valid.has(electricalKey(w.a,w.b)));}
+function missing(){const wired=new Set(state.wires.map(w=>electricalKey(w.a,w.b)));return EXPECTED.filter(([a,b])=>!wired.has(electricalKey(a,b)));}
 function ready(){return state.parts.length===9&&missing().length===0&&mistakes().length===0&&Math.abs(state.voltage-5)<.01&&state.switches.s1&&state.switches.s2;}
 function renderCatalog(){
  const query=Q('componentSearch').value.trim().toLowerCase();
@@ -88,6 +90,7 @@ function renderParts(){
  for(const p of state.parts){
   const t=byKind[p.kind],layout=partLayout(p),card=document.createElement('article');
   if(p.kind==='motor')card.dataset.motorView=p.view==='side'?'side':'front';
+  if(p.kind==='esp')card.dataset.boardModel='devkit30';
   card.className='part'+(state.selected===p.id?' selected':'');
   card.dataset.part=p.id;card.dataset.kind=p.kind;card.style.left=p.x+'px';card.style.top=p.y+'px';
   card.style.setProperty('--part-w',layout.w+'px');card.style.setProperty('--part-h',layout.h+'px');
@@ -100,6 +103,11 @@ function renderParts(){
   const imgbox=document.createElement('div');imgbox.className='part-image';
   const img=document.createElement('img');img.src=p.kind==='motor'?motorImage(p):imageUrl(t);img.alt='';img.draggable=false;
   imgbox.append(img);
+  if(p.kind==='esp'){
+   const label=document.createElement('span');label.className='esp-board-instruction';
+   label.textContent='Toque nos contatos dourados para ligar fios';
+   imgbox.append(label);
+  }
   if(p.kind==='motor'){
    const rotor=document.createElement('span');rotor.className='motor-shaft-spinner';rotor.setAttribute('aria-hidden','true');
    imgbox.append(rotor);
@@ -167,7 +175,7 @@ function inspectorWires(){
  state.wires.forEach((w,i)=>{
   const row=document.createElement('div');row.className='wire-item';
   const dot=document.createElement('span');dot.className='wire-dot';dot.style.background=w.color;
-  const names=document.createElement('div');names.className='wire-names';names.textContent=portName(w.a)+' → '+portName(w.b)+(valid.has(key(w.a,w.b))?' · ✓':' · Rever');
+  const names=document.createElement('div');names.className='wire-names';names.textContent=portName(w.a)+' → '+portName(w.b)+(valid.has(electricalKey(w.a,w.b))?' · ✓':' · Rever');
   const btn=document.createElement('button');btn.type='button';btn.dataset.removeWire=String(i);btn.title='Remover fio';btn.textContent='×';
   row.append(dot,names,btn);body.append(row);
  });
@@ -236,12 +244,12 @@ function connect(id){
  if(!state.startPort){state.startPort=id;message('Primeiro pino: '+portName(id)+'. Agora toque no terminal de destino.');renderParts();renderInspector();return;}
  const first=state.startPort;state.startPort=null;
  if(id===first){renderParts();message('Conexão cancelada.');return;}
- const index=state.wires.findIndex(w=>key(w.a,w.b)===key(first,id));
+ const index=state.wires.findIndex(w=>electricalKey(w.a,w.b)===electricalKey(first,id));
  snapshot();
  if(index>=0){state.wires.splice(index,1);message('Fio retirado.');}
  else{
   state.wires.push({a:first,b:id,color:state.wireColor});
-  message(valid.has(key(first,id))?'✓ Fio conectado corretamente!':'Fio conectado. Verifique se os terminais estão corretos.',!valid.has(key(first,id)));
+  message(valid.has(electricalKey(first,id))?'✓ Fio conectado corretamente!':'Fio conectado. Verifique se os terminais estão corretos.',!valid.has(electricalKey(first,id)));
  }
  state.completed=false;refresh();
 }
@@ -264,7 +272,7 @@ function drawWires(){
   const hit=document.createElementNS('http://www.w3.org/2000/svg','path');
   hit.setAttribute('d',d);hit.setAttribute('class','wire-target');hit.dataset.wireIndex=String(i);
   hit.setAttribute('aria-label','Remover ligação '+portName(w.a)+' com '+portName(w.b));
-  const path=document.createElementNS('http://www.w3.org/2000/svg','path');path.setAttribute('d',d);path.setAttribute('class','wire-line');path.setAttribute('stroke',w.color);if(!valid.has(key(w.a,w.b)))path.setAttribute('stroke-dasharray','9 6');
+  const path=document.createElementNS('http://www.w3.org/2000/svg','path');path.setAttribute('d',d);path.setAttribute('class','wire-line');path.setAttribute('stroke',w.color);if(!valid.has(electricalKey(w.a,w.b)))path.setAttribute('stroke-dasharray','9 6');
   svg.append(hit,path);
  }
  if(state.startPort&&previewPoint){
