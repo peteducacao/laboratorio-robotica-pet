@@ -34,10 +34,12 @@ const REQUIRED=new Set(EXPECTED.map(([a,b])=>electricalKey(a,b)));
 const valid=new Set([...EXPECTED,...OPTIONAL].map(([a,b])=>electricalKey(a,b)));
 const allPorts=new Set(TYPES.flatMap(t=>t.ids.flatMap(id=>t.pins.map(p=>id+'.'+p[0]))));
 const Q=id=>document.getElementById(id);
+// Coordenadas da bancada são livres: a câmera não impõe bordas às peças ou fios.
 const WORLD={w:1900,h:1450};
 const COLORS=['#ed654d','#316fc0','#1f434c','#32a47b','#e5a13d','#a378c8'];
 let state={parts:[],wires:[],voltage:4,switches:{s1:false,s2:false},wireColor:COLORS[0],selected:null,startPort:null,inspector:'parts',completed:false,bends:[],selectedWire:null};
 let zoom=1,panX=0,panY=0,gesture=null,history=[],future=[],toastTimer=0,previewPoint=null,previewSnapPort=null,drawPending=false;
+let panMode=false,spaceHeld=false;
 const activeTouches=new Map();
 let pinch=null;
 let gestureBlockedUntil=0;
@@ -52,8 +54,8 @@ function safeRestore(){
   const s=JSON.parse(localStorage.getItem('tinkerpet-v2')||'null');
   if(!s||!Array.isArray(s.parts)||!Array.isArray(s.wires))return;
   const names=new Set();
-  state.parts=s.parts.filter(p=>p&&byId[p.id]&&!names.has(p.id)&&names.add(p.id)&&Number.isFinite(p.x)&&Number.isFinite(p.y)).map(p=>({id:p.id,kind:byId[p.id].kind,x:limit(p.x,0,WORLD.w-PART_LAYOUTS[byId[p.id].kind].w),y:limit(p.y,0,WORLD.h-PART_LAYOUTS[byId[p.id].kind].h),view:byId[p.id].kind==='motor'&&p.view==='side'?'side':'front'}));
-  state.wires=s.wires.filter(w=>w&&allPorts.has(w.a)&&allPorts.has(w.b)&&w.a!==w.b&&exists(w.a.split('.')[0])&&exists(w.b.split('.')[0])).slice(0,80).map(w=>({a:w.a,b:w.b,color:COLORS.includes(w.color)?w.color:COLORS[0],via:Array.isArray(w.via)?w.via.filter(p=>p&&Number.isFinite(p.x)&&Number.isFinite(p.y)).slice(0,48).map(p=>({x:limit(p.x,0,WORLD.w),y:limit(p.y,0,WORLD.h)})):[]}));
+  state.parts=s.parts.filter(p=>p&&byId[p.id]&&!names.has(p.id)&&names.add(p.id)&&Number.isFinite(p.x)&&Number.isFinite(p.y)).map(p=>({id:p.id,kind:byId[p.id].kind,x:p.x,y:p.y,view:byId[p.id].kind==='motor'&&p.view==='side'?'side':'front'}));
+  state.wires=s.wires.filter(w=>w&&allPorts.has(w.a)&&allPorts.has(w.b)&&w.a!==w.b&&exists(w.a.split('.')[0])&&exists(w.b.split('.')[0])).slice(0,80).map(w=>({a:w.a,b:w.b,color:COLORS.includes(w.color)?w.color:COLORS[0],via:Array.isArray(w.via)?w.via.filter(p=>p&&Number.isFinite(p.x)&&Number.isFinite(p.y)).slice(0,48).map(p=>({x:p.x,y:p.y})):[]}));
   if(Number.isFinite(s.voltage))state.voltage=limit(s.voltage,3,6);
   if(s.switches)state.switches={s1:!!s.switches.s1,s2:!!s.switches.s2};
   if(COLORS.includes(s.wireColor))state.wireColor=s.wireColor;
@@ -236,7 +238,7 @@ function renderInspector(){
 function toggleMotorView(id){
  const part=byPart(id);if(!part||part.kind!=='motor')return;
  snapshot();part.view=part.view==='side'?'front':'side';
- const layout=partLayout(part);part.x=limit(part.x,0,WORLD.w-layout.w);part.y=limit(part.y,0,WORLD.h-layout.h);
+ // Alternar a vista não desloca nem limita a posição escolhida na área infinita.
  refresh();message('Motor: vista '+(part.view==='side'?'lateral':'frontal')+'. Os fios foram preservados.',true);
 }
 function demoMotor(id){
@@ -270,7 +272,7 @@ function addPart(kind,x,y){
  const t=byKind[kind];if(!t)return false;
  const id=t.ids.find(id=>!exists(id));if(!id){message('Você já colocou todas as peças deste tipo.',true);return false;}
  snapshot();
- const layout=PART_LAYOUTS[kind];state.parts.push({id,kind,x:limit(Math.round(x),0,WORLD.w-layout.w),y:limit(Math.round(y),0,WORLD.h-layout.h),view:'front'});
+ state.parts.push({id,kind,x:Math.round(x),y:Math.round(y),view:'front'});
  state.selected=id;state.selectedWire=null;state.inspector='parts';state.completed=false;state.startPort=null;refresh();
  message(partName(id)+' adicionado. Arraste pela imagem; toque nos contatos para ligar os fios.',true);
  return true;
@@ -310,15 +312,15 @@ function projectFromTip(from,wanted,previous=null){
   // O jumper só cresce da última ponta: não pode percorrer o trecho de volta.
   if(Math.abs(vx)>Math.abs(vy)&&xFirst&&dx*vx<=0){
    if(Math.abs(dy)<12)return null;
-   return {x:Math.round(from.x),y:limit(Math.round(wanted.y),0,WORLD.h)};
+   return {x:Math.round(from.x),y:Math.round(wanted.y)};
   }
   if(Math.abs(vy)>=Math.abs(vx)&&!xFirst&&dy*vy<=0){
    if(Math.abs(dx)<12)return null;
-   return {x:limit(Math.round(wanted.x),0,WORLD.w),y:Math.round(from.y)};
+   return {x:Math.round(wanted.x),y:Math.round(from.y)};
   }
  }
- return xFirst?{x:limit(Math.round(wanted.x),0,WORLD.w),y:Math.round(from.y)}:
-  {x:Math.round(from.x),y:limit(Math.round(wanted.y),0,WORLD.h)};
+ return xFirst?{x:Math.round(wanted.x),y:Math.round(from.y)}:
+  {x:Math.round(from.x),y:Math.round(wanted.y)};
 }
 function addCorner(x,y){
  if(!state.startPort)return;
@@ -460,14 +462,19 @@ function drawWires(){
 }
 function requestDraw(){if(drawPending)return;drawPending=true;requestAnimationFrame(drawWires);}
 function camera(){
- const w=Q('world');w.style.transform='translate('+panX+'px,'+panY+'px) scale('+zoom+')';
+ const w=Q('world'),v=Q('viewport');
+ w.style.transform='translate('+panX+'px,'+panY+'px) scale('+zoom+')';
  Q('zoomLabel').textContent=Math.round(zoom*100)+'%';
- const note=Q('worldNote'),v=Q('viewport');
- note.style.left=limit((v.clientWidth/2-panX)/zoom,150,WORLD.w-150)+'px';
- note.style.top=limit((v.clientHeight/2-panY)/zoom,170,WORLD.h-170)+'px';
+ // A grade pertence à janela, não a um retângulo de 1900x1450.
+ // Sua origem acompanha a câmera e pode avançar indefinidamente nas quatro direções.
+ const grid=20*zoom;
+ v.style.backgroundSize=grid+'px '+grid+'px';
+ v.style.backgroundPosition=panX+'px '+panY+'px';
+ const note=Q('worldNote');
+ note.style.left='50%';note.style.top='50%';
  requestDraw();
 }
-const MIN_ZOOM=.17,MAX_ZOOM=2.4;
+const MIN_ZOOM=.04,MAX_ZOOM=2.4;
 function cameraZoom(nextZoom,clientX,clientY){
  const r=Q('viewport').getBoundingClientRect(),cx=clientX===undefined?r.left+r.width/2:clientX,cy=clientY===undefined?r.top+r.height/2:clientY;
  const wx=(cx-r.left-panX)/zoom,wy=(cy-r.top-panY)/zoom;
@@ -569,29 +576,34 @@ function centerPart(kind){
  const v=Q('viewport').getBoundingClientRect();
  const center=worldXY(v.left+v.width/2,v.top+v.height/2);
  const size=PART_LAYOUTS[kind];if(!size)return false;
- const spaces=[];
- for(let y=24;y<=WORLD.h-size.h-24;y+=125){
-  for(let x=24;x<=WORLD.w-size.w-24;x+=125){
-   const clear=state.parts.every(p=>{
-    const d=partLayout(p),pad=26;
-    return x+size.w+pad<=p.x||p.x+d.w+pad<=x||y+size.h+pad<=p.y||p.y+d.h+pad<=y;
-   });
-   if(clear)spaces.push({x,y,d:Math.hypot(x+size.w/2-center.x,y+size.h/2-center.y)});
+ // Procura um espaço livre em espiral a partir da região que o usuário está vendo,
+ // sem percorrer uma grade limitada ou declarar a bancada cheia.
+ const step=125;
+ const baseX=Math.round((center.x-size.w/2)/step)*step;
+ const baseY=Math.round((center.y-size.h/2)/step)*step;
+ let target=null;
+ for(let radius=0;radius<200&&!target;radius++){
+  for(let row=-radius;row<=radius&&!target;row++){
+   for(let col=-radius;col<=radius;col++){
+    if(radius&&Math.max(Math.abs(row),Math.abs(col))!==radius)continue;
+    const x=baseX+col*step,y=baseY+row*step;
+    const clear=state.parts.every(p=>{
+     const d=partLayout(p),pad=26;
+     return x+size.w+pad<=p.x||p.x+d.w+pad<=x||y+size.h+pad<=p.y||p.y+d.h+pad<=y;
+    });
+    if(clear){target={x,y};break;}
+   }
   }
  }
- if(!spaces.length){message('Bancada cheia. Mova algumas peças para liberar espaço.',true);return false;}
- spaces.sort((a,b)=>a.d-b.d);
- const target=spaces[0];
+ if(!target)return false;
  const added=addPart(kind,target.x,target.y);
  if(added){
-  if(size.w*zoom>v.width-32||size.h*zoom>v.height-65){
-   focusPart(state.selected);
-  }else{
+  if(size.w*zoom>v.width-32||size.h*zoom>v.height-65)focusPart(state.selected);
+  else{
    const sx=panX+(target.x+size.w/2)*zoom,sy=panY+(target.y+size.h/2)*zoom;
    if(sx<70||sx>v.width-70||sy<80||sy>v.height-80){
     panX=v.width/2-(target.x+size.w/2)*zoom;
-    panY=v.height/2-(target.y+size.h/2)*zoom;
-    camera();
+    panY=v.height/2-(target.y+size.h/2)*zoom;camera();
    }
   }
  }
@@ -644,8 +656,8 @@ function pointerMove(e){
    if(g.moved&&!g.saved){snapshot();g.saved=true;}
    if(g.moved){
     const dim=partLayout(p);
-    p.x=limit(Math.round(g.partX+dx/zoom),0,WORLD.w-dim.w);
-    p.y=limit(Math.round(g.partY+dy/zoom),0,WORLD.h-dim.h);
+    p.x=Math.round(g.partX+dx/zoom);
+    p.y=Math.round(g.partY+dy/zoom);
     const el=[...Q('partsLayer').querySelectorAll('.part')].find(node=>node.dataset.part===p.id);
     if(el){el.style.left=p.x+'px';el.style.top=p.y+'px';}
     requestDraw();
