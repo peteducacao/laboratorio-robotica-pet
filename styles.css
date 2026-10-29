@@ -140,3 +140,16 @@
 /* Prévia independente da montagem: animar eixo do componente selecionado. */
 .part[data-kind="motor"].demo-running .motor-shaft-spinner{opacity:1;animation-play-state:running}
 .part[data-kind="motor"].demo-running .part-image img{filter:drop-shadow(0 4px 5px rgba(27,143,168,.34))}
+
+
+/* v6: componente com engrenagem amarela, fiel à organização das vistas aprovadas. */
+.part[data-kind="motor"]{overflow:visible}
+.part[data-kind="motor"] .part-image{top:0;bottom:0;left:10px;right:10px;height:auto;padding:0}
+.part[data-kind="motor"] .part-image img{width:100%;height:100%;object-fit:contain;filter:drop-shadow(0 4px 3px rgba(23,47,61,.13))}
+.part[data-kind="motor"][data-motor-view="front"] .motor-shaft-spinner{left:50%;top:93%}
+.part[data-kind="motor"][data-motor-view="side"] .motor-shaft-spinner{left:12%;top:49%}
+.part[data-kind="motor"][data-motor-view="front"] .part-head{top:-6px}
+.part[data-kind="motor"][data-motor-view="side"] .part-head{top:-15px}
+.part[data-kind="motor"] .pin-btn{height:42px;min-height:42px;width:42px}
+.part[data-kind="motor"] .pin-dot{width:12px;height:12px}
+.motor-dashboard-picture .motor-shaft-spinner{left:12%;top:49%}
