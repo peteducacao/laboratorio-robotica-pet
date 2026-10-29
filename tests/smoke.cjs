@@ -134,6 +134,28 @@ assert.equal(saved().parts.find(p=>p.id==='ml').view,'side','trocar para vista l
 send('click','inspectorBody',{target:{closest(q){return q==='[data-motor-view]'?{dataset:{motorView:'ml'}}:null;}}});
 assert.equal(saved().parts.find(p=>p.id==='ml').view,'front','voltar para vista frontal');
 add('esp');assert.equal(saved().parts.length,9,'evitar esp32 duplicado');
+
+assert(html.includes('id="connectModeBtn"')&&html.includes('id="selectModeBtn"'),'ferramentas selecionar e conectar disponíveis');
+assert(html.includes('id="precisionBtn"')&&html.includes('id="precisionPanel"'),'lupa de terminais disponível');
+assert(html.includes('id="organizeBtn"')&&html.includes('id="flowBtn"'),'organização e percurso elétrico disponíveis');
+const layoutBefore=JSON.stringify(saved().parts);
+click('organizeBtn');
+assert.equal(saved().parts.length,9,'organização mantém as 9 peças');
+assert(saved().parts.some(p=>p.x<0),'organização usa o espaço infinito');
+assert.notEqual(JSON.stringify(saved().parts),layoutBefore,'organização distribui as peças');
+click('undoBtn');
+assert.equal(JSON.stringify(saved().parts),layoutBefore,'desfazer restaura as posições anteriores');
+click('precisionBtn');
+const zoomPartTarget={closest(sel){return sel==='.part'?{dataset:{part:'esp'}}:null;}};
+send('pointerdown','partsLayer',{button:0,pointerId:++pointer,clientX:320,clientY:210,preventDefault(){},target:zoomPartTarget});
+assert.equal(nodes.precisionPanel.hidden,false,'modo lupa abre os contatos da peça');
+assert.equal(nodes.precisionBody.children[1].children.length,30,'lupa mostra os 30 terminais do ESP32');
+click('precisionClose');assert.equal(nodes.precisionPanel.hidden,true,'lupa pode ser fechada');
+click('connectModeBtn');
+click('selectModeBtn');
+assert.equal(nodes.selectModeBtn.name,'selectModeBtn','modo seleção disponível');
+click('connectModeBtn');
+
 // O canvas aceita coordenadas negativas e não corta o SVG nas bordas antigas.
 assert(!js.includes("limit(p.x,0,WORLD"),'componentes não são limitados ao retângulo antigo');
 assert(!js.includes("limit(Math.round(g.partX"),'arrasto não fica preso a limites');
