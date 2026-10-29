@@ -7,8 +7,8 @@
 <link rel="icon" href="assets/logo-pet.svg" type="image/svg+xml">
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="styles.css?v=11">
-<script defer src="app.js?v=11"></script>
+<link rel="stylesheet" href="styles.css?v=11.1">
+<script defer src="app.js?v=11.1"></script>
 </head>
 <body>
 <header class="app-header">
@@ -54,7 +54,7 @@
       </div>
       <div class="toolbar-right">
         <button id="hintBtn" class="control-btn hint-btn" type="button" title="Mostrar dica">💡 <span>Dica</span></button>
-        <button id="checkBtn" class="simulation-toggle" type="button" aria-pressed="false"><span class="sim-icon">▶</span> <span id="simLabel">Iniciar simulação</span></button>
+        <button id="checkBtn" class="simulation-toggle" type="button" aria-pressed="false"><span class="sim-icon" id="simIcon">▶</span> <span id="simLabel">Iniciar simulação</span></button>
       </div>
       <div class="toolbar-zoom" aria-label="Zoom da bancada">
         <button class="control-btn zoom-btn" id="zoomOut" aria-label="Diminuir zoom">−</button>
@@ -67,7 +67,7 @@
       <div class="mission-strip">
         <span class="strip-number" id="stepNumber">01</span>
         <div class="mission-copy"><strong id="missionTitle">Sua bancada está vazia</strong><span id="missionText">Escolha as peças no catálogo e coloque-as onde quiser.</span></div>
-        <div class="inspector-bottom"><div class="progress-head"><span>Conexões corretas</span><b id="connectionsCount">0 / 17</b></div><div class="progress-track"><div id="progressBar"></div></div><div id="validationBadge" class="validation-badge">Aguardando montagem</div></div>
+        <div class="inspector-bottom"><div class="progress-head"><span id="progressCaption">Componentes</span><b id="connectionsCount">0 / 9 peças</b></div><div class="progress-track"><div id="progressBar"></div></div><div id="validationBadge" class="validation-badge">Aguardando montagem</div></div>
       </div>
       <div id="viewport" class="viewport" aria-label="Bancada vazia. Arraste peças do catálogo para colocar aqui." tabindex="0">
         <div id="world" class="world">
