@@ -80,7 +80,7 @@ const win={addEventListener(type,fn){(listeners['window:'+type]??=[]).push(fn)}}
 const store={getItem(k){return storage[k]??null},setItem(k,v){storage[k]=v}};
 const fake={window:win,document:doc,localStorage:store,requestAnimationFrame(){},ResizeObserver:class{observe(){}},console,Math,JSON,confirm(){return true},setTimeout(){return 1},clearTimeout(){}};
 vm.runInNewContext(js,fake);
-function send(event,fnKey,target){const handlers=listeners[fnKey+':'+event];assert(handlers?.length,fnKey+':'+event);handlers[0](target);}
+function send(event,fnKey,target){const handlers=listeners[fnKey+':'+event];assert(handlers?.length,fnKey+':'+event);for(const handler of handlers)handler(target);}
 const saved=()=>JSON.parse(storage['tinkerpet-v2']);
 let pointer=0;
 function add(kind){
@@ -129,6 +129,25 @@ assert.equal(JSON.stringify(saved().wires[0].via),curved,'persistir curvas da li
 assert(!js.includes("setAttribute('stroke-dasharray'"),'nenhum fio tracejado');
 connect('b1.POS','s1.IN'); // remove a ligação de teste antes da montagem completa
 assert.equal(saved().wires.length,0,'fio existente pode ser removido');
+
+assert(html.includes('id="zoomSlider"')&&html.includes('id="zoomTool"'),'lupa e barra de zoom presentes');
+assert(!js.includes("title.textContent=partName(p.id)"),'sem nome flutuante no topo das peças');
+assert(!rocker.includes('>IN</text>')&&!rocker.includes('>OUT</text>')&&!rocker.includes('>LED−</text>'),'gangorra sem nomes impressos');
+assert(!lm.includes('<ellipse'),'LM2596 sem componentes redondos centrais');
+assert(!drv.includes('<ellipse')&&!drv.includes('y="216" width="15"'),'MX1508 sem peças redondas e três traços');
+const beforeZoom=Number(nodes.zoomSlider.value);
+const pinchEvent=(pointerId,x,y)=>({pointerType:'touch',pointerId,clientX:x,clientY:y,button:0,preventDefault(){},target:{closest(){return null}}});
+send('pointerdown','viewport',pinchEvent(9001,100,100));
+send('pointerdown','viewport',pinchEvent(9002,200,100));
+send('pointermove','window',pinchEvent(9002,260,100));
+assert(Number(nodes.zoomSlider.value)>beforeZoom,'pinça com dois dedos amplia');
+send('pointerup','window',pinchEvent(9002,260,100));
+send('pointerup','window',pinchEvent(9001,100,100));
+send('input','zoomSlider',{target:{value:'25'}});
+assert.equal(nodes.zoomSlider.value,'25','lupa permite reduzir o zoom até 25%');
+send('click','zoomFitAll',{});
+assert(Number(nodes.zoomSlider.value)>=17,'enquadramento calcula um zoom válido');
+
 
 connect('esp.D27','drv.IN4');
 click('checkBtn');
