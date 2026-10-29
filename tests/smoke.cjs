@@ -55,6 +55,12 @@ for(const [a,b] of edges){assert(ports.has(a));assert(ports.has(b));}
 assert.equal(new Set(edges.map(([a,b])=>[a,b].sort().join('|'))).size,17);
 for(const id of ['catalog','viewport','world','partsLayer','wireSvg','track','playPanel','buildPanel','menuBtn','checkBtn','hintBtn','saveBtn'])assert(html.includes('id="'+id+'"'),id);
 assert(css.includes('touch-action:none'));
+assert(html.includes('id="redoBtn"')&&html.includes('id="wireColorSelect"'),'toolbar contém refazer e seletor');
+assert(html.includes('class="simulation-toggle"'),'simulação está na barra superior');
+assert(html.includes('id="progressBar"')&&html.indexOf('id="progressBar"')<html.indexOf('id="viewport"'),'progresso agora está acima da bancada');
+assert(css.includes('.simulation-toggle.is-running'),'estado vermelho de parar simulação');
+assert(css.includes('.wire-line.wire-pending{stroke-width:10'),'fio grosso contínuo');
+
 const listeners={},nodes={},storage={};
 class E{
  constructor(name){this.name=name;this.dataset={};this.style={setProperty(k,v){this[k]=v}};this.hidden=false;this.disabled=false;this.children=[];this.textContent='';this.className='';this.value='';this.clientWidth=800;this.clientHeight=610;this.classList={add(){},remove(){},toggle(){},contains(){return false}};}
@@ -96,6 +102,14 @@ function click(id){send('click',id,{});}
 assert.equal(saved().parts.length,0,'bancada deve começar vazia');
 for(const t of types)for(let i=0;i<t.ids.length;i++)add(t.kind);
 assert.equal(saved().parts.length,9,'adicionar 9 peças pelo catálogo');
+click('undoBtn');
+assert.equal(saved().parts.length,8,'Desfazer remove última peça');
+click('redoBtn');
+assert.equal(saved().parts.length,9,'Refazer restaura a peça');
+send('change','wireColorSelect',{target:{value:'#316fc0'}});
+assert.equal(saved().wireColor,'#316fc0','seletor muda cor dos fios');
+send('change','wireColorSelect',{target:{value:'#ed654d'}});
+assert.equal(saved().wireColor,'#ed654d','seletor restaura vermelho');
 send('click','inspectorBody',{target:{closest(q){return q==='[data-motor-view]'?{dataset:{motorView:'ml'}}:null;}}});
 assert.equal(saved().parts.find(p=>p.id==='ml').view,'side','trocar para vista lateral');
 send('click','inspectorBody',{target:{closest(q){return q==='[data-motor-view]'?{dataset:{motorView:'ml'}}:null;}}});
@@ -144,6 +158,12 @@ send('input','partsLayer',{target:{id:'voltageInput',value:'5'}});
 click('checkBtn');
 assert.equal(nodes.playPanel.hidden,false,'liberar pista com circuito correto');
 assert.equal(nodes.trackLock.hidden,true,'retirar bloqueio da pista');
+assert.equal(nodes.simLabel.textContent,'Parar simulação','botão muda para Parar simulação');
+click('checkBtn');
+assert.equal(nodes.playPanel.hidden,true,'Parar simulação retorna à bancada');
+assert.equal(nodes.simLabel.textContent,'Iniciar simulação','botão volta a Iniciar simulação');
+click('checkBtn');
+assert.equal(nodes.playPanel.hidden,false,'simulação pode reiniciar');
 toggle('s1');
 assert.equal(nodes.trackLock.hidden,false,'desligar gangorra bloqueia pista');
 click('saveBtn');assert.equal(saved().parts.length,9,'persistir projeto');
