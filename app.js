@@ -63,7 +63,7 @@ function renderCatalog(){
  TYPES.filter(t=>t.name.toLowerCase().includes(query)).forEach(t=>{
   const n=t.ids.filter(exists).length,left=t.ids.length-n;
   const btn=document.createElement('button');btn.type='button';btn.className='catalog-card'+(left===0?' unavailable':'');btn.disabled=left===0;btn.dataset.kind=t.kind;btn.setAttribute('aria-label','Adicionar '+t.name+', '+left+' disponível(is)');
-  const img=document.createElement('img');img.src=imageUrl(t);img.alt='';img.loading='lazy';
+  const img=document.createElement('img');img.src=imageUrl(t);img.alt='';img.loading='lazy';img.draggable=false;
   const text=document.createElement('span');text.className='catalog-card-text';
   const title=document.createElement('strong');title.textContent=t.name;
   const small=document.createElement('small');small.textContent=left?left+' disponível(is)':'Todas na bancada';
