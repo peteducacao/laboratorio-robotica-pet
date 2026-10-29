@@ -243,6 +243,15 @@ assert(html.includes('id="diagnosticsPanel"'),'painel de conferência visual pre
 send('click','inspectorBody',{target:{closest(sel){return sel==='[data-edit-wire]'?{dataset:{editWire:'0'}}:null;}}});
 assert.equal(saved().wires.length,1,'editar fio não desconecta seus terminais');
 assert(saved().wires[0].via.length>=2,'editar fio cria pontos de curva quando necessário');
+const oldWire=JSON.stringify(saved().wires[0]);
+const handleId=++pointer;
+send('pointerdown','wireSvg',{button:0,pointerId:handleId,clientX:220,clientY:160,preventDefault(){},stopPropagation(){},
+ target:{closest(sel){return sel==='[data-wire-handle]'?{dataset:{wireIndex:'0',wireHandle:'0'}}:null;}}});
+send('pointermove','window',{pointerId:handleId,clientX:220,clientY:205});
+send('pointerup','window',{pointerId:handleId,clientX:220,clientY:205});
+assert.notEqual(JSON.stringify(saved().wires[0].via),JSON.parse(oldWire).via&&JSON.stringify(JSON.parse(oldWire).via),'alça altera o trajeto do fio');
+assert.equal(saved().wires[0].a,'b1.POS','editar curva preserva a origem do fio');
+assert.equal(saved().wires[0].b,'s1.IN','editar curva preserva o terminal de destino');
 
 assert.equal(saved().wires[0].via.length,2,'guardar duas curvas');
 const bends=saved().wires[0].via;
@@ -277,6 +286,12 @@ assert(nodes.diagnosticsPanel.children.length>=2,'diagnóstico indica pontos a c
 connect('esp.D27','drv.IN4');
 for(const [a,b] of edges)connect(a,a==='lm.OUTN'?'esp.GND2':b); // usar o segundo GND real e validar equivalência
 assert.equal(saved().wires.length,17,'criar 17 fios');
+const circuitBeforeOrganize=JSON.stringify(saved().wires);
+click('organizeBtn');
+assert.equal(saved().wires.length,17,'organizar preserva as 17 ligações');
+assert.deepEqual(saved().wires.map(w=>[w.a,w.b]),JSON.parse(circuitBeforeOrganize).map(w=>[w.a,w.b]),'origem e destino dos 17 jumpers são mantidos');
+click('undoBtn');
+assert.equal(JSON.stringify(saved().wires),circuitBeforeOrganize,'Desfazer restaura as curvas originais após organizar');
 // LED extra é opcional: mantém a validação de 17 fios necessários.
 connect('b1.NEG','s1.LEDG');assert.equal(saved().wires.length,18,'terceiro pino aceita retorno para LED');
 toggle('s1');toggle('s2');
