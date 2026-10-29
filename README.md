@@ -5,7 +5,7 @@ Laboratório educativo e responsivo do **PET Educação — UFS**, publicado em 
 ## Monte o carrinho
 1. Abra a gaveta **PEÇAS** pela seta fixa no meio do canto esquerdo.
 2. Arraste os componentes do catálogo para a bancada (ou toque na peça para adicioná-la sem arrastar).
-3. Organize as imagens soltas na mesa. A bancada de 1900 × 1450 pode ser arrastada e ampliada.
+3. Organize as imagens soltas na mesa. A bancada de 1900 × 1450 pode ser deslocada **com um dedo no fundo vazio**, em qualquer direção, e **com dois dedos mesmo em cima de uma peça**. Abra a **lupa (⌕)** no canto superior direito da bancada para reduzir ou ampliar pela barra, **enquadrar peça** ou **ver montagem**. O gesto de pinça também funciona para diminuir e ampliar com dois dedos; mova os dois dedos juntos para navegar horizontalmente e verticalmente.
 4. Toque no **primeiro terminal** para iniciar um fio sólido. O fio permanece aberto.
 5. Toque em qualquer lugar livre da bancada para **fixar um ponto de curva**. Continue tocando para criar outros segmentos em ângulo reto.
 6. Toque no **segundo terminal** para encerrar. O caminho completo é salvo e os pontos de curva não se movem quando você solta o dedo.
@@ -44,3 +44,11 @@ Referência do projeto físico: [Carrinho Wi-Fi ESP32 — Fundamentos de Prototi
 - A gangorra ilustrada agora é um **modelo iluminado de três terminais**: IN (positivo de entrada), OUT (saída comutada) e LED− (retorno opcional do indicador). As 17 ligações de funcionamento continuam obrigatórias; um fio adicional para LED− em cada gangorra é aceito e acende o indicador quando ligada. **Não assuma que todos os modelos reais de três terminais usam a mesma pinagem: consulte o esquema impresso na peça real.**
 - O interruptor bascula visualmente ao ligar e desligar. As conexões são desenhadas sobre os pontos reais dos terminais e as linhas são contínuas, sem traços interrompidos.
 - Removidas legendas excessivas de bobinas e capacitores dos desenhos.
+
+## Revisão v10 — celular e desenhos
+
+- Ocultados os títulos flutuantes acima de cada peça; nomes disponíveis no catálogo e na aba de propriedades.
+- LM2596: removidos capacitores redondos exagerados, bloco central e seus textos supérfluos; mantidos os bornes IN+/IN− e OUT+/OUT−.
+- MX1508: removidos os dois cilindros centrais, os três blocos/tracinhos e o detalhe de fixação junto à borda superior esquerda.
+- Gangorra: os três terminais físicos ficam desenhados sem legendas sobre eles. A função de cada contato continua disponível no inspetor, pois a pinagem de interruptores iluminados pode variar.
+- O zoom é contínuo entre 17% e 240% e inclui pinça, lupa deslizante e enquadramento. Com peças grandes, o primeiro posicionamento via catálogo no celular diminui a escala quando necessário.
