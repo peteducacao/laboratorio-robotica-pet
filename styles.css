@@ -612,3 +612,31 @@
  .empty-add-button{width:86px;height:86px;font-size:62px}
  .world-note strong{font-size:15px}
 }
+
+/* v18 · área de trabalho contínua (sem retângulo de borda fixa) */
+.viewport{
+ background-color:#f1f5f7!important;
+ background-image:radial-gradient(circle,#b9cfda 1.15px,transparent 1.3px)!important;
+ background-repeat:repeat!important;
+ overflow:hidden;
+}
+.world{
+ background:none!important;
+ border:0!important;
+ box-shadow:none!important;
+ overflow:visible!important;
+}
+.parts-layer,.wire-svg{overflow:visible!important}
+.viewport.pan-active,.viewport.pan-space{cursor:grab!important}
+.viewport.pan-active:active,.viewport.pan-space:active{cursor:grabbing!important}
+.viewport.pan-active .part,.viewport.pan-space .part,
+.viewport.pan-active .pin-btn,.viewport.pan-space .pin-btn{cursor:grab!important}
+.pan-mode-btn{
+ display:inline-flex;align-items:center;justify-content:center;gap:5px;
+ min-height:35px;white-space:nowrap;padding:5px 9px;
+ border:1px solid #c5d8df;border-radius:9px;color:#367484;background:#eef6f6;
+ font-weight:800;font-size:13px;touch-action:manipulation;
+}
+.pan-mode-btn.is-active{background:#1a807a;color:#fff;border-color:#1a807a}
+.pan-mode-btn span{font-size:11px}
+@media(max-width:620px){.pan-mode-btn{min-width:38px;padding:5px 7px}.pan-mode-btn span{display:none}}
