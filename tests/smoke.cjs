@@ -34,6 +34,19 @@ for(const file of ['mx1508-desenhado.svg','lm2596-desenhado.svg','bateria-9v-des
 }
 for(const kind of ['driver','buck','battery','switch'])assert(types.find(t=>t.kind===kind).img.startsWith('assets/'),kind+' usa desenho vetorial');
 
+const sw=types.find(t=>t.kind==='switch');
+assert.equal(sw.pins.length,3,'chave gangorra com 3 terminais');
+assert(sw.pins.some(([id])=>id==='LEDG'),'pino de negativo do LED da gangorra');
+const rocker=fs.readFileSync(path.join(base,'assets/gangorra-desenhada.svg'),'utf8');
+assert(rocker.includes('três terminais'),'gangorra desenhada com três contatos');
+const lm=fs.readFileSync(path.join(base,'assets/lm2596-desenhado.svg'),'utf8');
+for(const v of ['470','>220<','>100<','STEP-DOWN'])assert(!lm.includes(v),'LM2596 não repete '+v);
+const drv=fs.readFileSync(path.join(base,'assets/mx1508-desenhado.svg'),'utf8');
+assert(!drv.includes('100</text>')&&!drv.includes('16V'),'MX1508 sem legendas de capacitor');
+const battery=fs.readFileSync(path.join(base,'assets/bateria-9v-desenhada.svg'),'utf8');
+assert(battery.includes('#d83b3c')&&battery.includes('#1f2b34'),'polos da bateria vermelho/preto');
+assert(js.includes('wire-end-cap'),'contatos visuais dos fios presos ao borne');
+assert(css.includes('.wire-svg{z-index:8;pointer-events:none}'),'fios desenhados sobre componentes');
 assert.equal(types.length,6);
 assert.equal(types.reduce((sum,t)=>sum+t.ids.length,0),9);
 assert.equal(edges.length,17);
@@ -123,7 +136,10 @@ assert.equal(nodes.playPanel.hidden,true,'não liberar circuito com fio errado')
 connect('esp.D27','drv.IN4');
 for(const [a,b] of edges)connect(a,a==='lm.OUTN'?'esp.GND2':b); // usar o segundo GND real e validar equivalência
 assert.equal(saved().wires.length,17,'criar 17 fios');
+// LED extra é opcional: mantém a validação de 17 fios necessários.
+connect('b1.NEG','s1.LEDG');assert.equal(saved().wires.length,18,'terceiro pino aceita retorno para LED');
 toggle('s1');toggle('s2');
+
 send('input','partsLayer',{target:{id:'voltageInput',value:'5'}});
 click('checkBtn');
 assert.equal(nodes.playPanel.hidden,false,'liberar pista com circuito correto');
