@@ -723,7 +723,8 @@ function handleDoubleTap(e,g){
   doubleTapRestore={zoom,panX,panY};
   cameraZoom(Math.max(.95,Math.min(MAX_ZOOM,zoom*1.9)),e.clientX,e.clientY);
  }
- suppressPortClickUntil=now+400;
+ // Não bloquear cliques seguintes nos pinos: o aluno pode conectar um fio
+ // imediatamente depois de afastar a câmera.
  return true;
 }
 function pointerUp(e){
