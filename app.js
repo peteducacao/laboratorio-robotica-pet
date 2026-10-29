@@ -603,7 +603,7 @@ function pointerUp(e){
   // Em toque simples, o evento click chama connect; não resetar a origem aqui.
  }else if(g.type==='move'){
   if(g.moved)persist();
-  else{state.selected=g.partId;renderParts();renderInspector();if(zoom<.68&&byId[g.partId].kind==='esp')focusPart(g.partId);}
+  else{state.selected=g.partId;renderParts();renderInspector();if(zoom<.68&&byId[g.partId].kind==='esp')cameraZoom(.95,g.startX,g.startY);}
  }else if(g.type==='bend'){
   const pos=worldXY(e.clientX,e.clientY);addCorner(pos.x,pos.y);
  }else if(g.type==='pan'&&!g.moved){state.selected=null;renderParts();renderInspector();updateHistoryButtons();}
@@ -714,6 +714,13 @@ function bind(){
   const pin=e.target.closest('[data-port]');if(pin){
     e.stopPropagation();
     if(Date.now()<suppressPortClickUntil)return;
+    // Em telas pequenas o espaçamento físico dos 30 contatos diminui bastante.
+    // O primeiro toque aproxima a placa; o próximo faz a ligação com precisão.
+    if(e.isTrusted&&zoom<.69&&pin.dataset.port.startsWith('esp.')){
+      cameraZoom(.95,e.clientX,e.clientY);
+      message('ESP32 ampliado para selecionar o contato com precisão.',true);
+      return;
+    }
     connect(pin.dataset.port);return;
   }
   const del=e.target.closest('[data-remove]');if(del){removePart(del.dataset.remove);return;}
