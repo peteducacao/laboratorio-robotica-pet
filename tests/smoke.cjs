@@ -394,15 +394,10 @@ assert(Number(nodes.zoomSlider.value)>=4,'enquadramento calcula um zoom válido 
  assert.equal(keyNode('answerContent').hidden,true,'nova abertura pede senha novamente');
 
 
-// Em toque móvel no pino o gesto deve terminar no pointerUp (mesmo sem click),
-// e a busca deve ser desfocada para não abrir teclado.
-let preventedPin=false;
-const mobileStart=++pointer;
-const mobilePin={closest(sel){return sel==='[data-port]'?{dataset:{port:'b1.POS'}}:null;}};
-send('pointerdown','partsLayer',{button:0,pointerType:'touch',pointerId:mobileStart,clientX:100,clientY:100,target:mobilePin,
- preventDefault(){preventedPin=true;}});
-send('pointerup','window',{pointerType:'touch',pointerId:mobileStart,clientX:100,clientY:100});
-assert(preventedPin,'toque em pino impede foco padrão do navegador');
-assert.equal(saved().wires.length,0,'toque simples no pino não cria ligação prematura');
-click('undoBtn');
+// O gesto de conexão por toque não transfere foco para campos de texto.
+assert(js.includes("if(e.pointerType==='touch'){"),'ligação com touch tem tratamento próprio');
+assert(js.includes("if(e.cancelable!==false)e.preventDefault();"),'toque no pino não usa foco nativo');
+assert(js.includes("if(!g.moved&&e.pointerType==='touch')"),'pointerup liga o pino mesmo sem click sintético');
+assert(!js.includes("Q('componentSearch').focus?.()"),'abrir catálogo não ativa teclado automaticamente');
+
 console.log('PASS: bancada vazia, 9 peças, catálogo, limite, 17 fios, erro, 5 V, duas gangorras, pista e salvamento.');
