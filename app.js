@@ -40,6 +40,7 @@ const COLORS=['#ed654d','#316fc0','#1f434c','#32a47b','#e5a13d','#a378c8'];
 let state={parts:[],wires:[],voltage:4,switches:{s1:false,s2:false},wireColor:COLORS[0],selected:null,startPort:null,inspector:'parts',completed:false,bends:[],selectedWire:null};
 let zoom=1,panX=0,panY=0,gesture=null,history=[],future=[],toastTimer=0,previewPoint=null,previewSnapPort=null,drawPending=false;
 let panMode=false,spaceHeld=false;
+let recentTap=null,doubleTapRestore=null;
 const activeTouches=new Map();
 let pinch=null;
 let gestureBlockedUntil=0;
@@ -699,10 +700,37 @@ function pointerMove(e){
   }
  }
 }
+// Gesto móvel reversível: primeiro duplo toque amplia, segundo restaura a vista.
+// Não interfere com os pinos nem com um jumper que está sendo traçado.
+function handleDoubleTap(e,g){
+ if(e.pointerType!=='touch'||g.moved||state.startPort||!['pan','move'].includes(g.type)){
+  if(e.pointerType==='touch')recentTap=null;
+  return false;
+ }
+ const now=Date.now(),previous=recentTap;
+ recentTap={time:now,x:e.clientX,y:e.clientY};
+ if(!previous||now-previous.time>360||Math.hypot(e.clientX-previous.x,e.clientY-previous.y)>38)return false;
+ recentTap=null;
+ e.preventDefault?.();
+ if(doubleTapRestore){
+  zoom=doubleTapRestore.zoom;
+  panX=doubleTapRestore.panX;
+  panY=doubleTapRestore.panY;
+  doubleTapRestore=null;
+  camera();
+  Q('zoomSlider').value=String(Math.round(zoom*100));
+ }else{
+  doubleTapRestore={zoom,panX,panY};
+  cameraZoom(Math.max(.95,Math.min(MAX_ZOOM,zoom*1.9)),e.clientX,e.clientY);
+ }
+ suppressPortClickUntil=now+400;
+ return true;
+}
 function pointerUp(e){
  if(trackingTouchEnd(e)||pinch)return;
  if(!gesture||e.pointerId!==gesture.pointer)return;
  const g=gesture;gesture=null;Q('dragGhost').hidden=true;
+ if(handleDoubleTap(e,g))return;
  if(g.type==='catalog'){
   if(!g.moved){centerPart(g.kind);libraryOpen(false);}
   else{
@@ -729,7 +757,7 @@ function pointerUp(e){
   // Em toque simples, o evento click chama connect; não resetar a origem aqui.
  }else if(g.type==='move'){
   if(g.moved)persist();
-  else{state.selected=g.partId;renderParts();renderInspector();if(zoom<.68&&byId[g.partId].kind==='esp')cameraZoom(.95,g.startX,g.startY);}
+  else{state.selected=g.partId;renderParts();renderInspector();}
  }else if(g.type==='bend'){
   const pin=nearestPort(e.clientX,e.clientY,state.startPort);
   if(pin)connect(pin);else{const pos=worldXY(e.clientX,e.clientY);addCorner(pos.x,pos.y);}
