@@ -470,6 +470,9 @@ function camera(){
  const grid=20*zoom;
  v.style.backgroundSize=grid+'px '+grid+'px';
  v.style.backgroundPosition=panX+'px '+panY+'px';
+ // Em zoom muito baixo as bolinhas se sobreporiam: oculta a grade até ampliar.
+ const radius=Math.min(1.15,zoom*1.15);
+ v.style.setProperty('background-image',zoom<.25?'none':'radial-gradient(circle,#b9cfda '+radius+'px,transparent '+(radius+.15)+'px)','important');
  const note=Q('worldNote');
  note.style.left='50%';note.style.top='50%';
  requestDraw();
