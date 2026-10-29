@@ -254,6 +254,15 @@ assert(Number(nodes.zoomSlider.value)>=17,'enquadramento calcula um zoom válido
  keyNode('answerPassword').value='peteduca';
  keyNode('answerForm').events.submit({preventDefault(){}});
  assert.equal(keyNode('answerContent').hidden,false,'senha correta revela gabarito');
+ const svgBancada=keyNode('answerDiagram').innerHTML;
+ assert(svgBancada.includes('<svg'),'gabarito abre circuito visual SVG na própria janela');
+ assert.equal((svgBancada.match(/<image /g)||[]).length,9,'gabarito visual apresenta exatamente 9 componentes desenhados');
+ assert.equal((svgBancada.match(/<path d=/g)||[]).length,34,'gabarito visual desenha 17 ligações com linha e contorno');
+ assert(svgBancada.includes('esp32-devkit-v1-30p.svg'),'usa a mesma imagem ESP32 do laboratório');
+ assert(svgBancada.includes('mx1508-desenhado.svg'),'usa a ponte H da bancada real');
+ assert(!svgBancada.includes('NaN')&&!svgBancada.includes('undefined'),'nenhum terminal ficou sem posição');
+ assert(!keyNode('answerDetails').open,'resumo em texto começa recolhido');
+
  assert.equal(keyNode('answerGroups').children.length,4,'quatro grupos de conexões');
  assert.equal(keyNode('answerGroups').children.reduce((n,g)=>n+g.children.filter(c=>c.className==='answer-row').length,0),17,'gabarito mostra 17 fios');
  keyNode('answerDownload').click();
