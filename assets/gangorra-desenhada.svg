@@ -6,7 +6,7 @@
 <rect x="66" y="37" width="148" height="126" rx="12" fill="#121b21" stroke="#4e5c67" stroke-width="2"/>
 <!-- 3 bottom metal contacts integrated into housing -->
 <g><rect x="56" y="172" width="28" height="46" rx="4" fill="url(#gold)" stroke="#8e6e37" stroke-width="3"/><rect x="61" y="190" width="18" height="14" rx="2" fill="#f5d27d"/></g><g><rect x="126" y="172" width="28" height="46" rx="4" fill="url(#gold)" stroke="#8e6e37" stroke-width="3"/><rect x="131" y="190" width="18" height="14" rx="2" fill="#f5d27d"/></g><g><rect x="196" y="172" width="28" height="46" rx="4" fill="#353c41" stroke="#17232a" stroke-width="3"/><rect x="201" y="190" width="18" height="14" rx="2" fill="#151b21"/></g>
-<text x="70" y="166" font-family="Arial" font-size="12" fill="#f7efdb" font-weight="bold" text-anchor="middle">IN</text>
-<text x="140" y="166" font-family="Arial" font-size="12" fill="#f7efdb" font-weight="bold" text-anchor="middle">OUT</text>
-<text x="210" y="166" font-family="Arial" font-size="12" fill="#f7efdb" font-weight="bold" text-anchor="middle">LED−</text>
+
+
+
 </svg>
