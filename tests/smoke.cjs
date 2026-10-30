@@ -344,6 +344,11 @@ assert.equal(pending().startPort,null,'ao refazer conexão não resta fio solto'
 assert.equal(saved().wires[0].via.length,2,'guardar exatamente os dois vértices escolhidos');
 const bends=saved().wires[0].via;
 assert.equal(saved().wires[0].manual,true,'a conexão nova preserva rota manual sem curvas automáticas');
+assert(js.includes('manual:w.manual===true'),'ligações manuais mantêm tipo de rota após recarregar do armazenamento');
+assert(js.includes('w.manual?manualWirePoints(a,w.via||[],b)'),'rota manual é desenhada sem dobrar automaticamente');
+assert(js.includes('w.manual?wirePath(manualWirePoints(from,w.via||[],to))'),'exportação respeita formato reto da rota manual');
+assert(js.includes('manual:true'),'conexão criada armazena o traçado livre');
+
 assert.notEqual(bends[0].x,bends[1].x,'trechos diagonais são permitidos entre cliques');
 assert.notEqual(bends[0].y,bends[1].y,'trechos seguem cursor sem dobrar sozinhos');
 const curved=JSON.stringify(saved().wires[0].via);
