@@ -54,7 +54,7 @@ assert(html.includes('id="downloadBtn"'),'botão para baixar montagem presente')
 assert(html.includes('id="copyBtn"')&&html.includes('id="pasteBtn"'),'botões copiar/colar próximos da lixeira');
 assert(html.includes('class="studio-topbar"'),'ferramentas em painel superior único');
 assert(!html.includes('>PEÇAS</small>'),'alça do catálogo apresenta somente seta');
-assert(css.includes('.part.selected::after,.part.selected::before{display:none!important}'),'peças sem moldura de seleção');
+assert(css.includes('.part.selected::after,.part.selected::before{display:none!important;'),'peças sem moldura de seleção');
 assert(css.includes('.wire-spark{'),'faíscas da ponta do jumper disponíveis');
 assert(!espArt.includes('>ESPRESSIF<')&&!espArt.includes('2.4 GHz'),'módulo metálico sem texto interno');
 assert.equal(types.length,6);
