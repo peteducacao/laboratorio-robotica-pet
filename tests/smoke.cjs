@@ -126,7 +126,7 @@ const win={addEventListener(type,fn){(listeners['window:'+type]??=[]).push(fn)}}
 const store={getItem(k){return storage[k]??null},setItem(k,v){storage[k]=v}};
 const fake={window:win,document:doc,localStorage:store,requestAnimationFrame(){},ResizeObserver:class{observe(){}},console,Math,JSON,confirm(){return true},setTimeout(){return 1},clearTimeout(){}};
 // Hook somente para testes: inspeciona curvas pendentes, sem expor dados na aplicação.
-const instrumented=js.replace(/\}\)\(\);\s*$/, "window.__pendingForTests=()=>({startPort:state.startPort,bends:state.bends.map(p=>({...p})),preview:previewPoint&&{...previewPoint},points:pendingWirePoints()});window.__powerForTests=()=>({live:powerStatus(),running:simulationRunning});window.__wireForTests=()=>({points:state.wires.map(w=>wirePoints(w)),align:wireAlignment,selected:state.selectedWire,zoom});})();");
+const instrumented=js.replace(/\}\)\(\);\s*$/, "window.__pendingForTests=()=>({startPort:state.startPort,bends:state.bends.map(p=>({...p})),preview:previewPoint&&{...previewPoint},points:pendingWirePoints()});window.__powerForTests=()=>({live:powerStatus(),running:simulationRunning});window.__wireForTests=()=>({points:state.wires.map(w=>wirePoints(w)),align:wireAlignment,selected:state.selectedWire,zoom});window.__drawWireForTests=drawWires;})();");
 assert.notEqual(instrumented,js,'instrumentação do teste de histórico aplicada');
 vm.runInNewContext(instrumented,fake);
 const pending=()=>win.__pendingForTests();
@@ -384,6 +384,8 @@ click('deleteBtn');
 assert.equal(saved().wires.length,0,'Excluir apaga o fio selecionado');
 connect('b1.POS','s1.IN');
 assert.equal(saved().wires.length,1,'refazer conexão após exclusão');
+win.__drawWireForTests();
+assert(nodes.wireSvg.children.some(child=>child.dataset.wireIndex==='0'&&child.dataset.wireSegment==='0'),'jumper reto também recebe alvo de arraste próprio');
 const beforeMoveParts=JSON.stringify(saved().parts);
 const beforeMoveWire=JSON.stringify(saved().wires[0]);
 const fixedStart=wiresView().points[0][0],fixedEnd=wiresView().points[0].at(-1);
@@ -425,6 +427,10 @@ assert.deepEqual(wiresView().points[0][0],fixedStart,'fio acompanha bateria tamb
 assert(css.includes('.wire-alignment-guide')&&css.includes('.wire-alignment-label'),'guia de alinhamento do jumper está estilizada');
 assert(js.includes("hit.dataset.wireSegment=String(seg)"),'cada segmento recebe alvo próprio para arraste');
 assert(js.includes("function moveWireSegment("),'geometria do jumper pode ser reposicionada');
+assert(js.includes("function anchoredWireBends("),'cotovelos próximos aos bornes acompanham peça arrastada');
+assert(css.includes("cursor:grab!important"),'o cursor indica que o fio pode ser arrastado');
+assert(js.includes("movedA.y=movedB.y=guideValue")&&js.includes("movedA.x=movedB.x=guideValue"),'o guia endireita segmentos horizontais ou verticais');
+
 
 assert(!js.includes("setAttribute('stroke-dasharray'"),'nenhum fio tracejado');
 assert(js.includes("hit.dataset.wireIndex=String(i)"),'fio tem área clicável própria');
