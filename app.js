@@ -663,6 +663,42 @@ function drawWires(){
   label.setAttribute('y',String(g.horizontal?g.value-15:Math.min(g.start.y,g.end.y)-15));
   label.textContent='ALINHADO';svg.append(label);
  }
+ if(state.startPort&&wireTipActive&&pendingAlignment&&previewPoint){
+  const align=pendingAlignment,point=previewPoint,guide=document.createElementNS(ns,'line');
+  guide.setAttribute('class','wire-alignment-guide');
+  const pin=align.pin||point,extend=32/Math.max(zoom,.1);
+  if(align.axis==='x'||align.axis==='both'){
+   guide.setAttribute('x1',String(point.x));guide.setAttribute('x2',String(point.x));
+   guide.setAttribute('y1',String(Math.min(point.y,pin.y)-extend));
+   guide.setAttribute('y2',String(Math.max(point.y,pin.y)+extend));
+  }else{
+   guide.setAttribute('y1',String(point.y));guide.setAttribute('y2',String(point.y));
+   guide.setAttribute('x1',String(Math.min(point.x,pin.x)-extend));
+   guide.setAttribute('x2',String(Math.max(point.x,pin.x)+extend));
+  }
+  svg.append(guide);
+  const label=document.createElementNS(ns,'text');
+  label.setAttribute('class','wire-alignment-label');
+  label.setAttribute('x',String(point.x+12/zoom));
+  label.setAttribute('y',String(point.y-12/zoom));
+  label.textContent='ALINHADO';svg.append(label);
+ }
+ if(state.startPort&&!wireTipActive&&state.bends.length){
+  const tip=lastWireTip(),size=Math.max(22,34/zoom);
+  const handle=document.createElementNS(ns,'rect');
+  handle.setAttribute('class','wire-frozen-tip');
+  handle.setAttribute('x',String(tip.x-size/2));handle.setAttribute('y',String(tip.y-size/2));
+  handle.setAttribute('width',String(size));handle.setAttribute('height',String(size));
+  handle.dataset.pendingTip='true';
+  handle.setAttribute('aria-label','Toque aqui para puxar novamente a ponta do jumper');
+  svg.append(handle);
+  const square=document.createElementNS(ns,'rect');
+  const visible=Math.max(7,10/zoom);
+  square.setAttribute('class','wire-tip-square');
+  square.setAttribute('x',String(tip.x-visible/2));square.setAttribute('y',String(tip.y-visible/2));
+  square.setAttribute('width',String(visible));square.setAttribute('height',String(visible));
+  svg.append(square);
+ }
  if(state.startPort){
   const start=getPortPos(state.startPort);
   if(!start)return;
@@ -674,7 +710,7 @@ function drawWires(){
   preview.setAttribute('class','wire-line wire-pending');
   preview.setAttribute('stroke',state.wireColor);svg.append(preview);
   const tip=pts.at(-1)||start;
-  if(tip&&previewPoint){
+  if(tip&&wireTipActive&&previewPoint){
    const spark=document.createElementNS(ns,'g');
    spark.setAttribute('class','wire-spark');
    spark.setAttribute('transform','translate('+Math.round(tip.x)+' '+Math.round(tip.y)+')');
