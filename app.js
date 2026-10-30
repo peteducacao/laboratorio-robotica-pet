@@ -65,6 +65,8 @@ let spaceHeld=false;
 let recentTap=null,doubleTapRestore=null,copiedKind=null,simulationRunning=false;
 let wireAlignment=null;
 let wireTipActive=false,pendingAlignment=null;
+// Alça de reconexão temporária: o fio original permanece salvo até confirmar outro pino.
+let reconnectPending=null;
 const activeTouches=new Map();
 let pinch=null;
 let gestureBlockedUntil=0;
@@ -122,10 +124,11 @@ function restoreHistory(s){
   selected:null,selectedWire:null,completed:false
  });
  wireTipActive=!!state.startPort;
- previewPoint=null;previewSnapPort=null;pendingAlignment=null;gesture=null;
+ previewPoint=null;previewSnapPort=null;pendingAlignment=null;gesture=null;reconnectPending=null;
  renderAll();updateHistoryButtons();
 }
 function undo(){
+ if(reconnectPending){cancelReconnect();message('Alteração do fio cancelada.');return;}
  if(!history.length)return;
  future.push(historyState());
  restoreHistory(history.pop());
@@ -456,6 +459,7 @@ function renderProgress(){
 function refresh(){renderCatalog();renderParts();renderColors();renderInspector();renderProgress();persist();updateTrackLock();}
 function renderAll(){refresh();}
 function addPart(kind,x,y){
+ if(reconnectPending)cancelReconnect();
  const t=byKind[kind];if(!t)return false;
  const id=t.ids.find(id=>!exists(id));if(!id){message('Você já colocou todas as peças deste tipo.',true);return false;}
  snapshot();
@@ -466,6 +470,7 @@ function addPart(kind,x,y){
 }
 function removePart(id,skipSnapshot=false){
  if(!exists(id))return;
+ if(reconnectPending)cancelReconnect();
  if(!skipSnapshot)snapshot();
  state.parts=state.parts.filter(p=>p.id!==id);
  state.wires=state.wires.filter(w=>w.a.split('.')[0]!==id&&w.b.split('.')[0]!==id);
@@ -549,6 +554,7 @@ function addCorner(x,y){
  message('Curva fixada. Continue movimentando o cursor até a próxima curva ou pino.');
 }
 function connect(id){
+ if(reconnectPending){finishReconnect(id);return;}
  const part=id.split('.')[0];if(!exists(part))return;
  state.selected=part;state.selectedWire=null;state.inspector='parts';
  if(!state.startPort){
@@ -571,7 +577,7 @@ function connect(id){
  }
  state.completed=false;refresh();
 }
-function removeWire(i){if(!state.wires[i])return;snapshot();state.wires.splice(i,1);state.selectedWire=null;state.completed=false;refresh();message('Fio removido.');}
+function removeWire(i){if(!state.wires[i])return;snapshot();reconnectPending=null;state.wires.splice(i,1);state.selectedWire=null;state.completed=false;refresh();message('Fio removido.');}
 function getPortPos(id){
  const [partId,pinId]=id.split('.');
  const p=byPart(partId);if(!p)return null;
@@ -643,7 +649,7 @@ function bendAt(clientX,clientY){
  return best;
 }
 function beginBendDrag(e,index,vertex){
- const wire=state.wires[index];if(!wire||state.startPort)return false;
+ const wire=state.wires[index];if(!wire||state.startPort||reconnectPending)return false;
  const original=wirePoints(wire);
  if(!Number.isInteger(vertex)||vertex<1||vertex>=original.length-1)return false;
  if(e.cancelable!==false)e.preventDefault();
@@ -741,6 +747,117 @@ function wirePath(pts){
 function wireRoute(start,via,end,startPort,endPort){
  return wirePath(wireRoutePoints(start,via,end,startPort,endPort));
 }
+
+/* Reconectar uma ponta como no Tinkercad: duas bolinhas aparecem quando
+   um fio é selecionado. A origem oposta e a cor nunca se perdem. */
+function reconnectRoute(pending,position,port){
+ const wire=state.wires[pending.index];if(!wire)return [];
+ const points=wirePoints(wire);
+ if(points.length<2||!position)return [];
+ // Percorre a rota do borne que permanece conectado até a nova ponta.
+ const fixed=pending.end==='b'?points.slice(0,-1):points.slice(1).reverse();
+ const last=fixed.at(-1);
+ if(!last)return [];
+ const target={x:Math.round(position.x),y:Math.round(position.y)};
+ const route=fixed.map(p=>({x:Math.round(p.x),y:Math.round(p.y)}));
+ if(Math.abs(last.x-target.x)>1&&Math.abs(last.y-target.y)>1){
+  const dir=portDirection(port||wire[pending.end]);
+  // Uma única curva na extremidade livre, preservando o percurso existente.
+  const elbow=dir.y!==0?{x:target.x,y:last.y}:{x:last.x,y:target.y};
+  if(Math.hypot(elbow.x-last.x,elbow.y-last.y)>1&&
+     Math.hypot(target.x-elbow.x,target.y-elbow.y)>1)route.push(elbow);
+ }
+ route.push(target);
+ const clean=[];
+ for(const point of route){
+  const previous=clean.at(-1);
+  if(!previous||previous.x!==point.x||previous.y!==point.y)clean.push(point);
+ }
+ return pending.end==='b'?clean:clean.reverse();
+}
+function renderWireHandles(){
+ const layer=Q('wireHandles');if(!layer)return;
+ const w=Number.isInteger(state.selectedWire)?state.wires[state.selectedWire]:null;
+ if(!w||state.startPort){layer.replaceChildren();layer.dataset.index='';return;}
+ const selected=String(state.selectedWire);
+ if(layer.dataset.index!==selected||layer.children.length!==2){
+  layer.replaceChildren();
+  for(const end of ['a','b']){
+   const button=document.createElement('button');button.type='button';
+   button.className='wire-end-handle';button.dataset.wireEnd=end;
+   button.setAttribute('aria-label','Soltar ponta '+(end==='a'?'inicial':'final')+' do fio e conectar a outro pino');
+   button.title='Arraste para outro pino ou clique e escolha o novo contato';
+   layer.append(button);
+  }
+  layer.dataset.index=selected;
+ }
+ for(const button of layer.children){
+  const end=button.dataset.wireEnd;
+  const active=reconnectPending&&reconnectPending.index===state.selectedWire&&reconnectPending.end===end;
+  const point=active?reconnectPending.point:getPortPos(w[end]);
+  if(!point){button.hidden=true;continue;}
+  button.hidden=false;
+  const size=Math.min(160,Math.max(15,24/zoom));
+  button.style.left=point.x+'px';button.style.top=point.y+'px';
+  button.style.width=size+'px';button.style.height=size+'px';
+  button.style.borderWidth=Math.max(1,2.5/zoom)+'px';
+  button.classList.toggle('reconnecting',!!active);
+  button.style.setProperty('--handle-shadow-size',Math.max(1,3/zoom)+'px');
+ }
+}
+function beginReconnect(e,index,end){
+ if(e.button!==undefined&&e.button!==0)return;
+ const wire=state.wires[index];if(!wire||state.startPort||!['a','b'].includes(end))return;
+ if(e.cancelable)e.preventDefault();
+ e.stopPropagation?.();
+ state.selectedWire=index;state.selected=null;state.inspector='wires';state.wireColor=wire.color;
+ reconnectPending={index,end,point:getPortPos(wire[end]),snapPort:null};
+ gesture={type:'wire-end',pointer:e.pointerId,startX:e.clientX,startY:e.clientY,moved:false};
+ renderColors();renderInspector();updateHistoryButtons();requestDraw();
+}
+function moveReconnect(clientX,clientY){
+ if(!reconnectPending)return;
+ const box=Q('viewport').getBoundingClientRect();
+ if(clientX<box.left||clientX>box.right||clientY<box.top||clientY>box.bottom)return;
+ const wire=state.wires[reconnectPending.index];if(!wire){cancelReconnect();return;}
+ const fixed=wire[reconnectPending.end==='a'?'b':'a'];
+ const pin=nearestPort(clientX,clientY,fixed);
+ reconnectPending.snapPort=pin;
+ reconnectPending.point=pin?getPortPos(pin):worldXY(clientX,clientY);
+ pendingAlignment=pin?null:visualPendingAlignment(clientX,clientY);
+ requestDraw();
+}
+function cancelReconnect(){
+ if(!reconnectPending)return;
+ reconnectPending=null;pendingAlignment=null;wireAlignment=null;
+ requestDraw();
+}
+function finishReconnect(newPort){
+ const pending=reconnectPending;
+ if(!pending)return false;
+ const wire=state.wires[pending.index];if(!wire){cancelReconnect();return false;}
+ const fixed=wire[pending.end==='a'?'b':'a'];
+ if(!exists(newPort.split('.')[0])||!getPortPos(newPort)||newPort===fixed){
+  message('Escolha outro pino, diferente da ponta que continua conectada.',true);return false;
+ }
+ if(newPort===wire[pending.end]){
+  cancelReconnect();message('Ponta mantida no pino original.',true);return true;
+ }
+ if(state.wires.some((w,i)=>i!==pending.index&&electricalKey(w.a,w.b)===electricalKey(fixed,newPort))){
+  message('Já existe um fio ligando esses dois contatos.',true);return false;
+ }
+ const route=reconnectRoute(pending,getPortPos(newPort),newPort);
+ if(route.length<2)return false;
+ snapshot();
+ wire[pending.end]=newPort;wire.via=route.slice(1,-1);
+ wire.manual=true;
+ state.selectedWire=pending.index;state.selected=null;state.inspector='wires';
+ state.wireColor=wire.color;state.completed=false;
+ reconnectPending=null;pendingAlignment=null;wireAlignment=null;
+ refresh();
+ message('✓ Ponta reconectada em '+portName(newPort)+'. O outro terminal e a cor foram preservados.',true);
+ return true;
+}
 function drawWires(){
  drawPending=false;
  const svg=Q('wireSvg');svg.replaceChildren();
@@ -748,6 +865,7 @@ function drawWires(){
  for(let i=0;i<state.wires.length;i++){
   const w=state.wires[i],points=wirePoints(w);
   if(points.length<2)continue;
+  if(reconnectPending&&reconnectPending.index===i)continue; // Uma única prévia, sem o fio antigo duplicado.
   const d=wirePath(points);
   const line=document.createElementNS(ns,'path');
   line.setAttribute('d',d);
@@ -778,7 +896,7 @@ function drawWires(){
   }
  }
  // Alças quadradas sem halos: apenas a curva tocada muda de ângulo.
- if(!state.startPort)for(let i=0;i<state.wires.length;i++){
+ if(!state.startPort&&!reconnectPending)for(let i=0;i<state.wires.length;i++){
   const points=wirePoints(state.wires[i]);
   for(let vertex=1;vertex<points.length-1;vertex++){
    const p=points[vertex],hitSize=Math.min(130,Math.max(32,29/zoom));
@@ -800,7 +918,19 @@ function drawWires(){
  }
  // Tanto a edição do jumper quanto o seu traçado usam a mesma geometria.
  drawComponentGuide(svg,wireAlignment,ns);
- if(state.startPort&&previewPoint)drawComponentGuide(svg,pendingAlignment,ns);
+ if((state.startPort&&previewPoint)||reconnectPending)drawComponentGuide(svg,pendingAlignment,ns);
+ if(reconnectPending){
+  const w=state.wires[reconnectPending.index];
+  const points=reconnectRoute(reconnectPending,reconnectPending.point,reconnectPending.snapPort);
+  if(w&&points.length>=2){
+   const path=document.createElementNS(ns,'path');
+   path.setAttribute('d',wirePath(points));
+   path.setAttribute('class','wire-line wire-reconnect-preview');
+   path.setAttribute('stroke',w.color);
+   svg.append(path);
+  }
+ }
+ renderWireHandles();
  if(state.startPort){
   const start=getPortPos(state.startPort);
   if(!start)return;
@@ -992,10 +1122,11 @@ function setPendingPreview(e){
 function wireAt(clientX,clientY){return segmentAt(clientX,clientY).index;}
 function selectWire(i){
  if(!state.wires[i])return;
+ if(reconnectPending&&reconnectPending.index!==i)reconnectPending=null;
  state.selectedWire=i;state.selected=null;state.inspector='wires';
  state.wireColor=state.wires[i].color; // O seletor exibe a cor do fio clicado.
  renderParts();renderColors();renderInspector();updateHistoryButtons();requestDraw();
- message('Jumper selecionado. Arraste um trecho para mudar o caminho; as pontas ficam conectadas.',true);
+ message('Fio selecionado. Arraste uma bolinha da ponta para trocar seu pino, ou arraste um trecho para ajustar a curva.',true);
 }
 function centerPart(kind){
  const v=Q('viewport').getBoundingClientRect();
@@ -1055,7 +1186,7 @@ function libraryOpen(open){
  Q('drawerHandle').classList.toggle('open',yes);
 }
 function beginWireDrag(e,index,segment){
- const wire=state.wires[index];if(!wire||state.startPort)return false;
+ const wire=state.wires[index];if(!wire||state.startPort||reconnectPending)return false;
  const original=wirePoints(wire);
  if(segment<0||segment>=original.length-1)return false;
  if(e.cancelable!==false)e.preventDefault();
@@ -1116,6 +1247,7 @@ function viewportDown(e){
  if(pinch||activeTouches.size>=2||Date.now()<gestureBlockedUntil)return;
  if(e.button!==undefined&&e.button!==0&&e.button!==1)return;
  if(e.target.closest('.canvas-zoom-button,.canvas-zoom-panel,button,input'))return;
+ if(reconnectPending)return; // Clique em outro terminal conclui a nova conexão. Não mover a câmera.
  if(spaceHeld||e.button===1){startPan(e);return;}
  if(e.target.closest('.part'))return;
  if(!state.startPort){
@@ -1163,6 +1295,8 @@ function pointerMove(e){
     highlightDropZone(removeZoneAt(e.clientX,e.clientY));
     requestDraw();
    }
+  }else if(g.type==='wire-end'){
+   moveReconnect(e.clientX,e.clientY);
   }else if(g.type==='wire-bend'){
    if(g.moved&&!g.saved){snapshot();g.saved=true;}
    if(g.moved)moveWireBend(g,e.clientX,e.clientY);
@@ -1178,6 +1312,8 @@ function pointerMove(e){
    setPendingPreview(e);
   }
   else if(g.type==='pan'){if(g.moved){panX=g.x+dx;panY=g.y+dy;camera();}}
+ }else if(reconnectPending){
+  moveReconnect(e.clientX,e.clientY);
  }else if(state.startPort){
   const r=Q('viewport').getBoundingClientRect();
   if(e.clientX>=r.left&&e.clientX<=r.right&&e.clientY>=r.top&&e.clientY<=r.bottom){
@@ -1214,6 +1350,7 @@ function handleDoubleTap(e,g){
 }
 function pointerUp(e){
  if(e.type==='pointercancel'&&gesture?.pointer===e.pointerId){
+  if(gesture.type==='wire-end')cancelReconnect();
   gesture=null;Q('dragGhost').hidden=true;Q('viewport').classList.remove('component-drop-ready');
   wireAlignment=null;highlightDropZone(false);trackingTouchEnd(e);requestDraw();return;
  }
@@ -1223,7 +1360,17 @@ function pointerUp(e){
  Q('viewport').classList.remove('component-drop-ready');
  highlightDropZone(false);
  if(handleDoubleTap(e,g))return;
- if(g.type==='catalog'){
+ if(g.type==='wire-end'){
+  suppressPortClickUntil=Date.now()+380;
+  if(g.moved){
+   const wire=state.wires[reconnectPending?.index];
+   const fixed=wire?.[reconnectPending.end==='a'?'b':'a'];
+   const destination=fixed?nearestPort(e.clientX,e.clientY,fixed):null;
+   if(destination)finishReconnect(destination);
+   else message('Ponta solta: clique no novo pino para reconectar. Esc cancela.',true);
+  }else message('Ponta selecionada. Clique em outro pino ou arraste a bolinha até ele. Esc cancela.',true);
+  requestDraw();
+ }else if(g.type==='catalog'){
   // O painel permanece aberto para arrastar vários componentes seguidos.
   if(!g.moved){centerPart(g.kind);}
   else{
@@ -1457,11 +1604,22 @@ function bind(){
  Q('closeLibrary').addEventListener('click',()=>libraryOpen(false));Q('sideBackdrop').addEventListener('click',()=>libraryOpen(false));
  Q('componentSearch').addEventListener('input',renderCatalog);
  Q('catalog').addEventListener('pointerdown',paletteDown);
+ Q('wireHandles').addEventListener('pointerdown',e=>{
+  const handle=e.target.closest('.wire-end-handle');
+  if(!handle||pinch||activeTouches.size>=2||Date.now()<gestureBlockedUntil||spaceHeld)return;
+  beginReconnect(e,state.selectedWire,handle.dataset.wireEnd);
+ });
+ Q('wireHandles').addEventListener('click',e=>{if(e.target.closest('.wire-end-handle')){e.preventDefault();e.stopPropagation();}});
  Q('partsLayer').addEventListener('pointerdown',e=>{
    if(pinch||activeTouches.size>=2||Date.now()<gestureBlockedUntil)return;
    // A ferramenta mão não deve desativar o seletor de tensão ou as teclas das gangorras.
    if((spaceHeld||e.button===1)&&!e.target.closest('input,select,[data-toggle],[data-remove]')){startPan(e);return;}
    const port=e.target.closest('[data-port]');
+   if(reconnectPending&&port){
+    // No toque, finalizar aqui (o preventDefault pode suprimir o click).
+    if(e.pointerType==='touch'){e.preventDefault();suppressPortClickUntil=Date.now()+450;finishReconnect(port.dataset.port);}
+    return;
+   }
    if(port&&e.button!==2){
      // Android: os bornes são botões, não campos de texto. Evita foco/teclado
      // sem perder o toque simples, que é finalizado em pointerUp.
@@ -1492,7 +1650,9 @@ function bind(){
       message('ESP32 ampliado para selecionar o contato com precisão.',true);
       return;
     }
-    connect(pin.dataset.port);return;
+    if(reconnectPending)finishReconnect(pin.dataset.port);
+    else connect(pin.dataset.port);
+    return;
   }
   const del=e.target.closest('[data-remove]');if(del){removePart(del.dataset.remove);return;}
   const toggler=e.target.closest('[data-toggle]');if(toggler){snapshot();state.switches[toggler.dataset.toggle]=!state.switches[toggler.dataset.toggle];refresh();message('Gangorra '+(state.switches[toggler.dataset.toggle]?'ligada':'desligada')+'.');return;}
@@ -1595,6 +1755,7 @@ function bind(){
   if(e.key===' '&&Q('playPanel').hidden&&!e.target.closest('input,textarea,select,button')){
    e.preventDefault();spaceHeld=true;Q('viewport').classList.add('pan-space');return;
   }
+  if(e.key==='Escape'&&reconnectPending){e.preventDefault();cancelReconnect();message('Ponta restaurada ao contato original.');return;}
   if(e.key==='Escape'&&state.startPort){e.preventDefault();cancelPendingWire();message('Fio cancelado.');return;}
   if(e.key==='Backspace'&&state.startPort&&!e.target.closest('input,textarea,select')){
    e.preventDefault();undo();return;
