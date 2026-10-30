@@ -53,6 +53,16 @@ assert(css.includes('.wire-svg{z-index:8;pointer-events:none}'),'fios desenhados
 assert(html.includes('id="downloadBtn"'),'botão para baixar montagem presente');
 assert(html.includes('id="copyBtn"')&&html.includes('id="pasteBtn"'),'botões copiar/colar próximos da lixeira');
 assert(html.includes('class="studio-topbar"'),'ferramentas em painel superior único');
+assert(html.includes('id="downloadBtn"')&&html.includes('aria-label="Baixar montagem"'),'download apenas ícone com nome acessível');
+assert(html.includes('<svg viewBox="0 0 24 24"')&&html.includes('id="copyBtn"')&&html.includes('id="pasteBtn"'),'Copiar/Colar como ícones vetoriais alinhados');
+assert(html.indexOf('wire-color-caption')<html.indexOf('wireColorPreview'),'texto Cor do fio fica antes da amostra');
+assert(css.includes('grid-template-areas:"left zoom right"!important'),'zoom central e Dica/Simulação à direita');
+assert(css.includes('.toolbar .download-btn span{display:none!important}'),'download sem texto visível');
+assert(css.includes('visibility:hidden!important')&&css.includes('.library.open{'),'catálogo fica recolhido até abertura');
+assert(css.includes('right:var(--catalog-width)!important'),'seta acompanha o catálogo à direita');
+assert(css.includes('justify-items:center!important')&&css.includes('object-position:center center!important'),'cartões e imagens do catálogo centralizados');
+assert(js.includes('function syncDrawerTop()'),'catálogo começa abaixo da barra de ferramentas');
+
 assert(!html.includes('>PEÇAS</small>'),'alça do catálogo apresenta somente seta');
 assert(css.includes('.part.selected::after,.part.selected::before{display:none!important;'),'peças sem moldura de seleção');
 assert(css.includes('.wire-spark{'),'faíscas da ponta do jumper disponíveis');
