@@ -654,17 +654,15 @@ function centerPart(kind){
  }
  return added;
 }
+function syncDrawerTop(){
+ // A lateral começa abaixo do cabeçalho e da barra, em todos os tamanhos.
+ const bar=document.querySelector?.('.studio-topbar');
+ const top=Math.ceil(bar?.getBoundingClientRect?.().bottom||0);
+ if(top>0)document.documentElement?.style?.setProperty('--drawer-top',top+'px');
+}
 function libraryOpen(open){
  const yes=!!open;
- // Posiciona a gaveta abaixo do painel superior também em telas estreitas.
- if(window.matchMedia?.('(max-width:1190px)')?.matches){
-  const bar=document.querySelector?.('.studio-topbar');
-  const top=Math.max(0,Math.ceil(bar?.getBoundingClientRect?.().bottom||0));
-  if(top){
-   Q('library').style.setProperty('top',top+'px','important');
-   Q('sideBackdrop').style.setProperty('top',top+'px','important');
-  }
- }
+ syncDrawerTop();
  // Encerrar o foco da busca ao fechar a gaveta evita teclado preso no Android.
  if(!yes)Q('componentSearch').blur?.();
  Q('library').classList.toggle('open',yes);
@@ -1129,9 +1127,9 @@ function bind(){
   const end=()=>{if(dir!=='stop')keys[dir]=false;btn.classList.remove('pressed');};
   btn.addEventListener('pointerup',end);btn.addEventListener('pointercancel',end);btn.addEventListener('lostpointercapture',end);
  });
- window.addEventListener('resize',()=>{fitCamera();requestDraw();});
+ window.addEventListener('resize',()=>{syncDrawerTop();fitCamera();requestDraw();});
  if(typeof ResizeObserver!=='undefined')new ResizeObserver(requestDraw).observe(Q('viewport'));
 }
-safeRestore();bind();renderAll();fitCamera();drawTrack();requestAnimationFrame(drive);
+safeRestore();bind();syncDrawerTop();renderAll();fitCamera();drawTrack();requestAnimationFrame(drive);
 if(document.fonts)document.fonts.ready.then(requestDraw);
 })();
