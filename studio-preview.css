@@ -716,16 +716,19 @@
 .preview-studio .wire-end-handle,.preview-studio .wire-end-handle:not(:disabled){
  position:absolute!important;display:block!important;transform:translate(-50%,-50%)!important;
  padding:0!important;margin:0!important;min-width:0!important;min-height:0!important;
- border-style:solid!important;border-color:#fff!important;border-radius:50%!important;
- background:#1d9bc0!important;
- box-shadow:0 0 0 var(--handle-shadow-size,3px) #167d9bb0,0 3px 10px #163c4f40!important;
+ border-style:solid!important;border-color:#1289aa!important;border-radius:50%!important;
+ /* A alça tem centro vazado: a linha alcança a bolinha sem parecer cortada. */
+ background:transparent!important;
+ box-shadow:inset 0 0 0 1px #ffffffc9,
+            0 0 0 var(--handle-shadow-size,3px) #daf5f8a0,0 3px 10px #163c4f26!important;
  pointer-events:auto!important;cursor:grab!important;touch-action:none!important;
  user-select:none!important;-webkit-user-select:none!important;
  transition:background .12s ease,box-shadow .12s ease!important;
 }
 .preview-studio .wire-end-handle:hover,.preview-studio .wire-end-handle.reconnecting{
- background:#f3ab47!important;
- box-shadow:0 0 0 var(--handle-shadow-size,3px) #df8627aa,0 3px 12px #7b47234d!important;
+ background:transparent!important;border-color:#d4831b!important;
+ box-shadow:inset 0 0 0 1px #fff4dbd9,
+            0 0 0 var(--handle-shadow-size,3px) #ffe5b3aa,0 3px 12px #7b47234d!important;
 }
 .preview-studio .wire-end-handle.awaiting-target{pointer-events:none!important}
 .preview-studio .wire-end-handle:active{cursor:grabbing!important}
