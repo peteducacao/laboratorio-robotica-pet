@@ -970,13 +970,14 @@ function viewportDown(e){
  if(e.button!==undefined&&e.button!==0&&e.button!==1)return;
  if(e.target.closest('.canvas-zoom-button,.canvas-zoom-panel,button,input'))return;
  if(spaceHeld||e.button===1){startPan(e);return;}
+ if(state.startPort&&!wireTipActive&&resumePendingTip(e))return;
  if(e.target.closest('.part,.wire-target'))return;
  if(!state.startPort){
   const selected=segmentAt(e.clientX,e.clientY);
   if(selected.index>=0&&beginWireDrag(e,selected.index,selected.segment))return;
  }
  e.preventDefault();
- gesture={type:state.startPort?'bend':'pan',pointer:e.pointerId,startX:e.clientX,startY:e.clientY,x:panX,y:panY,moved:false};
+ gesture={type:state.startPort&&wireTipActive?'bend':'pan',pointer:e.pointerId,startX:e.clientX,startY:e.clientY,x:panX,y:panY,moved:false};
 }
 let suppressPortClickUntil=0;
 function pointerMove(e){
@@ -1003,22 +1004,17 @@ function pointerMove(e){
    if(g.moved)moveWireSegment(g,e.clientX,e.clientY);
   }else if(g.type==='wire'){
    if(g.moved){
-    if(!state.startPort){snapshot();state.startPort=g.port;state.bends=[];updateHistoryButtons();}
-    previewSnapPort=nearestPort(e.clientX,e.clientY,g.port);
-    previewPoint=previewSnapPort?null:worldXY(e.clientX,e.clientY);
-    requestDraw();
+    if(!state.startPort){snapshot();state.startPort=g.port;state.bends=[];wireTipActive=true;updateHistoryButtons();}
+    setPendingPreview(e,g.port);
    }
-  }else if(g.type==='bend'){
-   previewSnapPort=nearestPort(e.clientX,e.clientY,state.startPort);
-   previewPoint=previewSnapPort?null:worldXY(e.clientX,e.clientY);
-   requestDraw();
+  }else if(g.type==='bend'||g.type==='resume-wire'){
+   setPendingPreview(e);
   }
   else if(g.type==='pan'){if(g.moved){panX=g.x+dx;panY=g.y+dy;camera();}}
- }else if(state.startPort){
+ }else if(state.startPort&&wireTipActive){
   const r=Q('viewport').getBoundingClientRect();
   if(e.clientX>=r.left&&e.clientX<=r.right&&e.clientY>=r.top&&e.clientY<=r.bottom){
-   previewSnapPort=nearestPort(e.clientX,e.clientY,state.startPort);
-   previewPoint=previewSnapPort?null:worldXY(e.clientX,e.clientY);requestDraw();
+   setPendingPreview(e);
   }
  }
 }
@@ -1078,7 +1074,7 @@ function pointerUp(e){
    }else{
      const box=Q('viewport').getBoundingClientRect();
      if(e.clientX>=box.left&&e.clientX<=box.right&&e.clientY>=box.top&&e.clientY<=box.bottom){
-       const pos=worldXY(e.clientX,e.clientY);addCorner(pos.x,pos.y);
+       const pos=previewPoint||worldXY(e.clientX,e.clientY);addCorner(pos.x,pos.y);
      }else{previewPoint=null;requestDraw();}
    }
   }
@@ -1096,7 +1092,12 @@ function pointerUp(e){
   else{state.selected=g.partId;renderParts();renderInspector();}
  }else if(g.type==='bend'){
   const pin=nearestPort(e.clientX,e.clientY,state.startPort);
-  if(pin)connect(pin);else{const pos=worldXY(e.clientX,e.clientY);addCorner(pos.x,pos.y);}
+  if(pin)connect(pin);else{const pos=previewPoint||worldXY(e.clientX,e.clientY);addCorner(pos.x,pos.y);}
+ }else if(g.type==='resume-wire'){
+  if(g.moved){
+   const pin=nearestPort(e.clientX,e.clientY,state.startPort);
+   if(pin)connect(pin);else{const pos=previewPoint||worldXY(e.clientX,e.clientY);addCorner(pos.x,pos.y);}
+  }else message('Ponta reativada. Mova o cursor para continuar o jumper.',true);
  }else if(g.type==='pan'&&!g.moved&&!spaceHeld){
   const wire=wireAt(e.clientX,e.clientY);
   if(wire>=0)selectWire(wire);
