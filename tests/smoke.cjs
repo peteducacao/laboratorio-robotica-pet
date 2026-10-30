@@ -620,7 +620,7 @@ assert.equal(assembly().wrong,0,'positivos diretos são aceitos');
 assert.equal(assembly().missing,0,'nenhuma ligação com gangorra é exigida');
 assert.equal(assembly().ready,true,'direta é circuito completo');
 assert(nodes.validationBadge.textContent.includes('Circuito completo'),'painel anuncia conclusão direta');
-assert.equal(nodes.connectionsCount.textContent,'15 / 15','progresso exibe 15 de 15');
+assert.equal(nodes.connectionsCount.textContent,'15/15','progresso exibe 15 de 15');
 assert.equal(power().live.esp,true,'ESP32 recebe energia direto pelo LM2596');
 assert.equal(power().live.driver,true,'MX1508 recebe AA direto');
 assert.equal(power().live.motors.ml,true,'motor A funciona no modo direto');
