@@ -142,3 +142,26 @@
 @media print{
  .answer-filter-head,.answer-filters,.answer-wire-picker,.answer-selected-info{display:none!important}
 }
+
+
+/* Alternativas de alimentação — ambas conferidas no mesmo laboratório */
+.answer-mode-row{
+ display:flex;flex-wrap:wrap;align-items:center;gap:8px;
+ padding:13px 14px;margin:9px 0 6px;
+ background:#f5f8f9;border:1px solid #dce8eb;border-radius:11px
+}
+.answer-mode-row button{
+ flex:1 1 190px;padding:11px 13px;min-height:43px;
+ border-radius:9px;border:1px solid #d3e0e4;
+ background:#fff;color:#315b69;font-weight:750;font-size:12px;
+ cursor:pointer;transition:background .15s,border-color .15s
+}
+.answer-mode-row button.is-active{
+ background:#145d70;color:#fff;border-color:#145d70;
+ box-shadow:0 2px 6px #1f576c22
+}
+.answer-mode-row button:hover:not(.is-active){background:#e8f3f5}
+@media(max-width:480px){
+ .answer-mode-row{gap:6px;padding:8px}
+ .answer-mode-row button{font-size:11px;flex-basis:145px;line-height:1.25}
+}
