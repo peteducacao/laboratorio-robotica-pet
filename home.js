@@ -53,6 +53,73 @@
    return false;
   }finally{drawing=false}
  }
+
+ // A composição mobile não estica pixels da primeira ou última linha:
+ // desenha a oficina na escala ORIGINAL e completa apenas o ambiente.
+ let mobileLastSize='';
+ function renderMobileScene(width,height,scale,left,top){
+  if(!art.complete||!art.naturalWidth)return false;
+  const dpr=Math.min(window.devicePixelRatio||1,1.35);
+  const targetW=Math.round(width*dpr),targetH=Math.round(height*dpr);
+  const key=targetW+':'+targetH+':'+scale.toFixed(5)+':'+top.toFixed(1);
+  if(mobileLastSize===key&&backdrop.width===targetW&&backdrop.height===targetH)return true;
+  try{
+   backdrop.width=targetW;backdrop.height=targetH;
+   const ctx=backdrop.getContext('2d',{alpha:false});
+   if(!ctx)return false;
+   ctx.setTransform(dpr,0,0,dpr,0,0);
+   ctx.imageSmoothingEnabled=true;ctx.imageSmoothingQuality='high';
+   // Parede azul contínua, sem filter:blur e sem ampliar um pixel isolado.
+   const wall=ctx.createLinearGradient(0,0,0,height);
+   wall.addColorStop(0,'#081a35');
+   wall.addColorStop(.44,'#0b284e');
+   wall.addColorStop(1,'#075484');
+   ctx.fillStyle=wall;ctx.fillRect(0,0,width,height);
+   const warm=ctx.createRadialGradient(-width*.08,height*.33,0,0,height*.33,width*.58);
+   warm.addColorStop(0,'#75513c83');warm.addColorStop(1,'#75513c00');
+   ctx.fillStyle=warm;ctx.fillRect(0,0,width,height);
+   const cool=ctx.createRadialGradient(width*1.1,height*.30,0,width,height*.30,width*.70);
+   cool.addColorStop(0,'#269bf454');cool.addColorStop(1,'#269bf400');
+   ctx.fillStyle=cool;ctx.fillRect(0,0,width,height);
+   // A grade da bancada prolonga o chão original com linhas nítidas.
+   const floor=top+H*scale-38;
+   ctx.lineWidth=.8;
+   for(let y=Math.max(0,floor);y<height;y+=26){
+    const strength=Math.min(.25,.07+(y-floor)/Math.max(1,height-floor)*.18);
+    ctx.strokeStyle='rgba(119,210,255,'+Math.max(0,strength)+')';
+    ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(width,y);ctx.stroke();
+   }
+   for(let x=-width*2;x<width*3;x+=34){
+    ctx.strokeStyle='rgba(115,210,255,.12)';
+    ctx.beginPath();
+    ctx.moveTo(width/2+(x-width/2)*.13,floor);
+    ctx.lineTo(x,height);
+    ctx.stroke();
+   }
+   // Robô, marca, botão e oficina vêm da arte aprovada, na mesma proporção.
+   // Só há uma transição curta (36 px), não faixas turvas gigantes.
+   const plate=document.createElement('canvas');
+   plate.width=targetW;plate.height=targetH;
+   const layer=plate.getContext('2d');
+   if(!layer)return false;
+   layer.setTransform(dpr,0,0,dpr,0,0);
+   layer.imageSmoothingEnabled=true;layer.imageSmoothingQuality='high';
+   layer.drawImage(art,left,top,W*scale,H*scale);
+   layer.globalCompositeOperation='destination-in';
+   const mask=layer.createLinearGradient(0,0,0,height);
+   const stop=(y,a)=>mask.addColorStop(Math.max(0,Math.min(1,y/height)),'rgba(0,0,0,'+a+')');
+   const edge=top+H*scale;
+   stop(0,0);stop(top+1,0);stop(top+36,1);
+   stop(edge-38,1);stop(edge+1,0);stop(height,0);
+   layer.fillStyle=mask;layer.fillRect(0,0,width,height);
+   ctx.drawImage(plate,0,0,width,height);
+   mobileLastSize=key;return true;
+  }catch(err){
+   console.warn('TinkerPET: cenário mobile indisponível',err);
+   return false;
+  }
+ }
+
  function layout(){
   const width=document.documentElement.clientWidth||window.innerWidth;
   const height=window.innerHeight;
@@ -61,6 +128,34 @@
   const scale=shortLandscape?Math.min(width/W,height/H):
    mobile?Math.min(width/830,height/780):
    Math.min(width/W,height/H)*.84;
+  // Mobile tem um enquadramento independente. O desktop abaixo não muda.
+  if(mobile&&!shortLandscape){
+   const top=Math.max(48,Math.min(height*.19,146));
+   const left=(width-W*scale)/2;
+   Object.assign(art.style,{
+    left:left+'px',top:top+'px',width:W*scale+'px',height:H*scale+'px'
+   });
+   const place=(el,x,y,w,h)=>{
+    if(el)Object.assign(el.style,{
+     left:left+x*scale+'px',top:top+y*scale+'px',
+     width:w*scale+'px',height:h*scale+'px'
+    });
+   };
+   place(button,585,591,604,130);
+   place(blink,831,315,43,34);
+   place(beacon,883,143,94,94);
+   particles.forEach((el,i)=>{
+    const p=coords[i];if(p){
+     const n=Math.max(3,Math.round(p.n*scale));
+     place(el,p.x,p.y,n,n);
+    }
+   });
+   const composed=renderMobileScene(width,height,scale,left,top);
+   scene.classList.toggle('composed',composed);
+   scene.classList.toggle('mobile-clean',composed);
+   return;
+  }
+  scene.classList.remove('mobile-clean');
   const extraX=(width-W*scale)/2,extraY=(height-H*scale)/2;
   const mapX=x=>{
    const centered=(x-CX)/CX;
