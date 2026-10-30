@@ -894,3 +894,21 @@
   flex-basis:56px!important;width:56px!important;min-width:56px!important;max-width:56px!important
  }
 }
+
+/* Studio v15: seleção múltipla em todos os componentes da bancada. */
+.preview-studio #selectionToolBtn{position:relative!important}
+.preview-studio #selectionToolBtn.active{
+ background:#daf5ee!important;border-color:#279994!important;color:#166b70!important
+}
+.preview-studio #selectionToolBtn .selection-count:not([hidden]){
+ position:absolute!important;top:-5px!important;right:-5px!important;
+ display:grid!important;place-items:center!important;
+ min-width:17px!important;height:17px!important;padding:0 3px!important;
+ border-radius:50%!important;background:#168d92!important;color:#fff!important;
+ font:bold 10px/1 sans-serif!important;pointer-events:none!important
+}
+.preview-studio #partsLayer .part.multi-selected{
+ outline:3px solid #18a69c!important;outline-offset:6px!important;
+ box-shadow:0 0 0 5px #18a69c28!important;
+ border-radius:9px!important
+}
