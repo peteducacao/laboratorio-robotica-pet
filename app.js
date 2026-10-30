@@ -60,7 +60,7 @@ const Q=id=>document.getElementById(id);
 const WORLD={w:1900,h:1450};
 const COLOR_CHOICES=[{"name":"Vermelho","value":"#ed654d"},{"name":"Azul","value":"#316fc0"},{"name":"Preto","value":"#1f434c"},{"name":"Verde","value":"#32a47b"},{"name":"Amarelo","value":"#e5a13d"},{"name":"Roxo","value":"#a378c8"},{"name":"Laranja","value":"#f17a32"},{"name":"Azul-claro","value":"#26a9e0"},{"name":"Rosa","value":"#e66da9"},{"name":"Branco","value":"#f5f7f5"},{"name":"Marrom","value":"#8e603f"},{"name":"Cinza","value":"#8895a1"},{"name":"Verde-limão","value":"#a7be4c"},{"name":"Azul-marinho","value":"#253c80"},{"name":"Turquesa","value":"#19b5ac"},{"name":"Vinho","value":"#8f3d63"},{"name":"Dourado","value":"#d0ad55"},{"name":"Lilás","value":"#c6a5f0"}];
 const COLORS=COLOR_CHOICES.map(c=>c.value);
-let state={parts:[],wires:[],voltage:4,switches:{s1:false,s2:false},wireColor:COLORS[0],selected:null,startPort:null,inspector:'parts',completed:false,bends:[],selectedWire:null};
+let state={parts:[],wires:[],voltage:4,switches:{s1:false,s2:false},wireColor:COLORS[0],selected:null,startPort:null,inspector:'parts',completed:false,bends:[],selectedWire:null,autoWireAlign:false};
 let zoom=1,panX=0,panY=0,gesture=null,history=[],future=[],toastTimer=0,previewPoint=null,previewSnapPort=null,drawPending=false;
 let spaceHeld=false;
 let recentTap=null,doubleTapRestore=null,copiedKind=null,simulationRunning=false;
@@ -93,23 +93,25 @@ function safeRestore(){
   if(!s||!Array.isArray(s.parts)||!Array.isArray(s.wires))return;
   const names=new Set();
   state.parts=s.parts.filter(p=>p&&byId[p.id]&&!names.has(p.id)&&names.add(p.id)&&Number.isFinite(p.x)&&Number.isFinite(p.y)).map(p=>({id:p.id,kind:byId[p.id].kind,x:p.x,y:p.y,view:byId[p.id].kind==='motor'&&p.view==='side'?'side':'front',rotation:normalizePartRotation(p.rotation)}));
-  state.wires=s.wires.filter(w=>w&&allPorts.has(w.a)&&allPorts.has(w.b)&&w.a!==w.b&&exists(w.a.split('.')[0])&&exists(w.b.split('.')[0])).slice(0,80).map(w=>({a:w.a,b:w.b,color:COLORS.includes(w.color)?w.color:COLORS[0],via:Array.isArray(w.via)?w.via.filter(p=>p&&Number.isFinite(p.x)&&Number.isFinite(p.y)).slice(0,48).map(p=>({x:p.x,y:p.y})):[],manual:w.manual===true}));
+  state.wires=s.wires.filter(w=>w&&allPorts.has(w.a)&&allPorts.has(w.b)&&w.a!==w.b&&exists(w.a.split('.')[0])&&exists(w.b.split('.')[0])).slice(0,80).map(w=>({a:w.a,b:w.b,color:COLORS.includes(w.color)?w.color:COLORS[0],via:Array.isArray(w.via)?w.via.filter(p=>p&&Number.isFinite(p.x)&&Number.isFinite(p.y)).slice(0,48).map(p=>({x:p.x,y:p.y})):[],manual:w.manual===true,autoRoute:w.autoRoute===true}));
   if(Number.isFinite(s.voltage))state.voltage=limit(s.voltage,3,6);
   if(s.switches)state.switches={s1:!!s.switches.s1,s2:!!s.switches.s2};
   if(COLORS.includes(s.wireColor))state.wireColor=s.wireColor;
+  state.autoWireAlign=s.autoWireAlign===true;
  }catch(err){console.warn('Progresso indisponível',err);}
 }
 function persist(){
- try{localStorage.setItem(STORAGE_KEY,JSON.stringify({parts:state.parts,wires:state.wires,voltage:state.voltage,switches:state.switches,wireColor:state.wireColor}));Q('savedIndicator').textContent='● Salvo automaticamente';}catch(e){Q('savedIndicator').textContent='● Não salvo';}
+ try{localStorage.setItem(STORAGE_KEY,JSON.stringify({parts:state.parts,wires:state.wires,voltage:state.voltage,switches:state.switches,wireColor:state.wireColor,autoWireAlign:state.autoWireAlign}));Q('savedIndicator').textContent='● Salvo automaticamente';}catch(e){Q('savedIndicator').textContent='● Não salvo';}
 }
 // Cada curva e cada origem de jumper entram na linha do tempo de ações.
 function historyState(){return JSON.stringify({
  parts:state.parts,wires:state.wires,voltage:state.voltage,switches:state.switches,
- startPort:state.startPort,bends:state.bends
+ startPort:state.startPort,bends:state.bends,autoWireAlign:state.autoWireAlign
 });}
 function updateHistoryButtons(){
  const undoBtn=Q('undoBtn'),redoBtn=Q('redoBtn'),delBtn=Q('deleteBtn');
  const rotateBtn=Q('rotateBtn'),p=byPart(state.selected);
+ updateAutoWireButton();
  if(rotateBtn){rotateBtn.disabled=!p||selectedParts.size>1;rotateBtn.title=selectedParts.size>1?'Girar: selecione uma peça por vez':p?'Girar '+partName(p.id)+' 90° (R)':'Selecione um componente para girar 90°';rotateBtn.setAttribute('aria-label',rotateBtn.title);}
  updateMultiSelectionTool();
  if(undoBtn)undoBtn.disabled=history.length===0;
@@ -130,7 +132,7 @@ function restoreHistory(s){
  const saved=JSON.parse(s);
  Object.assign(state,saved,{
   startPort:saved.startPort||null,bends:Array.isArray(saved.bends)?saved.bends:[],
-  selected:null,selectedWire:null,completed:false
+  selected:null,selectedWire:null,completed:false,autoWireAlign:saved.autoWireAlign===true
  });
  wireTipActive=!!state.startPort;
  previewPoint=null;previewSnapPort=null;pendingAlignment=null;gesture=null;reconnectPending=null;selectedBend=null;partDragAlignment=null;
@@ -645,6 +647,7 @@ function projectFromTip(from,wanted,previous=null){
 }
 function addCorner(x,y){
  if(!state.startPort)return;
+ if(state.autoWireAlign){message('Alinhamento ligado: clique no pino de destino; desligue-o para acrescentar curvas.',true);return;}
  const last=lastWireTip(),tip={x:Math.round(x),y:Math.round(y)};
  if(!last||Math.hypot(tip.x-last.x,tip.y-last.y)<6){requestDraw();return;}
  if(state.bends.length>=48){message('Limite de curvas: finalize em um pino.',true);return;}
@@ -761,7 +764,29 @@ function automaticWireRoute(aId,bId,exclude=-1){
  }
  return best;
 }
+function updateAutoWireButton(){
+ const button=Q('autoWireBtn');if(!button)return;
+ const yes=state.autoWireAlign===true;
+ button.classList.toggle('active',yes);
+ button.setAttribute('aria-pressed',String(yes));
+ button.title=yes?'Alinhamento automático LIGADO: clique para desligar e editar curvas':'Alinhamento automático DESLIGADO: clique para organizar todos os fios';
+ const label=Q('autoWireState');if(label)label.textContent=yes?'ON':'OFF';
+}
+function setAutoWireAlignment(enabled){
+ if(state.autoWireAlign===!!enabled)return;
+ if(reconnectPending)cancelReconnect();
+ snapshot();
+ state.autoWireAlign=!!enabled;
+ if(enabled){
+  state.bends=[];wireTipActive=!!state.startPort;
+  for(const w of state.wires)w.autoRoute=true;
+  rerouteAutomaticWires();
+ }else for(const w of state.wires)w.autoRoute=false;
+ state.completed=false;refresh();
+ message(enabled?'Alinhamento automático LIGADO: organizei os fios antigos. Agora basta escolher os dois pinos.':'Alinhamento DESLIGADO: o traçado atual foi mantido. Você pode ajustar as curvas manualmente.',true);
+}
 function rerouteAutomaticWires(preserveGroup=false){
+ if(!state.autoWireAlign)return;
  for(let i=0;i<state.wires.length;i++){
   const w=state.wires[i];if(!w.autoRoute)continue;
   if(preserveGroup&&selectedParts.size>1&&selectedParts.has(w.a.split('.')[0])&&selectedParts.has(w.b.split('.')[0]))continue;
@@ -776,13 +801,13 @@ function connect(id){
  if(!state.startPort){
   snapshot();
   state.startPort=id;state.bends=[];wireTipActive=true;previewPoint=null;previewSnapPort=null;pendingAlignment=null;updateHistoryButtons();
-  message('Fio iniciado em '+portName(id)+'. Toque na bancada para criar curvas, depois no pino de destino.');
+  message(state.autoWireAlign?'Fio iniciado: selecione o pino de destino. O caminho se ajusta automaticamente.':'Fio iniciado em '+portName(id)+'. Clique para criar curvas, depois escolha o pino de destino.',true);
   renderParts();renderInspector();requestDraw();return;
  }
  const first=state.startPort;
  if(id===first){cancelPendingWire();message('Ligação cancelada.');return;}
  const via=state.bends.map(p=>({x:p.x,y:p.y}));
- const autoPath=via.length?null:automaticWireRoute(first,id);
+ const autoPath=state.autoWireAlign?automaticWireRoute(first,id):null;
  // Antes de finalizar, guarda o jumper parcialmente desenhado.
  snapshot();
  state.startPort=null;state.bends=[];wireTipActive=false;previewPoint=null;previewSnapPort=null;pendingAlignment=null;
@@ -791,6 +816,7 @@ function connect(id){
  else{
   const route=autoPath?autoPath.slice(1,-1):via;
   state.wires.push({a:first,b:id,color:state.wireColor,via:route,manual:true,autoRoute:!!autoPath});
+  if(state.autoWireAlign)rerouteAutomaticWires();
   message(acceptedConnectionSet().has(electricalKey(first,id))
    ?(autoPath?'✓ Fio conectado e alinhado automaticamente.':'✓ Fio com '+route.length+' curva(s) conectado.')
    :'Fio criado, mas os terminais precisam ser revisados.',!acceptedConnectionSet().has(electricalKey(first,id)));
@@ -892,7 +918,12 @@ function pendingWirePoints(){
  if(!state.startPort)return [];
  const start=getPortPos(state.startPort),tip=previewPoint;
  if(!tip)return [start].filter(Boolean);
- if(state.bends.length)return manualWirePoints(start,state.bends,tip);
+ if(state.autoWireAlign&&previewSnapPort){
+  // Mesma rota na prévia e no fio definitivo; não cria curva ao clicar.
+  const auto=automaticWireRoute(state.startPort,previewSnapPort);
+  if(auto)return auto;
+ }
+ if(state.bends.length&&!state.autoWireAlign)return manualWirePoints(start,state.bends,tip);
  const exit=autoWireExit(state.startPort),d=portDirection(state.startPort);
  const elbow=d.x!==0?{x:tip.x,y:exit.y}:{x:exit.x,y:tip.y};
  return simplifyAutoWire([start,exit,elbow,tip]);
@@ -936,6 +967,9 @@ function bendAt(clientX,clientY){
 }
 function beginBendDrag(e,index,vertex){
  const wire=state.wires[index];if(!wire||state.startPort||reconnectPending)return false;
+ if(state.autoWireAlign){
+  selectBend(index,vertex);message('Desligue o alinhamento automático para arrastar este ponto.',true);return true;
+ }
  const original=wirePoints(wire);
  if(!Number.isInteger(vertex)||vertex<1||vertex>=original.length-1)return false;
  if(e.cancelable!==false)e.preventDefault();
@@ -1158,11 +1192,13 @@ function finishReconnect(newPort){
  if(state.wires.some((w,i)=>i!==pending.index&&electricalKey(w.a,w.b)===electricalKey(fixed,newPort))){
   message('Já existe um fio ligando esses dois contatos.',true);return false;
  }
- const route=reconnectRoute(pending,getPortPos(newPort),newPort);
+ const auto=state.autoWireAlign?automaticWireRoute(
+  pending.end==='a'?newPort:wire.a,pending.end==='b'?newPort:wire.b,pending.index):null;
+ const route=auto||reconnectRoute(pending,getPortPos(newPort),newPort);
  if(route.length<2)return false;
  snapshot();
  wire[pending.end]=newPort;wire.via=route.slice(1,-1);
- wire.manual=true;wire.autoRoute=false;
+ wire.manual=true;wire.autoRoute=!!auto;
  state.selectedWire=pending.index;state.selected=null;state.inspector='wires';
  state.wireColor=wire.color;state.completed=false;
  reconnectPending=null;pendingAlignment=null;wireAlignment=null;
@@ -1472,10 +1508,10 @@ function visualPendingAlignment(clientX,clientY,anchor=null){
 }
 function setPendingPreview(e){
  if(!wireTipActive||!state.startPort)return;
- // O jumper acompanha o ponteiro exatamente, independentemente da guia.
- previewPoint=worldXY(e.clientX,e.clientY);
- previewSnapPort=null;
- pendingAlignment=visualPendingAlignment(e.clientX,e.clientY,lastWireTip());
+ const snap=state.autoWireAlign?nearestPort(e.clientX,e.clientY,state.startPort,20):null;
+ previewSnapPort=snap;
+ previewPoint=snap?getPortPos(snap):worldXY(e.clientX,e.clientY);
+ pendingAlignment=state.autoWireAlign?null:visualPendingAlignment(e.clientX,e.clientY,lastWireTip());
  requestDraw();
 }
 function wireAt(clientX,clientY){return segmentAt(clientX,clientY).index;}
@@ -1549,6 +1585,9 @@ function libraryOpen(open){
 function beginWireDrag(e,index,segment){
  selectedBend=null;
  const wire=state.wires[index];if(!wire||state.startPort||reconnectPending)return false;
+ if(state.autoWireAlign){
+  selectWire(index);message('Desligue o alinhamento automático para editar o trecho manualmente.',true);return true;
+ }
  const original=wirePoints(wire);
  if(segment<0||segment>=original.length-1)return false;
  // Não é possível deslocar um trecho ligado diretamente a um pino sem criar
@@ -1679,6 +1718,7 @@ function paletteDown(e){
 }
 function captureBendNearComponents(e){
  if(!state.startPort&&!reconnectPending)return;
+ if(state.autoWireAlign)return;
  if(pinch||activeTouches.size>=2||Date.now()<gestureBlockedUntil||spaceHeld)return;
  if(e.button!==undefined&&e.button!==0)return;
  if(e.target.closest('.wire-end-handle'))return;
@@ -1703,6 +1743,7 @@ function viewportDown(e){
  if(e.target.closest('.canvas-zoom-button,.canvas-zoom-panel,button,input'))return;
  if(reconnectPending){
   if(e.target.closest('.part,.wire-end-handle'))return;
+  if(state.autoWireAlign)return;
   e.preventDefault();gesture={type:'reconnect-bend',pointer:e.pointerId,startX:e.clientX,startY:e.clientY,moved:false};
   return;
  }
@@ -1716,7 +1757,7 @@ function viewportDown(e){
  }
  if(!state.startPort&&e.target.closest('.wire-target,.wire-bend-target'))return;
  e.preventDefault();
- gesture={type:state.startPort?'bend':'pan',pointer:e.pointerId,startX:e.clientX,startY:e.clientY,x:panX,y:panY,moved:false};
+ gesture={type:state.startPort&&!state.autoWireAlign?'bend':'pan',pointer:e.pointerId,startX:e.clientX,startY:e.clientY,x:panX,y:panY,moved:false};
 }
 let suppressPortClickUntil=0;
 function pointerMove(e){
@@ -1885,7 +1926,7 @@ function pointerUp(e){
    }else{
      const box=Q('viewport').getBoundingClientRect();
      if(e.clientX>=box.left&&e.clientX<=box.right&&e.clientY>=box.top&&e.clientY<=box.bottom){
-       const pos=worldXY(e.clientX,e.clientY);addCorner(pos.x,pos.y);
+       const pos=worldXY(e.clientX,e.clientY);if(!state.autoWireAlign)addCorner(pos.x,pos.y);
      }else{previewPoint=null;requestDraw();}
    }
   }
@@ -1911,6 +1952,7 @@ function pointerUp(e){
   else{state.selected=g.partId;renderParts();renderInspector();}
   requestDraw();
  }else if(g.type==='bend'){
+  if(state.autoWireAlign)return;
   const pin=nearestPort(e.clientX,e.clientY,state.startPort,9);
   if(pin)connect(pin);else{const pos=worldXY(e.clientX,e.clientY);addCorner(pos.x,pos.y);}
  }else if(g.type==='pan'&&!g.moved&&!spaceHeld){
@@ -2204,6 +2246,7 @@ function bind(){
  Q('redoBtn').addEventListener('click',redo);
  Q('copyBtn').addEventListener('click',copySelection);
  Q('rotateBtn').addEventListener('click',rotateSelectedPart);
+ Q('autoWireBtn').addEventListener('click',()=>setAutoWireAlignment(!state.autoWireAlign));
  Q('selectionToolBtn').addEventListener('click',()=>{
   selectionToolActive=!selectionToolActive;updateMultiSelectionTool();
   message(selectionToolActive?'Seletor ligado: clique nas peças e arraste qualquer selecionada para mover o grupo.':'Seletor desligado. Shift+clique também seleciona várias peças.',true);
