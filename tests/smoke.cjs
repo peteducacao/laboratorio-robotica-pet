@@ -97,7 +97,11 @@ doc.getElementById('playPanel').hidden=true;
 const win={addEventListener(type,fn){(listeners['window:'+type]??=[]).push(fn)}};
 const store={getItem(k){return storage[k]??null},setItem(k,v){storage[k]=v}};
 const fake={window:win,document:doc,localStorage:store,requestAnimationFrame(){},ResizeObserver:class{observe(){}},console,Math,JSON,confirm(){return true},setTimeout(){return 1},clearTimeout(){}};
-vm.runInNewContext(js,fake);
+// Hook somente para testes: inspeciona curvas pendentes, sem expor dados na aplicação.
+const instrumented=js.replace(/\}\)\(\);\s*$/, "window.__pendingForTests=()=>({startPort:state.startPort,bends:state.bends.map(p=>({...p}))});})();");
+assert.notEqual(instrumented,js,'instrumentação do teste de histórico aplicada');
+vm.runInNewContext(instrumented,fake);
+const pending=()=>win.__pendingForTests();
 function send(event,fnKey,target){const handlers=listeners[fnKey+':'+event];assert(handlers?.length,fnKey+':'+event);for(const handler of handlers)handler(target);}
 const saved=()=>JSON.parse(storage['tinkerpet-v2']);
 let pointer=0;
@@ -225,8 +229,43 @@ send('keyup','doc',{key:' '});
 tapCanvas(205,180);
 tapCanvas(295,240);
 assert.equal(saved().wires.length,0,'curvas devem ficar pendentes até o segundo pino');
+assert.equal(pending().startPort,'b1.POS','primeiro terminal continua selecionado');
+assert.equal(pending().bends.length,2,'dois movimentos do fio registrados em sequência');
+const beforeUndoBends=JSON.stringify(pending().bends);
+function shortcut(key,opts={}){
+ let prevented=false;
+ send('keydown','doc',{key,ctrlKey:true,shiftKey:!!opts.shiftKey,altKey:false,
+  target:{closest(){return opts.editing?{}:null;}},preventDefault(){prevented=true;}});
+ return prevented;
+}
+assert(shortcut('z'),'Ctrl+Z impede desfazer padrão do navegador na bancada');
+assert.equal(pending().bends.length,1,'primeiro Ctrl+Z desfaz somente a última curva');
+assert(shortcut('z'),'segundo Ctrl+Z é interceptado');
+assert.equal(pending().bends.length,0,'segundo Ctrl+Z desfaz a curva anterior, sem apagar o fio iniciado');
+assert.equal(pending().startPort,'b1.POS','origem ainda selecionada após desfazer curvas');
+assert(shortcut('z'),'terceiro Ctrl+Z é interceptado');
+assert.equal(pending().startPort,null,'terceiro Ctrl+Z desfaz a seleção do pino inicial');
+assert(shortcut('y'),'Ctrl+Y refaz a primeira ação');
+assert.equal(pending().startPort,'b1.POS','Ctrl+Y refaz a origem do jumper');
+assert(shortcut('z',{shiftKey:true}),'Ctrl+Shift+Z refaz');
+assert.equal(pending().bends.length,1,'Ctrl+Shift+Z refaz a primeira curva');
+assert(shortcut('y'),'Ctrl+Y refaz a segunda curva');
+assert.equal(JSON.stringify(pending().bends),beforeUndoBends,'refazer recompõe a rota exatamente');
+const notPrevented=shortcut('z',{editing:true});
+assert.equal(notPrevented,false,'Ctrl+Z no campo de texto preserva desfazer nativo');
+assert.equal(pending().bends.length,2,'Ctrl+Z no campo de texto não mexe na bancada');
 tapPin('s1.IN');
 assert.equal(saved().wires.length,1,'segundo pino finaliza ligação');
+assert(shortcut('z'),'Ctrl+Z também funciona após conexão terminada');
+assert.equal(saved().wires.length,0,'desfazer conexão retorna jumper ao estado em construção');
+assert.equal(pending().startPort,'b1.POS','desfazer conexão restaura pino inicial');
+assert.equal(JSON.stringify(pending().bends),beforeUndoBends,'desfazer conexão restaura todas as curvas');
+click('undoBtn');assert.equal(pending().bends.length,1,'botão Desfazer também volta só a última curva');
+click('redoBtn');assert.equal(pending().bends.length,2,'botão Refazer recupera curva do jumper');
+assert(shortcut('y'),'Ctrl+Y refaz a conexão');
+assert.equal(saved().wires.length,1,'refazer restabelece o fio conectado');
+assert.equal(pending().startPort,null,'ao refazer conexão não resta fio solto');
+
 assert.equal(saved().wires[0].via.length,2,'guardar duas curvas');
 const bends=saved().wires[0].via;
 assert(bends[0].x===bends[1].x||bends[0].y===bends[1].y,'curva nova prolonga apenas a ponta, sem diagonais');
