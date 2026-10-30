@@ -10,8 +10,8 @@ Laboratório educativo e responsivo do **PET Educação — UFS**, publicado em 
 5. Toque numa área livre da bancada para **prolongar o jumper a partir da última ponta**. As curvas são ortogonais e não permitem voltar pelo segmento anterior.
 6. Aproxime o jumper do **segundo terminal** e solte para encaixar automaticamente no pino. O caminho completo é salvo sem duplicar a ponta.
 7. Se errar antes de finalizar, use **Desfazer** para remover a última curva (ou Escape no teclado para cancelar). Para apagar uma ligação pronta, toque no próprio fio e use **Excluir**, ou remova pelo × da aba **Fios**.
-8. Ajuste o **LM2596 para 5,0 V** e ligue as duas **gangorras** pelo botão sobre a tecla.
-9. Clique em **Iniciar simulação** a qualquer momento para observar os componentes energizados na própria bancada. Após completar as 17 ligações, clique em **Abrir pista** para dirigir com WASD, setas ou controles de toque.
+8. Escolha entre **montagem direta sem gangorras (7 peças / 15 fios)** ou **com duas gangorras (9 peças / 17 fios)**. Ajuste a saída do **LM2596 para 5,0 V** e, somente no segundo modo, ligue as duas gangorras.
+9. Clique em **Iniciar simulação** a qualquer momento para observar os componentes energizados na própria bancada. Após completar todas as 15 ou 17 ligações de sua alternativa, clique em **Abrir pista** para dirigir com WASD, setas ou controles de toque.
 
 **Ao mover uma peça já conectada, os fios acompanham a origem e o destino, mantendo os pontos intermediários no lugar.** As cores e rotas concluídas são salvas automaticamente no navegador do dispositivo. Toque em **Salvar** para confirmar.
 
@@ -32,7 +32,7 @@ A logo do PET Educação foi copiada do catálogo original. **Nenhum arquivo do 
 
 ## Verificação
 
-O arquivo `tests/smoke.cjs` é executado no GitHub Actions a cada commit na ramificação `main`. O teste verifica as 9 peças, todos os terminais, circuitos incompletos, duas gangorras, saída de 5 V, pino GND alternativo, fios com curvas por toque, salvamento e desbloqueio da pista.
+O arquivo `tests/smoke.cjs` é executado no GitHub Actions a cada commit na ramificação `main`. O teste confere os esquemas direto (7 peças e 15 fios) e com gangorras (9 peças e 17 fios), o GND comum da MX1508, os terminais, a simulação, o salvamento e o desbloqueio da pista.
 
 **Limites educativos:** os desenhos representam componentes para montagem virtual e validação lógica; não há cálculo de corrente, simulação de curto-circuito, reprodução do firmware ESP32, Wi-Fi real ou avaliação da segurança elétrica. A pista é virtual. Na montagem real, fontes, reguladores, motores e solda exigem supervisão e medições adequadas.
 
@@ -41,8 +41,8 @@ Referência do projeto físico: [Carrinho Wi-Fi ESP32 — Fundamentos de Prototi
 ## Revisão visual e elétrica da v9
 
 - A alimentação positiva é vermelha e o negativo/GND é preto. **Há uma bateria de 9 V para o ESP32 e um suporte de seis pilhas AA para a ponte H**. Com pilhas alcalinas de 1,5 V, o suporte fornece 9 V nominais; com seis NiMH recarregáveis de 1,2 V, a tensão nominal é 7,2 V. Apenas a saída do LM2596 é ajustada para 5 V para alimentar VIN.
-- A ponte H MX1508 recebe o positivo do suporte de seis pilhas no terminal + e o negativo no terminal −. Os comandos chegam em IN1–IN4.
-- A gangorra ilustrada agora é um **modelo iluminado de três terminais**: IN (positivo de entrada), OUT (saída comutada) e LED− (retorno opcional do indicador). As 17 ligações de funcionamento continuam obrigatórias; um fio adicional para LED− em cada gangorra é aceito e acende o indicador quando ligada. **Não assuma que todos os modelos reais de três terminais usam a mesma pinagem: consulte o esquema impresso na peça real.**
+- A ponte H MX1508 recebe o positivo do suporte de seis pilhas no terminal + e o negativo no terminal −. **O próprio terminal − da MX1508 também deve ligar-se a um GND do ESP32**, além do suporte AA −. Os comandos chegam em IN1–IN4.
+- A gangorra ilustrada agora é um **modelo iluminado de três terminais**: IN (positivo de entrada), OUT (saída comutada) e LED− (retorno opcional do indicador). No modo com gangorras, 17 ligações são necessárias; no modo sem gangorras, bastam 15. Um fio adicional para LED− em cada gangorra é aceito e acende o indicador quando ligada. **Não assuma que todos os modelos reais de três terminais usam a mesma pinagem: consulte o esquema impresso na peça real.**
 - O interruptor bascula visualmente ao ligar e desligar. As conexões são desenhadas sobre os pontos reais dos terminais e as linhas são contínuas, sem traços interrompidos.
 - Removidas legendas excessivas de bobinas e capacitores dos desenhos.
 
@@ -56,7 +56,7 @@ Referência do projeto físico: [Carrinho Wi-Fi ESP32 — Fundamentos de Prototi
 
 ## Gabarito para professores e estudantes
 
-No cabeçalho da bancada, o botão **🔒 Gabarito** abre uma janela protegida por uma **senha didática** definida pelo responsável. Depois da senha, a tela mostra **o circuito visual pronto**, com os **nove componentes originais desenhados na bancada e os 17 fios conectados entre os pinos reais**, sem alterar a montagem do estudante. O usuário pode ampliar o desenho, **baixar PNG**, **baixar SVG vetorial** (com componentes incorporados) e **imprimir / salvar PDF**. O texto das ligações fica numa seção **Ver resumo das 17 conexões**, inicialmente recolhida.
+No cabeçalho da bancada, o botão **🔒 Gabarito** abre uma janela protegida por uma **senha didática** definida pelo responsável. Depois da senha, a tela mostra **o circuito visual pronto**, com os **nove componentes originais desenhados na bancada e os 17 fios conectados entre os pinos reais**, sem alterar a montagem do estudante. O usuário pode ampliar o desenho, **baixar PNG**, **baixar SVG vetorial** (com componentes incorporados) e **imprimir / salvar PDF**. É possível alternar o gabarito entre **Sem gangorras (7 peças/15 fios)** e **Com gangorras (9 peças/17 fios)**. O texto das ligações fica inicialmente recolhido.
 
 **Limitação de segurança:** esta aplicação está no GitHub Pages, que serve arquivos estáticos. A senha protege apenas a interface; quem examina o código-fonte público pode encontrá-la, assim como as respostas. Não use o mecanismo para informações confidenciais.
 
@@ -110,3 +110,15 @@ Ao desenhar um jumper, a ponta acompanha o cursor **continuamente**, mesmo depoi
 Após conectar um jumper, clicar/arrastar **no meio de um segmento** desloca aquele trecho, com terminais presos aos componentes. Clicar/arrastar **no vértice de uma curva** altera **somente esse ponto e os ângulos das duas pernas adjacentes**, mantendo todos os outros vértices e terminais no lugar. Uma pequena alça quadrada (não circular) fica visível nas curvas do jumper selecionado, com alvo ampliado para toque no celular. Todas as alterações entram no **Ctrl+Z / Ctrl+Y**.
 
 Para trocar a **cor de um jumper já conectado**, selecione o fio clicando em seu traçado ou escolhendo-o na lista de fios e, em seguida, escolha outra opção no seletor **Cor do fio**. A cor muda no jumper selecionado, é salva automaticamente e pode ser desfeita; o novo tom também fica preparado para o próximo fio. Esse procedimento não afeta conexões, simulação nem componentes.
+
+### v37 — dois esquemas válidos, placa MX1508 corrigida e GND compartilhado
+
+O TinkerPET reconhece automaticamente a forma de montagem pelo uso das gangorras e considera **ambas concluídas** quando todas as peças e ligações daquele esquema estiverem corretas. O progresso apresenta **7 peças / 15 fios** na versão direta, ou **9 peças / 17 fios** na versão com duas gangorras. A validação das ligações é separada da energização: o indicador informa **Montagem concluída** mesmo se as gangorras ainda estiverem desligadas; para movimentar o carrinho virtual é preciso ligar as chaves (quando existirem) e ajustar a saída do LM2596 em 5 V.
+
+**Ligações elétricas comuns às duas alternativas:** bateria de 9 V negativo → LM2596 IN−; LM2596 OUT+ → ESP32 VIN; LM2596 OUT− → ESP32 GND; suporte AA negativo → MX1508 −; **MX1508 − → um GND do ESP32**, que estabelece referência comum para os sinais IN1–IN4. ESP32 D27→IN1, D26→IN2, D32→IN3, D18→IN4. Motor 1 ligado aos dois contatos **MOTOR A**, motor 2 aos dois contatos **MOTOR B**. O desenho da placa foi reconstruído conforme a referência do usuário: **MOTOR B à esquerda, MOTOR A à direita**, dois capacitores e circuito integrado central, seis contatos inferiores +, −, IN1, IN2, IN3, IN4.
+
+**Direta (15 fios):** bateria 9 V + → LM2596 IN+; suporte seis AA + → MX1508 +. Nenhum interruptor é necessário.
+
+**Com duas gangorras (17 fios):** S1 recebe positivo da bateria 9 V em **IN** e leva positivo à entrada LM2596 IN+ por **OUT**. S2 recebe positivo do suporte seis AA em **IN** e leva positivo à MX1508 + por **OUT**. O terceiro pino **LED−** de cada gangorra iluminada pode ser ligado ao negativo da **mesma** fonte para iluminar a tecla (opcional, não interfere no progresso). Os negativos de alimentação continuam conectados diretamente ao LM2596 e à MX1508, e o **GND comum ESP32–MX1508 permanece obrigatório nas duas versões**. Pinagem e funcionamento das gangorras de três terminais variam por fabricante: conferir marcações e continuidade elétrica no modelo físico antes de energizar.
+
+**Atenção:** a bateria de 9 V alimenta a **entrada** da LM2596; o valor de **5 V é a saída ajustada** para o ESP32. Os pinos MOTOR A/B da MX1508 são saídas de ponte H, cuja polaridade pode inverter conforme a direção, não terminais permanentemente positivos ou negativos.
