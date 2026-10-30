@@ -538,6 +538,44 @@ function segmentAt(clientX,clientY){
  });
  return best;
 }
+// Puxar uma curva ajusta só o vértice escolhido, não o segmento inteiro.
+function bendAt(clientX,clientY){
+ const cursor=worldXY(clientX,clientY),radius=Math.min(110,Math.max(17,17/zoom));
+ let best={index:-1,vertex:-1,dist:radius*radius};
+ state.wires.forEach((wire,i)=>{
+  const points=wirePoints(wire);
+  for(let k=1;k<points.length-1;k++){
+   const pt=points[k],dist=(cursor.x-pt.x)**2+(cursor.y-pt.y)**2;
+   if(dist<best.dist)best={index:i,vertex:k,dist};
+  }
+ });
+ return best;
+}
+function beginBendDrag(e,index,vertex){
+ const wire=state.wires[index];if(!wire||state.startPort)return false;
+ const original=wirePoints(wire);
+ if(!Number.isInteger(vertex)||vertex<1||vertex>=original.length-1)return false;
+ if(e.cancelable!==false)e.preventDefault();
+ state.selectedWire=index;state.selected=null;state.inspector='wires';
+ state.wireColor=wire.color;
+ renderColors();renderInspector();updateHistoryButtons();
+ gesture={type:'wire-bend',pointer:e.pointerId,wireIndex:index,vertex,
+  original:original.map(p=>({...p})),startX:e.clientX,startY:e.clientY,
+  moved:false,saved:false};
+ wireAlignment=null;requestDraw();
+ return true;
+}
+function moveWireBend(g,clientX,clientY){
+ const wire=state.wires[g.wireIndex];if(!wire)return;
+ const original=g.original,target=original[g.vertex];if(!target)return;
+ const via=original.slice(1,-1).map(p=>({...p}));
+ via[g.vertex-1]={
+  x:Math.round(target.x+(clientX-g.startX)/zoom),
+  y:Math.round(target.y+(clientY-g.startY)/zoom)
+ };
+ wire.via=via;wire.manual=true;wireAlignment=null;
+ requestDraw();
+}
 function moveWireSegment(g,clientX,clientY){
  const wire=state.wires[g.wireIndex];
  if(!wire)return;
@@ -655,6 +693,27 @@ function drawWires(){
    hit.dataset.wireSegment=String(seg);
    hit.setAttribute('aria-label','Arrastar trecho '+(seg+1)+' do jumper '+portName(w.a)+' a '+portName(w.b));
    svg.append(hit);
+  }
+ }
+ // Alças quadradas sem halos: apenas a curva tocada muda de ângulo.
+ if(!state.startPort)for(let i=0;i<state.wires.length;i++){
+  const points=wirePoints(state.wires[i]);
+  for(let vertex=1;vertex<points.length-1;vertex++){
+   const p=points[vertex],hitSize=Math.min(130,Math.max(32,29/zoom));
+   const hit=document.createElementNS(ns,'rect');
+   hit.setAttribute('x',String(p.x-hitSize/2));hit.setAttribute('y',String(p.y-hitSize/2));
+   hit.setAttribute('width',String(hitSize));hit.setAttribute('height',String(hitSize));
+   hit.setAttribute('class','wire-bend-target');
+   hit.dataset.wireIndex=String(i);hit.dataset.wireVertex=String(vertex);
+   hit.setAttribute('aria-label','Arrastar somente o vértice '+vertex+' do jumper');
+   svg.append(hit);
+   if(state.selectedWire===i){
+    const size=Math.min(55,Math.max(10,10/zoom));
+    const mark=document.createElementNS(ns,'rect');
+    mark.setAttribute('x',String(p.x-size/2));mark.setAttribute('y',String(p.y-size/2));
+    mark.setAttribute('width',String(size));mark.setAttribute('height',String(size));
+    mark.setAttribute('class','wire-bend-mark');svg.append(mark);
+   }
   }
  }
  if(wireAlignment){
@@ -972,11 +1031,14 @@ function viewportDown(e){
  if(e.button!==undefined&&e.button!==0&&e.button!==1)return;
  if(e.target.closest('.canvas-zoom-button,.canvas-zoom-panel,button,input'))return;
  if(spaceHeld||e.button===1){startPan(e);return;}
- if(e.target.closest('.part,.wire-target'))return;
+ if(e.target.closest('.part'))return;
  if(!state.startPort){
+  const bend=bendAt(e.clientX,e.clientY);
+  if(bend.index>=0&&beginBendDrag(e,bend.index,bend.vertex))return;
   const selected=segmentAt(e.clientX,e.clientY);
   if(selected.index>=0&&beginWireDrag(e,selected.index,selected.segment))return;
  }
+ if(e.target.closest('.wire-target,.wire-bend-target'))return;
  e.preventDefault();
  gesture={type:state.startPort?'bend':'pan',pointer:e.pointerId,startX:e.clientX,startY:e.clientY,x:panX,y:panY,moved:false};
 }
@@ -1000,6 +1062,9 @@ function pointerMove(e){
     highlightDropZone(removeZoneAt(e.clientX,e.clientY));
     requestDraw();
    }
+  }else if(g.type==='wire-bend'){
+   if(g.moved&&!g.saved){snapshot();g.saved=true;}
+   if(g.moved)moveWireBend(g,e.clientX,e.clientY);
   }else if(g.type==='wire-segment'){
    if(g.moved&&!g.saved){snapshot();g.saved=true;}
    if(g.moved)moveWireSegment(g,e.clientX,e.clientY);
@@ -1059,6 +1124,9 @@ function pointerUp(e){
    if(e.clientX>=box.left&&e.clientX<=box.right&&e.clientY>=box.top&&e.clientY<=box.bottom){const p=worldXY(e.clientX,e.clientY);addPart(g.kind,p.x-PART_LAYOUTS[g.kind].w/2,p.y-PART_LAYOUTS[g.kind].h/2);libraryOpen(false);}
    else message('Solte a peça sobre a bancada para adicioná-la.',true);
   }
+ }else if(g.type==='wire-bend'){
+  if(g.moved){persist();renderInspector();message('Ângulo da curva ajustado. Outros pontos e conexões mantidos.',true);}
+  requestDraw();
  }else if(g.type==='wire-segment'){
   wireAlignment=null;
   if(g.moved){persist();renderInspector();message('Trecho do jumper ajustado. As peças permanecem no lugar.',true);}
@@ -1308,7 +1376,16 @@ function bind(){
   if(e.button!==undefined&&e.button!==0)return;
   const path=e.target.closest?.('[data-wire-index]');
   if(!path)return;
-  const index=Number(path.dataset.wireIndex),seg=Number(path.dataset.wireSegment);
+  const index=Number(path.dataset.wireIndex);
+  if(path.dataset.wireVertex!==undefined){
+   if(beginBendDrag(e,index,Number(path.dataset.wireVertex)))e.stopPropagation?.();
+   return;
+  }
+  const bend=bendAt(e.clientX,e.clientY);
+  if(bend.index>=0&&beginBendDrag(e,bend.index,bend.vertex)){
+   e.stopPropagation?.();return;
+  }
+  const seg=Number(path.dataset.wireSegment);
   if(!Number.isInteger(seg))return;
   if(beginWireDrag(e,index,seg))e.stopPropagation?.();
  });
