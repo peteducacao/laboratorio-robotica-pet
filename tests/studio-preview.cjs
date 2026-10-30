@@ -10,7 +10,7 @@ const ids=s=>[...s.matchAll(/\bid="([^"]+)"/g)].map(m=>m[1]);
 const originalIds=ids(base);
 for(const id of originalIds)assert(preview.includes('id="'+id+'"'),'Prévia precisa preservar controle de simulador: '+id);
 assert.equal(new Set(ids(preview)).size,ids(preview).length,'IDs sem duplicidade');
-assert(preview.includes('href="styles.css?v=36"')&&preview.includes('src="app.js?v=37"'),'mesmo motor do site atual, sem fork de circuitos');
+assert(preview.includes('href="styles.css?v=36"')&&preview.includes('src="app.js?v=38"'),'mesmo motor do site atual, sem fork de circuitos');
 assert(preview.includes('studio-preview.css?v=2')&&preview.includes('studio-preview.js?v=1'),'assets da prévia isolados');
 assert(preview.includes('href="./"'),'voltar à versão atual');
 assert(preview.includes('id="previewInspectorOpen"')&&preview.includes('id="previewInspectorClose"'),'propriedades no modo sob demanda');
@@ -24,6 +24,7 @@ assert(css.includes('@media(max-width:600px)')&&css.includes('@media(max-width:3
 assert(css.includes('--studio-top-offset'),'gaveta sincronizada com a barra');
 assert(ui.includes('aria-expanded')&&ui.includes('aria-hidden'),'detalhes acessíveis');
 assert(!ui.includes('localStorage')&&!ui.includes('state.parts')&&!ui.includes('state.wires'),'script de prévia não altera montagem nem motor');
+assert(read('app.js').includes("tinkerpet-studio-preview-v1"),'motor separa o armazenamento da prévia e o original');
 const brackets=s=>{
  let depth=0,comment=false,str=null,esc=false;
  for(let i=0;i<s.length;i++){
