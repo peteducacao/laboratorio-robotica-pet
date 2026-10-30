@@ -727,6 +727,7 @@
  background:#f3ab47!important;
  box-shadow:0 0 0 var(--handle-shadow-size,3px) #df8627aa,0 3px 12px #7b47234d!important;
 }
+.preview-studio .wire-end-handle.awaiting-target{pointer-events:none!important}
 .preview-studio .wire-end-handle:active{cursor:grabbing!important}
 .preview-studio .wire-end-handle[hidden]{display:none!important}
 .preview-studio .wire-reconnect-preview{
