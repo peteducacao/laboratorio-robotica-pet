@@ -126,11 +126,12 @@ const win={addEventListener(type,fn){(listeners['window:'+type]??=[]).push(fn)}}
 const store={getItem(k){return storage[k]??null},setItem(k,v){storage[k]=v}};
 const fake={window:win,document:doc,localStorage:store,requestAnimationFrame(){},ResizeObserver:class{observe(){}},console,Math,JSON,confirm(){return true},setTimeout(){return 1},clearTimeout(){}};
 // Hook somente para testes: inspeciona curvas pendentes, sem expor dados na aplicação.
-const instrumented=js.replace(/\}\)\(\);\s*$/, "window.__pendingForTests=()=>({startPort:state.startPort,bends:state.bends.map(p=>({...p})),preview:previewPoint&&{...previewPoint},points:pendingWirePoints()});window.__powerForTests=()=>({live:powerStatus(),running:simulationRunning});})();");
+const instrumented=js.replace(/\}\)\(\);\s*$/, "window.__pendingForTests=()=>({startPort:state.startPort,bends:state.bends.map(p=>({...p})),preview:previewPoint&&{...previewPoint},points:pendingWirePoints()});window.__powerForTests=()=>({live:powerStatus(),running:simulationRunning});window.__wireForTests=()=>({points:state.wires.map(w=>wirePoints(w)),align:wireAlignment,selected:state.selectedWire,zoom});})();");
 assert.notEqual(instrumented,js,'instrumentação do teste de histórico aplicada');
 vm.runInNewContext(instrumented,fake);
 const pending=()=>win.__pendingForTests();
 const power=()=>win.__powerForTests();
+const wiresView=()=>win.__wireForTests();
 function send(event,fnKey,target){const handlers=listeners[fnKey+':'+event];assert(handlers?.length,fnKey+':'+event);for(const handler of handlers)handler(target);}
 const saved=()=>JSON.parse(storage['tinkerpet-v2']);
 let pointer=0;
@@ -383,6 +384,48 @@ click('deleteBtn');
 assert.equal(saved().wires.length,0,'Excluir apaga o fio selecionado');
 connect('b1.POS','s1.IN');
 assert.equal(saved().wires.length,1,'refazer conexão após exclusão');
+const beforeMoveParts=JSON.stringify(saved().parts);
+const beforeMoveWire=JSON.stringify(saved().wires[0]);
+const fixedStart=wiresView().points[0][0],fixedEnd=wiresView().points[0].at(-1);
+const segmentGesture=++pointer;
+let wireDownPrevented=false,wireDownStopped=false;
+send('pointerdown','wireSvg',{button:0,pointerId:segmentGesture,clientX:230,clientY:190,
+ preventDefault(){wireDownPrevented=true},stopPropagation(){wireDownStopped=true},
+ target:{closest(sel){return sel==='[data-wire-index]'?{dataset:{wireIndex:'0',wireSegment:'0'}}:null}}});
+assert(wireDownPrevented&&wireDownStopped,'clicar no segmento inicia o arraste sem mover a bancada');
+assert.equal(wiresView().selected,0,'jumper selecionado para ajuste');
+send('pointermove','window',{pointerId:segmentGesture,clientX:230,clientY:266});
+assert(wiresView().points[0].length>=4,'arrastar linha reta cria dois cotovelos para manter as extremidades');
+assert.deepEqual(wiresView().points[0][0],fixedStart,'jumper permanece no pino de origem ao arrastar');
+assert.deepEqual(wiresView().points[0].at(-1),fixedEnd,'jumper permanece no pino de destino ao arrastar');
+send('pointerup','window',{pointerId:segmentGesture,clientX:230,clientY:266});
+assert.notEqual(JSON.stringify(saved().wires[0]),beforeMoveWire,'novo caminho do jumper salvo');
+assert.equal(saved().wires[0].manual,true,'fio antigo fica editável após arrastar');
+assert.equal(JSON.stringify(saved().parts),beforeMoveParts,'arrastar jumper não movimenta bateria, ESP32 ou outras peças');
+assert.equal(wiresView().align,null,'guia desaparece depois de soltar fio');
+click('undoBtn');
+assert.equal(JSON.stringify(saved().wires[0]),beforeMoveWire,'desfazer recupera o traçado anterior do jumper');
+click('redoBtn');
+assert.notEqual(JSON.stringify(saved().wires[0]),beforeMoveWire,'refazer recupera o trecho ajustado');
+click('undoBtn');
+const b1Before=JSON.parse(JSON.stringify(saved().parts.find(p=>p.id==='b1')));
+const s1Before=JSON.parse(JSON.stringify(saved().parts.find(p=>p.id==='s1')));
+const pieceGesture=++pointer;
+send('pointerdown','partsLayer',{button:0,pointerId:pieceGesture,clientX:300,clientY:220,preventDefault(){},
+ target:{closest(sel){return sel==='.part'?{dataset:{part:'b1'}}:null}}});
+send('pointermove','window',{pointerId:pieceGesture,clientX:395,clientY:268});
+send('pointerup','window',{pointerId:pieceGesture,clientX:395,clientY:268});
+assert.notEqual(saved().parts.find(p=>p.id==='b1').x,b1Before.x,'arrastar bateria muda sua posição');
+assert.deepEqual(saved().parts.find(p=>p.id==='s1'),s1Before,'arrastar bateria não desloca a gangorra');
+assert.deepEqual(wiresView().points[0].at(-1),fixedEnd,'o destino do fio fica preso à gangorra parada');
+assert.notDeepEqual(wiresView().points[0][0],fixedStart,'a origem do fio acompanha a bateria movida');
+click('undoBtn');
+assert.equal(saved().parts.find(p=>p.id==='b1').x,b1Before.x,'desfazer recupera posição da bateria');
+assert.deepEqual(wiresView().points[0][0],fixedStart,'fio acompanha bateria também ao desfazer');
+assert(css.includes('.wire-alignment-guide')&&css.includes('.wire-alignment-label'),'guia de alinhamento do jumper está estilizada');
+assert(js.includes("hit.dataset.wireSegment=String(seg)"),'cada segmento recebe alvo próprio para arraste');
+assert(js.includes("function moveWireSegment("),'geometria do jumper pode ser reposicionada');
+
 assert(!js.includes("setAttribute('stroke-dasharray'"),'nenhum fio tracejado');
 assert(js.includes("hit.dataset.wireIndex=String(i)"),'fio tem área clicável própria');
 assert(js.includes("setAttribute('r','10')")===false,'encaixe da ponta do jumper não fica como bola gigante');
