@@ -119,6 +119,64 @@ function countGood(){return new Set(state.wires.filter(w=>REQUIRED.has(electrica
 function mistakes(){return state.wires.filter(w=>!valid.has(electricalKey(w.a,w.b)));}
 function missing(){const wired=new Set(state.wires.map(w=>electricalKey(w.a,w.b)));return EXPECTED.filter(([a,b])=>!wired.has(electricalKey(a,b)));}
 function ready(){return state.parts.length===9&&missing().length===0&&mistakes().length===0&&Math.abs(state.voltage-5)<.01&&state.switches.s1&&state.switches.s2;}
+// Modelo pedagógico: cada circuito acende e funciona somente quando recebe
+// alimentação e sinais por um caminho conectado. Não é SPICE nem execução do ESP32.
+function powerStatus(){
+ const has=(a,b)=>state.wires.some(w=>electricalKey(w.a,w.b)===electricalKey(a,b));
+ const source9=exists('b1')&&exists('s1')&&exists('lm')&&state.switches.s1
+  &&has('b1.POS','s1.IN')&&has('s1.OUT','lm.INP')&&has('b1.NEG','lm.INN');
+ const esp=source9&&Math.abs(state.voltage-5)<.01&&exists('esp')
+  &&has('lm.OUTP','esp.VIN')&&has('lm.OUTN','esp.GND');
+ const pack6=exists('b2')&&exists('s2')&&exists('drv')&&state.switches.s2
+  &&has('b2.POS','s2.IN')&&has('s2.OUT','drv.VCC')&&has('b2.NEG','drv.GND');
+ const common=esp&&has('esp.GND','drv.GND');
+ const motorA=pack6&&common&&exists('ml')
+  &&has('esp.D27','drv.IN1')&&has('esp.D26','drv.IN2')
+  &&has('drv.OUT1','ml.A')&&has('drv.OUT2','ml.B');
+ const motorB=pack6&&common&&exists('mr')
+  &&has('esp.D32','drv.IN3')&&has('esp.D18','drv.IN4')
+  &&has('drv.OUT3','mr.A')&&has('drv.OUT4','mr.B');
+ return {buck:source9,esp,driver:pack6,common,motors:{ml:motorA,mr:motorB}};
+}
+function updateLiveSimulation(){
+ const live=powerStatus(),enabled=simulationRunning;
+ Q('buildPanel').classList.toggle('simulation-active',enabled);
+ const sim=Q('checkBtn');sim.classList.toggle('is-running',enabled);
+ sim.setAttribute('aria-pressed',String(enabled));
+ Q('simLabel').textContent=enabled?'Parar simulação':'Iniciar simulação';
+ Q('simIcon').textContent=enabled?'■':'▶';
+ Q('openTrackBtn').hidden=!(enabled&&ready());
+ const status=Q('liveCircuitStatus');
+ if(status){
+  status.hidden=!enabled;
+  const active=[live.buck?'LM2596 energizado':null,live.esp?'ESP32 ligado · Wi-Fi simulado':null,
+   live.driver?'Ponte H alimentada':null,...Object.entries(live.motors).filter(([,on])=>on).map(([id])=>id==='ml'?'Motor esquerdo girando':'Motor direito girando')].filter(Boolean);
+  status.textContent=enabled?(active.length?active.join('  •  '):'Simulação ativa: conecte a alimentação para observar os componentes.'):'';
+ }
+ for(const card of Q('partsLayer').querySelectorAll('.part')){
+  const id=card.dataset.part;
+  const on=id==='esp'?live.esp:id==='lm'?live.buck:id==='drv'?live.driver:
+   id==='ml'||id==='mr'?live.motors[id]:false;
+  card.classList.toggle('powered',enabled&&!!on);
+  if(id==='ml'||id==='mr')card.classList.toggle('running',enabled&&!!on);
+  if(id==='s1'||id==='s2'){
+   const source=id==='s1'?live.buck:live.driver;
+   const negative=id==='s1'?'b1.NEG':'b2.NEG';
+   const indicator=enabled&&source&&state.wires.some(w=>electricalKey(w.a,w.b)===electricalKey(negative,id+'.LEDG'));
+   card.dataset.indicator=indicator?'on':'off';
+  }
+ }
+}
+function toggleSimulation(){
+ simulationRunning=!simulationRunning;
+ if(!simulationRunning&&!Q('playPanel').hidden)switchView(false);
+ updateLiveSimulation();
+ if(simulationRunning){
+  message('Simulação ligada: observe na bancada o que está alimentado; não é necessário concluir todos os fios.',true);
+ }else{
+  message('Simulação desligada. LEDs e motores pararam.',true);
+ }
+}
 function renderCatalog(){
  const query=Q('componentSearch').value.trim().toLowerCase();
  Q('catalog').replaceChildren();
@@ -162,6 +220,13 @@ function renderParts(){
    const rotor=document.createElement('span');rotor.className='motor-shaft-spinner';rotor.setAttribute('aria-hidden','true');
    imgbox.append(rotor);
   }
+  if(p.kind==='esp'){
+   const ledRed=document.createElement('span');ledRed.className='board-led board-led-red';
+   ledRed.title='LED de alimentação do ESP32';
+   const ledBlue=document.createElement('span');ledBlue.className='board-led board-led-blue';
+   ledBlue.title='Atividade Wi-Fi simulada (indicador didático)';
+   imgbox.append(ledRed,ledBlue);
+  }
   const pins=document.createElement('div');pins.className='part-pins';
   t.pins.forEach(([code,txt])=>{
    const id=p.id+'.'+code,connected=state.wires.some(w=>w.a===id||w.b===id),wrong=mistakes().some(w=>w.a===id||w.b===id);
@@ -195,6 +260,7 @@ function renderParts(){
   layer.append(card);
  }
  Q('worldNote').hidden=state.parts.length>0;
+ updateLiveSimulation();
  updateHistoryButtons();requestDraw();
 }
 function renderColors(){
@@ -841,14 +907,10 @@ function check(){
 }
 function switchView(play){
  Q('buildPanel').hidden=play;Q('playPanel').hidden=!play;
- const sim=Q('checkBtn');sim.classList.toggle('is-running',play);
- sim.setAttribute('aria-pressed',String(play));
- Q('simLabel').textContent=play?'Parar simulação':'Iniciar simulação';
- Q('simIcon').textContent=play?'■':'▶';
  Q('editTab').classList.toggle('active',!play);Q('playTab').classList.toggle('active',play);
  if(play){car.x=150;car.y=447;car.a=0;car.finished=false;Q('driveReadout').textContent=ready()?'Pronto para pilotar':'Aguardando montagem';}
- if(!play) syncMotorAnimation(0,0);
- updateTrackLock();if(play)drawTrack();
+ if(!play)syncMotorAnimation(0,0);
+ updateTrackLock();updateLiveSimulation();if(play)drawTrack();
 }
 function updateTrackLock(){Q('trackLock').hidden=ready();if(!ready()){Object.keys(keys).forEach(k=>keys[k]=false);syncMotorAnimation(0,0);}}
 const ctx=Q('track').getContext('2d');
@@ -875,7 +937,7 @@ function syncMotorAnimation(v,turn){
  for(const id of ['ml','mr']){
   const motor=Q('preview-'+id);
   if(!motor)continue;
-  const speed=ready()&&!Q('playPanel').hidden&&!car.finished?velocities[id]:0;
+  const speed=simulationRunning&&ready()&&!Q('playPanel').hidden&&!car.finished?velocities[id]:0;
   const motion=Math.abs(speed)<.01?'idle':speed<0?'reverse':'forward';
   if(motor.dataset.motion===motion)continue;
   motor.dataset.motion=motion;
@@ -1027,7 +1089,7 @@ function bind(){
   const del=e.target.closest('[data-remove]');if(del){removePart(del.dataset.remove);return;}
   const toggler=e.target.closest('[data-toggle]');if(toggler){snapshot();state.switches[toggler.dataset.toggle]=!state.switches[toggler.dataset.toggle];refresh();message('Gangorra '+(state.switches[toggler.dataset.toggle]?'ligada':'desligada')+'.');return;}
  });
- Q('partsLayer').addEventListener('input',e=>{if(e.target.id==='voltageInput'){state.voltage=Number(e.target.value);const out=Q('voltageOutput');if(out)out.textContent=state.voltage.toFixed(1).replace('.',',')+' V';renderProgress();persist();updateTrackLock();}});
+ Q('partsLayer').addEventListener('input',e=>{if(e.target.id==='voltageInput'){state.voltage=Number(e.target.value);const out=Q('voltageOutput');if(out)out.textContent=state.voltage.toFixed(1).replace('.',',')+' V';renderProgress();persist();updateTrackLock();updateLiveSimulation();}});
  Q('partsLayer').addEventListener('change',e=>{if(e.target.id==='voltageInput')message('LM2596 ajustado para '+state.voltage.toFixed(1).replace('.',',')+' V.');});
  Q('wireSvg').addEventListener('click',e=>{
    if(spaceHeld)return;
@@ -1058,11 +1120,12 @@ function bind(){
  Q('downloadBtn').addEventListener('click',downloadWorkspace);
  Q('hintBtn').addEventListener('click',hint);
  Q('saveBtn').addEventListener('click',()=>{persist();message('Seu projeto foi salvo neste navegador.',true);});
- Q('checkBtn').addEventListener('click',()=>{
-  if(!Q('playPanel').hidden){switchView(false);message('Simulação encerrada.');return;}
-  if(check()){switchView(true);message('Circuito conferido! Carrinho liberado.',true);}
+ Q('checkBtn').addEventListener('click',toggleSimulation);
+ Q('openTrackBtn').addEventListener('click',()=>{
+  if(!simulationRunning||!ready()){message('Conclua a montagem para abrir a pista. A simulação da bancada continua disponível.',true);return;}
+  switchView(true);message('Pista liberada! Use WASD, setas ou os botões.',true);
  });
- Q('playTab').addEventListener('click',()=>{switchView(true);if(!ready())message('Monte o circuito e use a dica para descobrir o que falta.',true);});
+ Q('playTab').addEventListener('click',()=>{if(simulationRunning&&ready())switchView(true);});
  Q('editTab').addEventListener('click',()=>switchView(false));Q('backBtn').addEventListener('click',()=>switchView(false));Q('goToBuild').addEventListener('click',()=>switchView(false));
  Q('zoomIn').addEventListener('click',()=>zoomTo(1.25));
  Q('zoomOut').addEventListener('click',()=>zoomTo(.8));
