@@ -106,7 +106,7 @@ const win={addEventListener(type,fn){(listeners['window:'+type]??=[]).push(fn)}}
 const store={getItem(k){return storage[k]??null},setItem(k,v){storage[k]=v}};
 const fake={window:win,document:doc,localStorage:store,requestAnimationFrame(){},ResizeObserver:class{observe(){}},console,Math,JSON,confirm(){return true},setTimeout(){return 1},clearTimeout(){}};
 // Hook somente para testes: inspeciona curvas pendentes, sem expor dados na aplicação.
-const instrumented=js.replace(/\}\)\(\);\s*$/, "window.__pendingForTests=()=>({startPort:state.startPort,bends:state.bends.map(p=>({...p}))});})();");
+const instrumented=js.replace(/\}\)\(\);\s*$/, "window.__pendingForTests=()=>({startPort:state.startPort,bends:state.bends.map(p=>({...p})),preview:previewPoint&&{...previewPoint}});})();");
 assert.notEqual(instrumented,js,'instrumentação do teste de histórico aplicada');
 vm.runInNewContext(instrumented,fake);
 const pending=()=>win.__pendingForTests();
@@ -260,6 +260,13 @@ send('pointerup','window',{pointerId:panId,clientX:440,clientY:370});
 assert.notEqual(nodes.world.style.transform,beforePendingPan,'Espaço permite mover a câmera durante uma ligação');
 send('keyup','doc',{key:' '});
 tapCanvas(205,180);
+const frozenFirst=JSON.stringify(pending().bends);
+send('pointermove','window',{pointerId:9878,clientX:750,clientY:540});
+const freeTipA=pending().preview;
+assert(freeTipA&&Number.isFinite(freeTipA.x),'ponta continua seguindo o mouse sem botão pressionado');
+assert.equal(JSON.stringify(pending().bends),frozenFirst,'mover o mouse não altera o trecho já fixado');
+send('pointermove','window',{pointerId:9878,clientX:695,clientY:510});
+assert.notEqual(JSON.stringify(pending().preview),JSON.stringify(freeTipA),'ponta livre acompanha novo movimento do cursor');
 tapCanvas(295,240);
 assert.equal(saved().wires.length,0,'curvas devem ficar pendentes até o segundo pino');
 assert.equal(pending().startPort,'b1.POS','primeiro terminal continua selecionado');
