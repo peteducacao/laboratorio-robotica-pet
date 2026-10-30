@@ -9,7 +9,7 @@
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&family=Manrope:wght@600;700;800&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="styles.css?v=36">
 <link rel="stylesheet" href="answer-key.css?v=37">
-<link rel="stylesheet" href="studio-preview.css?v=9">
+<link rel="stylesheet" href="studio-preview.css?v=10">
 <script defer src="app.js?v=46"></script>
 <script defer src="answer-key.js?v=37"></script>
 <script defer src="studio-preview.js?v=1"></script>
@@ -43,8 +43,8 @@
           <button id="deleteBtn" class="control-btn delete-btn" type="button" title="Excluir selecionado (Delete)" aria-label="Excluir peça ou fio selecionado"><svg viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7h16M9 4h6m-9 3 1 13h10l1-13M10 10v7m4-7v7"/></svg></button>
         </div>
         <button id="clearBtn" class="legacy-control" hidden>Limpar</button>
-        <label class="wire-color-picker" for="wireColorSelect" title="Cor do fio"><span class="wire-color-caption">Cor do fio</span><span class="wire-color-preview" id="wireColorPreview"></span>
-          <select id="wireColorSelect" aria-label="Cor do fio">
+        <label class="wire-color-picker" for="wireColorSelect" title="Selecionar cor do fio"><span class="wire-color-preview" id="wireColorPreview" aria-hidden="true"></span>
+          <select id="wireColorSelect" aria-label="Selecionar cor do fio" title="Selecionar cor do fio">
             <option value="#ed654d">Vermelho</option><option value="#316fc0">Azul</option><option value="#1f434c">Preto</option>
             <option value="#32a47b">Verde</option><option value="#e5a13d">Amarelo</option><option value="#a378c8">Roxo</option>
           </select>
