@@ -786,6 +786,66 @@ function nearestPort(clientX,clientY,exclude){
  }
  return chosen;
 }
+// Imã para o jumper: um alinhamento com pino segura até 24px de desvio.
+// O usuário pode forçar além desse raio para soltar e continuar normalmente.
+function magneticPendingPoint(clientX,clientY,exclude){
+ const raw=worldXY(clientX,clientY);
+ const near=nearestPort(clientX,clientY,exclude);
+ if(near){
+  pendingMagnet=null;
+  const pin=getPortPos(near);
+  pendingAlignment={axis:'both',point:pin,port:near,pin};
+  return {point:pin,port:near};
+ }
+ const view=Q('viewport').getBoundingClientRect(),release=24,capture=11;
+ const screen=point=>({x:view.left+panX+point.x*zoom,y:view.top+panY+point.y*zoom});
+ let choice=null;
+ if(pendingMagnet){
+  const pos=getPortPos(pendingMagnet.port);
+  if(pos){
+   const sp=screen(pos),distance=Math.abs(pendingMagnet.axis==='x'?sp.x-clientX:sp.y-clientY);
+   const along=Math.abs(pendingMagnet.axis==='x'?sp.y-clientY:sp.x-clientX);
+   if(distance<=release&&along<=280)choice={port:pendingMagnet.port,axis:pendingMagnet.axis,pos};
+  }
+ }
+ if(!choice){
+  let best=Infinity;
+  for(const part of state.parts)for(const [pin] of byKind[part.kind].pins){
+   const id=part.id+'.'+pin;if(id===exclude)continue;
+   const pos=getPortPos(id);if(!pos)continue;
+   const sp=screen(pos);
+   for(const axis of ['x','y']){
+    const deviation=Math.abs(axis==='x'?sp.x-clientX:sp.y-clientY);
+    const along=Math.abs(axis==='x'?sp.y-clientY:sp.x-clientX);
+    const score=deviation+along*.02;
+    if(deviation<=capture&&along<=240&&score<best){best=score;choice={port:id,axis,pos};}
+   }
+  }
+ }
+ if(!choice){pendingMagnet=null;pendingAlignment=null;return {point:raw,port:null};}
+ pendingMagnet={port:choice.port,axis:choice.axis};
+ const point={x:choice.axis==='x'?choice.pos.x:raw.x,y:choice.axis==='y'?choice.pos.y:raw.y};
+ pendingAlignment={axis:choice.axis,point,port:choice.port,pin:choice.pos};
+ return {point,port:null};
+}
+function setPendingPreview(e,exclude=state.startPort){
+ if(!wireTipActive||!state.startPort)return;
+ const position=magneticPendingPoint(e.clientX,e.clientY,exclude);
+ previewSnapPort=position.port;previewPoint=position.point;requestDraw();
+}
+function pendingTipNear(clientX,clientY){
+ if(!state.startPort||wireTipActive||!state.bends.length)return false;
+ const tip=lastWireTip(),r=Q('viewport').getBoundingClientRect();
+ return Math.hypot(r.left+panX+tip.x*zoom-clientX,r.top+panY+tip.y*zoom-clientY)<=30;
+}
+function resumePendingTip(e){
+ if(!pendingTipNear(e.clientX,e.clientY))return false;
+ if(e.cancelable!==false)e.preventDefault();
+ wireTipActive=true;pendingMagnet=null;pendingAlignment=null;
+ previewSnapPort=null;previewPoint={...lastWireTip()};
+ gesture={type:'resume-wire',pointer:e.pointerId,startX:e.clientX,startY:e.clientY,moved:false};
+ requestDraw();return true;
+}
 function wireAt(clientX,clientY){return segmentAt(clientX,clientY).index;}
 function selectWire(i){
  if(!state.wires[i])return;
