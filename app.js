@@ -8,11 +8,11 @@ const STORAGE_KEY=IS_VISUAL_PREVIEW?'tinkerpet-studio-preview-v1':'tinkerpet-v2'
 const ROOT='https://raw.githubusercontent.com/gabrieljsantos/Fundamentos-de-Prototipagem-e-Fabrica--o-Digital/main/assets/images/componentes/';
 const TYPES=[
  {kind:'esp',name:'ESP32 DevKit V1',img:'assets/esp32-devkit-v1-30p.svg?v=29',ids:['esp'],pins:[["VIN","VIN"],["GND","GND"],["D13","D13"],["D12","D12"],["D14","D14"],["D27","D27"],["D26","D26"],["D25","D25"],["D33","D33"],["D32","D32"],["D35","D35"],["D34","D34"],["VN","VN"],["VP","VP"],["EN","EN"],["3V3","3V3"],["GND2","GND"],["D15","D15"],["D2","D2"],["D4","D4"],["RX2","RX2"],["TX2","TX2"],["D5","D5"],["D18","D18"],["D19","D19"],["D21","D21"],["RX0","RX0"],["TX0","TX0"],["D22","D22"],["D23","D23"]],info:'Placa de 30 pinos com USB à esquerda e nomes em cada contato. Os dois GND são equivalentes.',tip:'Neste carrinho: VIN recebe 5 V, GND comum, D27→IN1, D26→IN2, D32→IN3 e D18→IN4.'},
- {kind:'driver',name:'Ponte H MX1508',img:'assets/mx1508-desenhado.svg?v=38',ids:['drv'],pins:[['VCC','+ motores'],['GND','GND motores'],['IN1','IN1'],['IN2','IN2'],['IN3','IN3'],['IN4','IN4'],['OUT1','A • 1'],['OUT2','A • 2'],['OUT3','B • 1'],['OUT4','B • 2']],info:'MX1508: os dois bornes MOTOR A (na direita) são de um motor; os dois MOTOR B (na esquerda) são do outro. + e − recebem o suporte de seis pilhas. O − também deve ser ligado a um GND do ESP32.',tip:'IN1→GPIO27, IN2→GPIO26, IN3→GPIO32, IN4→GPIO18. Compartilhe o GND entre ESP32 e ponte H.'},
+ {kind:'driver',name:'Ponte H MX1508',img:'assets/mx1508-desenhado.svg?v=38',ids:['drv'],pins:[['VCC','+ motores'],['GND','GND motores'],['IN1','IN1'],['IN2','IN2'],['IN3','IN3'],['IN4','IN4'],['OUT1','A • 1'],['OUT2','A • 2'],['OUT3','B • 1'],['OUT4','B • 2']],info:'MX1508: MOTOR A e MOTOR B recebem um motor DC cada. O positivo do suporte de pilhas chega ao + da ponte pela gangorra; o negativo do suporte vai ao GND da ponte, que deve compartilhar GND com o ESP32.',tip:'IN1→GPIO27, IN2→GPIO26, IN3→GPIO32, IN4→GPIO18. Compartilhe o GND entre ESP32 e ponte H.'},
  {kind:'buck',name:'Regulador LM2596',img:'assets/lm2596-desenhado.svg',ids:['lm'],pins:[['INP','IN +'],['INN','IN −'],['OUTP','OUT +'],['OUTN','OUT −']],info:'Regulador de tensão. Neste projeto, a saída para o ESP32 deve ser ajustada para 5,0 V.',tip:'Na montagem real, um responsável deve medir 5 V com multímetro antes de conectar VIN.'},
- {kind:'battery',name:'Bateria 9 V',img:'assets/bateria-9v-desenhada.svg',ids:['b1'],pins:[['POS','+'],['NEG','−']],info:'Uma bateria de 9 V alimenta o regulador LM2596 e o ESP32.',tip:'Bateria de 9 V → IN+ e IN− do LM2596; ajuste OUT+ / OUT− para 5 V antes de ligar VIN e GND do ESP32.'},
- {kind:'batteryPack',name:'Suporte de 6 pilhas AA',img:'assets/suporte-6-pilhas.svg',ids:['b2'],pins:[['POS','+'],['NEG','−']],info:'Porta-pilhas com seis células AA: 9 V nominais se forem seis pilhas de 1,5 V. Alimenta a ponte H, não o ESP32.',tip:'Com seis pilhas AA de 1,5 V, são 9 V nominais; seis NiMH de 1,2 V dão 7,2 V. Verifique a tensão nominal dos motores: 9 V pode exceder a especificação de motores de 3–6 V.'},
- {kind:'switch',name:'Chave gangorra',img:'assets/gangorra-desenhada.svg?v=3',ids:['s1','s2'],pins:[['IN','Contato 1'],['OUT','Contato 2'],['LEDG','LED − (indicador)']],info:'Gangorra iluminada de três terminais. Os contatos 1 e 2 abrem e fecham a alimentação: não têm polaridade para a função liga/desliga. O terceiro terminal é o retorno da luz LED, não um contato de comutação. A posição física dos terminais varia conforme o modelo.',tip:'Use os contatos 1 e 2 para interromper o positivo, em qualquer ordem. A chave do ESP32 pode ficar entre bateria e LM2596 ou entre saída 5 V e VIN. O terminal do LED é opcional e deve respeitar sua tensão nominal. Identifique os contatos de sua gangorra física com multímetro, sem energizar o circuito.'},
+ {kind:'battery',name:'Bateria 9 V',img:'assets/bateria-9v-desenhada.svg',ids:['b1'],pins:[['POS','+'],['NEG','−']],info:'Uma bateria de 9 V alimenta o regulador LM2596 e o ESP32.',tip:'Com gangorra: bateria (+) → contato 1 da chave; contato 2 → LM IN+. Bateria (−) → LM IN−. Ajuste LM OUT+ para 5 V antes de ligar VIN do ESP32.'},
+ {kind:'batteryPack',name:'Suporte de 6 pilhas AA',img:'assets/suporte-6-pilhas.svg',ids:['b2'],pins:[['POS','+'],['NEG','−']],info:'Porta-pilhas com seis células AA: 9 V nominais se forem seis pilhas de 1,5 V. Alimenta a ponte H, não o ESP32.',tip:'Com gangorra: suporte (+) → contato 1 da chave, contato 2 → + da ponte H; suporte (−) → GND da ponte H, e GND da ponte H → GND do ESP32. Seis pilhas AA fornecem até 9 V nominais: verifique a tensão permitida pelos motores.'},
+ {kind:'switch',name:'Chave gangorra',img:'assets/gangorra-desenhada.svg?v=3',ids:['s1','s2'],pins:[['IN','Contato 1'],['OUT','Contato 2'],['LEDG','LED − (indicador)']],info:'Gangorra iluminada de três terminais. Os contatos 1 e 2 abrem e fecham a alimentação: não têm polaridade para a função liga/desliga. O terceiro terminal é o retorno da luz LED, não um contato de comutação. A posição física dos terminais varia conforme o modelo.',tip:'Neste gabarito: positivo da fonte → contato 1 (IN), contato 2 (OUT) → IN+ do LM2596 ou + da ponte H. Não é necessário ligar o contato do LED na atividade. Identifique os dois contatos reais de comutação com multímetro, sem energizar o circuito.'},
  {kind:'motor',name:'Motor DC',img:'assets/motor-frontal.svg',ids:['ml','mr'],pins:[['A','+'],['B','−']],info:'Motor DC com caixa de redução amarela, eixo lateral para a roda e dois contatos no motor metálico. Na simulação, a ponte H controla o sentido de giro.',tip:'Os dois contatos ficam ao lado do motor metálico, identificados em vermelho e preto. O eixo de saída fica na caixa amarela.'}
 ];
 const byKind=Object.fromEntries(TYPES.map(p=>[p.kind,p]));
@@ -48,12 +48,11 @@ const EXPECTED=[
  ['drv.OUT1','ml.A'],['drv.OUT2','ml.B'],['drv.OUT3','mr.A'],['drv.OUT4','mr.B']
 ];
 const SWITCHED_CONNECTIONS=EXPECTED;
-const OPTIONAL=[['b1.NEG','s1.LEDG'],['b2.NEG','s2.LEDG']];
 const key=(a,b)=>[a,b].sort().join('|');
 const canonicalPort=p=>p==='esp.GND2'?'esp.GND':p;
 const electricalKey=(a,b)=>key(canonicalPort(a),canonicalPort(b));
 const REQUIRED=new Set(EXPECTED.map(([a,b])=>electricalKey(a,b)));
-const valid=new Set([...DIRECT_CONNECTIONS,...SWITCHED_CONNECTIONS,...OPTIONAL].map(([a,b])=>electricalKey(a,b)));
+const valid=new Set([...DIRECT_CONNECTIONS,...SWITCHED_CONNECTIONS].map(([a,b])=>electricalKey(a,b)));
 const allPorts=new Set(TYPES.flatMap(t=>t.ids.flatMap(id=>t.pins.map(p=>id+'.'+p[0]))));
 const Q=id=>document.getElementById(id);
 // Coordenadas da bancada são livres: a câmera não impõe bordas às peças ou fios.
@@ -191,37 +190,13 @@ function partBounds(p){
 function message(msg,toast=false){Q('statusText').textContent=msg;if(toast){const el=Q('toast');el.textContent=msg;el.classList.add('show');clearTimeout(toastTimer);toastTimer=setTimeout(()=>el.classList.remove('show'),2600);}}
 function assemblyMode(){return exists('s1')||exists('s2')?'switched':'direct';}
 function requiredParts(){return assemblyMode()==='switched'?9:7;}
-// Contatos 1/2 são intercambiáveis na função chave. O terceiro terminal
-// pertence ao LED: não é uma segunda saída de alimentação.
-const SWITCH_WIRINGS=(()=>{
- const rest=COMMON_CONNECTIONS.filter(([a,b])=>a!=='lm.OUTP'||b!=='esp.VIN');
- const options=[];
- for(const stage of ['before-regulator','after-regulator']){
-  for(const one of ['IN','OUT']){
-   for(const two of ['IN','OUT']){
-    const oneOut=one==='IN'?'OUT':'IN';
-    const twoOut=two==='IN'?'OUT':'IN';
-    const s1edges=stage==='before-regulator'
-     ?[['b1.POS','s1.'+one],['s1.'+oneOut,'lm.INP']]
-     :[['lm.OUTP','s1.'+one],['s1.'+oneOut,'esp.VIN']];
-    const s2edges=[['b2.POS','s2.'+two],['s2.'+twoOut,'drv.VCC']];
-    const edges=[...(stage==='before-regulator'?[...s1edges,['lm.OUTP','esp.VIN']]:[['b1.POS','lm.INP'],...s1edges]),...s2edges,...rest];
-    options.push({stage,s1edges,s2edges,edges,keys:new Set(edges.map(([a,b])=>electricalKey(a,b)))});
-   }
-  }
- }
- return options;
-})();
-function selectedSwitchWiring(){
- const wired=new Set(state.wires.map(w=>electricalKey(w.a,w.b)));
- let best=SWITCH_WIRINGS[0],bestScore=-1;
- for(const candidate of SWITCH_WIRINGS){
-  let score=0;
-  for(const edge of wired)if(candidate.keys.has(edge))score++;
-  if(score>bestScore){best=candidate;bestScore=score;}
- }
- return best;
-}
+// Gabarito com gangorras: cada fonte interrompe SOMENTE seu positivo.
+// Chave 1: bateria 9 V (+) → terminal 1 → terminal 2 → IN+ do LM2596.
+// Chave 2: suporte AA (+) → terminal 1 → terminal 2 → + da MX1508.
+// Negativos: 9 V (-) → LM IN-; AA (-) → MX1508 GND → ESP32 GND.
+// O terceiro contato LEDG não faz parte das ligações exigidas.
+const SWITCH_POSITIVE_ESP=[['b1.POS','s1.IN'],['s1.OUT','lm.INP']];
+const SWITCH_POSITIVE_MOTOR=[['b2.POS','s2.IN'],['s2.OUT','drv.VCC']];
 // Os dois canais da MX1508 são equivalentes para motores DC.
 // A posição visual de um motor na bancada e a ordem em que foi criado
 // não determinam se ele precisa ficar obrigatoriamente no canal A ou B.
@@ -250,17 +225,17 @@ function selectedMotorConnections(){
  return best;
 }
 function expectedConnections(){
- const baseline=assemblyMode()==='switched'?selectedSwitchWiring().edges:DIRECT_CONNECTIONS;
- // Troca somente os quatro fios dos motores; preserva alimentação, GND,
- // sinais e o comportamento da gangorra da montagem original.
+ // Ao inserir gangorras, só o arranjo solicitado é validado. A versão
+ // sem gangorras permanece disponível para exercícios com sete peças.
+ const baseline=assemblyMode()==='switched'?SWITCHED_CONNECTIONS:DIRECT_CONNECTIONS;
+ // Os dois canais de saída são equivalentes: o motor esquerdo/direito
+ // pode ocupar A ou B e os polos do motor podem ser invertidos.
  return baseline.filter(([a])=>!a.startsWith('drv.OUT')).concat(selectedMotorConnections());
 }
 function acceptedConnectionSet(){
- const edges=[...expectedConnections()];
- if(assemblyMode()==='switched')edges.push(...OPTIONAL,
-  ['lm.INN','s1.LEDG'],['lm.OUTN','s1.LEDG'],['esp.GND','s1.LEDG'],
-  ['drv.GND','s2.LEDG'],['esp.GND','s2.LEDG']);
- return new Set(edges.map(([a,b])=>electricalKey(a,b)));
+ // Nada de aceitar outras posições de chave ou fios de LED que não
+ // aparecem no esquema escolhido.
+ return new Set(expectedConnections().map(([a,b])=>electricalKey(a,b)));
 }
 function countGood(){
  const expected=new Set(expectedConnections().map(([a,b])=>electricalKey(a,b)));
@@ -284,19 +259,15 @@ function powerStatus(){
  const has=(a,b)=>state.wires.some(w=>electricalKey(w.a,w.b)===electricalKey(a,b));
  const switched=assemblyMode()==='switched';
  // A chave comuta apenas o positivo de cada fonte. Todos os GND são comuns.
- const wiring=switched?selectedSwitchWiring():null;
- const switchOneClosed=switched&&exists('s1')&&state.switches.s1
-  &&wiring.s1edges.every(([a,b])=>has(a,b));
- const espPositive=switched?switchOneClosed:has('b1.POS','lm.INP');
+ const espPositive=switched
+  ?exists('s1')&&state.switches.s1&&SWITCH_POSITIVE_ESP.every(([a,b])=>has(a,b))
+  :has('b1.POS','lm.INP');
  const motorPositive=switched
-  ?exists('s2')&&state.switches.s2&&wiring.s2edges.every(([a,b])=>has(a,b))
+  ?exists('s2')&&state.switches.s2&&SWITCH_POSITIVE_MOTOR.every(([a,b])=>has(a,b))
   :has('b2.POS','drv.VCC');
- const inputPowered=switched&&wiring.stage==='after-regulator'
-  ?has('b1.POS','lm.INP'):espPositive;
- const buck=exists('b1')&&exists('lm')&&inputPowered&&has('b1.NEG','lm.INN');
- const esp=buck&&exists('esp')&&espPositive&&Math.abs(state.voltage-5)<.01
-  &&((switched&&wiring.stage==='after-regulator')||has('lm.OUTP','esp.VIN'))
-  &&has('lm.OUTN','esp.GND');
+ const buck=exists('b1')&&exists('lm')&&espPositive&&has('b1.NEG','lm.INN');
+ const esp=buck&&exists('esp')&&Math.abs(state.voltage-5)<.01
+  &&has('lm.OUTP','esp.VIN')&&has('lm.OUTN','esp.GND');
  const driver=exists('b2')&&exists('drv')&&motorPositive&&has('b2.NEG','drv.GND');
  const common=esp&&has('esp.GND','drv.GND');
  const assigned=selectedMotorConnections();
@@ -584,7 +555,7 @@ function renderProgress(){
  const missionTitle=Q('missionTitle'),missionText=Q('missionText');
  if(!partsDone){Q('stepNumber').textContent='01';missionTitle.textContent='Sua bancada está vazia';missionText.textContent='Monte a versão direta com 7 peças ou adicione duas gangorras para a versão com chaves (9 peças).';}
  else if(inAssembly){Q('stepNumber').textContent='01';missionTitle.textContent='Monte seu conjunto de peças';missionText.textContent='Modo '+(switched?'com gangorras':'sem gangorras')+': você colocou '+partsDone+' de '+required+' peças.';}
- else if(missing().length||errors){Q('stepNumber').textContent='02';missionTitle.textContent='Conecte os terminais';missionText.textContent=total+' das '+expected.length+' ligações corretas no modo '+(switched?'com gangorras':'direto')+'. O negativo da MX1508 também vai ao GND do ESP32.';}
+ else if(missing().length||errors){Q('stepNumber').textContent='02';missionTitle.textContent='Conecte os terminais';missionText.textContent=total+' das '+expected.length+' ligações corretas no modo '+(switched?'com gangorras':'direto')+'. Suporte (−) → GND da ponte H → GND do ESP32. As gangorras interrompem apenas os positivos.';}
  else if(Math.abs(state.voltage-5)>.01||(switched&&(!state.switches.s1||!state.switches.s2))){Q('stepNumber').textContent='03';missionTitle.textContent='Ligações concluídas! Ative a alimentação';missionText.textContent='Ajuste a saída do LM2596 para 5,0 V'+(switched?' e ligue as duas gangorras.':'.');}
  else {Q('stepNumber').textContent='04';missionTitle.textContent='Circuito completo!';missionText.textContent='Parabéns! Montagem '+(switched?'com':'sem')+' gangorras validada. Inicie a simulação e abra a pista.';}
 }
