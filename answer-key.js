@@ -51,7 +51,7 @@
  '<details id="answerDetails" class="answer-details"><summary>Ver resumo das 17 conexões</summary>'+
  '<div id="answerGroups"></div><div class="answer-info"><strong>Antes de testar</strong>'+
  '<p>GND e GND2 da ESP32 são equivalentes. Ajuste o LM2596 para <b>5,0 V</b> e ligue as duas gangorras.</p>'+
- '<p><b>Opcionais:</b> bateria 1 NEG → gangorra 1 LED− e bateria 2 NEG → gangorra 2 LED−.</p></div></details></div>';
+ '<p><b>Opcionais:</b> bateria 1 NEG → gangorra 1 LED− e suporte 6 AA NEG → gangorra 2 LED−.</p></div></details></div>';
  document.body.append(dialog);
  const el=id=>dialog.querySelector('#'+id);
  const escaped=s=>String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
