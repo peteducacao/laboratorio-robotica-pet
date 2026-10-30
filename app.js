@@ -538,14 +538,18 @@ function moveWireSegment(g,clientX,clientY){
  if(horizontal||vertical){
   const base=horizontal?a.y:a.x,perp=horizontal?ny:nx;
   const value=base+shift*perp;
-  const candidates=[Math.round(value/20)*20];
   const portA=getPortPos(wire.a),portB=getPortPos(wire.b);
-  for(const port of [portA,portB])if(port)candidates.push(horizontal?port.y:port.x);
-  const match=candidates.find(candidate=>Math.abs(candidate-value)<=Math.min(14,7/zoom));
+  const candidates=[portA,portB].filter(Boolean).map(port=>horizontal?port.y:port.x);
+  candidates.push(Math.round(value/20)*20);
+  const match=candidates.sort((left,right)=>Math.abs(left-value)-Math.abs(right-value))
+   .find(candidate=>Math.abs(candidate-value)<=Math.min(14,7/zoom));
   if(match!==undefined){shift=(match-base)/perp;guideValue=match;aligned=true;}
  }
  const movedA={x:Math.round(a.x+nx*shift),y:Math.round(a.y+ny*shift)};
  const movedB={x:Math.round(b.x+nx*shift),y:Math.round(b.y+ny*shift)};
+ // Encaixe magnético também endireita o segmento na guia, sem inclinação.
+ if(aligned&&horizontal)movedA.y=movedB.y=guideValue;
+ if(aligned&&vertical)movedA.x=movedB.x=guideValue;
  // Preserva os terminais originais. Acrescenta cotovelos somente ao arrastar.
  const nodes=[
   ...original.slice(0,g.segment+1),
@@ -857,6 +861,25 @@ function startPan(e){
  if(e.cancelable!==false)e.preventDefault();
  gesture={type:'pan',pointer:e.pointerId,startX:e.clientX,startY:e.clientY,x:panX,y:panY,moved:false};
 }
+function anchoredWireBends(part,dx,dy,anchors){
+ // Ao mover somente uma peça, os cotovelos ortogonais próximos ao borne
+ // acompanham a peça. O borne da outra extremidade nunca é modificado.
+ for(const item of anchors||[]){
+  const wire=state.wires[item.i],old=item.via;
+  if(!wire||!wire.manual||!old.length)continue;
+  const via=old.map(p=>({...p}));
+  if(item.a){
+   if(Math.abs(old[0].x-item.start.x)<2)via[0].x=Math.round(old[0].x+dx);
+   if(Math.abs(old[0].y-item.start.y)<2)via[0].y=Math.round(old[0].y+dy);
+  }
+  if(item.b){
+   const n=old.length-1;
+   if(Math.abs(old[n].x-item.end.x)<2)via[n].x=Math.round(old[n].x+dx);
+   if(Math.abs(old[n].y-item.end.y)<2)via[n].y=Math.round(old[n].y+dy);
+  }
+  wire.via=via;
+ }
+}
 function partDown(e){
  if(pinch||activeTouches.size>=2||Date.now()<gestureBlockedUntil)return;
  if(e.button!==undefined&&e.button!==0)return;
@@ -866,7 +889,11 @@ function partDown(e){
  e.preventDefault();
  state.selected=p.id;state.selectedWire=null;state.inspector='parts';
  renderInspector();renderParts();
- gesture={type:'move',pointer:e.pointerId,partId:p.id,startX:e.clientX,startY:e.clientY,partX:p.x,partY:p.y,moved:false};
+ gesture={type:'move',pointer:e.pointerId,partId:p.id,startX:e.clientX,startY:e.clientY,partX:p.x,partY:p.y,
+  anchors:state.wires.map((w,i)=>({
+   i,a:w.a.split('.')[0]===p.id,b:w.b.split('.')[0]===p.id,
+   via:(w.via||[]).map(point=>({...point})),start:getPortPos(w.a),end:getPortPos(w.b)
+  })).filter(item=>item.a||item.b),moved:false};
 }
 function paletteDown(e){
  if(e.button!==undefined&&e.button!==0)return;
@@ -901,6 +928,7 @@ function pointerMove(e){
    if(g.moved){
     p.x=Math.round(g.partX+dx/zoom);
     p.y=Math.round(g.partY+dy/zoom);
+    anchoredWireBends(p,p.x-g.partX,p.y-g.partY,g.anchors);
     const el=[...Q('partsLayer').querySelectorAll('.part')].find(node=>node.dataset.part===p.id);
     if(el){el.style.left=p.x+'px';el.style.top=p.y+'px';}
     highlightDropZone(removeZoneAt(e.clientX,e.clientY));
