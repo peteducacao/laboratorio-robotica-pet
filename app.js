@@ -642,7 +642,11 @@ function bendAt(clientX,clientY){
  state.wires.forEach((wire,i)=>{
   const points=wirePoints(wire);
   for(let k=1;k<points.length-1;k++){
-   const pt=points[k],dist=(cursor.x-pt.x)**2+(cursor.y-pt.y)**2;
+   const pt=points[k],before=points[k-1],after=points[k+1];
+   if(before&&after&&(
+    (Math.abs(before.x-pt.x)<2&&Math.abs(after.x-pt.x)<2)||
+    (Math.abs(before.y-pt.y)<2&&Math.abs(after.y-pt.y)<2)))continue;
+   const dist=(cursor.x-pt.x)**2+(cursor.y-pt.y)**2;
    if(dist<best.dist)best={index:i,vertex:k,dist};
   }
  });
@@ -678,39 +682,44 @@ function moveWireBend(g,clientX,clientY){
  wireAlignment=straight?closestComponentGuide(vertex):null;
  requestDraw();
 }
+// Só um segmento INTERNO pode ser transladado sem alterar o borne original.
+// Os dois vértices existentes mudam juntos: nunca se inserem novos nós.
+function movableWireSegment(points,segment){
+ if(!Array.isArray(points)||segment<1||segment>=points.length-2)return false;
+ const prev=points[segment-1],a=points[segment],b=points[segment+1],next=points[segment+2];
+ if(!prev||!a||!b||!next)return false;
+ const horizontal=Math.abs(a.y-b.y)<2,vertical=Math.abs(a.x-b.x)<2;
+ if(horizontal===vertical)return false; // Não editar diagonais/segmentos de zero comprimento.
+ // Os trechos vizinhos precisam ser perpendiculares ao selecionado.
+ return horizontal
+  ?Math.abs(prev.x-a.x)<2&&Math.abs(next.x-b.x)<2
+  :Math.abs(prev.y-a.y)<2&&Math.abs(next.y-b.y)<2;
+}
 function moveWireSegment(g,clientX,clientY){
- const wire=state.wires[g.wireIndex];
- if(!wire)return;
- const original=g.original,a=original[g.segment],b=original[g.segment+1];
- if(!a||!b)return;
- const axisX=b.x-a.x,axisY=b.y-a.y,length=Math.hypot(axisX,axisY);
- if(length<3)return;
- const nx=-axisY/length,ny=axisX/length;
- const deltaX=(clientX-g.startX)/zoom,deltaY=(clientY-g.startY)/zoom;
- const shift=deltaX*nx+deltaY*ny;
- const horizontal=Math.abs(axisY)<length*.15,vertical=Math.abs(axisX)<length*.15;
- const movedA={x:Math.round(a.x+nx*shift),y:Math.round(a.y+ny*shift)};
- const movedB={x:Math.round(b.x+nx*shift),y:Math.round(b.y+ny*shift)};
- // A guia não movimenta o segmento, apenas sinaliza o alinhamento.
- // Preserva os terminais originais. Acrescenta cotovelos somente ao arrastar.
- const nodes=[
-  ...original.slice(0,g.segment+1),
-  movedA,movedB,
-  ...original.slice(g.segment+1)
- ];
- const clean=[];
- for(const pt of nodes){
-  const last=clean.at(-1);
-  if(!last||last.x!==pt.x||last.y!==pt.y)clean.push({...pt});
- }
- wire.via=clean.slice(1,-1);
+ const wire=state.wires[g.wireIndex];if(!wire)return;
+ const points=g.original,segment=g.segment;
+ if(!movableWireSegment(points,segment)){wireAlignment=null;requestDraw();return;}
+ const first=points[segment],second=points[segment+1];
+ const horizontal=Math.abs(first.y-second.y)<2;
+ const delta=Math.round(((horizontal?clientY-g.startY:clientX-g.startX)/zoom));
+ const changed=points.map(p=>({...p}));
+ const dimension=horizontal?'y':'x';
+ changed[segment][dimension]=first[dimension]+delta;
+ changed[segment+1][dimension]=second[dimension]+delta;
+ // Resta apenas a quantidade de pontos que o jumper já possuía.
+ // O ponto inicial e o final seguem fixos nos furos dos componentes.
+ wire.via=changed.slice(1,-1);
  wire.manual=true;
- // O traço acompanha também o arraste de trechos já conectados.
- wireAlignment=horizontal
-  ?closestComponentGuide({x:(movedA.x+movedB.x)/2,y:movedA.y},'y',[movedA.x,movedB.x])
-  :vertical
-   ?closestComponentGuide({x:movedA.x,y:(movedA.y+movedB.y)/2},'x',[movedA.y,movedB.y])
-   :null;
+ // Guias completas durante a edição, sempre sobre segmentos ortogonais.
+ // Ao arrastar um segmento horizontal, a guia HORIZONTAL também aparece.
+ const guides=horizontal
+  ?[{axis:'y',value:changed[segment].y},
+    {axis:'x',value:changed[segment].x},
+    {axis:'x',value:changed[segment+1].x}]
+  :[{axis:'x',value:changed[segment].x},
+    {axis:'y',value:changed[segment].y},
+    {axis:'y',value:changed[segment+1].y}];
+ wireAlignment=guides.filter((g,i,list)=>list.findIndex(x=>x.axis===g.axis&&Math.abs(x.value-g.value)<1)===i);
  requestDraw();
 }
 function wireRoutePoints(start,via,end,startPort,endPort){
@@ -910,7 +919,11 @@ function drawWires(){
  if(!state.startPort&&!reconnectPending)for(let i=0;i<state.wires.length;i++){
   const points=wirePoints(state.wires[i]);
   for(let vertex=1;vertex<points.length-1;vertex++){
-   const p=points[vertex],hitSize=Math.min(130,Math.max(32,29/zoom));
+   const p=points[vertex],before=points[vertex-1],after=points[vertex+1];
+   if(before&&after&&(
+    (Math.abs(before.x-p.x)<2&&Math.abs(after.x-p.x)<2)||
+    (Math.abs(before.y-p.y)<2&&Math.abs(after.y-p.y)<2)))continue;
+   const hitSize=Math.min(130,Math.max(32,29/zoom));
    const hit=document.createElementNS(ns,'rect');
    hit.setAttribute('x',String(p.x-hitSize/2));hit.setAttribute('y',String(p.y-hitSize/2));
    hit.setAttribute('width',String(hitSize));hit.setAttribute('height',String(hitSize));
@@ -1208,6 +1221,13 @@ function beginWireDrag(e,index,segment){
  const wire=state.wires[index];if(!wire||state.startPort||reconnectPending)return false;
  const original=wirePoints(wire);
  if(segment<0||segment>=original.length-1)return false;
+ // Não é possível deslocar um trecho ligado diretamente a um pino sem criar
+ // novos cotovelos. Nesses casos só selecionar o fio, sem modificar sua rota.
+ if(!movableWireSegment(original,segment)){
+  selectWire(index);
+  message('Arraste o trecho entre dois cotovelos para movê-lo sem criar pontos. Nas pontas, use as bolinhas azuis.',true);
+  return true;
+ }
  if(e.cancelable!==false)e.preventDefault();
  state.selectedWire=index;state.selected=null;state.inspector='wires';
  state.wireColor=wire.color;
