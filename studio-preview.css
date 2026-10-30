@@ -320,7 +320,7 @@
 
 /* Context panel: visible on demand, as in editing programs, rather than a full column. */
 .preview-studio .inspector{
- position:fixed!important;top:150px!important;right:18px!important;left:auto!important;
+ position:fixed!important;top:calc(var(--studio-top-offset,132px) + 14px)!important;right:18px!important;left:auto!important;
  width:min(345px,calc(100vw - 38px))!important;
  height:auto!important;max-height:calc(100dvh - 174px)!important;
  padding:0!important;margin:0!important;
@@ -363,7 +363,7 @@
 /* Component drawer from Tinkercad; images and palette colors remain genuine. */
 .preview-studio .library{
  position:fixed!important;
- top:132px!important;right:0!important;left:auto!important;
+ top:var(--studio-top-offset,132px)!important;right:0!important;left:auto!important;
  width:min(345px,calc(100vw - 32px))!important;
  max-width:min(345px,calc(100vw - 32px))!important;
  background:#f6f9f8!important;border:1px solid #deebe8!important;
@@ -432,8 +432,8 @@
  }
  .preview-studio .toolbar-zoom{justify-self:center!important}
  .preview-studio .viewport{height:calc(100dvh - 275px)!important;min-height:455px!important}
- .preview-studio .library{top:175px!important}
- .preview-studio .inspector{top:187px!important;max-height:calc(100dvh - 205px)!important}
+ .preview-studio .library{top:var(--studio-top-offset,175px)!important}
+ .preview-studio .inspector{top:calc(var(--studio-top-offset,175px) + 14px)!important;max-height:calc(100dvh - var(--studio-top-offset,175px) - 35px)!important}
 }
 @media(max-width:820px){
  .preview-studio .app-header{height:62px!important;min-height:62px!important}
@@ -442,8 +442,8 @@
  .preview-studio .brand small{font-size:8px!important}
  .preview-studio .header-tag,.preview-studio .autosave-indicator{display:none!important}
  .preview-studio .toolbar{padding:7px 10px!important}
- .preview-studio .library{top:171px!important}
- .preview-studio .inspector{top:170px!important}
+ .preview-studio .library{top:var(--studio-top-offset,171px)!important}
+ .preview-studio .inspector{top:calc(var(--studio-top-offset,171px) + 8px)!important}
  .preview-studio .workspace-region{padding:9px 10px 6px!important}
  .preview-studio .mission-copy span{display:none!important}
  .preview-studio .mission-copy strong{font-size:11px!important;white-space:normal}
@@ -533,11 +533,11 @@
  }
  .preview-studio .canvas-corner{bottom:8px!important;left:8px!important;
   max-width:65%!important;font-size:9px!important;padding:7px 9px!important}
- .preview-studio .inspector{
-  top:158px!important;right:8px!important;max-height:calc(100dvh - 180px)!important;
+  .preview-studio .inspector{
+  top:calc(var(--studio-top-offset,158px) + 7px)!important;right:8px!important;max-height:calc(100dvh - var(--studio-top-offset,158px) - 22px)!important;
   width:min(345px,calc(100vw - 16px))!important
  }
- .preview-studio .library{top:153px!important}
+ .preview-studio .library{top:var(--studio-top-offset,153px)!important}
  .preview-studio .drawer-handle{width:21px!important}
 }
 @media(max-width:376px){
@@ -550,8 +550,8 @@
  .preview-studio .inspector-bottom{max-width:105px!important;width:105px!important;flex-basis:105px!important}
  .preview-studio .mission-copy strong{font-size:9px!important}
  .preview-studio .viewport{height:calc(100dvh - 262px)!important}
- .preview-studio .library{top:194px!important}
- .preview-studio .inspector{top:191px!important}
+ .preview-studio .library{top:var(--studio-top-offset,194px)!important}
+ .preview-studio .inspector{top:calc(var(--studio-top-offset,194px) + 5px)!important}
 }
 @media(prefers-reduced-motion:reduce){
  .preview-studio *{animation-duration:.001ms!important;transition-duration:.001ms!important}
