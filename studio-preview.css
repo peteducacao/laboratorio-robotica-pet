@@ -583,3 +583,31 @@
 @media(prefers-reduced-motion:reduce){
  .preview-studio *{animation-duration:.001ms!important;transition-duration:.001ms!important}
 }
+
+
+/* Studio v4: somente controles necessários na bancada. Zoom manual permanece. */
+.preview-studio .toolbar{
+  grid-template-columns:minmax(0,1fr) auto!important;
+  grid-template-areas:"left right"!important;
+  grid-template-rows:auto!important;
+}
+.preview-studio .toolbar-zoom,
+.preview-studio .toolbar-right #openTrackBtn,
+.preview-studio #zoomTool,
+.preview-studio #zoomPopover,
+.preview-studio .legacy-control[hidden]{display:none!important}
+@media(max-width:900px){
+ .preview-studio .toolbar{
+   grid-template-columns:minmax(0,1fr)!important;
+   grid-template-areas:"left" "right"!important;
+   grid-template-rows:auto auto!important;
+ }
+ .preview-studio .toolbar-right{grid-area:right!important;justify-self:end!important}
+}
+@media(max-width:600px){
+ .preview-studio .toolbar{
+   grid-template-columns:minmax(0,1fr)!important;
+   grid-template-areas:"left" "right"!important;
+   grid-template-rows:39px 39px!important;
+ }
+}
