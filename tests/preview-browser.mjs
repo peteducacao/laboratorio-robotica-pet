@@ -58,7 +58,13 @@ try{
   assert.equal(await page.locator('#previewInspector').evaluate(e=>getComputedStyle(e).display),'none','Inspector closes '+width);
   await page.locator('#drawerHandle').click();
   assert(await page.locator('#library').evaluate(e=>e.classList.contains('open')),'Drawer opens '+width);
+  await page.waitForTimeout(280);
+  await page.screenshot({path:join(dir,'studio-preview-'+width+'-catalog.png'),fullPage:false});
   await page.locator('#closeLibrary').click();
+  await page.waitForTimeout(280);
+  assert(!await page.locator('#library').evaluate(e=>e.classList.contains('open')),'Drawer closes on X '+width);
+  const visibility=await page.locator('#library').evaluate(e=>getComputedStyle(e).visibility);
+  assert.equal(visibility,'hidden','Closed component drawer must be invisible at '+width);
   const oldZoom=await page.locator('#zoomLabel').textContent();
   await page.locator('#zoomIn').click();
   assert.notEqual(await page.locator('#zoomLabel').textContent(),oldZoom,'Zoom button works '+width);
