@@ -815,3 +815,10 @@
 .preview-studio #rotateBtn svg{width:19px!important;height:19px!important}
 .preview-studio #rotateBtn:disabled{opacity:.38!important;cursor:not-allowed!important}
 .preview-studio .part[data-rotation]{transform-origin:center center!important}
+
+/* Studio v12 — o quadrado ativo é excluído sem excluir o jumper. */
+.preview-studio .wire-svg .wire-bend-mark.bend-picked{
+ fill:#ffe3a7!important;stroke:#ba6a16!important;stroke-width:3!important;
+ filter:drop-shadow(0 0 5px #efb45177)!important
+}
+.preview-studio .wire-svg .wire-bend-target{cursor:pointer!important}
