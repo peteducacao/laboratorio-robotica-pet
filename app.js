@@ -58,7 +58,7 @@ function safeRestore(){
   if(!s||!Array.isArray(s.parts)||!Array.isArray(s.wires))return;
   const names=new Set();
   state.parts=s.parts.filter(p=>p&&byId[p.id]&&!names.has(p.id)&&names.add(p.id)&&Number.isFinite(p.x)&&Number.isFinite(p.y)).map(p=>({id:p.id,kind:byId[p.id].kind,x:p.x,y:p.y,view:byId[p.id].kind==='motor'&&p.view==='side'?'side':'front'}));
-  state.wires=s.wires.filter(w=>w&&allPorts.has(w.a)&&allPorts.has(w.b)&&w.a!==w.b&&exists(w.a.split('.')[0])&&exists(w.b.split('.')[0])).slice(0,80).map(w=>({a:w.a,b:w.b,color:COLORS.includes(w.color)?w.color:COLORS[0],via:Array.isArray(w.via)?w.via.filter(p=>p&&Number.isFinite(p.x)&&Number.isFinite(p.y)).slice(0,48).map(p=>({x:p.x,y:p.y})):[]}));
+  state.wires=s.wires.filter(w=>w&&allPorts.has(w.a)&&allPorts.has(w.b)&&w.a!==w.b&&exists(w.a.split('.')[0])&&exists(w.b.split('.')[0])).slice(0,80).map(w=>({a:w.a,b:w.b,color:COLORS.includes(w.color)?w.color:COLORS[0],via:Array.isArray(w.via)?w.via.filter(p=>p&&Number.isFinite(p.x)&&Number.isFinite(p.y)).slice(0,48).map(p=>({x:p.x,y:p.y})):[],manual:w.manual===true}));
   if(Number.isFinite(s.voltage))state.voltage=limit(s.voltage,3,6);
   if(s.switches)state.switches={s1:!!s.switches.s1,s2:!!s.switches.s2};
   if(COLORS.includes(s.wireColor))state.wireColor=s.wireColor;
@@ -407,7 +407,7 @@ function tipOrigin(){
  return p?{x:p.x+direction.x*24,y:p.y+direction.y*24}:null;
 }
 function lastWireTip(){
- return state.bends.at(-1)||tipOrigin();
+ return state.bends.at(-1)||getPortPos(state.startPort);
 }
 function previousWirePoint(){
  if(!state.startPort)return null;
@@ -431,15 +431,15 @@ function projectFromTip(from,wanted,previous=null){
 }
 function addCorner(x,y){
  if(!state.startPort)return;
- const last=lastWireTip(),trail=orthogonalTrail(last,{x,y},previousWirePoint());
- const tip=trail.at(-1);
- if(!tip||Math.hypot(tip.x-last.x,tip.y-last.y)<6){requestDraw();return;}
- if(state.bends.length+trail.length>48){message('Limite de curvas: finalize em um pino.',true);return;}
- // Um clique fixa as curvas até o cursor, em um único passo Ctrl+Z.
- snapshot();state.bends.push(...trail);
- previewPoint={x,y};previewSnapPort=null;
+ const last=lastWireTip(),tip={x:Math.round(x),y:Math.round(y)};
+ if(!last||Math.hypot(tip.x-last.x,tip.y-last.y)<6){requestDraw();return;}
+ if(state.bends.length>=48){message('Limite de curvas: finalize em um pino.',true);return;}
+ // Somente o clique fixa a ponta. Enquanto o cursor se move, não há curvas.
+ // Cada clique é um passo independente para Ctrl+Z / Ctrl+Y.
+ snapshot();state.bends.push(tip);
+ previewPoint=tip;previewSnapPort=null;
  updateHistoryButtons();requestDraw();
- message('Trecho fixado. Continue movendo o mouse ou toque no destino.');
+ message('Curva fixada no clique. A próxima ponta segue o cursor em linha reta.');
 }
 function connect(id){
  const part=id.split('.')[0];if(!exists(part))return;
@@ -459,7 +459,7 @@ function connect(id){
  const index=state.wires.findIndex(w=>electricalKey(w.a,w.b)===electricalKey(first,id));
  if(index>=0){state.wires.splice(index,1);message('Ligação existente removida.');}
  else{
-  state.wires.push({a:first,b:id,color:state.wireColor,via});
+  state.wires.push({a:first,b:id,color:state.wireColor,via,manual:true});
   message(valid.has(electricalKey(first,id))?'✓ Fio sólido conectado com '+via.length+' curva(s).':'Fio criado, mas os terminais precisam ser revisados.',!valid.has(electricalKey(first,id)));
  }
  state.completed=false;refresh();
@@ -482,6 +482,25 @@ function portDirection(id){
  if(p.kind==='switch')return {x:0,y:1};
  if(p.kind==='motor')return p.view==='side'?{x:1,y:0}:{x:-1,y:0};
  return {x:0,y:-1};
+}
+// Caminho manual: cada ponto do desenho é uma escolha explícita do usuário.
+// Não insere a dobra ortogonal antes do clique nem cria cotovelos automáticos.
+function manualWirePoints(start,via,end){
+ if(!start)return [];
+ const points=[start,...(via||[]),...(end?[end]:[])];
+ const result=[];
+ for(const p of points){
+  if(!p)continue;
+  const rounded={x:Math.round(p.x),y:Math.round(p.y)},last=result.at(-1);
+  if(!last||last.x!==rounded.x||last.y!==rounded.y)result.push(rounded);
+ }
+ return result;
+}
+function pendingWirePoints(){
+ if(!state.startPort)return [];
+ const start=getPortPos(state.startPort);
+ const tip=previewSnapPort?getPortPos(previewSnapPort):previewPoint;
+ return manualWirePoints(start,state.bends,tip);
 }
 function wireRoutePoints(start,via,end,startPort,endPort){
  const round=p=>({x:Math.round(p.x),y:Math.round(p.y)});
@@ -527,7 +546,7 @@ function drawWires(){
  for(let i=0;i<state.wires.length;i++){
   const w=state.wires[i],a=getPortPos(w.a),b=getPortPos(w.b);
   if(!a||!b)continue;
-  const points=wireRoutePoints(a,w.via||[],b,w.a,w.b);
+  const points=w.manual?manualWirePoints(a,w.via||[],b):wireRoutePoints(a,w.via||[],b,w.a,w.b);
   const d=wirePath(points);
   const line=document.createElementNS(ns,'path');
   line.setAttribute('d',d);
@@ -551,14 +570,14 @@ function drawWires(){
  if(state.startPort){
   const start=getPortPos(state.startPort);
   if(!start)return;
-  const last=lastWireTip(),target=previewPoint?projectFromTip(last,previewPoint,previousWirePoint()):null;
-  const pts=[...state.bends];
-  if(!previewSnapPort&&target&&Math.hypot(target.x-last.x,target.y-last.y)>2)pts.push(...orthogonalTrail(last,previewPoint,previousWirePoint()));
+  // Um único segmento livre, direto do último ponto fixado ao cursor.
+  // Não criar cotovelos enquanto o aluno apenas movimenta o ponteiro.
+  const pts=pendingWirePoints();
   const preview=document.createElementNS(ns,'path');
-  preview.setAttribute('d',wireRoute(start,pts,previewSnapPort?getPortPos(previewSnapPort):null,state.startPort,previewSnapPort));
+  preview.setAttribute('d',wirePath(pts));
   preview.setAttribute('class','wire-line wire-pending');
   preview.setAttribute('stroke',state.wireColor);svg.append(preview);
-  const tip=(previewSnapPort&&getPortPos(previewSnapPort))||pts.at(-1)||last;
+  const tip=pts.at(-1)||start;
   if(tip&&previewPoint){
    const spark=document.createElementNS(ns,'g');
    spark.setAttribute('class','wire-spark');
@@ -676,7 +695,7 @@ function wireAt(clientX,clientY){
  let min=tolerance*tolerance,result=-1;
  state.wires.forEach((w,i)=>{
   const a=getPortPos(w.a),b=getPortPos(w.b);if(!a||!b)return;
-  const points=wireRoutePoints(a,w.via||[],b,w.a,w.b);
+  const points=w.manual?manualWirePoints(a,w.via||[],b):wireRoutePoints(a,w.via||[],b,w.a,w.b);
   for(let j=1;j<points.length;j++){
    const u=points[j-1],v=points[j],dx=v.x-u.x,dy=v.y-u.y,len=dx*dx+dy*dy;
    const along=len?limit(((p.x-u.x)*dx+(p.y-u.y)*dy)/len,0,1):0;
@@ -1022,7 +1041,7 @@ async function downloadWorkspace(){
   const wires=state.wires.map(w=>{
    const from=getPortPos(w.a),to=getPortPos(w.b);
    if(!from||!to)return '';
-   return '<path d="'+escapeXml(wireRoute(from,w.via||[],to,w.a,w.b))+'" fill="none" stroke="'+escapeXml(w.color)+'" stroke-width="10" stroke-linejoin="round" stroke-linecap="round"/>';
+   return '<path d="'+escapeXml(w.manual?wirePath(manualWirePoints(from,w.via||[],to)):wireRoute(from,w.via||[],to,w.a,w.b))+'" fill="none" stroke="'+escapeXml(w.color)+'" stroke-width="10" stroke-linejoin="round" stroke-linecap="round"/>';
   }).join('');
   const svg='<?xml version="1.0" encoding="UTF-8"?>'
    +'<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="'+minX+' '+minY+' '+width+' '+height+'" width="'+width+'" height="'+height+'">'
