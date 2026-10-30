@@ -676,3 +676,34 @@
  background:#688a77!important;box-shadow:0 0 0 2px #324c42!important
 }
 .preview-studio .part[data-kind="switch"] .part-switch:focus-visible{outline:3px solid #1597ba!important;outline-offset:3px!important}
+
+/* Studio v6 — arraste apenas a imagem recortada, sem cartão branco. */
+.preview-studio .drag-ghost,
+.preview-studio .drag-ghost:not([hidden]),
+.preview-studio .drag-ghost.valid-drop,
+.preview-studio .drag-ghost:not([hidden]).valid-drop{
+  width:auto!important;min-width:0!important;min-height:0!important;
+  height:auto!important;max-width:none!important;max-height:none!important;
+  display:flex!important;align-items:center!important;justify-content:center!important;
+  padding:0!important;gap:0!important;
+  background:transparent!important;border:0!important;border-radius:0!important;
+  box-shadow:none!important;outline:0!important;backdrop-filter:none!important;
+  pointer-events:none!important;overflow:visible!important;
+}
+.preview-studio .drag-ghost[hidden]{display:none!important}
+.preview-studio .drag-ghost img{
+  display:block!important;width:100px!important;max-width:none!important;height:92px!important;
+  padding:0!important;margin:0!important;background:transparent!important;
+  object-fit:contain!important;filter:drop-shadow(0 5px 5px #183a4b2c)!important;
+}
+.preview-studio .drag-ghost strong{display:none!important}
+/* Na bancada o componente também nunca recebe cartão ou fundo branco no arraste. */
+.preview-studio #partsLayer .part,
+.preview-studio #partsLayer .part.selected,
+.preview-studio #partsLayer .part:active,
+.preview-studio #partsLayer .part .part-image{
+  background:transparent!important;
+  border-color:transparent!important;
+  box-shadow:none!important;
+}
+.preview-studio #partsLayer .part .part-image img{background:transparent!important}
