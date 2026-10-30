@@ -83,9 +83,6 @@
 <rect x="736" y="297" width="9" height="17" rx="2" fill="#c9a96f" stroke="#67522f" stroke-width="1"/>
 <rect x="462" y="128" width="299" height="181" rx="12" fill="url(#steel)" stroke="#687988" stroke-width="5"/>
 <path d="M485 138H737" stroke="#fff" stroke-width="4" opacity=".75"/>
-<text x="613" y="181" font-family="Arial,sans-serif" font-size="26" fill="#687782" text-anchor="middle" font-weight="bold">ESP-WROOM-32</text>
-<text x="613" y="216" font-family="Arial,sans-serif" font-size="18" fill="#82909b" text-anchor="middle">Wi-Fi · Bluetooth</text>
-<text x="613" y="252" font-family="Arial,sans-serif" font-size="18" fill="#8b9ca4" text-anchor="middle">ESPRESSIF</text>
 <path d="M780 136 h28 v18 h-17 v18 h17 v17 h-17 v17 h17 v17 h-17 v17 h17 v16 h-17 v17 h17" fill="none" stroke="#ad9d72" stroke-width="7" stroke-linejoin="miter" opacity=".55"/>
 <text x="602" y="290" fill="#85929b" font-family="Arial,sans-serif" font-size="15" text-anchor="middle">2.4 GHz</text>
 </svg>
