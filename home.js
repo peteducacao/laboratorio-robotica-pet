@@ -1,5 +1,5 @@
 'use strict';(()=>{
- const W=1536,H=1024,src='assets/welcome-approved.png';
+ const W=1536,H=1024,src='assets/welcome-approved.avif';
  const art=document.getElementById('welcomeArt'),button=document.getElementById('enterProjects');
  const blink=document.getElementById('robotBlink');
  const crops=[{el:document.getElementById('floatingArduino'),x:36,y:218,w:330,h:250},
