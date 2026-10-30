@@ -11,7 +11,7 @@ const answerKey=fs.readFileSync(path.join(base,'answer-key.js'),'utf8');
 new vm.Script(answerKey);
 new vm.Script(js);
 const types=vm.runInNewContext('['+js.match(/const TYPES=\[([\s\S]*?)\];/)[1]+']');
-const edges=vm.runInNewContext('['+js.match(/const EXPECTED=\[([\s\S]*?)\];/)[1]+']');
+const edges=vm.runInNewContext(js.match(/const COMMON_CONNECTIONS=\[([\s\S]*?)\];/)[0]+'\n'+js.match(/const EXPECTED=\[([\s\S]*?)\];/)[0]+'\nEXPECTED');
 const esp=types.find(t=>t.kind==='esp');
 assert.equal(esp.pins.length,30,'ESP32 precisa ter 30 contatos físicos na bancada');
 assert(esp.pins.some(([id,label])=>id==='GND2'&&label==='GND'),'dois GND equivalentes');
