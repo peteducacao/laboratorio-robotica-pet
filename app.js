@@ -897,8 +897,9 @@ function connect(id){
  const index=state.wires.findIndex(w=>electricalKey(w.a,w.b)===electricalKey(first,id));
  if(index>=0){state.wires.splice(index,1);message('Ligação existente removida.');}
  else{
-  const safePath=autoPath||(!via.length?automaticWireRoute(first,id):null);
-  const route=safePath?safePath.slice(1,-1):via;
+  // OFF respeita EXATAMENTE os pontos escolhidos: sem roteamento
+  // automático nem curvas adicionais mesmo quando via está vazio.
+  const route=state.autoWireAlign&&autoPath?autoPath.slice(1,-1):via;
   state.wires.push({a:first,b:id,color:state.wireColor,via:route,manual:true,autoRoute:!!autoPath});
   // Fios anteriores mantêm seus corredores; a nova rota usa os canais livres.
   message(acceptedConnectionSet().has(electricalKey(first,id))
@@ -1001,15 +1002,20 @@ function manualWirePoints(start,via,end){
 function pendingWirePoints(){
  if(!state.startPort)return [];
  const start=getPortPos(state.startPort),tip=previewPoint;
- if(!tip)return [start].filter(Boolean);
- if(state.autoWireAlign&&previewSnapPort){
-  // Mesma rota na prévia e no fio definitivo; não cria curva ao clicar.
-  const auto=automaticWireRoute(state.startPort,previewSnapPort);
-  if(auto)return auto;
+ if(!start)return [];
+ if(!tip)return [start];
+ if(!state.autoWireAlign){
+  // OFF = modo manual verdadeiro: somente cliques em addCorner criam
+  // vértices. Mover o cursor NUNCA introduz stub/cotovelo automático.
+  return manualWirePoints(start,state.bends,tip);
  }
- if(state.bends.length&&!state.autoWireAlign)return manualWirePoints(start,state.bends,tip);
- const exit=autoWireExit(state.startPort),d=portDirection(state.startPort);
- const elbow=d.x!==0?{x:tip.x,y:exit.y}:{x:exit.x,y:tip.y};
+ if(previewSnapPort){
+  const automatic=automaticWireRoute(state.startPort,previewSnapPort);
+  if(automatic)return automatic;
+ }
+ // ON: prévia ortogonal sem alterar os cantos já fixados do modo manual.
+ const exit=autoWireExit(state.startPort),direction=portDirection(state.startPort);
+ const elbow=direction.x!==0?{x:tip.x,y:exit.y}:{x:exit.x,y:tip.y};
  return simplifyAutoWire([start,exit,elbow,tip]);
 }
 // Edita um segmento de um jumper conectado sem alterar os dois bornes.
