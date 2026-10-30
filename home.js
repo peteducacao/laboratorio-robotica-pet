@@ -3,7 +3,7 @@
  const art=document.getElementById('welcomeArt'),button=document.getElementById('enterProjects');
  const blink=document.getElementById('robotBlink');
  const beacon=document.getElementById('antennaGlow');
- const energyRails=document.getElementById('energyRails');
+
  const particles=[...document.querySelectorAll('.light-dust')];
  const particlesWorld=[
   {x:460,y:235,n:6},{x:1092,y:310,n:5},{x:388,y:652,n:6},
@@ -23,7 +23,7 @@
   let scale;
   if(shortLandscape)scale=Math.min(width/W,height/H);
   else if(portrait)scale=Math.min(width/780,height/930);
-  else scale=Math.max(width/W,height/H);
+  else scale=Math.min(width/W,height/H); // Computador: arte INTEIRA, sem cortar topo ou base.
   const imgWidth=W*scale,imgHeight=H*scale;
   const left=(width-imgWidth)/2,top=(height-imgHeight)/2;
   art.style.width=imgWidth+'px';
@@ -41,7 +41,6 @@
   place(button,504,631,526,126);
   place(blink,718,339,46,30);
   place(beacon,726,118,92,92);
-  place(energyRails,0,0,W,H);
   particles.forEach((particle,i)=>{
    const world=particlesWorld[i];if(!world)return;
    const n=Math.max(3,Math.round(world.n*scale));
