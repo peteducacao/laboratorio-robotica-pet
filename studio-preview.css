@@ -912,3 +912,11 @@
  box-shadow:0 0 0 5px #18a69c28!important;
  border-radius:9px!important
 }
+
+/* Studio v16 — controle de roteamento ON/OFF sempre visível. */
+.preview-studio #autoWireBtn{position:relative!important;display:inline-grid!important;place-items:center!important;padding:0 11px 0 4px!important;min-width:42px!important}
+.preview-studio #autoWireBtn svg{width:19px!important;height:19px!important}
+.preview-studio #autoWireBtn .auto-wire-state{position:absolute!important;right:2px!important;bottom:1px!important;font:bold 7px/1 "DM Sans",sans-serif!important;color:#899ca1!important;pointer-events:none!important}
+.preview-studio #autoWireBtn.active{background:#ddf7ed!important;border-color:#2c9b94!important;color:#146e76!important}
+.preview-studio #autoWireBtn.active .auto-wire-state{color:#158975!important}
+.preview-studio #autoWireBtn:focus-visible{outline:2px solid #168e9d!important;outline-offset:2px!important}
