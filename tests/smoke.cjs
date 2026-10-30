@@ -34,7 +34,7 @@ for(const file of ['mx1508-desenhado.svg','lm2596-desenhado.svg','bateria-9v-des
  const svg=fs.readFileSync(path.join(base,'assets',file),'utf8');
  assert(svg.includes('<svg')&&svg.includes('</svg>'),file+' presente');
 }
-for(const kind of ['driver','buck','battery','switch'])assert(types.find(t=>t.kind===kind).img.startsWith('assets/'),kind+' usa desenho vetorial');
+for(const kind of ['driver','buck','battery','batteryPack','switch'])assert(types.find(t=>t.kind===kind).img.startsWith('assets/'),kind+' usa desenho vetorial');
 
 const sw=types.find(t=>t.kind==='switch');
 assert.equal(sw.pins.length,3,'chave gangorra com 3 terminais');
@@ -67,7 +67,12 @@ assert(!html.includes('>PEÇAS</small>'),'alça do catálogo apresenta somente s
 assert(css.includes('.part.selected::after,.part.selected::before{display:none!important;'),'peças sem moldura de seleção');
 assert(css.includes('.wire-spark{'),'faíscas da ponta do jumper disponíveis');
 assert(!espArt.includes('>ESPRESSIF<')&&!espArt.includes('2.4 GHz'),'módulo metálico sem texto interno');
-assert.equal(types.length,6);
+assert.equal(types.length,7,'sete tipos: uma 9V e um suporte com seis pilhas');
+assert.deepEqual([...types.find(t=>t.kind==='battery').ids],['b1'],'apenas uma bateria de 9V');
+assert.deepEqual([...types.find(t=>t.kind==='batteryPack').ids],['b2'],'suporte de seis AA é a fonte da ponte H');
+const packAsset=fs.readFileSync(path.join(base,'assets/suporte-6-pilhas.svg'),'utf8');
+assert.equal((packAsset.match(/<g transform="translate\(/g)||[]).length,6,'suporte desenha exatamente seis pilhas');
+assert(packAsset.includes('6 × AA · 9 V'),'suporte identifica seis AA de 1,5V');
 assert.equal(types.reduce((sum,t)=>sum+t.ids.length,0),9);
 assert.equal(edges.length,17);
 // Os quatro comandos e as saídas do MX1508 são conferidos com a imagem de referência.
@@ -116,10 +121,11 @@ const win={addEventListener(type,fn){(listeners['window:'+type]??=[]).push(fn)}}
 const store={getItem(k){return storage[k]??null},setItem(k,v){storage[k]=v}};
 const fake={window:win,document:doc,localStorage:store,requestAnimationFrame(){},ResizeObserver:class{observe(){}},console,Math,JSON,confirm(){return true},setTimeout(){return 1},clearTimeout(){}};
 // Hook somente para testes: inspeciona curvas pendentes, sem expor dados na aplicação.
-const instrumented=js.replace(/\}\)\(\);\s*$/, "window.__pendingForTests=()=>({startPort:state.startPort,bends:state.bends.map(p=>({...p})),preview:previewPoint&&{...previewPoint}});})();");
+const instrumented=js.replace(/\}\)\(\);\s*$/, "window.__pendingForTests=()=>({startPort:state.startPort,bends:state.bends.map(p=>({...p})),preview:previewPoint&&{...previewPoint}});window.__powerForTests=()=>({live:powerStatus(),running:simulationRunning});})();");
 assert.notEqual(instrumented,js,'instrumentação do teste de histórico aplicada');
 vm.runInNewContext(instrumented,fake);
 const pending=()=>win.__pendingForTests();
+const power=()=>win.__powerForTests();
 function send(event,fnKey,target){const handlers=listeners[fnKey+':'+event];assert(handlers?.length,fnKey+':'+event);for(const handler of handlers)handler(target);}
 const saved=()=>JSON.parse(storage['tinkerpet-v2']);
 let pointer=0;
@@ -344,7 +350,12 @@ assert.equal(saved().wires.length,0,'fio existente pode ser removido');
 
 connect('esp.D27','drv.IN4');
 click('checkBtn');
-assert.equal(nodes.playPanel.hidden,true,'não liberar circuito com fio errado');
+assert.equal(nodes.playPanel.hidden,true,'simulação incompleta permanece na bancada');
+assert.equal(power().running,true,'Iniciar simulação funciona com um fio errado ou faltando');
+assert.equal(nodes.simLabel.textContent,'Parar simulação','simulação começa independentemente das ligações');
+assert.equal(power().live.esp,false,'ESP32 sem alimentação ainda não acende');
+click('checkBtn');
+assert.equal(power().running,false,'botão também interrompe simulação sem circuito completo');
 connect('esp.D27','drv.IN4');
 for(const [a,b] of edges)connect(a,a==='lm.OUTN'?'esp.GND2':b); // usar o segundo GND real e validar equivalência
 assert.equal(saved().wires.length,17,'criar 17 fios');
@@ -352,18 +363,33 @@ assert.equal(saved().wires.length,17,'criar 17 fios');
 connect('b1.NEG','s1.LEDG');assert.equal(saved().wires.length,18,'terceiro pino aceita retorno para LED');
 toggle('s1');toggle('s2');
 
+click('checkBtn');
+assert.equal(power().running,true,'simulação inicia sem exigir 5V na saída do LM2596');
+assert.equal(power().live.buck,true,'LM2596 recebe a alimentação de 9V');
+assert.equal(power().live.driver,true,'ponte H recebe alimentação do suporte 6×AA');
+assert.equal(power().live.esp,false,'ESP32 não recebe indicador ligado com saída fora de 5V');
+assert.equal(power().live.motors.ml,false,'motor parado até sinal e alimentação do ESP32');
 send('input','partsLayer',{target:{id:'voltageInput',value:'5'}});
+assert.equal(power().live.esp,true,'ESP32 liga após LM2596 em 5V e fios corretos');
+assert.equal(power().live.motors.ml,true,'motor esquerdo gira com alimentações e sinais corretos');
+assert.equal(power().live.motors.mr,true,'motor direito gira com alimentações e sinais corretos');
+assert.equal(nodes.playPanel.hidden,true,'Iniciar simulação mantém bancada visível para observar LEDs e motores');
+assert.equal(nodes.trackLock.hidden,true,'a pista fica desbloqueada quando os 17 fios estão corretos');
+assert.equal(nodes.openTrackBtn.hidden,false,'Abrir pista aparece apenas quando montagem está pronta');
+click('openTrackBtn');
+assert.equal(nodes.playPanel.hidden,false,'Abrir pista oferece controle do carrinho');
+click('backBtn');
+assert.equal(nodes.playPanel.hidden,true,'Voltar à bancada mantém simulação ligada');
 click('checkBtn');
-assert.equal(nodes.playPanel.hidden,false,'liberar pista com circuito correto');
-assert.equal(nodes.trackLock.hidden,true,'retirar bloqueio da pista');
-assert.equal(nodes.simLabel.textContent,'Parar simulação','botão muda para Parar simulação');
+assert.equal(power().running,false,'Parar simulação encerra o efeito na bancada');
+assert.equal(nodes.simLabel.textContent,'Iniciar simulação','botão retorna a Iniciar simulação');
 click('checkBtn');
-assert.equal(nodes.playPanel.hidden,true,'Parar simulação retorna à bancada');
-assert.equal(nodes.simLabel.textContent,'Iniciar simulação','botão volta a Iniciar simulação');
-click('checkBtn');
-assert.equal(nodes.playPanel.hidden,false,'simulação pode reiniciar');
 toggle('s1');
-assert.equal(nodes.trackLock.hidden,false,'desligar gangorra bloqueia pista');
+assert.equal(power().live.esp,false,'gangorra ESP32 desligada apaga LEDs');
+assert.equal(power().live.driver,true,'suporte de AA mantém ponte H alimentada pela outra gangorra');
+assert.equal(power().live.motors.ml,false,'motor desliga quando ESP32 perde alimentação');
+assert.equal(nodes.trackLock.hidden,false,'gangorra desligada bloqueia a pista');
+assert.equal(nodes.openTrackBtn.hidden,true,'sem alimentação completa a pista não é oferecida');
 click('saveBtn');assert.equal(saved().parts.length,9,'persistir projeto');
 assert(html.includes('id="zoomSlider"')&&html.includes('id="zoomTool"'),'lupa e barra de zoom presentes');
 assert(!js.includes("title.textContent=partName(p.id)"),'sem nome flutuante no topo das peças');
