@@ -104,3 +104,22 @@ body{overflow:hidden;background:#091e39;font-family:'DM Sans',Arial,sans-serif}
  .antenna-beacon,.shine,.light-dust{animation:none!important;transition:none!important}
  .robot-blink{opacity:0!important}
 }
+
+/* v11: composição fiel, redimensionada apenas no centro. As bordas da
+   própria oficina são prolongadas sem desfoque CSS (nem barras verticais). */
+.welcome::before{display:none!important;filter:none!important}
+.welcome-backdrop{
+ position:absolute;inset:0;z-index:1;display:none;width:100%;height:100%;
+ pointer-events:none;
+}
+.welcome.composed .welcome-backdrop{display:block}
+.welcome.composed .welcome-art{visibility:hidden}
+.welcome-art{
+ -webkit-mask-image:none!important;mask-image:none!important;
+ max-width:none!important;max-height:none!important;
+}
+.main-action .cta-track{opacity:0!important}
+.main-action .cta-energy rect{vector-effect:non-scaling-stroke}
+@media(max-width:900px){
+ .welcome-art{-webkit-mask-image:none!important;mask-image:none!important}
+}
