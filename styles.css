@@ -1025,3 +1025,78 @@
  .catalog-card img{height:69px!important;max-width:79px!important}
 }
 @media(prefers-reduced-motion:reduce){.library,.drawer-handle{transition:none!important}}
+
+
+/* v28 — simulação visual progressiva: os efeitos dependem dos fios e das chaves */
+.part[data-kind="batteryPack"] .part-image{
+ inset:0!important;height:100%!important;padding:8px!important;
+ display:flex;align-items:center;justify-content:center
+}
+.part[data-kind="batteryPack"] .part-image img{
+ display:block;width:100%;height:100%;max-height:100%;
+ object-fit:contain;mix-blend-mode:normal;filter:drop-shadow(0 3px 4px #21374425)
+}
+.part[data-kind="batteryPack"] .pin-btn{
+ min-height:40px!important;min-width:40px!important;width:40px!important;height:40px!important;
+ background:transparent!important;border:0!important;box-shadow:none!important
+}
+.part[data-kind="batteryPack"] .pin-btn .pin-dot{background:transparent!important;border:none!important;box-shadow:none!important}
+.part[data-kind="esp"] .board-led{
+ position:absolute;z-index:5;pointer-events:none;
+ width:13px;height:13px;border-radius:50%;opacity:0;
+ border:2px solid #e6f5f4a8;box-shadow:none;
+ transition:opacity .2s ease;transform:translate(-50%,-50%)
+}
+.part[data-kind="esp"] .board-led-red{
+ left:44%;top:67%;background:#ff514d
+}
+.part[data-kind="esp"] .board-led-blue{
+ left:49%;top:67%;background:#55baff
+}
+.part[data-kind="esp"].powered .board-led-red{
+ opacity:1;box-shadow:0 0 7px 2px #ff3935,0 0 16px 4px #ff433b6e
+}
+.part[data-kind="esp"].powered .board-led-blue{
+ opacity:1;animation:wifi-activity-blink 1.4s ease-in-out infinite;
+ box-shadow:0 0 7px 2px #338cff,0 0 16px 4px #338cff6e
+}
+@keyframes wifi-activity-blink{
+ 0%,18%,63%,100%{opacity:.2;box-shadow:0 0 3px 1px #328cdd5b}
+ 26%,48%,78%{opacity:1;box-shadow:0 0 8px 3px #278cfb,0 0 20px 6px #2b8bff70}
+}
+.part .powered-tag{
+ position:absolute;top:5px;right:4px;z-index:9;pointer-events:none;
+ padding:4px 6px;border-radius:6px;
+ background:#124e62;color:#fff;box-shadow:0 1px 5px #182c3340;
+ font-size:9px;font-weight:800;letter-spacing:.03em;white-space:nowrap;
+ opacity:0;transition:opacity .18s ease
+}
+.part.powered .powered-tag{opacity:1}
+.part[data-kind="motor"].running .motor-shaft-spinner{
+ opacity:1!important;animation-play-state:running!important;
+ filter:drop-shadow(0 0 4px #6fbdf6)
+}
+.part[data-kind="motor"].running .part-image img{
+ filter:drop-shadow(0 4px 7px #48acd544)!important
+}
+.live-circuit-status{
+ margin:0;padding:9px 11px;border:1px solid #b6dcd1;
+ border-radius:7px;background:#eaf8f2;color:#216454;
+ font-size:12px;line-height:1.45;font-weight:700
+}
+.live-circuit-status[hidden]{display:none!important}
+.toolbar .track-entry-btn{
+ display:inline-flex!important;justify-content:center!important;align-items:center!important;
+ white-space:nowrap;border:1px solid #b5cfd0!important;
+ background:#f3faf8!important;color:#23685d!important;
+ min-height:43px!important;border-radius:6px!important
+}
+.toolbar .track-entry-btn[hidden]{display:none!important}
+@media(max-width:620px){
+ .toolbar .track-entry-btn{min-width:39px!important;padding:6px!important}
+ .toolbar .track-entry-btn span{display:none}
+}
+@media(prefers-reduced-motion:reduce){
+ .part[data-kind="esp"].powered .board-led-blue{animation-duration:3s}
+ .part[data-kind="motor"].running .motor-shaft-spinner{animation-duration:1.2s!important}
+}
