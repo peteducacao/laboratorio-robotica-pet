@@ -126,7 +126,7 @@ const win={addEventListener(type,fn){(listeners['window:'+type]??=[]).push(fn)}}
 const store={getItem(k){return storage[k]??null},setItem(k,v){storage[k]=v}};
 const fake={window:win,document:doc,localStorage:store,requestAnimationFrame(){},ResizeObserver:class{observe(){}},console,Math,JSON,confirm(){return true},setTimeout(){return 1},clearTimeout(){}};
 // Hook somente para testes: inspeciona curvas pendentes, sem expor dados na aplicação.
-const instrumented=js.replace(/\}\)\(\);\s*$/, "window.__pendingForTests=()=>({startPort:state.startPort,bends:state.bends.map(p=>({...p})),preview:previewPoint&&{...previewPoint},points:pendingWirePoints(),active:wireTipActive,magnet:pendingMagnet&&{...pendingMagnet},alignment:pendingAlignment&&{...pendingAlignment},panX,panY,zoom});window.__magnetForTests=(x,y)=>magneticPendingPoint(x,y,state.startPort);window.__portForTests=id=>getPortPos(id);window.__powerForTests=()=>({live:powerStatus(),running:simulationRunning});window.__wireForTests=()=>({points:state.wires.map(w=>wirePoints(w)),align:wireAlignment,selected:state.selectedWire,zoom});window.__drawWireForTests=drawWires;})();");
+const instrumented=js.replace(/\}\)\(\);\s*$/, "window.__pendingForTests=()=>({startPort:state.startPort,bends:state.bends.map(p=>({...p})),preview:previewPoint&&{...previewPoint},points:pendingWirePoints(),active:wireTipActive,alignment:pendingAlignment&&{...pendingAlignment},panX,panY,zoom});window.__alignForTests=(x,y)=>visualPendingAlignment(x,y,state.startPort);window.__portForTests=id=>getPortPos(id);window.__powerForTests=()=>({live:powerStatus(),running:simulationRunning});window.__wireForTests=()=>({points:state.wires.map(w=>wirePoints(w)),align:wireAlignment,selected:state.selectedWire,zoom});window.__drawWireForTests=drawWires;})();");
 assert.notEqual(instrumented,js,'instrumentação do teste de histórico aplicada');
 vm.runInNewContext(instrumented,fake);
 const pending=()=>win.__pendingForTests();
@@ -308,20 +308,18 @@ assert.equal(pending().bends.length,0,'movimentar o cursor não registra curva a
 const nearPin=win.__portForTests('s1.IN'),camM=pending();
 const pinScreenX=nearPin.x*camM.zoom+camM.panX;
 const pinScreenY=nearPin.y*camM.zoom+camM.panY;
-const magnetY=pinScreenY+95; // Alinha coordenada X sem encostar fisicamente no borne.
-const latched=win.__magnetForTests(pinScreenX+7,magnetY);
-assert(latched.point&&pending().alignment,'alinhamento a pino próximo exibe guia');
-const axis=pending().magnet?.axis;
-assert(axis==='x'||axis==='y','imã captura uma coordenada de alinhamento');
-const latchedAxis=pending().magnet,axisCoordinate=axis==='x'?'x':'y';
-const rawAxis=axis==='x'?pinScreenX:magnetY;
-const hold=win.__magnetForTests(axis==='x'?pinScreenX+18:pinScreenX,
- axis==='y'?magnetY+18:magnetY);
-assert.equal(hold.point[axisCoordinate],latched.point[axisCoordinate],'imã mantém coordenada mesmo com pequeno desvio');
-const force=win.__magnetForTests(axis==='x'?pinScreenX+60:pinScreenX,
- axis==='y'?magnetY+60:magnetY);
-assert.notEqual(force.point[axisCoordinate],latched.point[axisCoordinate],'forçar para além da resistência solta o imã');
-
+const testY=pinScreenY+95; // Fora do contato elétrico real.
+const alignment=win.__alignForTests(pinScreenX+3,testY);
+assert(alignment&&alignment.axis==='x','guia vertical aparece quando cursor alinha ao X do pino');
+const positionBeforeGuide=pending();
+send('pointermove','window',{pointerId:9877,clientX:pinScreenX+3,clientY:testY});
+assert.equal(pending().alignment.axis,'x','alinhamento mostra guia azul sem afetar fio');
+assert(Math.abs(pending().preview.x-(pinScreenX+3-positionBeforeGuide.panX)/positionBeforeGuide.zoom)<.001,
+ 'a guia não empurra o jumper para posição do pino');
+send('pointermove','window',{pointerId:9877,clientX:pinScreenX+40,clientY:testY});
+assert.equal(pending().alignment,null,'guia some quando cursor sai do alinhamento');
+assert(Math.abs(pending().preview.x-(pinScreenX+40-positionBeforeGuide.panX)/positionBeforeGuide.zoom)<.001,
+ 'jumper segue o cursor sem travar fora da guia');
 
 // Enquanto um jumper está em andamento, Espaço + arrastar move a câmera.
 send('keydown','doc',{key:' ',preventDefault(){},target:{closest(){return null}}});
@@ -335,24 +333,17 @@ send('keyup','doc',{key:' '});
 tapCanvas(205,180);
 assert.equal(pending().bends.length,1,'primeiro clique fixa um único vértice escolhido');
 const frozenFirst=JSON.stringify(pending().bends);
-assert.equal(pending().points.length,2,'após clique a ponta termina no vértice fixado');
-assert.equal(pending().active,false,'clique na bancada solta a ponta do cursor');
-send('pointermove','window',{pointerId:9878,clientX:750,clientY:540});
-assert.equal(pending().preview,null,'ponta parada não acompanha mouse');
-assert.equal(JSON.stringify(pending().bends),frozenFirst,'mover o mouse não altera trecho já fixado');
-assert.equal(pending().points.length,2,'fio permanece exatamente até a ponta fixada');
-const parkedTip=pending().points.at(-1),cam=pending();
-const tipX=parkedTip.x*cam.zoom+cam.panX,tipY=parkedTip.y*cam.zoom+cam.panY;
-tapCanvas(tipX,tipY);
-assert.equal(pending().active,true,'clicar novamente na ponta retoma o traçado');
+assert.equal(pending().points.length,2,'após clique fica uma curva no lugar escolhido');
+assert.equal(pending().active,true,'após o clique a ponta continua ativa, sem precisar retomá-la');
 send('pointermove','window',{pointerId:9878,clientX:750,clientY:540});
 const freeTipA=pending().preview;
-assert(freeTipA&&Number.isFinite(freeTipA.x),'ponta reativada segue o mouse');
-assert.equal(pending().points.length,3,'retomar ponta cria só um trecho livre');
+assert(freeTipA&&Number.isFinite(freeTipA.x),'jumper continua acompanhando mouse após clicar');
+assert.equal(JSON.stringify(pending().bends),frozenFirst,'mover o cursor não muda as curvas já fixadas');
+assert.equal(pending().points.length,3,'um novo trecho reto acompanha o mouse após a curva');
 send('pointermove','window',{pointerId:9878,clientX:695,clientY:510});
-assert.notEqual(JSON.stringify(pending().preview),JSON.stringify(freeTipA),'ponta reativada muda junto do cursor');
+assert.notEqual(JSON.stringify(pending().preview),JSON.stringify(freeTipA),'movimento posterior altera só a ponta livre');
 tapCanvas(295,240);
-assert.equal(pending().active,false,'segundo clique na bancada fixa novamente a ponta');
+assert.equal(pending().active,true,'segundo clique fixa nova curva mas ponta continua seguindo');
 assert.equal(saved().wires.length,0,'curvas devem ficar pendentes até o segundo pino');
 assert.equal(pending().startPort,'b1.POS','primeiro terminal continua selecionado');
 assert.equal(pending().bends.length,2,'cada clique da bancada fixa só uma curva');
@@ -391,6 +382,28 @@ click('redoBtn');assert.equal(pending().bends.length,firstTrailLength,'botão Re
 assert(shortcut('y'),'Ctrl+Y refaz a conexão');
 assert.equal(saved().wires.length,1,'refazer restabelece o fio conectado');
 assert.equal(pending().startPort,null,'ao refazer conexão não resta fio solto');
+// Escolher uma nova cor depois de selecionar um jumper altera esse fio conectado.
+send('click','wireSvg',{stopPropagation(){},target:{closest(sel){
+ return sel==='[data-wire-index]'?{dataset:{wireIndex:'0'}}:null;
+}}});
+assert.equal(wiresView().selected,0,'clicar no jumper conectado deixa-o selecionado');
+assert.equal(nodes.wireColorSelect.value,saved().wires[0].color,'seletor reflete cor real do jumper selecionado');
+send('change','wireColorSelect',{target:{value:'#316fc0'}});
+assert.equal(saved().wires[0].color,'#316fc0','trocar cor superior recolore o jumper já conectado');
+assert.equal(saved().wires.length,1,'recolorir preserva conexão e comprimento');
+assert.equal(nodes.wireColorPreview.style.background,'#316fc0','amostra da cor acompanha fio recolorido');
+click('undoBtn');
+assert.equal(saved().wires[0].color,'#ed654d','Ctrl+Z restaura a cor anterior do jumper');
+click('redoBtn');
+assert.equal(saved().wires[0].color,'#316fc0','Ctrl+Y refaz a nova cor');
+send('click','inspectorBody',{target:{closest(sel){
+ return sel==='[data-select-wire]'?{dataset:{selectWire:'0'}}:null;
+}}});
+send('click','colorPalette',{target:{closest(sel){
+ return sel==='[data-color]'?{dataset:{color:'#ed654d'}}:null;
+}}});
+assert.equal(saved().wires[0].color,'#ed654d','paleta também recolore fio selecionado');
+
 
 assert.equal(saved().wires[0].via.length,2,'guardar exatamente os dois vértices escolhidos');
 const bends=saved().wires[0].via;
@@ -465,9 +478,10 @@ assert(js.includes("setAttribute('r','10')")===false,'encaixe da ponta do jumper
 assert(js.includes("// O traço termina no furo do pino; nenhum círculo"),'jumper termina no terminal sem círculo extra');
 assert(js.includes("const pts=pendingWirePoints();"),'prévia usa pontos sem dobras automáticas');
 assert(js.includes("state.bends.push(tip);"),'somente clique fixa novo vértice');
-assert(js.includes('function resumePendingTip('),'clique sobre ponta fixada retoma edição');
-assert(js.includes('function magneticPendingPoint('),'pino próximo cria atração magnética');
-assert(css.includes('.wire-frozen-tip')&&css.includes('.wire-tip-square'),'marcador pequeno identifica ponta fixada');
+assert(!js.includes('function resumePendingTip('),'não exige retomar ponta após o clique');
+assert(!js.includes('function magneticPendingPoint('),'nenhuma atração magnética altera fio');
+assert(js.includes('function visualPendingAlignment('),'guia visual detecta pinos próximos');
+assert(css.includes('.wire-pending-guide'),'barra azul fina tem estilo próprio');
 assert(js.includes('function nearestPort('),'pino atrai fio quando ponta está próxima');
 assert(js.includes('function wireAt('),'seleciona fio por toque no caminho');
 assert(html.includes('answer-key.js?v='),'gabarito carrega na bancada');
