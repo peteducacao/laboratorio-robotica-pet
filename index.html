@@ -7,8 +7,8 @@
 <title>TinkerPET • Laboratório de Robótica</title>
 <link rel="icon" href="assets/logo-pet.svg" type="image/svg+xml">
 <link rel="preload" as="image" href="assets/welcome-approved.avif" type="image/avif">
-<link rel="stylesheet" href="home.css?v=3">
-<script src="home.js?v=3" defer></script>
+<link rel="stylesheet" href="home.css?v=4">
+<script src="home.js?v=4" defer></script>
 </head>
 <body>
 <main class="welcome" aria-label="Bem-vindo ao TinkerPET">
@@ -18,6 +18,22 @@
  <span id="floatingMotor" class="floating-crop motor" aria-hidden="true"></span>
  <span id="floatingSensor" class="floating-crop sensor" aria-hidden="true"></span>
  <span id="robotBlink" class="robot-blink" aria-hidden="true"></span>
- <a id="enterProjects" class="main-action" href="projects.html" aria-label="Abrir Meus circuitos">Meus circuitos</a>
+ <span id="antennaGlow" class="antenna-beacon" aria-hidden="true"></span>
+ <div class="ambient-particles" aria-hidden="true">
+  <span class="light-dust gold"></span><span class="light-dust cyan"></span>
+  <span class="light-dust cyan"></span><span class="light-dust gold"></span>
+  <span class="light-dust gold"></span><span class="light-dust cyan"></span>
+ </div>
+ <a id="enterProjects" class="main-action" href="projects.html" aria-label="Abrir Meus circuitos">
+  <svg class="cta-energy" viewBox="0 0 526 126" preserveAspectRatio="none" aria-hidden="true">
+   <rect class="cta-track" x="3" y="3" width="520" height="120" rx="29" pathLength="1000"/>
+   <rect class="cta-trace cyan" x="3" y="3" width="520" height="120" rx="29" pathLength="1000"/>
+   <rect class="cta-trace gold" x="3" y="3" width="520" height="120" rx="29" pathLength="1000"/>
+  </svg>
+  <span class="side-energy side-left" aria-hidden="true"></span>
+  <span class="side-energy side-right" aria-hidden="true"></span>
+  <span class="cta-arrow-halo" aria-hidden="true"></span>
+  <span class="visually-hidden">Meus circuitos</span>
+ </a>
 </main>
 </body></html>
