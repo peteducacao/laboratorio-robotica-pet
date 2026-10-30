@@ -622,7 +622,9 @@ function moveWireBend(g,clientX,clientY){
   x:Math.round(target.x+(clientX-g.startX)/zoom),
   y:Math.round(target.y+(clientY-g.startY)/zoom)
  };
- wire.via=via;wire.manual=true;wireAlignment=null;
+ wire.via=via;wire.manual=true;
+ // O vértice em edição recebe a mesma indicação do jumper ainda livre.
+ wireAlignment=closestComponentGuide(via[g.vertex-1]);
  requestDraw();
 }
 function moveWireSegment(g,clientX,clientY){
@@ -634,24 +636,8 @@ function moveWireSegment(g,clientX,clientY){
  if(length<3)return;
  const nx=-axisY/length,ny=axisX/length;
  const deltaX=(clientX-g.startX)/zoom,deltaY=(clientY-g.startY)/zoom;
- let shift=deltaX*nx+deltaY*ny;
- let aligned=false,guideValue=null;
+ const shift=deltaX*nx+deltaY*ny;
  const horizontal=Math.abs(axisY)<length*.15,vertical=Math.abs(axisX)<length*.15;
- if(horizontal||vertical){
-  const base=horizontal?a.y:a.x,perp=horizontal?ny:nx;
-  const value=base+shift*perp;
-  const candidates=[];
-  const midpoint={x:(a.x+b.x)/2,y:(a.y+b.y)/2};
-  for(const part of state.parts)for(const [pin] of byKind[part.kind].pins){
-   const pos=getPortPos(part.id+'.'+pin);if(!pos)continue;
-   const along=Math.abs(horizontal?pos.x-midpoint.x:pos.y-midpoint.y)*zoom;
-   if(along<=250)candidates.push(horizontal?pos.y:pos.x);
-  }
-  // Indicador visual momentâneo; não atrai nem muda a posição do fio.
-  const match=candidates.sort((left,right)=>Math.abs(left-value)-Math.abs(right-value))
-   .find(candidate=>Math.abs(candidate-value)<=6/zoom);
-  if(match!==undefined){guideValue=match;aligned=true;}
- }
  const movedA={x:Math.round(a.x+nx*shift),y:Math.round(a.y+ny*shift)};
  const movedB={x:Math.round(b.x+nx*shift),y:Math.round(b.y+ny*shift)};
  // A guia não movimenta o segmento, apenas sinaliza o alinhamento.
@@ -668,7 +654,12 @@ function moveWireSegment(g,clientX,clientY){
  }
  wire.via=clean.slice(1,-1);
  wire.manual=true;
- wireAlignment=aligned?{horizontal,value:guideValue,start:movedA,end:movedB}:null;
+ // O traço acompanha também o arraste de trechos já conectados.
+ wireAlignment=horizontal
+  ?closestComponentGuide({x:(movedA.x+movedB.x)/2,y:movedA.y},'y',[movedA.x,movedB.x])
+  :vertical
+   ?closestComponentGuide({x:movedA.x,y:(movedA.y+movedB.y)/2},'x',[movedA.y,movedB.y])
+   :closestComponentGuide(movedB);
  requestDraw();
 }
 function wireRoutePoints(start,via,end,startPort,endPort){
@@ -765,43 +756,9 @@ function drawWires(){
    }
   }
  }
- if(wireAlignment){
-  // Também no ajuste de fio conectado: guia fina, sem atrair o segmento.
-  const g=wireAlignment,guide=document.createElementNS(ns,'line');
-  const box=Q('viewport').getBoundingClientRect();
-  const upper=worldXY(box.left,box.top);
-  const lower=worldXY(box.right,box.bottom);
-  guide.setAttribute('class','wire-pending-guide');
-  if(g.horizontal){
-   guide.setAttribute('x1',String(upper.x));guide.setAttribute('x2',String(lower.x));
-   guide.setAttribute('y1',String(g.value));guide.setAttribute('y2',String(g.value));
-  }else{
-   guide.setAttribute('y1',String(upper.y));guide.setAttribute('y2',String(lower.y));
-   guide.setAttribute('x1',String(g.value));guide.setAttribute('x2',String(g.value));
-  }
-  guide.style.strokeWidth=(1.5/zoom)+'px';
-  svg.append(guide);
- }
- if(state.startPort&&pendingAlignment&&previewPoint){
-  // Régua fina como no Tinkercad: indica eixo coincidente sem alterar fio.
-  const match=pendingAlignment,box=Q('viewport').getBoundingClientRect();
-  const top=worldXY(box.left,box.top),bottom=worldXY(box.right,box.bottom);
-  const guide=document.createElementNS(ns,'line');
-  guide.setAttribute('class','wire-pending-guide');
-  if(match.axis==='x'){
-   guide.setAttribute('x1',String(match.pin.x));
-   guide.setAttribute('x2',String(match.pin.x));
-   guide.setAttribute('y1',String(Math.min(top.y,match.pin.y,previewPoint.y)));
-   guide.setAttribute('y2',String(Math.max(match.pin.y,previewPoint.y)));
-  }else{
-   guide.setAttribute('y1',String(match.pin.y));
-   guide.setAttribute('y2',String(match.pin.y));
-   guide.setAttribute('x1',String(Math.min(top.x,match.pin.x,previewPoint.x)));
-   guide.setAttribute('x2',String(Math.max(match.pin.x,previewPoint.x)));
-  }
-  guide.style.strokeWidth=(1.5/zoom)+'px';
-  svg.append(guide);
- }
+ // Tanto a edição do jumper quanto o seu traçado usam a mesma geometria.
+ drawComponentGuide(svg,wireAlignment,ns);
+ if(state.startPort&&previewPoint)drawComponentGuide(svg,pendingAlignment,ns);
  if(state.startPort){
   const start=getPortPos(state.startPort);
   if(!start)return;
@@ -927,24 +884,60 @@ function nearestPort(clientX,clientY,exclude){
 }
 // Guia exclusivamente visual. Detecta coordenada de pino próxima ao cursor
 // sem alterar a posição real da ponta nem aplicar qualquer resistência.
-function visualPendingAlignment(clientX,clientY,exclude){
- const box=Q('viewport').getBoundingClientRect();
- const raw=worldXY(clientX,clientY),screen=p=>({x:box.left+panX+p.x*zoom,y:box.top+panY+p.y*zoom});
- const threshold=6;let best=null,bestScore=Infinity;
- for(const part of state.parts)for(const [pin] of byKind[part.kind].pins){
-  const id=part.id+'.'+pin;if(id===exclude)continue;
-  const pos=getPortPos(id);if(!pos)continue;
-  const sp=screen(pos),dx=Math.abs(sp.x-clientX),dy=Math.abs(sp.y-clientY);
-  for(const axis of ['x','y']){
-   const deviation=axis==='x'?dx:dy;
-   const along=axis==='x'?dy:dx;
-   const score=deviation+along*.015;
-   if(deviation<=threshold&&along<=280&&score<bestScore){
-    bestScore=score;best={axis,point:raw,pin:pos,port:id};
+// Guias de alinhamento pelo CORPO do componente, não apenas pelos pinos.
+// Uma ponta alinhada a qualquer altura/largura da peça recebe uma régua sutil.
+// A guia não move o fio, não cria curvas e não altera a montagem salva.
+function closestComponentGuide(point,axisFilter=null,span=null){
+ const tolerance=10/zoom,maxGap=520/zoom;
+ let best=null,bestScore=Infinity;
+ for(const part of state.parts){
+  const layout=partLayout(part);
+  const left=part.x,right=part.x+layout.w,top=part.y,bottom=part.y+layout.h;
+  for(const axis of (axisFilter?[axisFilter]:['y','x'])){
+   const isHorizontal=axis==='y';
+   const cross= isHorizontal?point.y:point.x;
+   const low=isHorizontal?top:left,high=isHorizontal?bottom:right;
+   // Permite alinhamento ao longo de TODA a silhueta, inclusive entre os pinos.
+   if(cross<low-tolerance||cross>high+tolerance)continue;
+   const value=Math.max(low,Math.min(high,cross));
+   const begin=isHorizontal?left:top,end=isHorizontal?right:bottom;
+   const fromSpan=span?Math.min(...span):isHorizontal?point.x:point.y;
+   const toSpan=span?Math.max(...span):fromSpan;
+   let fromAlong,toAlong;
+   if(toSpan<begin){fromAlong=begin;toAlong=toSpan;}
+   else if(fromSpan>end){fromAlong=end;toAlong=fromSpan;}
+   else if(span){
+    // Segmento atravessa a projeção da peça: usa a ponta fora da carcaça.
+    const leftOut=begin-fromSpan,rightOut=toSpan-end;
+    if(leftOut>0&&leftOut>=rightOut){fromAlong=begin;toAlong=fromSpan;}
+    else if(rightOut>0){fromAlong=end;toAlong=toSpan;}
+    else continue;
+   }else continue; // Não desenhar sobre um componente sob o cursor.
+   const gap=Math.abs(fromAlong-toAlong),deviation=Math.abs(cross-value);
+   if(gap<3/zoom||gap>maxGap)continue;
+   const score=gap*zoom+deviation*zoom*2;
+   if(score<bestScore){
+    bestScore=score;
+    best=isHorizontal
+      ?{axis:'y',from:{x:fromAlong,y:value},to:{x:toAlong,y:value},partId:part.id}
+      :{axis:'x',from:{x:value,y:fromAlong},to:{x:value,y:toAlong},partId:part.id};
    }
   }
  }
  return best;
+}
+function drawComponentGuide(svg,guide,ns){
+ if(!guide)return;
+ const line=document.createElementNS(ns,'line');
+ line.setAttribute('class','wire-pending-guide component-alignment-guide');
+ line.setAttribute('x1',String(guide.from.x));line.setAttribute('y1',String(guide.from.y));
+ line.setAttribute('x2',String(guide.to.x));line.setAttribute('y2',String(guide.to.y));
+ line.style.strokeWidth=(1.5/zoom)+'px';
+ line.setAttribute('aria-hidden','true');
+ svg.append(line);
+}
+function visualPendingAlignment(clientX,clientY){
+ return closestComponentGuide(worldXY(clientX,clientY));
 }
 function setPendingPreview(e){
  if(!wireTipActive||!state.startPort)return;
@@ -1180,7 +1173,7 @@ function handleDoubleTap(e,g){
 function pointerUp(e){
  if(e.type==='pointercancel'&&gesture?.pointer===e.pointerId){
   gesture=null;Q('dragGhost').hidden=true;Q('viewport').classList.remove('component-drop-ready');
-  highlightDropZone(false);trackingTouchEnd(e);return;
+  wireAlignment=null;highlightDropZone(false);trackingTouchEnd(e);requestDraw();return;
  }
  if(trackingTouchEnd(e)||pinch)return;
  if(!gesture||e.pointerId!==gesture.pointer)return;
@@ -1201,6 +1194,7 @@ function pointerUp(e){
    }else if(!overSidebar)message('Solte o componente na área de criação.',true);
   }
  }else if(g.type==='wire-bend'){
+  wireAlignment=null;
   if(g.moved){persist();renderInspector();message('Ângulo da curva ajustado. Outros pontos e conexões mantidos.',true);}
   requestDraw();
  }else if(g.type==='wire-segment'){
