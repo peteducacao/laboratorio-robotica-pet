@@ -84,5 +84,4 @@
 <rect x="462" y="128" width="299" height="181" rx="12" fill="url(#steel)" stroke="#687988" stroke-width="5"/>
 <path d="M485 138H737" stroke="#fff" stroke-width="4" opacity=".75"/>
 <path d="M780 136 h28 v18 h-17 v18 h17 v17 h-17 v17 h17 v17 h-17 v17 h17 v16 h-17 v17 h17" fill="none" stroke="#ad9d72" stroke-width="7" stroke-linejoin="miter" opacity=".55"/>
-<text x="602" y="290" fill="#85929b" font-family="Arial,sans-serif" font-size="15" text-anchor="middle">2.4 GHz</text>
 </svg>
