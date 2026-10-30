@@ -22,3 +22,27 @@ jobs:
         run: |
           node --check studio-preview.js
           node tests/studio-preview.cjs
+
+  preview-browser:
+    name: Visual do Studio (Chromium)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Baixar código
+        uses: actions/checkout@v4
+      - name: Configurar Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Preparar navegador de teste
+        run: |
+          npm install --no-save --ignore-scripts playwright@1.56.1
+          npx playwright install --with-deps chromium
+      - name: Conferir layout em telas de celular e computador
+        run: node tests/preview-browser.mjs
+      - name: Guardar capturas para revisão de design
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: studio-preview-capturas
+          path: test-results/*.png
+          if-no-files-found: ignore
