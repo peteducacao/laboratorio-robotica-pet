@@ -798,6 +798,8 @@ function renderWireHandles(){
   if(!point){button.hidden=true;continue;}
   button.hidden=false;
   const size=Math.min(160,Math.max(15,24/zoom));
+  // Depois de soltar a bolinha, ela deixa o pino de destino clicável.
+  button.classList.toggle('awaiting-target',!!active&&(!gesture||gesture.type!=='wire-end'));
   button.style.left=point.x+'px';button.style.top=point.y+'px';
   button.style.width=size+'px';button.style.height=size+'px';
   button.style.borderWidth=Math.max(1,2.5/zoom)+'px';
@@ -821,7 +823,7 @@ function moveReconnect(clientX,clientY){
  if(clientX<box.left||clientX>box.right||clientY<box.top||clientY>box.bottom)return;
  const wire=state.wires[reconnectPending.index];if(!wire){cancelReconnect();return;}
  const fixed=wire[reconnectPending.end==='a'?'b':'a'];
- const pin=nearestPort(clientX,clientY,fixed);
+ const pin=nearestPort(clientX,clientY,fixed,32);
  reconnectPending.snapPort=pin;
  reconnectPending.point=pin?getPortPos(pin):worldXY(clientX,clientY);
  pendingAlignment=pin?null:visualPendingAlignment(clientX,clientY);
@@ -1044,8 +1046,8 @@ function worldXY(clientX,clientY){
  return {x:(clientX-r.left-panX)/zoom,y:(clientY-r.top-panY)/zoom};
 }
 // Encaixe magnético em pixels da tela, mesmo com zoom.
-function nearestPort(clientX,clientY,exclude){
- const r=Q('viewport').getBoundingClientRect();let distance=19*19,chosen=null;
+function nearestPort(clientX,clientY,exclude,threshold=19){
+ const r=Q('viewport').getBoundingClientRect();let distance=threshold*threshold,chosen=null;
  for(const part of state.parts)for(const [pin] of byKind[part.kind].pins){
   const id=part.id+'.'+pin;if(id===exclude)continue;
   const point=getPortPos(id);if(!point)continue;
@@ -1361,12 +1363,11 @@ function pointerUp(e){
  highlightDropZone(false);
  if(handleDoubleTap(e,g))return;
  if(g.type==='wire-end'){
-  suppressPortClickUntil=Date.now()+380;
   if(g.moved){
    const wire=state.wires[reconnectPending?.index];
    const fixed=wire?.[reconnectPending.end==='a'?'b':'a'];
-   const destination=fixed?nearestPort(e.clientX,e.clientY,fixed):null;
-   if(destination)finishReconnect(destination);
+   const destination=fixed?nearestPort(e.clientX,e.clientY,fixed,32):null;
+   if(destination){suppressPortClickUntil=Date.now()+380;finishReconnect(destination);}
    else message('Ponta solta: clique no novo pino para reconectar. Esc cancela.',true);
   }else message('Ponta selecionada. Clique em outro pino ou arraste a bolinha até ele. Esc cancela.',true);
   requestDraw();
