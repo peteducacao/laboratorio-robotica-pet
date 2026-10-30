@@ -30,6 +30,11 @@ assert(js.includes('function toggleMotorView('),'alternar vistas do motor');
 
 assert(html.includes('id="preview-ml"')&&html.includes('id="preview-mr"'),'painel dos dois motores');
 assert(css.includes('.demo-running')&&css.includes('motor-shaft-spinner'),'prévia do eixo animado');
+assert(css.includes('board-led-red')&&css.includes('board-led-blue'),'LED vermelho e Wi-Fi azul representados no ESP32');
+assert(css.includes('part[data-kind="motor"].running .motor-shaft-spinner'),'motor DC tem rotação quando alimentado');
+assert(css.includes('part .powered-tag'),'regulador e driver recebem status sem LED inventado');
+assert(html.includes('id="openTrackBtn"')&&html.includes('id="liveCircuitStatus"'),'pista e aviso de alimentação separados');
+
 for(const file of ['mx1508-desenhado.svg','lm2596-desenhado.svg','bateria-9v-desenhada.svg','gangorra-desenhada.svg']){
  const svg=fs.readFileSync(path.join(base,'assets',file),'utf8');
  assert(svg.includes('<svg')&&svg.includes('</svg>'),file+' presente');
@@ -373,6 +378,21 @@ send('input','partsLayer',{target:{id:'voltageInput',value:'5'}});
 assert.equal(power().live.esp,true,'ESP32 liga após LM2596 em 5V e fios corretos');
 assert.equal(power().live.motors.ml,true,'motor esquerdo gira com alimentações e sinais corretos');
 assert.equal(power().live.motors.mr,true,'motor direito gira com alimentações e sinais corretos');
+// Se um cabo do motor esquerdo for retirado, só ele para; o direito continua.
+connect('drv.OUT1','ml.A');
+assert.equal(power().live.motors.ml,false,'motor esquerdo para se sua saída desconectar');
+assert.equal(power().live.motors.mr,true,'motor direito continua funcionando de forma independente');
+connect('drv.OUT1','ml.A');
+assert.equal(power().live.motors.ml,true,'restaurar jumper retoma motor esquerdo');
+// Sem terra comum, os motores param, embora as fontes permaneçam energizadas.
+connect('esp.GND','drv.GND');
+assert.equal(power().live.driver,true,'ponte continua com seis AA');
+assert.equal(power().live.esp,true,'ESP32 continua alimentado');
+assert.equal(power().live.motors.ml,false,'sem GND comum motor esquerdo para');
+assert.equal(power().live.motors.mr,false,'sem GND comum motor direito para');
+connect('esp.GND','drv.GND');
+assert.equal(power().live.motors.ml,true,'restaurar terra comum recupera motor esquerdo');
+assert.equal(power().live.motors.mr,true,'restaurar terra comum recupera motor direito');
 assert.equal(nodes.playPanel.hidden,true,'Iniciar simulação mantém bancada visível para observar LEDs e motores');
 assert.equal(nodes.trackLock.hidden,true,'a pista fica desbloqueada quando os 17 fios estão corretos');
 assert.equal(nodes.openTrackBtn.hidden,false,'Abrir pista aparece apenas quando montagem está pronta');
