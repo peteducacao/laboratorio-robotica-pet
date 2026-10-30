@@ -40,7 +40,7 @@ const COLORS=['#ed654d','#316fc0','#1f434c','#32a47b','#e5a13d','#a378c8'];
 let state={parts:[],wires:[],voltage:4,switches:{s1:false,s2:false},wireColor:COLORS[0],selected:null,startPort:null,inspector:'parts',completed:false,bends:[],selectedWire:null};
 let zoom=1,panX=0,panY=0,gesture=null,history=[],future=[],toastTimer=0,previewPoint=null,previewSnapPort=null,drawPending=false;
 let spaceHeld=false;
-let recentTap=null,doubleTapRestore=null;
+let recentTap=null,doubleTapRestore=null,copiedKind=null;
 const activeTouches=new Map();
 let pinch=null;
 let gestureBlockedUntil=0;
@@ -284,9 +284,9 @@ function addPart(kind,x,y){
  message(partName(id)+' adicionado. Arraste pela imagem; toque nos contatos para ligar os fios.',true);
  return true;
 }
-function removePart(id){
+function removePart(id,skipSnapshot=false){
  if(!exists(id))return;
- snapshot();
+ if(!skipSnapshot)snapshot();
  state.parts=state.parts.filter(p=>p.id!==id);
  state.wires=state.wires.filter(w=>w.a.split('.')[0]!==id&&w.b.split('.')[0]!==id);
  if(state.selected===id)state.selected=null;
@@ -294,6 +294,31 @@ function removePart(id){
  if(state.startPort&&state.startPort.split('.')[0]===id){state.startPort=null;state.bends=[];previewPoint=null;}
  if(id==='s1'||id==='s2')state.switches[id]=false;
  state.completed=false;refresh();message(partName(id)+' removido.');
+}
+function copySelection(){
+ const p=byPart(state.selected);
+ if(!p){message('Selecione um componente para copiar.',true);return;}
+ copiedKind=p.kind;Q('pasteBtn').disabled=false;
+ message(partName(p.id)+' copiado. Use Colar ou Ctrl+V.',true);
+}
+function pasteSelection(){
+ if(!copiedKind){message('Copie uma peça antes de colar.',true);return;}
+ if(!byKind[copiedKind].ids.some(id=>!exists(id))){
+  message('Limite de peças desse tipo atingido.',true);return;
+ }
+ centerPart(copiedKind);
+ message('Componente colado. Posicione-o na bancada.',true);
+}
+function removeZoneAt(x,y){
+ const target=document.elementFromPoint?.(x,y);
+ if(target?.closest?.('#library,#drawerHandle'))return true;
+ const library=Q('library'),box=library.getBoundingClientRect?.();
+ const visible=library.classList.contains('open')||window.matchMedia?.('(min-width:1191px)')?.matches;
+ return !!(visible&&box&&x>=box.left&&x<=box.right&&y>=box.top&&y<=box.bottom);
+}
+function highlightDropZone(active){
+ Q('library').classList.toggle('drop-target',!!active);
+ Q('drawerHandle').classList.toggle('drop-target',!!active);
 }
 function cancelPendingWire(){
  if(!state.startPort)return;
@@ -687,6 +712,7 @@ function pointerMove(e){
     p.y=Math.round(g.partY+dy/zoom);
     const el=[...Q('partsLayer').querySelectorAll('.part')].find(node=>node.dataset.part===p.id);
     if(el){el.style.left=p.x+'px';el.style.top=p.y+'px';}
+    highlightDropZone(removeZoneAt(e.clientX,e.clientY));
     requestDraw();
    }
   }else if(g.type==='wire'){
@@ -741,6 +767,7 @@ function pointerUp(e){
  if(trackingTouchEnd(e)||pinch)return;
  if(!gesture||e.pointerId!==gesture.pointer)return;
  const g=gesture;gesture=null;Q('dragGhost').hidden=true;
+ highlightDropZone(false);
  if(handleDoubleTap(e,g))return;
  if(g.type==='catalog'){
   if(!g.moved){centerPart(g.kind);libraryOpen(false);}
@@ -772,7 +799,10 @@ function pointerUp(e){
    connect(g.port);
   }
  }else if(g.type==='move'){
-  if(g.moved)persist();
+  if(g.moved&&removeZoneAt(e.clientX,e.clientY)){
+   removePart(g.partId,true);
+   message('Peça devolvida ao catálogo e removida da montagem.',true);
+  }else if(g.moved)persist();
   else{state.selected=g.partId;renderParts();renderInspector();}
  }else if(g.type==='bend'){
   const pin=nearestPort(e.clientX,e.clientY,state.startPort);
@@ -939,6 +969,9 @@ function bind(){
  Q('wireColorSelect').addEventListener('change',e=>{if(COLORS.includes(e.target.value)){state.wireColor=e.target.value;renderColors();requestDraw();persist();}});
  Q('undoBtn').addEventListener('click',undo);
  Q('redoBtn').addEventListener('click',redo);
+ Q('copyBtn').addEventListener('click',copySelection);
+ Q('pasteBtn').disabled=true;
+ Q('pasteBtn').addEventListener('click',pasteSelection);
  Q('deleteBtn').addEventListener('click',()=>{
   if(Number.isInteger(state.selectedWire)&&state.wires[state.selectedWire]){removeWire(state.selectedWire);return;}
   const selected=byPart(state.selected);
@@ -983,6 +1016,8 @@ function bind(){
   const editable=e.target?.closest?.('input,textarea,select,[contenteditable="true"]');
   if((e.ctrlKey||e.metaKey)&&!e.altKey&&!editable){
    const key=e.key.toLowerCase();
+   if(key==='c'){e.preventDefault();copySelection();return;}
+   if(key==='v'){e.preventDefault();pasteSelection();return;}
    if(key==='z'||key==='y'){
     e.preventDefault();
     if(key==='y'||e.shiftKey)redo();else undo();
