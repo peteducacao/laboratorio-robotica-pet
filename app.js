@@ -36,9 +36,11 @@ const DIRECT_CONNECTIONS=[
 ];
 // Gabarito canônico com interruptores, também usado pelos testes existentes.
 const EXPECTED=[
- ['b1.POS','s1.IN'],['s1.OUT','lm.INP'],
- ['b2.POS','s2.IN'],['s2.OUT','drv.VCC'],
- ...COMMON_CONNECTIONS
+ ['b1.POS','s1.IN'],['s1.OUT','lm.INP'],['b1.NEG','lm.INN'],
+ ['lm.OUTP','esp.VIN'],['lm.OUTN','esp.GND'],
+ ['b2.POS','s2.IN'],['s2.OUT','drv.VCC'],['b2.NEG','drv.GND'],['esp.GND','drv.GND'],
+ ['esp.D27','drv.IN1'],['esp.D26','drv.IN2'],['esp.D32','drv.IN3'],['esp.D18','drv.IN4'],
+ ['drv.OUT1','ml.A'],['drv.OUT2','ml.B'],['drv.OUT3','mr.A'],['drv.OUT4','mr.B']
 ];
 const SWITCHED_CONNECTIONS=EXPECTED;
 const OPTIONAL=[['b1.NEG','s1.LEDG'],['b2.NEG','s2.LEDG']];
