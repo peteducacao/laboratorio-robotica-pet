@@ -666,41 +666,25 @@ function drawWires(){
   label.setAttribute('y',String(g.horizontal?g.value-15:Math.min(g.start.y,g.end.y)-15));
   label.textContent='ALINHADO';svg.append(label);
  }
- if(state.startPort&&wireTipActive&&pendingAlignment&&previewPoint){
-  const align=pendingAlignment,point=previewPoint,guide=document.createElementNS(ns,'line');
-  guide.setAttribute('class','wire-alignment-guide');
-  const pin=align.pin||point,extend=32/Math.max(zoom,.1);
-  if(align.axis==='x'||align.axis==='both'){
-   guide.setAttribute('x1',String(point.x));guide.setAttribute('x2',String(point.x));
-   guide.setAttribute('y1',String(Math.min(point.y,pin.y)-extend));
-   guide.setAttribute('y2',String(Math.max(point.y,pin.y)+extend));
+ if(state.startPort&&pendingAlignment&&previewPoint){
+  // Régua fina como no Tinkercad: indica eixo coincidente sem alterar fio.
+  const match=pendingAlignment,box=Q('viewport').getBoundingClientRect();
+  const top=worldXY(box.left,box.top),bottom=worldXY(box.right,box.bottom);
+  const guide=document.createElementNS(ns,'line');
+  guide.setAttribute('class','wire-pending-guide');
+  if(match.axis==='x'){
+   guide.setAttribute('x1',String(match.pin.x));
+   guide.setAttribute('x2',String(match.pin.x));
+   guide.setAttribute('y1',String(Math.min(top.y,match.pin.y,previewPoint.y)));
+   guide.setAttribute('y2',String(Math.max(match.pin.y,previewPoint.y)));
   }else{
-   guide.setAttribute('y1',String(point.y));guide.setAttribute('y2',String(point.y));
-   guide.setAttribute('x1',String(Math.min(point.x,pin.x)-extend));
-   guide.setAttribute('x2',String(Math.max(point.x,pin.x)+extend));
+   guide.setAttribute('y1',String(match.pin.y));
+   guide.setAttribute('y2',String(match.pin.y));
+   guide.setAttribute('x1',String(Math.min(top.x,match.pin.x,previewPoint.x)));
+   guide.setAttribute('x2',String(Math.max(match.pin.x,previewPoint.x)));
   }
+  guide.style.strokeWidth=(1.5/zoom)+'px';
   svg.append(guide);
-  const label=document.createElementNS(ns,'text');
-  label.setAttribute('class','wire-alignment-label');
-  label.setAttribute('x',String(point.x+12/zoom));
-  label.setAttribute('y',String(point.y-12/zoom));
-  label.textContent='ALINHADO';svg.append(label);
- }
- if(state.startPort&&!wireTipActive&&state.bends.length){
-  const tip=lastWireTip(),size=Math.max(22,34/zoom);
-  const handle=document.createElementNS(ns,'rect');
-  handle.setAttribute('class','wire-frozen-tip');
-  handle.setAttribute('x',String(tip.x-size/2));handle.setAttribute('y',String(tip.y-size/2));
-  handle.setAttribute('width',String(size));handle.setAttribute('height',String(size));
-  handle.dataset.pendingTip='true';
-  handle.setAttribute('aria-label','Toque aqui para puxar novamente a ponta do jumper');
-  svg.append(handle);
-  const square=document.createElementNS(ns,'rect');
-  const visible=Math.max(7,10/zoom);
-  square.setAttribute('class','wire-tip-square');
-  square.setAttribute('x',String(tip.x-visible/2));square.setAttribute('y',String(tip.y-visible/2));
-  square.setAttribute('width',String(visible));square.setAttribute('height',String(visible));
-  svg.append(square);
  }
  if(state.startPort){
   const start=getPortPos(state.startPort);
@@ -1099,7 +1083,7 @@ function pointerUp(e){
   else{state.selected=g.partId;renderParts();renderInspector();}
  }else if(g.type==='bend'){
   const pin=nearestPort(e.clientX,e.clientY,state.startPort);
-  if(pin)connect(pin);else{const pos=magneticPendingPoint(e.clientX,e.clientY,state.startPort).point;addCorner(pos.x,pos.y);}
+  if(pin)connect(pin);else{const pos=worldXY(e.clientX,e.clientY);addCorner(pos.x,pos.y);}
  }else if(g.type==='pan'&&!g.moved&&!spaceHeld){
   const wire=wireAt(e.clientX,e.clientY);
   if(wire>=0)selectWire(wire);
