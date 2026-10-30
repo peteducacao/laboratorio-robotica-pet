@@ -627,7 +627,7 @@ function drawWires(){
    hit.setAttribute('class','wire-target');
    hit.setAttribute('stroke','transparent');
    hit.setAttribute('fill','none');
-   hit.setAttribute('stroke-width',String(Math.min(90,Math.max(22,20/zoom))));
+   hit.style.setProperty('--hit-width',Math.min(90,Math.max(22,20/zoom))+'px');
    hit.setAttribute('stroke-linecap','butt');
    hit.dataset.wireIndex=String(i);
    hit.dataset.wireSegment=String(seg);
@@ -840,6 +840,19 @@ function libraryOpen(open){
  Q('drawerHandle').setAttribute('aria-label',yes?'Fechar componentes':'Abrir componentes');
  Q('drawerHandle').classList.toggle('open',yes);
 }
+function beginWireDrag(e,index,segment){
+ const wire=state.wires[index];if(!wire||state.startPort)return false;
+ const original=wirePoints(wire);
+ if(segment<0||segment>=original.length-1)return false;
+ if(e.cancelable!==false)e.preventDefault();
+ state.selectedWire=index;state.selected=null;state.inspector='wires';
+ renderInspector();updateHistoryButtons();
+ gesture={type:'wire-segment',pointer:e.pointerId,wireIndex:index,segment,
+  original:original.map(p=>({...p})),startX:e.clientX,startY:e.clientY,
+  moved:false,saved:false};
+ wireAlignment=null;requestDraw();
+ return true;
+}
 function startPan(e){
  if(e.cancelable!==false)e.preventDefault();
  gesture={type:'pan',pointer:e.pointerId,startX:e.clientX,startY:e.clientY,x:panX,y:panY,moved:false};
@@ -867,7 +880,10 @@ function viewportDown(e){
  if(e.target.closest('.canvas-zoom-button,.canvas-zoom-panel,button,input'))return;
  if(spaceHeld||e.button===1){startPan(e);return;}
  if(e.target.closest('.part,.wire-target'))return;
- if(!state.startPort){const selected=wireAt(e.clientX,e.clientY);if(selected>=0){selectWire(selected);return;}}
+ if(!state.startPort){
+  const selected=segmentAt(e.clientX,e.clientY);
+  if(selected.index>=0&&beginWireDrag(e,selected.index,selected.segment))return;
+ }
  e.preventDefault();
  gesture={type:state.startPort?'bend':'pan',pointer:e.pointerId,startX:e.clientX,startY:e.clientY,x:panX,y:panY,moved:false};
 }
@@ -1203,17 +1219,9 @@ function bind(){
   if(e.button!==undefined&&e.button!==0)return;
   const path=e.target.closest?.('[data-wire-index]');
   if(!path)return;
-  const index=Number(path.dataset.wireIndex),wire=state.wires[index];
-  if(!wire||state.startPort)return;
-  const original=wirePoints(wire),seg=Number(path.dataset.wireSegment);
-  if(!Number.isInteger(seg)||seg<0||seg>=original.length-1)return;
-  if(e.cancelable!==false)e.preventDefault();
-  e.stopPropagation?.();
-  state.selectedWire=index;state.selected=null;state.inspector='wires';
-  renderInspector();updateHistoryButtons();
-  gesture={type:'wire-segment',pointer:e.pointerId,wireIndex:index,segment:seg,
-   original:original.map(p=>({...p})),startX:e.clientX,startY:e.clientY,moved:false,saved:false};
-  wireAlignment=null;requestDraw();
+  const index=Number(path.dataset.wireIndex),seg=Number(path.dataset.wireSegment);
+  if(!Number.isInteger(seg))return;
+  if(beginWireDrag(e,index,seg))e.stopPropagation?.();
  });
  Q('wireSvg').addEventListener('click',e=>{
    if(spaceHeld)return;
