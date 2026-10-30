@@ -1,5 +1,8 @@
 'use strict';
 (() => {
+// Visual preview uses a private localStorage copy. The normal site keeps
+// its original key and nothing in the preview can overwrite its circuit.
+const STORAGE_KEY=document.body?.classList?.contains('preview-studio')?'tinkerpet-studio-preview-v1':'tinkerpet-v2';
 const ROOT='https://raw.githubusercontent.com/gabrieljsantos/Fundamentos-de-Prototipagem-e-Fabrica--o-Digital/main/assets/images/componentes/';
 const TYPES=[
  {kind:'esp',name:'ESP32 DevKit V1',img:'assets/esp32-devkit-v1-30p.svg?v=29',ids:['esp'],pins:[["VIN","VIN"],["GND","GND"],["D13","D13"],["D12","D12"],["D14","D14"],["D27","D27"],["D26","D26"],["D25","D25"],["D33","D33"],["D32","D32"],["D35","D35"],["D34","D34"],["VN","VN"],["VP","VP"],["EN","EN"],["3V3","3V3"],["GND2","GND"],["D15","D15"],["D2","D2"],["D4","D4"],["RX2","RX2"],["TX2","TX2"],["D5","D5"],["D18","D18"],["D19","D19"],["D21","D21"],["RX0","RX0"],["TX0","TX0"],["D22","D22"],["D23","D23"]],info:'Placa de 30 pinos com USB à esquerda e nomes em cada contato. Os dois GND são equivalentes.',tip:'Neste carrinho: VIN recebe 5 V, GND comum, D27→IN1, D26→IN2, D32→IN3 e D18→IN4.'},
@@ -71,7 +74,13 @@ const exists=id=>state.parts.some(p=>p.id===id);
 const byPart=id=>state.parts.find(p=>p.id===id);
 function safeRestore(){
  try{
-  const s=JSON.parse(localStorage.getItem('tinkerpet-v2')||'null');
+  // Clone the existing circuit only once, for visual comparison.
+  // All subsequent edits made on the preview remain in its own storage key.
+  if(STORAGE_KEY!=='tinkerpet-v2'&&localStorage.getItem(STORAGE_KEY)===null){
+   const current=localStorage.getItem('tinkerpet-v2');
+   if(current)localStorage.setItem(STORAGE_KEY,current);
+  }
+  const s=JSON.parse(localStorage.getItem(STORAGE_KEY)||'null');
   if(!s||!Array.isArray(s.parts)||!Array.isArray(s.wires))return;
   const names=new Set();
   state.parts=s.parts.filter(p=>p&&byId[p.id]&&!names.has(p.id)&&names.add(p.id)&&Number.isFinite(p.x)&&Number.isFinite(p.y)).map(p=>({id:p.id,kind:byId[p.id].kind,x:p.x,y:p.y,view:byId[p.id].kind==='motor'&&p.view==='side'?'side':'front'}));
@@ -82,7 +91,7 @@ function safeRestore(){
  }catch(err){console.warn('Progresso indisponível',err);}
 }
 function persist(){
- try{localStorage.setItem('tinkerpet-v2',JSON.stringify({parts:state.parts,wires:state.wires,voltage:state.voltage,switches:state.switches,wireColor:state.wireColor}));Q('savedIndicator').textContent='● Salvo automaticamente';}catch(e){Q('savedIndicator').textContent='● Não salvo';}
+ try{localStorage.setItem(STORAGE_KEY,JSON.stringify({parts:state.parts,wires:state.wires,voltage:state.voltage,switches:state.switches,wireColor:state.wireColor}));Q('savedIndicator').textContent='● Salvo automaticamente';}catch(e){Q('savedIndicator').textContent='● Não salvo';}
 }
 // Cada curva e cada origem de jumper entram na linha do tempo de ações.
 function historyState(){return JSON.stringify({
