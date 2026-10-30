@@ -123,3 +123,9 @@ body{overflow:hidden;background:#091e39;font-family:'DM Sans',Arial,sans-serif}
 @media(max-width:900px){
  .welcome-art{-webkit-mask-image:none!important;mask-image:none!important}
 }
+
+/* v12 — Correção somente de telas verticais. Sem faixas turvas no
+   topo e rodapé: os pixels naturais da arte permanecem proporcionais. */
+.welcome.mobile-clean::before{display:none!important}
+.welcome.mobile-clean .welcome-backdrop{display:block}
+.welcome.mobile-clean .welcome-art{visibility:hidden}
