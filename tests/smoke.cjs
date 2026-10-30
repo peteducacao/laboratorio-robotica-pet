@@ -457,6 +457,20 @@ assert.equal(power().running,false,'botão também interrompe simulação sem ci
 connect('esp.D27','drv.IN4');
 for(const [a,b] of edges)connect(a,a==='lm.OUTN'?'esp.GND2':b); // usar o segundo GND real e validar equivalência
 assert.equal(saved().wires.length,17,'criar 17 fios');
+const espBeforeMove=JSON.parse(JSON.stringify(saved().parts.find(p=>p.id==='esp')));
+const driverBeforeMove=JSON.parse(JSON.stringify(saved().parts.find(p=>p.id==='drv')));
+const espEdgeIndex=saved().wires.findIndex(w=>w.a==='esp.D27'&&w.b==='drv.IN1');
+assert(espEdgeIndex>=0,'cabo ESP32 → ponte H presente');
+const signalBefore=wiresView().points[espEdgeIndex];
+dragEsp(90,-45);
+const signalAfter=wiresView().points[espEdgeIndex];
+assert.notDeepEqual(signalAfter[0],signalBefore[0],'fio do GPIO acompanha o ESP32');
+assert.deepEqual(signalAfter.at(-1),signalBefore.at(-1),'terminal da ponte H fica no lugar');
+assert.deepEqual(saved().parts.find(p=>p.id==='drv'),driverBeforeMove,'a ponte H não se move junto do ESP32');
+click('undoBtn');
+assert.deepEqual(saved().parts.find(p=>p.id==='esp'),espBeforeMove,'desfazer recoloca ESP32 sem desconectar fio');
+assert.equal(saved().wires.length,17,'mover ESP32 e desfazer preserva todas as ligações');
+
 // LED extra é opcional: mantém a validação de 17 fios necessários.
 connect('b1.NEG','s1.LEDG');assert.equal(saved().wires.length,18,'terceiro pino aceita retorno para LED');
 toggle('s1');toggle('s2');
