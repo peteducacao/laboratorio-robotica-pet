@@ -12,7 +12,7 @@
                '#d34073','#a349a4','#657684','#465665',
                '#1767b2','#18a4bf','#8450c4','#c44b9f',
                '#107b50','#83af28','#ad5312','#eba12a'];
- const categories=[
+ const switchedCategories=[
   {id:'all',label:'Tudo',title:'Circuito completo',indices:[...Array(17).keys()]},
   {id:'esp',label:'Energia ESP32',title:'Bateria 1 → gangorra 1 → LM2596 → ESP32',indices:[0,1,2,3,4]},
   {id:'motorPower',label:'Energia motores',title:'6 pilhas AA → gangorra 2 → ponte H e GND comum',indices:[5,6,7,8]},
@@ -20,6 +20,16 @@
   {id:'motor1',label:'Motor 1',title:'Ponte H → motor DC 1 (verde)',indices:[13,14]},
   {id:'motor2',label:'Motor 2',title:'Ponte H → motor DC 2 (laranja)',indices:[15,16]}
  ];
+ const directCategories=[
+  {id:'all',label:'Tudo',title:'Circuito sem gangorras',indices:[...Array(15).keys()]},
+  {id:'esp',label:'Energia ESP32',title:'9 V direto → LM2596 → ESP32',indices:[0,2,3,4]},
+  {id:'motorPower',label:'Energia motores',title:'6 AA direto → MX1508 + GND comum',indices:[1,5,6]},
+  {id:'control',label:'Comandos',title:'GPIOs 27, 26, 32, 18 → IN1 a IN4',indices:[7,8,9,10]},
+  {id:'motor1',label:'Motor A',title:'MX1508 MOTOR A → motor 1',indices:[11,12]},
+  {id:'motor2',label:'Motor B',title:'MX1508 MOTOR B → motor 2',indices:[13,14]}
+ ];
+ let answerMode='switched',categories=switchedCategories,connections=data.connections,
+     components=data.components,groups=data.groups;
  let activeCategory='all',activeWire=-1;
  const byId=Object.fromEntries(data.components.map(p=>[p.id,p]));
  const btn=document.createElement('button');
@@ -37,8 +47,9 @@
  '<label for="answerPassword">Senha de acesso</label><input id="answerPassword" type="password" required autocomplete="off" placeholder="Digite a senha">'+
  '<span id="answerError" role="alert"></span><button type="submit" class="answer-main">Mostrar circuito pronto</button></form>'+
  '<div id="answerContent" class="answer-content" hidden>'+
- '<div class="answer-visual-top"><span class="answer-counter">✓ 9 peças • 17 fios conectados</span>'+
+ '<div class="answer-visual-top"><span id="answerCounter" class="answer-counter">✓ 9 peças • 17 fios conectados</span>'+
  '<div class="answer-zoom" aria-label="Ampliar gabarito"><button type="button" id="answerZoomOut" aria-label="Diminuir gabarito">−</button><b id="answerZoomLabel">100%</b><button type="button" id="answerZoomIn" aria-label="Ampliar gabarito">+</button><button type="button" id="answerZoomFit">Enquadrar</button></div></div>'+
+ '<div class="answer-mode-row" aria-label="Escolher alternativa"><button id="answerModeDirect" type="button">Sem gangorras · 7 peças / 15 fios</button><button id="answerModeSwitched" type="button">Com gangorras · 9 peças / 17 fios</button></div>'+
  '<div class="answer-filter-head"><b>Visualizar por circuito</b><span>Escolha uma etapa para esconder os demais fios</span></div>'+
  '<div id="answerFilters" class="answer-filters" aria-label="Filtros de ligação"></div>'+
  '<div id="answerWirePicker" class="answer-wire-picker" aria-label="Escolher um fio específico"></div>'+
@@ -48,9 +59,9 @@
  '<div class="answer-actions"><button id="answerPng" type="button" class="answer-main">↓ Baixar imagem PNG</button>'+
  '<button id="answerDownload" type="button" class="answer-alt">↓ Baixar SVG</button>'+
  '<button id="answerPrint" type="button" class="answer-alt">⎙ Salvar PDF / imprimir</button></div>'+
- '<details id="answerDetails" class="answer-details"><summary>Ver resumo das 17 conexões</summary>'+
+ '<details id="answerDetails" class="answer-details"><summary id="answerDetailsTitle">Ver resumo das 17 conexões</summary>'+
  '<div id="answerGroups"></div><div class="answer-info"><strong>Antes de testar</strong>'+
- '<p>GND e GND2 da ESP32 são equivalentes. Ajuste o LM2596 para <b>5,0 V</b> e ligue as duas gangorras.</p>'+
+ '<p>GND e GND2 do ESP32 são equivalentes. <b>O negativo da MX1508 liga ao negativo do suporte AA e também ao GND do ESP32.</b> A bateria 9 V alimenta IN+/IN− do LM2596; ajuste a saída para <b>5,0 V</b>. Se usar gangorras, ligue as duas.</p>'+
  '<p><b>Opcionais:</b> bateria 1 NEG → gangorra 1 LED− e suporte 6 AA NEG → gangorra 2 LED−.</p></div></details></div>';
  document.body.append(dialog);
  const el=id=>dialog.querySelector('#'+id);
@@ -58,9 +69,9 @@
  let magnification=1;
  let busy=false;
  const displayedPorts=i=>{
-  const w=data.connections[i];
-  // Na ligação de terra entre ESP32 e ponte H, usa o segundo GND físico.
-  return {a:i===8?'esp.GND2':w.a,b:w.b};
+  const w=connections[i];
+  // Usar qualquer GND do ESP32; o segundo GND facilita desenhar o gabarito.
+  return {a:((answerMode==='switched'&&i===8)||(answerMode==='direct'&&i===6))?'esp.GND2':w.a,b:w.b};
  };
  function portPosition(id){
   const parts=id.split('.'),part=byId[parts[0]],where=places[parts[0]];
@@ -70,6 +81,7 @@
  }
  function bendsFor(i,a,b){
   const x=a.x,y=a.y,X=b.x,Y=b.y;
+  if(answerMode==='direct')return [[x,Y]];
   // Corredores separados, incluindo gangorras e pares de cada motor.
   switch(i){
    case 0:return [[302,y],[302,Y]];
@@ -106,7 +118,7 @@
   pieces.push('<text x="81" y="146" fill="#347e82" font-family="Arial,sans-serif" font-weight="bold" font-size="20" letter-spacing="2">ALIMENTAÇÃO E CONTROLE</text>');
   pieces.push('<text x="81" y="678" fill="#347e82" font-family="Arial,sans-serif" font-weight="bold" font-size="20" letter-spacing="2">ALIMENTAÇÃO DOS MOTORES</text>');
   const contacts=[];
-  data.connections.forEach((w,i)=>{
+  connections.forEach((w,i)=>{
    if(wire>=0?i!==wire:category!=='all'&&!categories.find(c=>c.id===category).indices.includes(i))return;
    const ports=displayedPorts(i),start=portPosition(ports.a),end=portPosition(ports.b);
    if(!start||!end)return;
@@ -132,7 +144,7 @@
    contacts.push({x:start.x,y:start.y,color,label},{x:end.x,y:end.y,color,label});
   });
   // Mesmas imagens e pontos reais de conexão usados na bancada editável.
-  data.components.forEach(part=>{
+  components.forEach(part=>{
    const pos=places[part.id],href=embedded[part.image]||part.image;
    if(!pos)return;
    pieces.push('<image x="'+pos[0]+'" y="'+pos[1]+'" width="'+part.width+'" height="'+part.height+'" preserveAspectRatio="none" pointer-events="none" href="'+escaped(href)+'" xlink:href="'+escaped(href)+'"><title>'+escaped(part.name)+'</title></image>');
@@ -148,7 +160,7 @@
    pieces.push('<circle cx="'+c.x.toFixed(1)+'" cy="'+c.y.toFixed(1)+'" r="10" fill="'+c.color+'" stroke="#fff" stroke-width="3"><title>'+c.label+'</title></circle>');
   });
   // Nos dois interruptores, os três terminais ficam nomeados e alinhados aos pinos reais.
-  for(const id of ['s1','s2']){
+  for(const id of answerMode==='switched'?['s1','s2']:[]){
    for(const [pin,label] of [['IN','IN'],['OUT','OUT'],['LEDG','LED−']]){
     const p=portPosition(id+'.'+pin),x=p.x,y=p.y+38;
     const accent=pin==='LEDG'?'#607582':id==='s1'?'#bb453b':'#b23a75';
@@ -172,7 +184,7 @@
  const pinLabels={POS:'+',NEG:'−',INP:'IN+',INN:'IN−',OUTP:'OUT+',OUTN:'OUT−',VCC:'VCC',GND:'GND',GND2:'GND2',
                   A:'A',B:'B',IN:'IN',OUT:'OUT'};
  function wireName(i){
-  const w=data.connections[i],a=displayedPorts(i).a,b=w.b;
+  const w=connections[i],a=displayedPorts(i).a,b=w.b;
   const part=s=>{
    const parts=s.split('.');
    return (partLabels[parts[0]]||parts[0])+' '+(pinLabels[parts[1]]||parts[1]);
@@ -219,12 +231,12 @@
  }
  function renderSummary(){
   const root=el('answerGroups');root.replaceChildren();
-  for(const group of data.groups){
+  for(const group of groups){
    const section=document.createElement('section');section.className='answer-group';
    section.style.setProperty('--section-color',group.color);
    const heading=document.createElement('h3');heading.textContent=group.title;
    const p=document.createElement('p');p.textContent=group.info;section.append(heading,p);
-   for(const w of data.connections.slice(group.from,group.to)){
+   for(const w of connections.slice(group.from,group.to)){
     const row=document.createElement('div');row.className='answer-row';
     row.style.setProperty('--section-color',colors[w.n-1]);
     for(const [v,css] of [[String(w.n).padStart(2,'0'),'answer-n'],[w.from,'answer-port'],['→','answer-arrow'],[w.to,'answer-port']]){
@@ -280,7 +292,7 @@
  }
  // Um SVG independente precisa incorporar as imagens locais dos componentes.
  async function withEmbeddedAssets(){
-  const paths=[...new Set(data.components.map(p=>p.image))];
+  const paths=[...new Set(components.map(p=>p.image))];
   const entries=await Promise.all(paths.map(async path=>{
    const response=await fetch(path);
    if(!response.ok)throw new Error('Imagem indisponível: '+path);
