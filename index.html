@@ -7,9 +7,9 @@
 <link rel="icon" href="assets/logo-pet.svg" type="image/svg+xml">
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="styles.css?v=26">
+<link rel="stylesheet" href="styles.css?v=27">
 <link rel="stylesheet" href="answer-key.css?v=17">
-<script defer src="app.js?v=26"></script>
+<script defer src="app.js?v=27"></script>
 <script defer src="answer-key.js?v=17"></script>
 </head>
 <body>
@@ -30,16 +30,16 @@
         <button id="editTab" class="legacy-control" hidden>Montagem</button>
         <button id="playTab" class="legacy-control" hidden>Simulação</button>
         <div class="toolbar-group history-group" aria-label="Histórico">
-          <button id="undoBtn" class="control-btn" type="button" title="Desfazer (Ctrl+Z)" aria-label="Desfazer (Ctrl+Z)">↶</button>
-          <button id="redoBtn" class="control-btn" type="button" title="Refazer (Ctrl+Y)" aria-label="Refazer (Ctrl+Y)">↷</button>
+          <button id="undoBtn" class="control-btn" type="button" title="Desfazer (Ctrl+Z)" aria-label="Desfazer (Ctrl+Z)"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M8 7 3 12l5 5"/><path d="M4 12h9a6 6 0 0 1 6 6"/></svg></button>
+          <button id="redoBtn" class="control-btn" type="button" title="Refazer (Ctrl+Y)" aria-label="Refazer (Ctrl+Y)"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="m16 7 5 5-5 5"/><path d="M20 12h-9a6 6 0 0 0-6 6"/></svg></button>
         </div>
         <div class="toolbar-group edit-group" aria-label="Editar montagem">
-          <button id="copyBtn" class="control-btn" type="button" title="Copiar peça selecionada (Ctrl+C)" aria-label="Copiar peça">▣</button>
-          <button id="pasteBtn" class="control-btn" type="button" title="Colar peça copiada (Ctrl+V)" aria-label="Colar peça">▤</button>
+          <button id="copyBtn" class="control-btn" type="button" title="Copiar peça selecionada (Ctrl+C)" aria-label="Copiar peça"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="8" y="5" width="12" height="16" rx="1.6"/><path d="M5 18H4a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h11a1 1 0 0 1 1 1v1M11 9h6M11 12h6M11 15h4"/></svg></button>
+          <button id="pasteBtn" class="control-btn" type="button" title="Colar peça copiada (Ctrl+V)" aria-label="Colar peça"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="3.5" width="14" height="17" rx="1.7"/><path d="M9 8h6M9 11h6M9 14h3m3-1v7m-3-3 3 3 3-3"/></svg></button>
           <button id="deleteBtn" class="control-btn delete-btn" type="button" title="Excluir selecionado (Delete)" aria-label="Excluir peça ou fio selecionado"><svg viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7h16M9 4h6m-9 3 1 13h10l1-13M10 10v7m4-7v7"/></svg></button>
         </div>
         <button id="clearBtn" class="legacy-control" hidden>Limpar</button>
-        <label class="wire-color-picker" for="wireColorSelect" title="Cor do fio"><span class="wire-color-preview" id="wireColorPreview"></span><span class="wire-color-caption">Cor do fio</span>
+        <label class="wire-color-picker" for="wireColorSelect" title="Cor do fio"><span class="wire-color-caption">Cor do fio</span><span class="wire-color-preview" id="wireColorPreview"></span>
           <select id="wireColorSelect" aria-label="Cor do fio">
             <option value="#ed654d">Vermelho</option><option value="#316fc0">Azul</option><option value="#1f434c">Preto</option>
             <option value="#32a47b">Verde</option><option value="#e5a13d">Amarelo</option><option value="#a378c8">Roxo</option>
@@ -48,7 +48,7 @@
       </div>
       <div class="toolbar-right">
         <button id="hintBtn" class="control-btn hint-btn" type="button" title="Mostrar dica">💡 <span>Dica</span></button>
-        <button id="downloadBtn" class="control-btn download-btn" type="button" title="Baixar imagem da montagem que está na bancada">⇩ <span>Baixar montagem</span></button>
+        <button id="downloadBtn" class="control-btn download-btn" type="button" aria-label="Baixar montagem" title="Baixar imagem da montagem"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12m-5-5 5 5 5-5M4 17v3h16v-3"/></svg></button>
         <button id="checkBtn" class="simulation-toggle" type="button" aria-pressed="false"><span class="sim-icon" id="simIcon">▶</span> <span id="simLabel">Iniciar simulação</span></button>
       </div>
       <div class="toolbar-zoom toolbar-group" aria-label="Navegação da bancada">
