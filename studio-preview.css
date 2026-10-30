@@ -738,3 +738,15 @@
  fill:none!important;pointer-events:none!important;
  filter:drop-shadow(0 1px 2px #21475533)!important;
 }
+
+/* Studio v9 — o clique para fixar a curva atravessa o retângulo invisível da peça. */
+.preview-studio #viewport.is-wiring #partsLayer .part,
+.preview-studio #viewport.is-wiring #partsLayer .part-image,
+.preview-studio #viewport.is-wiring #partsLayer .part-head,
+.preview-studio #viewport.is-wiring #partsLayer .part-actions,
+.preview-studio #viewport.is-wiring #partsLayer .part-remove{pointer-events:none!important}
+.preview-studio #viewport.is-wiring #partsLayer .pin-btn{pointer-events:auto!important}
+.preview-studio #viewport .component-alignment-guide{
+ pointer-events:none!important;stroke:#72bce3!important;stroke-dasharray:none!important;
+ opacity:.88!important;filter:none!important
+}
