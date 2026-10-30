@@ -920,3 +920,61 @@
 .preview-studio #autoWireBtn.active{background:#ddf7ed!important;border-color:#2c9b94!important;color:#146e76!important}
 .preview-studio #autoWireBtn.active .auto-wire-state{color:#158975!important}
 .preview-studio #autoWireBtn:focus-visible{outline:2px solid #168e9d!important;outline-offset:2px!important}
+
+/* Studio v17: seleção em grupo sempre identificada + controles auto claramente rotulados. */
+.preview-studio .toolbar-group #selectionToolBtn,
+.preview-studio .toolbar-group #autoWireBtn{
+ display:inline-flex!important;align-items:center!important;justify-content:center!important;
+ flex:none!important;width:auto!important;min-width:0!important;max-width:none!important;
+ height:36px!important;min-height:36px!important;padding:0 10px!important;
+ gap:6px!important;border-radius:9px!important
+}
+.preview-studio .toolbar-group #autoWireBtn{
+ border:1px solid #bce1d7!important;background:#f1faf5!important;color:#28676a!important
+}
+.preview-studio .toolbar-group #autoWireBtn.active{
+ border-color:#269b91!important;background:#d9f6e9!important;color:#0b665d!important
+}
+.preview-studio #autoWireBtn .auto-wire-name,
+.preview-studio #selectionToolBtn .selection-btn-label{
+ display:inline!important;position:static!important;visibility:visible!important;
+ white-space:nowrap!important;font:750 11px/1.1 "DM Sans",Arial,sans-serif!important;
+ color:inherit!important;pointer-events:none!important
+}
+.preview-studio #autoWireBtn .auto-wire-state{
+ display:inline-flex!important;position:static!important;
+ font:800 10px/1 Arial,sans-serif!important;color:#647e82!important;pointer-events:none!important
+}
+.preview-studio #autoWireBtn.active .auto-wire-state{color:#10846d!important}
+.preview-studio #selectionToolBtn.active{background:#e0f7f0!important;color:#0e686b!important;border:1px solid #4fb2a6!important}
+.preview-studio #selectionToolBtn .selection-count:not([hidden]){
+ position:absolute!important;top:-7px!important;right:-7px!important;z-index:9!important;display:grid!important
+}
+.preview-studio #partsLayer .part.multi-selected{
+ outline:3px solid #0b91ac!important;outline-offset:5px!important;
+ border-radius:9px!important;box-shadow:0 0 0 8px #1cb8b12a!important
+}
+.preview-studio #partsLayer .part.multi-selected::after{
+ display:block!important;content:""!important;position:absolute!important;
+ inset:-3px!important;border:2px dashed #087f99!important;
+ border-radius:11px!important;pointer-events:none!important;z-index:30!important
+}
+.preview-studio #partsLayer .part .component-selection-badge{
+ display:grid!important;place-items:center!important;position:absolute!important;
+ z-index:31!important;right:-12px!important;top:-15px!important;
+ min-width:32px!important;height:28px!important;padding:3px 6px!important;
+ border:2px solid white!important;border-radius:999px!important;
+ background:#087f97!important;color:white!important;
+ font:850 12px/1 Arial,sans-serif!important;
+ box-shadow:0 3px 9px #173c4c55!important;pointer-events:none!important
+}
+@media(max-width:950px){
+ .preview-studio .toolbar-left{flex-wrap:wrap!important;row-gap:7px!important}
+ .preview-studio .toolbar-group.edit-group{flex-wrap:wrap!important;row-gap:4px!important}
+}
+@media(max-width:540px){
+ .preview-studio .toolbar-group #selectionToolBtn,
+ .preview-studio .toolbar-group #autoWireBtn{padding:0 7px!important;gap:4px!important;min-height:35px!important}
+ .preview-studio #autoWireBtn .auto-wire-name,
+ .preview-studio #selectionToolBtn .selection-btn-label{font-size:10px!important}
+}
