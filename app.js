@@ -12,7 +12,7 @@ const TYPES=[
  {kind:'buck',name:'Regulador LM2596',img:'assets/lm2596-desenhado.svg',ids:['lm'],pins:[['INP','IN +'],['INN','IN −'],['OUTP','OUT +'],['OUTN','OUT −']],info:'Regulador de tensão. Neste projeto, a saída para o ESP32 deve ser ajustada para 5,0 V.',tip:'Na montagem real, um responsável deve medir 5 V com multímetro antes de conectar VIN.'},
  {kind:'battery',name:'Bateria 9 V',img:'assets/bateria-9v-desenhada.svg',ids:['b1'],pins:[['POS','+'],['NEG','−']],info:'Uma bateria de 9 V alimenta o regulador LM2596 e o ESP32.',tip:'Bateria de 9 V → IN+ e IN− do LM2596; ajuste OUT+ / OUT− para 5 V antes de ligar VIN e GND do ESP32.'},
  {kind:'batteryPack',name:'Suporte de 6 pilhas AA',img:'assets/suporte-6-pilhas.svg',ids:['b2'],pins:[['POS','+'],['NEG','−']],info:'Porta-pilhas com seis células AA: 9 V nominais se forem seis pilhas de 1,5 V. Alimenta a ponte H, não o ESP32.',tip:'Com seis pilhas AA de 1,5 V, são 9 V nominais; seis NiMH de 1,2 V dão 7,2 V. Verifique a tensão nominal dos motores: 9 V pode exceder a especificação de motores de 3–6 V.'},
- {kind:'switch',name:'Chave gangorra',img:'assets/gangorra-desenhada.svg?v=2',ids:['s1','s2'],pins:[['IN','IN +'],['OUT','SAÍDA'],['LEDG','LED −']],info:'Gangorra iluminada de 3 terminais: IN recebe o positivo da fonte, OUT leva o positivo à carga e LED− é o retorno opcional da iluminação.',tip:'S1: 9 V + → IN; OUT → LM2596 IN+; LED− → 9 V − (opcional). S2: seis AA + → IN; OUT → MX1508 +; LED− → AA − (opcional). Os negativos principais ficam diretos. Confirme a pinagem física da sua gangorra.'},
+ {kind:'switch',name:'Chave gangorra',img:'assets/gangorra-desenhada.svg?v=3',ids:['s1','s2'],pins:[['IN','Contato 1'],['OUT','Contato 2'],['LEDG','LED − (indicador)']],info:'Gangorra iluminada de três terminais. Os contatos 1 e 2 abrem e fecham a alimentação: não têm polaridade para a função liga/desliga. O terceiro terminal é o retorno da luz LED, não um contato de comutação. A posição física dos terminais varia conforme o modelo.',tip:'Use os contatos 1 e 2 para interromper o positivo, em qualquer ordem. A chave do ESP32 pode ficar entre bateria e LM2596 ou entre saída 5 V e VIN. O terminal do LED é opcional e deve respeitar sua tensão nominal. Identifique os contatos de sua gangorra física com multímetro, sem energizar o circuito.'},
  {kind:'motor',name:'Motor DC',img:'assets/motor-frontal.svg',ids:['ml','mr'],pins:[['A','+'],['B','−']],info:'Motor DC com caixa de redução amarela, eixo lateral para a roda e dois contatos no motor metálico. Na simulação, a ponte H controla o sentido de giro.',tip:'Os dois contatos ficam ao lado do motor metálico, identificados em vermelho e preto. O eixo de saída fica na caixa amarela.'}
 ];
 const byKind=Object.fromEntries(TYPES.map(p=>[p.kind,p]));
@@ -146,10 +146,43 @@ function partLayout(p){return p.kind==='motor'&&p.view==='side'?PART_LAYOUTS.mot
 function message(msg,toast=false){Q('statusText').textContent=msg;if(toast){const el=Q('toast');el.textContent=msg;el.classList.add('show');clearTimeout(toastTimer);toastTimer=setTimeout(()=>el.classList.remove('show'),2600);}}
 function assemblyMode(){return exists('s1')||exists('s2')?'switched':'direct';}
 function requiredParts(){return assemblyMode()==='switched'?9:7;}
-function expectedConnections(){return assemblyMode()==='switched'?SWITCHED_CONNECTIONS:DIRECT_CONNECTIONS;}
+// Contatos 1/2 são intercambiáveis na função chave. O terceiro terminal
+// pertence ao LED: não é uma segunda saída de alimentação.
+const SWITCH_WIRINGS=(()=>{
+ const rest=COMMON_CONNECTIONS.filter(([a,b])=>a!=='lm.OUTP'||b!=='esp.VIN');
+ const options=[];
+ for(const stage of ['before-regulator','after-regulator']){
+  for(const one of ['IN','OUT']){
+   for(const two of ['IN','OUT']){
+    const oneOut=one==='IN'?'OUT':'IN';
+    const twoOut=two==='IN'?'OUT':'IN';
+    const s1edges=stage==='before-regulator'
+     ?[['b1.POS','s1.'+one],['s1.'+oneOut,'lm.INP']]
+     :[['lm.OUTP','s1.'+one],['s1.'+oneOut,'esp.VIN']];
+    const s2edges=[['b2.POS','s2.'+two],['s2.'+twoOut,'drv.VCC']];
+    const edges=[...(stage==='before-regulator'?[...s1edges,['lm.OUTP','esp.VIN']]:[['b1.POS','lm.INP'],...s1edges]),...s2edges,...rest];
+    options.push({stage,s1edges,s2edges,edges,keys:new Set(edges.map(([a,b])=>electricalKey(a,b)))});
+   }
+  }
+ }
+ return options;
+})();
+function selectedSwitchWiring(){
+ const wired=new Set(state.wires.map(w=>electricalKey(w.a,w.b)));
+ let best=SWITCH_WIRINGS[0],bestScore=-1;
+ for(const candidate of SWITCH_WIRINGS){
+  let score=0;
+  for(const edge of wired)if(candidate.keys.has(edge))score++;
+  if(score>bestScore){best=candidate;bestScore=score;}
+ }
+ return best;
+}
+function expectedConnections(){return assemblyMode()==='switched'?selectedSwitchWiring().edges:DIRECT_CONNECTIONS;}
 function acceptedConnectionSet(){
  const edges=[...expectedConnections()];
- if(assemblyMode()==='switched')edges.push(...OPTIONAL);
+ if(assemblyMode()==='switched')edges.push(...OPTIONAL,
+  ['lm.INN','s1.LEDG'],['lm.OUTN','s1.LEDG'],['esp.GND','s1.LEDG'],
+  ['drv.GND','s2.LEDG'],['esp.GND','s2.LEDG']);
  return new Set(edges.map(([a,b])=>electricalKey(a,b)));
 }
 function countGood(){
@@ -158,6 +191,11 @@ function countGood(){
 }
 function mistakes(){const allowed=acceptedConnectionSet();return state.wires.filter(w=>!allowed.has(electricalKey(w.a,w.b)));}
 function missing(){const wired=new Set(state.wires.map(w=>electricalKey(w.a,w.b)));return expectedConnections().filter(([a,b])=>!wired.has(electricalKey(a,b)));}
+function mistakeExplanation(w){
+ if([w.a,w.b].some(p=>p==='s1.LEDG'||p==='s2.LEDG'))
+  return 'O terceiro terminal LED− da gangorra é apenas da luz indicadora e não alimenta o ESP32. Use os contatos 1 e 2 para ligar ou desligar a alimentação.';
+ return 'Revise o fio '+portName(w.a)+' → '+portName(w.b)+'. A gangorra aceita contatos 1 e 2 invertidos, mas o circuito deve fechar o caminho do positivo.';
+}
 function ready(){
  const switched=assemblyMode()==='switched';
  return state.parts.length===requiredParts()&&missing().length===0&&mistakes().length===0&&
@@ -169,15 +207,19 @@ function powerStatus(){
  const has=(a,b)=>state.wires.some(w=>electricalKey(w.a,w.b)===electricalKey(a,b));
  const switched=assemblyMode()==='switched';
  // A chave comuta apenas o positivo de cada fonte. Todos os GND são comuns.
- const espPositive=switched
-  ?exists('s1')&&state.switches.s1&&has('b1.POS','s1.IN')&&has('s1.OUT','lm.INP')
-  :has('b1.POS','lm.INP');
+ const wiring=switched?selectedSwitchWiring():null;
+ const switchOneClosed=switched&&exists('s1')&&state.switches.s1
+  &&wiring.s1edges.every(([a,b])=>has(a,b));
+ const espPositive=switched?switchOneClosed:has('b1.POS','lm.INP');
  const motorPositive=switched
-  ?exists('s2')&&state.switches.s2&&has('b2.POS','s2.IN')&&has('s2.OUT','drv.VCC')
+  ?exists('s2')&&state.switches.s2&&wiring.s2edges.every(([a,b])=>has(a,b))
   :has('b2.POS','drv.VCC');
- const buck=exists('b1')&&exists('lm')&&espPositive&&has('b1.NEG','lm.INN');
- const esp=buck&&exists('esp')&&Math.abs(state.voltage-5)<.01
-  &&has('lm.OUTP','esp.VIN')&&has('lm.OUTN','esp.GND');
+ const inputPowered=switched&&wiring.stage==='after-regulator'
+  ?has('b1.POS','lm.INP'):espPositive;
+ const buck=exists('b1')&&exists('lm')&&inputPowered&&has('b1.NEG','lm.INN');
+ const esp=buck&&exists('esp')&&espPositive&&Math.abs(state.voltage-5)<.01
+  &&((switched&&wiring.stage==='after-regulator')||has('lm.OUTP','esp.VIN'))
+  &&has('lm.OUTN','esp.GND');
  const driver=exists('b2')&&exists('drv')&&motorPositive&&has('b2.NEG','drv.GND');
  const common=esp&&has('esp.GND','drv.GND');
  const motorA=driver&&common&&exists('ml')
@@ -402,7 +444,7 @@ function renderProgress(){
  const wiringComplete=!inAssembly&&!errors&&missing().length===0;
  const badge=Q('validationBadge');badge.className='validation-badge'+(wiringComplete?' ok':errors?' error':'');
  badge.textContent=wiringComplete?'✓ Montagem concluída ('+(switched?'com gangorras':'sem gangorras')+')':
-  errors?errors+' ligação(ões) fora do esquema':
+  errors?(mistakes().some(w=>[w.a,w.b].some(p=>p.endsWith('.LEDG')))?errors+' fio(s) a revisar · LED− não é saída':errors+' ligação(ões) a revisar'):
   inAssembly?'Continue adicionando componentes':'Faltam '+missing().length+' ligações';
  const missionTitle=Q('missionTitle'),missionText=Q('missionText');
  if(!partsDone){Q('stepNumber').textContent='01';missionTitle.textContent='Sua bancada está vazia';missionText.textContent='Monte a versão direta com 7 peças ou adicione duas gangorras para a versão com chaves (9 peças).';}
@@ -1246,7 +1288,7 @@ function hint(){
   if(next)message('Pegue no catálogo: '+next.name+'. Faltam '+(needed-state.parts.length)+' peça(s).',true);
   return;
  }
- const wrong=mistakes()[0];if(wrong){message('Revise este fio: '+portName(wrong.a)+' → '+portName(wrong.b)+'.',true);return;}
+ const wrong=mistakes()[0];if(wrong){message(mistakeExplanation(wrong),true);return;}
  const miss=missing()[0];if(miss){message('Experimente ligar: '+portName(miss[0])+' → '+portName(miss[1])+'.',true);return;}
  if(Math.abs(state.voltage-5)>.01){message('Ajuste a saída do LM2596 para 5,0 V.',true);return;}
  if(assemblyMode()==='switched'&&(!state.switches.s1||!state.switches.s2)){
@@ -1257,7 +1299,7 @@ function hint(){
 function check(){
  const needed=requiredParts();
  if(state.parts.length!==needed){message('O modo '+(assemblyMode()==='switched'?'com':'sem')+' gangorras exige '+needed+' peças. Ainda faltam '+(needed-state.parts.length)+'.',true);return false;}
- if(mistakes().length){message('Existem '+mistakes().length+' fio(s) fora do esquema escolhido.',true);state.inspector='wires';renderInspector();return false;}
+ if(mistakes().length){message(mistakeExplanation(mistakes()[0]),true);state.inspector='wires';renderInspector();return false;}
  const m=missing();if(m.length){message('Faltam '+m.length+' ligações. Dica: '+portName(m[0][0])+' → '+portName(m[0][1])+'.',true);return false;}
  if(Math.abs(state.voltage-5)>.01){message('Ajuste a saída do LM2596 para 5,0 V.',true);return false;}
  if(assemblyMode()==='switched'&&(!state.switches.s1||!state.switches.s2)){message('Ligue as duas gangorras.',true);return false;}
