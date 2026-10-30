@@ -1,0 +1,149 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#fcf8f2"><meta name="description" content="Laboratório de robótica do PET Educação. Arraste as peças, conecte fios e pilote seu carrinho ESP32.">
+<title>TinkerPET Studio — Prévia visual | PET Educação</title>
+<link rel="icon" href="assets/logo-pet.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css?v=36">
+<link rel="stylesheet" href="answer-key.css?v=37">
+<link rel="stylesheet" href="studio-preview.css?v=1">
+<script defer src="app.js?v=37"></script>
+<script defer src="answer-key.js?v=37"></script>
+<script defer src="studio-preview.js?v=1"></script>
+</head>
+<body class="preview-studio">
+<header class="app-header">
+  <div class="header-start">
+    <button id="menuBtn" class="icon-btn mobile-menu legacy-control" aria-label="Abrir lista de componentes" aria-expanded="false" hidden>☰</button>
+    <a href="./" class="brand"><img src="assets/logo-pet.svg" alt="PET Educação"><span><strong>Tinker<span>PET</span></strong><small>LABORATÓRIO DE ROBÓTICA · UFS</small></span></a>
+    <span class="header-tag preview-tag">STUDIO · PRÉVIA</span>
+  </div>
+  <div class="header-end">
+    <a class="preview-back-link" href="./" title="Voltar ao TinkerPET atual">← Visual atual</a>
+    <span class="autosave-indicator" id="savedIndicator" aria-live="polite">● Salvo automaticamente</span>
+    <button id="guideBtn" class="legacy-control" hidden>Ajuda</button>
+    <button id="saveBtn" class="legacy-control" hidden>Salvar</button>
+  </div>
+</header>
+<div class="studio-topbar">
+    <div class="toolbar" role="toolbar" aria-label="Ferramentas da bancada">
+      <div class="toolbar-left">
+        <button id="editTab" class="legacy-control" hidden>Montagem</button>
+        <button id="playTab" class="legacy-control" hidden>Simulação</button>
+        <div class="toolbar-group history-group" aria-label="Histórico">
+          <button id="undoBtn" class="control-btn" type="button" title="Desfazer (Ctrl+Z)" aria-label="Desfazer (Ctrl+Z)"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M8 7 3 12l5 5"/><path d="M4 12h9a6 6 0 0 1 6 6"/></svg></button>
+          <button id="redoBtn" class="control-btn" type="button" title="Refazer (Ctrl+Y)" aria-label="Refazer (Ctrl+Y)"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="m16 7 5 5-5 5"/><path d="M20 12h-9a6 6 0 0 0-6 6"/></svg></button>
+        </div>
+        <div class="toolbar-group edit-group" aria-label="Editar montagem">
+          <button id="copyBtn" class="control-btn" type="button" title="Copiar peça selecionada (Ctrl+C)" aria-label="Copiar peça"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="8" y="5" width="12" height="16" rx="1.6"/><path d="M5 18H4a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h11a1 1 0 0 1 1 1v1M11 9h6M11 12h6M11 15h4"/></svg></button>
+          <button id="pasteBtn" class="control-btn" type="button" title="Colar peça copiada (Ctrl+V)" aria-label="Colar peça"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="3.5" width="14" height="17" rx="1.7"/><path d="M9 8h6M9 11h6M9 14h3m3-1v7m-3-3 3 3 3-3"/></svg></button>
+          <button id="deleteBtn" class="control-btn delete-btn" type="button" title="Excluir selecionado (Delete)" aria-label="Excluir peça ou fio selecionado"><svg viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7h16M9 4h6m-9 3 1 13h10l1-13M10 10v7m4-7v7"/></svg></button>
+        </div>
+        <button id="clearBtn" class="legacy-control" hidden>Limpar</button>
+        <label class="wire-color-picker" for="wireColorSelect" title="Cor do fio"><span class="wire-color-caption">Cor do fio</span><span class="wire-color-preview" id="wireColorPreview"></span>
+          <select id="wireColorSelect" aria-label="Cor do fio">
+            <option value="#ed654d">Vermelho</option><option value="#316fc0">Azul</option><option value="#1f434c">Preto</option>
+            <option value="#32a47b">Verde</option><option value="#e5a13d">Amarelo</option><option value="#a378c8">Roxo</option>
+          </select>
+        </label>
+      </div>
+      <div class="toolbar-right">
+        <button type="button" id="previewInspectorOpen" class="control-btn preview-inspector-toggle" aria-label="Abrir propriedades e fios" title="Propriedades e fios" aria-controls="previewInspector" aria-expanded="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7h10M18 7h2M4 17h2M10 17h10"/><circle cx="16" cy="7" r="2"/><circle cx="8" cy="17" r="2"/></svg><span>Detalhes</span></button>
+        <button id="hintBtn" class="control-btn hint-btn" type="button" title="Mostrar dica">💡 <span>Dica</span></button>
+        <button id="downloadBtn" class="control-btn download-btn" type="button" aria-label="Baixar montagem" title="Baixar imagem da montagem"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12m-5-5 5 5 5-5M4 17v3h16v-3"/></svg></button>
+        <button id="openTrackBtn" class="control-btn track-entry-btn" type="button" hidden title="Abrir pista para pilotar com o circuito completo">🏁 <span>Abrir pista</span></button>
+        <button id="checkBtn" class="simulation-toggle" type="button" aria-pressed="false"><span class="sim-icon" id="simIcon">▶</span> <span id="simLabel">Iniciar simulação</span></button>
+      </div>
+      <div class="toolbar-zoom toolbar-group" aria-label="Navegação da bancada">
+        <button class="control-btn zoom-btn" id="zoomOut" aria-label="Diminuir zoom">−</button>
+        <span id="zoomLabel" class="zoom-label">100%</span>
+        <button class="control-btn zoom-btn" id="zoomIn" aria-label="Aumentar zoom">+</button>
+        <button class="control-btn zoom-btn" id="fitBtn" aria-label="Enquadrar montagem" title="Enquadrar montagem">⛶</button>
+      </div>
+    </div>
+</div>
+<div class="studio">
+  <aside class="library" id="library" aria-label="Catálogo de componentes">
+    <div class="library-head">
+      <div><small>PEÇAS DISPONÍVEIS</small><h2>Componentes</h2></div>
+      <button id="closeLibrary" class="icon-btn close-library" aria-label="Fechar componentes">×</button>
+    </div>
+    <div class="library-search"><span>⌕</span><input id="componentSearch" type="search" placeholder="Buscar componente..." aria-label="Buscar componente"></div>
+    <div class="library-intro">Toque para adicionar ou arraste para montar. Arraste uma peça da bancada de volta para cá para excluir.</div>
+    <div id="catalog" class="catalog" aria-label="Peças disponíveis"></div>
+    <div class="library-footer"><b>✳ DICA</b><p>Toque em um pino para começar o fio. Clique em pontos vazios da bancada para criar curvas; termine no outro pino.</p></div>
+  </aside>
+  <div id="sideBackdrop" class="side-backdrop" hidden></div>
+  <button type="button" id="drawerHandle" class="drawer-handle" aria-label="Abrir componentes" aria-controls="library" aria-expanded="false"><span id="drawerArrow">❯</span></button>
+  <main class="main-work">
+    <section class="workspace-region" id="buildPanel" aria-label="Bancada virtual">
+      <div class="mission-strip" aria-label="Resumo do progresso da montagem">
+        <span class="strip-number" id="stepNumber">01</span>
+        <div class="mission-copy"><strong id="missionTitle">Sua bancada está vazia</strong><span id="missionText">Escolha as peças no catálogo e coloque-as onde quiser.</span></div>
+        <div class="inspector-bottom"><div class="progress-head"><span id="progressCaption">Componentes</span><b id="connectionsCount">0 / 9 peças</b></div><div class="progress-track"><div id="progressBar"></div></div><div id="validationBadge" class="validation-badge">Aguardando montagem</div></div>
+      </div>
+      <div id="viewport" class="viewport" aria-label="Área infinita de montagem. Arraste as peças e mova a bancada para qualquer direção." tabindex="0">
+        <div id="world" class="world">
+          
+          <svg id="wireSvg" class="wire-svg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1900 1450" aria-label="Fios conectados"></svg>
+          <div id="partsLayer" class="parts-layer"></div>
+          <div id="wirePreview" class="wire-preview" hidden></div>
+        </div>
+        <div class="world-note" id="worldNote">
+          <button id="openComponentPicker" class="empty-add-button" type="button" aria-label="Abrir catálogo para adicionar componentes">+</button>
+          <strong>Adicione seu primeiro componente</strong>
+          <span>Toque no + para escolher uma peça.</span>
+        </div>
+        <button type="button" id="zoomTool" class="canvas-zoom-button" aria-label="Abrir lupa e controle de zoom" title="Lupa e zoom">⌕</button>
+        <div id="zoomPopover" class="canvas-zoom-panel" hidden>
+          <label for="zoomSlider">Zoom da bancada</label>
+          <div class="canvas-zoom-row"><span>−</span><input type="range" id="zoomSlider" min="4" max="240" step="1" value="83" aria-label="Ajustar zoom da bancada"/><span>+</span></div>
+          <div class="canvas-zoom-actions"><button type="button" id="zoomFitPart">Enquadrar peça</button><button type="button" id="zoomFitAll">Ver montagem</button></div>
+          <small>Bancada sem limites: arraste o fundo para mover. No computador, Espaço + arrastar e Ctrl + roda para zoom. No celular, arraste o fundo ou use dois dedos para mover e ampliar.</small>
+        </div>
+        <div class="canvas-corner" id="canvasHint">Jumper: o fio segue o cursor após cada clique. Arraste a ponta de uma curva para ajustar só aquele ângulo.</div>
+      </div>
+      <p id="liveCircuitStatus" class="live-circuit-status" role="status" aria-live="polite" hidden></p>
+      <div class="bottom-controls">
+        <div id="colorPalette" class="legacy-control" hidden></div>
+        <div class="status-box" role="status" aria-live="polite" id="statusText">Arraste as peças para a bancada e conecte os terminais.</div>
+      </div>
+    </section>
+    <section id="playPanel" class="play-panel" hidden aria-label="Simulação do carrinho">
+      <div class="play-head"><div><small>PISTA DE TESTES</small><h2>Hora de dirigir! 🏁</h2><p>Use as teclas <b>WASD</b>, setas ou os controles na tela.</p></div><button id="backBtn" class="header-btn" type="button">← Voltar à bancada</button></div>
+      <div class="play-grid">
+        <div class="track-shell"><canvas id="track" width="960" height="560" aria-label="Pista virtual com obstáculos e linha de chegada"></canvas><div id="trackLock" class="track-lock"><span>🔒</span><strong>Circuito não conferido</strong><p>Monte as peças, faça as ligações e inicie a simulação.</p><button id="goToBuild" class="run-btn" type="button">Voltar à bancada</button></div></div>
+        <div class="controls-box"><div class="drive-readout"><small>PAINEL DO CARRINHO</small><strong id="driveReadout">Aguardando montagem</strong><span id="driveDetails">Controles virtuais</span></div>
+          <div class="dpad" aria-label="Controle direcional">
+            <button class="up" data-drive="up" aria-label="Acelerar">▲</button><button class="left" data-drive="left" aria-label="Virar à esquerda">◀</button><button class="stop" data-drive="stop" aria-label="Parar">■</button><button class="right" data-drive="right" aria-label="Virar à direita">▶</button><button class="down" data-drive="down" aria-label="Marcha à ré">▼</button>
+          </div>
+          <div class="motor-dashboard" aria-label="Motores DC animados">
+  <div class="motor-dashboard-item" id="preview-ml">
+    <div class="motor-dashboard-picture"><img src="assets/motor-lateral.svg" alt="Motor DC esquerdo"><span class="motor-shaft-spinner" aria-hidden="true"></span></div>
+    <div><strong>Motor esquerdo</strong><small id="motor-status-ml">Parado</small></div>
+  </div>
+  <div class="motor-dashboard-item" id="preview-mr">
+    <div class="motor-dashboard-picture"><img src="assets/motor-lateral.svg" alt="Motor DC direito"><span class="motor-shaft-spinner" aria-hidden="true"></span></div>
+    <div><strong>Motor direito</strong><small id="motor-status-mr">Parado</small></div>
+  </div>
+</div>
+          <button class="tool-btn reset-drive" id="restartDrive" type="button">↺ Reiniciar pista</button>
+          <p>A pista é virtual. Nenhum comando é enviado ao carrinho físico.</p>
+        </div>
+      </div>
+    </section>
+  </main>
+  <aside class="inspector" id="previewInspector" aria-label="Informações e conexões" aria-hidden="true">
+    <div class="preview-inspector-head"><strong>Detalhes da montagem</strong><button id="previewInspectorClose" type="button" aria-label="Fechar detalhes">×</button></div>
+    <div class="inspector-tabs"><button id="inspectorPartsTab" class="active" type="button">Propriedades</button><button id="inspectorWiresTab" type="button">Fios <span id="wiresBadge">0</span></button></div>
+    <div id="inspectorBody" class="inspector-body"><div class="inspect-empty"><span>⌁</span><h3>Escolha uma peça</h3><p>Ao selecionar um componente, você verá seus pinos e sua função.</p></div></div>
+  </aside>
+</div>
+<div id="toast" class="toast" role="status" aria-live="polite"></div>
+<div id="dragGhost" class="drag-ghost" hidden></div>
+<dialog id="guideDialog"><div class="dialog-head"><h2>Como usar o TinkerPET</h2><button id="closeGuide" type="button" aria-label="Fechar">×</button></div><p><b>Agora a bancada começa vazia, igual a um laboratório de montagem.</b></p><ol><li>Abra a gaveta pela seta na lateral esquerda do meio da tela. Arraste uma peça do catálogo ou toque para adicioná-la.</li><li>Arraste cada componente pela imagem. A bancada não tem limites: solte as peças em qualquer posição, inclusive à esquerda ou acima da posição inicial.</li><li>Para navegar, arraste o fundo vazio ou mantenha Espaço pressionado enquanto arrasta no computador. Roda do mouse desloca a visão; Ctrl + roda amplia. No celular, dois dedos movimentam e dão zoom.</li><li>Toque no primeiro terminal para começar um fio contínuo. Toque em pontos vazios da bancada para fixar curvas. Toque no segundo terminal para finalizar. Também pode arrastar diretamente entre dois terminais. Cada clique na bancada fixa uma curva, mas a ponta do jumper continua seguindo o cursor. Quando alinhar a ponta com um pino próximo, aparece apenas uma linha azul fina, horizontal ou vertical; ela desaparece ao afastar o cursor, sem travar ou puxar o fio. Depois de conectar, arraste o meio de um trecho para movê-lo inteiro ou arraste o quadradinho da curva para ajustar somente aquele vértice. Selecione um fio conectado e use Cor do fio para alterar sua cor sem desconectá-lo. Ao arrastar uma peça, seus fios seguem os bornes e os demais componentes ficam parados. A cada curva fixada, Ctrl+Z (ou o botão Desfazer) volta um passo; Ctrl+Y (ou Refazer) recupera o passo. Funciona inclusive depois que o fio é conectado.</li><li><b>Escolha a montagem:</b> sem gangorras (7 peças, 15 fios) ou com duas gangorras (9 peças, 17 fios). O progresso reconhece automaticamente a alternativa pelas peças colocadas.</li><li><b>Sem gangorras:</b> bateria 9 V + → LM2596 IN+; bateria 9 V − → LM2596 IN−; LM2596 OUT+ → ESP32 VIN; LM2596 OUT− → ESP32 GND. Suporte com seis pilhas AA + → MX1508 +; AA − → MX1508 −. <b>MX1508 − → um GND do ESP32</b> também.</li><li><b>Com gangorras iluminadas de três terminais:</b> chave 1: bateria 9 V + → IN, OUT → LM2596 IN+, LED− opcional → bateria 9 V −. Chave 2: suporte AA + → IN, OUT → MX1508 +, LED− opcional → AA −. Os negativos que alimentam LM2596 e MX1508 são ligados diretamente, e MX1508 − também vai ao GND do ESP32. Confira a pinagem da sua chave física.</li><li><b>Comandos:</b> ESP32 D27 → MX1508 IN1; D26 → IN2; D32 → IN3; D18 → IN4. Conecte um motor ao par MOTOR A e o outro ao par MOTOR B. Ajuste a saída do LM2596 para 5,0 V; se usar gangorras, ligue ambas.</li><li>Iniciar simulação funciona mesmo com a montagem incompleta: os LEDs do ESP32 e os eixos dos motores só animam se a alimentação e os sinais estiverem conectados. O indicador azul representa Wi-Fi de forma didática; o suporte com seis pilhas AA alimenta a ponte H.</li><li>Com 15 ligações (sem gangorras) ou 17 ligações (com gangorras) corretas, toque em <b>Abrir pista</b> para pilotar o carrinho virtual.</li></ol><p>A simulação é educativa e não representa todas as leis elétricas ou a execução real do firmware ESP32. Ferramentas, soldas e medições físicas exigem supervisão.</p><button id="startGuide" class="run-btn">Vamos montar!</button></dialog>
+<footer>✳ TinkerPET Studio • Prévia visual do PET Educação — UFS <span>O simulador e os dados continuam os mesmos.</span></footer>
+</body></html>
