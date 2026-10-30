@@ -130,15 +130,17 @@
    Math.min(width/W,height/H)*.84;
   // Mobile tem um enquadramento independente. O desktop abaixo não muda.
   if(mobile&&!shortLandscape){
-   const top=Math.max(48,Math.min(height*.19,146));
-   const left=(width-W*scale)/2;
+   // Ajuste para tablets deitados sem cortar o botão.
+   const mobileScale=Math.min(scale,(height-38)/770);
+   const top=Math.max(10,Math.min(height*.19,146,height-733*mobileScale));
+   const left=(width-W*mobileScale)/2;
    Object.assign(art.style,{
-    left:left+'px',top:top+'px',width:W*scale+'px',height:H*scale+'px'
+    left:left+'px',top:top+'px',width:W*mobileScale+'px',height:H*mobileScale+'px'
    });
    const place=(el,x,y,w,h)=>{
     if(el)Object.assign(el.style,{
-     left:left+x*scale+'px',top:top+y*scale+'px',
-     width:w*scale+'px',height:h*scale+'px'
+     left:left+x*mobileScale+'px',top:top+y*mobileScale+'px',
+     width:w*mobileScale+'px',height:h*mobileScale+'px'
     });
    };
    place(button,585,591,604,130);
@@ -146,11 +148,11 @@
    place(beacon,883,143,94,94);
    particles.forEach((el,i)=>{
     const p=coords[i];if(p){
-     const n=Math.max(3,Math.round(p.n*scale));
+     const n=Math.max(3,Math.round(p.n*mobileScale));
      place(el,p.x,p.y,n,n);
     }
    });
-   const composed=renderMobileScene(width,height,scale,left,top);
+   const composed=renderMobileScene(width,height,mobileScale,left,top);
    scene.classList.toggle('composed',composed);
    scene.classList.toggle('mobile-clean',composed);
    return;
