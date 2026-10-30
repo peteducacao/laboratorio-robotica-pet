@@ -1328,3 +1328,37 @@
  .toolbar-zoom,.toolbar .toolbar-zoom{grid-area:zoom!important;justify-self:center!important}
  .toolbar-right{grid-area:right!important;justify-self:end!important}
 }
+
+
+/* v32 · Ajustar segmentos de jumpers conectados (sem alterar os bornes). */
+.wire-svg .wire-target{
+ pointer-events:stroke!important;
+ stroke:transparent!important;
+ fill:none!important;
+ stroke-width:var(--hit-width,24px)!important;
+ stroke-linecap:butt!important;
+ cursor:grab!important;
+ touch-action:none!important;
+}
+.wire-svg .wire-target:hover{stroke:#eef9fc13!important}
+.wire-svg .wire-target:active{cursor:grabbing!important}
+.wire-svg .wire-alignment-guide{
+ stroke:#008eaa!important;
+ stroke-width:2!important;
+ stroke-dasharray:8 6!important;
+ fill:none!important;
+ opacity:.93!important;
+ pointer-events:none!important;
+ filter:drop-shadow(0 0 3px #fff)!important;
+}
+.wire-svg .wire-alignment-label{
+ fill:#09708a!important;
+ stroke:#f4fafc!important;stroke-width:3!important;
+ paint-order:stroke fill!important;
+ font:800 13px "DM Sans",Arial,sans-serif!important;
+ letter-spacing:.06em;
+ pointer-events:none!important;
+}
+@media(prefers-reduced-motion:reduce){
+ .wire-svg .wire-alignment-guide{transition:none!important}
+}
