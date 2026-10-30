@@ -230,7 +230,7 @@ function renderParts(){
   if(p.kind==='buck'||p.kind==='driver'){
    const badge=document.createElement('span');
    badge.className='powered-tag';
-   badge.textContent=p.kind==='buck'?'SAÍDA · 5 V':'ALIMENTAÇÃO';
+   badge.textContent=p.kind==='buck'?'ENTRADA · 9 V':'ALIMENTAÇÃO';
    badge.title='Estado energético didático; esta versão da placa não apresenta LED de indicação no desenho.';
    imgbox.append(badge);
   }
