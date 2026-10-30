@@ -2,11 +2,13 @@
 (() => {
 // Visual preview uses a private localStorage copy. The normal site keeps
 // its original key and nothing in the preview can overwrite its circuit.
-const STORAGE_KEY=document.body?.classList?.contains('preview-studio')?'tinkerpet-studio-preview-v1':'tinkerpet-v2';
+// A aparência Studio também está na página principal: não trocar o progresso salvo.
+const IS_VISUAL_PREVIEW=/(?:^|\/)studio-preview\.html$/.test(window.location.pathname);
+const STORAGE_KEY=IS_VISUAL_PREVIEW?'tinkerpet-studio-preview-v1':'tinkerpet-v2';
 const ROOT='https://raw.githubusercontent.com/gabrieljsantos/Fundamentos-de-Prototipagem-e-Fabrica--o-Digital/main/assets/images/componentes/';
 const TYPES=[
  {kind:'esp',name:'ESP32 DevKit V1',img:'assets/esp32-devkit-v1-30p.svg?v=29',ids:['esp'],pins:[["VIN","VIN"],["GND","GND"],["D13","D13"],["D12","D12"],["D14","D14"],["D27","D27"],["D26","D26"],["D25","D25"],["D33","D33"],["D32","D32"],["D35","D35"],["D34","D34"],["VN","VN"],["VP","VP"],["EN","EN"],["3V3","3V3"],["GND2","GND"],["D15","D15"],["D2","D2"],["D4","D4"],["RX2","RX2"],["TX2","TX2"],["D5","D5"],["D18","D18"],["D19","D19"],["D21","D21"],["RX0","RX0"],["TX0","TX0"],["D22","D22"],["D23","D23"]],info:'Placa de 30 pinos com USB à esquerda e nomes em cada contato. Os dois GND são equivalentes.',tip:'Neste carrinho: VIN recebe 5 V, GND comum, D27→IN1, D26→IN2, D32→IN3 e D18→IN4.'},
- {kind:'driver',name:'Ponte H MX1508',img:'assets/mx1508-desenhado.svg?v=37',ids:['drv'],pins:[['VCC','+ motores'],['GND','GND motores'],['IN1','IN1'],['IN2','IN2'],['IN3','IN3'],['IN4','IN4'],['OUT1','A • 1'],['OUT2','A • 2'],['OUT3','B • 1'],['OUT4','B • 2']],info:'MX1508: os dois bornes MOTOR A (na direita) são de um motor; os dois MOTOR B (na esquerda) são do outro. + e − recebem o suporte de seis pilhas. O − também deve ser ligado a um GND do ESP32.',tip:'IN1→GPIO27, IN2→GPIO26, IN3→GPIO32, IN4→GPIO18. Compartilhe o GND entre ESP32 e ponte H.'},
+ {kind:'driver',name:'Ponte H MX1508',img:'assets/mx1508-desenhado.svg?v=38',ids:['drv'],pins:[['VCC','+ motores'],['GND','GND motores'],['IN1','IN1'],['IN2','IN2'],['IN3','IN3'],['IN4','IN4'],['OUT1','A • 1'],['OUT2','A • 2'],['OUT3','B • 1'],['OUT4','B • 2']],info:'MX1508: os dois bornes MOTOR A (na direita) são de um motor; os dois MOTOR B (na esquerda) são do outro. + e − recebem o suporte de seis pilhas. O − também deve ser ligado a um GND do ESP32.',tip:'IN1→GPIO27, IN2→GPIO26, IN3→GPIO32, IN4→GPIO18. Compartilhe o GND entre ESP32 e ponte H.'},
  {kind:'buck',name:'Regulador LM2596',img:'assets/lm2596-desenhado.svg',ids:['lm'],pins:[['INP','IN +'],['INN','IN −'],['OUTP','OUT +'],['OUTN','OUT −']],info:'Regulador de tensão. Neste projeto, a saída para o ESP32 deve ser ajustada para 5,0 V.',tip:'Na montagem real, um responsável deve medir 5 V com multímetro antes de conectar VIN.'},
  {kind:'battery',name:'Bateria 9 V',img:'assets/bateria-9v-desenhada.svg',ids:['b1'],pins:[['POS','+'],['NEG','−']],info:'Uma bateria de 9 V alimenta o regulador LM2596 e o ESP32.',tip:'Bateria de 9 V → IN+ e IN− do LM2596; ajuste OUT+ / OUT− para 5 V antes de ligar VIN e GND do ESP32.'},
  {kind:'batteryPack',name:'Suporte de 6 pilhas AA',img:'assets/suporte-6-pilhas.svg',ids:['b2'],pins:[['POS','+'],['NEG','−']],info:'Porta-pilhas com seis células AA: 9 V nominais se forem seis pilhas de 1,5 V. Alimenta a ponte H, não o ESP32.',tip:'Com seis pilhas AA de 1,5 V, são 9 V nominais; seis NiMH de 1,2 V dão 7,2 V. Verifique a tensão nominal dos motores: 9 V pode exceder a especificação de motores de 3–6 V.'},
@@ -193,7 +195,7 @@ function updateLiveSimulation(){
  sim.setAttribute('aria-pressed',String(enabled));
  Q('simLabel').textContent=enabled?'Parar simulação':'Iniciar simulação';
  Q('simIcon').textContent=enabled?'■':'▶';
- Q('openTrackBtn').hidden=!(enabled&&ready());
+ Q('openTrackBtn').hidden=true; // Pista reservada para etapa futura.
  const status=Q('liveCircuitStatus');
  if(status){
   status.hidden=!enabled;
