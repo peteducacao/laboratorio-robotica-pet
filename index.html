@@ -9,7 +9,7 @@
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="styles.css?v=20">
 <link rel="stylesheet" href="answer-key.css?v=17">
-<script defer src="app.js?v=23"></script>
+<script defer src="app.js?v=24"></script>
 <script defer src="answer-key.js?v=17"></script>
 </head>
 <body>
@@ -43,8 +43,8 @@
       <div class="toolbar-left">
         <button id="editTab" class="legacy-control" hidden>Montagem</button>
         <button id="playTab" class="legacy-control" hidden>Simulação</button>
-        <button id="undoBtn" class="control-btn" type="button" title="Desfazer" aria-label="Desfazer">↶ <span>Desfazer</span></button>
-        <button id="redoBtn" class="control-btn" type="button" title="Refazer" aria-label="Refazer">↷ <span>Refazer</span></button>
+        <button id="undoBtn" class="control-btn" type="button" title="Desfazer etapa (Ctrl+Z)" aria-label="Desfazer etapa (Ctrl+Z)">↶ <span>Desfazer</span></button>
+        <button id="redoBtn" class="control-btn" type="button" title="Refazer etapa (Ctrl+Y)" aria-label="Refazer etapa (Ctrl+Y)">↷ <span>Refazer</span></button>
         <button id="deleteBtn" class="control-btn delete-btn" type="button" title="Excluir peça ou fio selecionado" aria-label="Excluir peça ou fio selecionado">⌫ <span>Excluir</span></button>
         <button id="clearBtn" class="legacy-control" hidden>Limpar</button>
         <label class="wire-color-picker" for="wireColorSelect"><span>Cor do fio</span><span class="wire-color-preview" id="wireColorPreview"></span>
@@ -128,6 +128,6 @@
 </div>
 <div id="toast" class="toast" role="status" aria-live="polite"></div>
 <div id="dragGhost" class="drag-ghost" hidden></div>
-<dialog id="guideDialog"><div class="dialog-head"><h2>Como usar o TinkerPET</h2><button id="closeGuide" type="button" aria-label="Fechar">×</button></div><p><b>Agora a bancada começa vazia, igual a um laboratório de montagem.</b></p><ol><li>Abra a gaveta pela seta na lateral esquerda do meio da tela. Arraste uma peça do catálogo ou toque para adicioná-la.</li><li>Arraste cada componente pela imagem. A bancada não tem limites: solte as peças em qualquer posição, inclusive à esquerda ou acima da posição inicial.</li><li>Para navegar, arraste o fundo vazio ou mantenha Espaço pressionado enquanto arrasta no computador. Roda do mouse desloca a visão; Ctrl + roda amplia. No celular, dois dedos movimentam e dão zoom.</li><li>Toque no primeiro terminal para começar um fio contínuo. Toque em pontos vazios da bancada para fixar curvas. Toque no segundo terminal para finalizar. Também pode arrastar diretamente entre dois terminais. Use Desfazer para retirar a última curva.</li><li>Selecione as gangorras para ligá-las e ajuste o LM2596 para 5 V.</li><li>Quando tudo estiver conectado, toque em <b>Iniciar simulação</b> e pilote o carrinho virtual.</li></ol><p>A simulação é educativa e não representa todas as leis elétricas ou a execução real do firmware ESP32. Ferramentas, soldas e medições físicas exigem supervisão.</p><button id="startGuide" class="run-btn">Vamos montar!</button></dialog>
+<dialog id="guideDialog"><div class="dialog-head"><h2>Como usar o TinkerPET</h2><button id="closeGuide" type="button" aria-label="Fechar">×</button></div><p><b>Agora a bancada começa vazia, igual a um laboratório de montagem.</b></p><ol><li>Abra a gaveta pela seta na lateral esquerda do meio da tela. Arraste uma peça do catálogo ou toque para adicioná-la.</li><li>Arraste cada componente pela imagem. A bancada não tem limites: solte as peças em qualquer posição, inclusive à esquerda ou acima da posição inicial.</li><li>Para navegar, arraste o fundo vazio ou mantenha Espaço pressionado enquanto arrasta no computador. Roda do mouse desloca a visão; Ctrl + roda amplia. No celular, dois dedos movimentam e dão zoom.</li><li>Toque no primeiro terminal para começar um fio contínuo. Toque em pontos vazios da bancada para fixar curvas. Toque no segundo terminal para finalizar. Também pode arrastar diretamente entre dois terminais. A cada curva fixada, Ctrl+Z (ou o botão Desfazer) volta um passo; Ctrl+Y (ou Refazer) recupera o passo. Funciona inclusive depois que o fio é conectado.</li><li>Selecione as gangorras para ligá-las e ajuste o LM2596 para 5 V.</li><li>Quando tudo estiver conectado, toque em <b>Iniciar simulação</b> e pilote o carrinho virtual.</li></ol><p>A simulação é educativa e não representa todas as leis elétricas ou a execução real do firmware ESP32. Ferramentas, soldas e medições físicas exigem supervisão.</p><button id="startGuide" class="run-btn">Vamos montar!</button></dialog>
 <footer>✳ TinkerPET • Laboratório virtual do PET Educação — UFS <span>Sem vídeos · Arraste, monte, experimente.</span></footer>
 </body></html>
