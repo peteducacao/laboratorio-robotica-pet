@@ -3,3 +3,41 @@
 .floating-crop.arduino{clip-path:polygon(0% 45%,8% 39%,74% 3%,82% 1%,100% 59%,96% 73%,24% 100%,2% 68%)}
 .floating-crop.motor{clip-path:polygon(22% 18%,40% 5%,61% 7%,70% 16%,99% 35%,100% 70%,82% 88%,65% 96%,45% 93%,15% 66%,4% 48%)}
 .floating-crop.sensor{clip-path:polygon(0% 39%,70% 0%,99% 38%,100% 76%,15% 100%,3% 75%)}
+
+
+/* Abertura responsiva: retrato central preserva 100% do robô, título e CTA.
+   A arte é a MESMA do desktop; o fundo desfocado ocupa a área restante. */
+@media (max-width: 900px), (max-aspect-ratio: 4 / 5) {
+ .welcome::before {
+  content:"";position:absolute;inset:-30px;z-index:-1;pointer-events:none;
+  background:url("assets/welcome-approved.avif") center / cover no-repeat;
+  filter:blur(25px) brightness(.63) saturate(1.08);
+  transform:scale(1.06);
+ }
+ .welcome::after{
+  content:"";position:absolute;inset:0;z-index:0;pointer-events:none;
+  background:linear-gradient(180deg,#102b520c 0%,#091b3940 100%);
+ }
+ .welcome-art{
+  max-width:none;max-height:none;object-fit:fill;
+  -webkit-mask-image:linear-gradient(to bottom,transparent,#000 7%,#000 92%,transparent);
+  mask-image:linear-gradient(to bottom,transparent,#000 7%,#000 92%,transparent);
+ }
+ .floating-crop{display:none}
+ .shine{display:block;opacity:.32}
+ .robot-blink{z-index:5}
+ .main-action{z-index:10;min-height:44px}
+}
+@media (max-height: 520px) and (orientation:landscape) {
+ .welcome::before{
+  content:"";position:absolute;inset:-30px;z-index:-1;pointer-events:none;
+  background:url("assets/welcome-approved.avif") center / cover no-repeat;
+  filter:blur(28px) brightness(.6);
+ }
+ .welcome-art{object-fit:fill;max-width:none;max-height:none}
+ .floating-crop{display:none}
+ .main-action{min-height:36px}
+}
+@media (prefers-reduced-motion:reduce){
+ .robot-blink,.floating-crop,.shine{animation:none!important}
+}
