@@ -542,11 +542,24 @@ function moveWireSegment(g,clientX,clientY){
  if(horizontal||vertical){
   const base=horizontal?a.y:a.x,perp=horizontal?ny:nx;
   const value=base+shift*perp;
-  const portA=getPortPos(wire.a),portB=getPortPos(wire.b);
-  const candidates=[portA,portB].filter(Boolean).map(port=>horizontal?port.y:port.x);
-  candidates.push(Math.round(value/20)*20);
-  const match=candidates.sort((left,right)=>Math.abs(left-value)-Math.abs(right-value))
-   .find(candidate=>Math.abs(candidate-value)<=Math.min(14,7/zoom));
+  const candidates=[];
+  const midpoint={x:(a.x+b.x)/2,y:(a.y+b.y)/2};
+  for(const part of state.parts)for(const [pin] of byKind[part.kind].pins){
+   const pos=getPortPos(part.id+'.'+pin);if(!pos)continue;
+   const along=Math.abs(horizontal?pos.x-midpoint.x:pos.y-midpoint.y)*zoom;
+   if(along<=250)candidates.push(horizontal?pos.y:pos.x);
+  }
+  if(zoom>=.8)candidates.push(Math.round(value/20)*20);
+  // Retém o alinhamento mesmo com pequenos movimentos. Solta ao forçar.
+  let match;
+  if(g.magnetLock!==undefined&&Math.abs(value-g.magnetLock)<=24/zoom){
+   match=g.magnetLock;
+  }else{
+   g.magnetLock=undefined;
+   match=candidates.sort((left,right)=>Math.abs(left-value)-Math.abs(right-value))
+    .find(candidate=>Math.abs(candidate-value)<=10/zoom);
+   if(match!==undefined)g.magnetLock=match;
+  }
   if(match!==undefined){shift=(match-base)/perp;guideValue=match;aligned=true;}
  }
  const movedA={x:Math.round(a.x+nx*shift),y:Math.round(a.y+ny*shift)};
