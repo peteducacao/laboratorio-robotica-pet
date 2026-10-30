@@ -1492,25 +1492,68 @@ function startPan(e){
  if(e.cancelable!==false)e.preventDefault();
  gesture={type:'pan',pointer:e.pointerId,startX:e.clientX,startY:e.clientY,x:panX,y:panY,moved:false};
 }
+// Mantém as curvas junto às peças arrastadas, em vez de esticar a linha
+// diagonalmente até o terminal fixo. NÃO é roteamento automático.
+function elasticWireBends(original,from,to,moveA,moveB,dx,dy){
+ const x=Math.round(dx),y=Math.round(dy);
+ const corners=(original||[]).map(p=>({x:Math.round(p.x),y:Math.round(p.y)}));
+ if(!moveA&&!moveB)return corners;
+ if(moveA&&moveB)return corners.map(p=>({x:p.x+x,y:p.y+y}));
+ if(!from||!to)return corners;
+ const start=moveA?{x:from.x+x,y:from.y+y}:from;
+ const end=moveB?{x:to.x+x,y:to.y+y}:to;
+ if(!corners.length){
+  if(start.x===end.x||start.y===end.y)return [];
+  // Era um trecho reto. O único cotovelo necessário acompanha a peça.
+  const oldH=Math.abs(from.y-to.y)<2,oldV=Math.abs(from.x-to.x)<2;
+  const p=oldH?{x:start.x,y:end.y}
+   :oldV?{x:end.x,y:start.y}
+   :moveA?{x:start.x,y:end.y}:{x:end.x,y:start.y};
+  return (p.x===start.x&&p.y===start.y)||(p.x===end.x&&p.y===end.y)?[]:[p];
+ }
+ const shifted=corners.map(p=>({x:p.x+x,y:p.y+y}));
+ // Todas as curvas acompanham a peça. Corrigimos SOMENTE a última curva
+ // junto à ponta fixa para que a linha diminua/aumente sem virar diagonal.
+ if(moveA&&!moveB){
+  const last=shifted.at(-1),oldLast=corners.at(-1);
+  if(Math.abs(oldLast.y-to.y)<2)last.y=to.y;
+  else if(Math.abs(oldLast.x-to.x)<2)last.x=to.x;
+  else if(Math.abs(oldLast.x-to.x)>=Math.abs(oldLast.y-to.y))last.y=to.y;
+  else last.x=to.x;
+ }else if(moveB&&!moveA){
+  const first=shifted[0],oldFirst=corners[0];
+  if(Math.abs(oldFirst.y-from.y)<2)first.y=from.y;
+  else if(Math.abs(oldFirst.x-from.x)<2)first.x=from.x;
+  else if(Math.abs(oldFirst.x-from.x)>=Math.abs(oldFirst.y-from.y))first.y=from.y;
+  else first.x=from.x;
+ }
+ // Um circuito com alguma diagonal LEGADA é reparado apenas quando é
+ // movimentado, acrescentando um cotovelo no próprio trecho errado.
+ const points=[start,...shifted,end],fixed=[points[0]];
+ for(let i=1;i<points.length;i++){
+  const next=points[i],previous=fixed.at(-1);
+  if(Math.abs(next.x-previous.x)>1&&Math.abs(next.y-previous.y)>1){
+   const before=fixed.at(-2);
+   const prevHorizontal=before&&Math.abs(before.y-previous.y)<2;
+   const prevVertical=before&&Math.abs(before.x-previous.x)<2;
+   const elbow=prevHorizontal?{x:next.x,y:previous.y}:
+    prevVertical?{x:previous.x,y:next.y}:
+    moveA?{x:previous.x,y:next.y}:{x:next.x,y:previous.y};
+   if((elbow.x!==previous.x||elbow.y!==previous.y)&&
+      (elbow.x!==next.x||elbow.y!==next.y))fixed.push(elbow);
+  }
+  fixed.push(next);
+ }
+ return fixed.slice(1,-1);
+}
 function anchoredWireBends(part,dx,dy,anchors){
- // Ao mover somente uma peça, os cotovelos ortogonais próximos ao borne
- // acompanham a peça. O borne da outra extremidade nunca é modificado.
  for(const item of anchors||[]){
-  const wire=state.wires[item.i],old=item.via;
-  if(!wire||!wire.manual||!old.length)continue;
-  const via=old.map(p=>({...p}));
-  if(item.a){
-   if(Math.abs(old[0].x-item.start.x)<2)via[0].x=Math.round(old[0].x+dx);
-   if(Math.abs(old[0].y-item.start.y)<2)via[0].y=Math.round(old[0].y+dy);
-  }
-  if(item.b){
-   const n=old.length-1;
-   if(Math.abs(old[n].x-item.end.x)<2)via[n].x=Math.round(old[n].x+dx);
-   if(Math.abs(old[n].y-item.end.y)<2)via[n].y=Math.round(old[n].y+dy);
-  }
-  wire.via=via;
+  const wire=state.wires[item.i];
+  if(!wire||!wire.manual)continue;
+  wire.via=elasticWireBends(item.via,item.start,item.end,item.a,item.b,dx,dy);
  }
 }
+
 function updateMultiSelectionTool(){
  const button=Q('selectionToolBtn'),counter=Q('selectionCount');
  if(!button)return;
@@ -1574,22 +1617,8 @@ function translateGroup(group,dx,dy){
   const p=byPart(item.id);if(p){p.x=item.x+x;p.y=item.y+y;}
  }
  for(const item of group.wires){
-  const w=state.wires[item.i];if(!w)continue;
-  const points=item.via.map(p=>({...p}));
-  if(item.moveA&&item.moveB)w.via=points.map(p=>({x:p.x+x,y:p.y+y}));
-  else if(points.length&&w.manual){
-   if(item.moveA){
-    const first=points[0];
-    if(item.start&&Math.abs(first.x-item.start.x)<2)first.x+=x;
-    if(item.start&&Math.abs(first.y-item.start.y)<2)first.y+=y;
-   }
-   if(item.moveB){
-    const last=points.at(-1);
-    if(item.end&&Math.abs(last.x-item.end.x)<2)last.x+=x;
-    if(item.end&&Math.abs(last.y-item.end.y)<2)last.y+=y;
-   }
-   w.via=points;
-  }
+  const w=state.wires[item.i];if(!w||!w.manual)continue;
+  w.via=elasticWireBends(item.via,item.start,item.end,item.moveA,item.moveB,x,y);
  }
 }
 function partDown(e){
