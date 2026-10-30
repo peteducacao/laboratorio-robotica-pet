@@ -69,6 +69,18 @@ try{
   await page.locator('#zoomIn').click();
   assert.notEqual(await page.locator('#zoomLabel').textContent(),oldZoom,'Zoom button works '+width);
   await page.screenshot({path:join(dir,'studio-preview-'+width+'.png'),fullPage:false});
+  if(width===390){
+   await page.locator('#drawerHandle').click();
+   await page.locator('#catalog .catalog-card[data-kind="esp"]').click();
+   await page.waitForTimeout(100);
+   const stored=await page.evaluate(()=>({
+    current:localStorage.getItem('tinkerpet-v2'),
+    preview:localStorage.getItem('tinkerpet-studio-preview-v1')
+   }));
+   assert.equal(stored.current,null,'Edit preview never touches current TinkerPET storage');
+   assert(stored.preview&&JSON.parse(stored.preview).parts.some(p=>p.kind==='esp'),'Preview stores its own ESP32 assembly');
+  }
+
   assert.equal(errors.length,0,'JS page errors at '+width+': '+errors.join('; '));
   console.log('✓ Browser '+width+'px: layout, drawer, zoom, details (canvas '+Math.round(layout.screen.width)+' × '+Math.round(layout.screen.height)+')');
   await page.close();
