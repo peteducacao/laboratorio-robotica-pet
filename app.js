@@ -706,9 +706,18 @@ function moveWireSegment(g,clientX,clientY){
  const dimension=horizontal?'y':'x';
  changed[segment][dimension]=first[dimension]+delta;
  changed[segment+1][dimension]=second[dimension]+delta;
- // Resta apenas a quantidade de pontos que o jumper já possuía.
- // O ponto inicial e o final seguem fixos nos furos dos componentes.
- wire.via=changed.slice(1,-1);
+ // Remove cotovelos colineares gerados por versões antigas do editor.
+ // Não altera os conectores; os únicos pontos mantidos são curvas reais.
+ const route=[];
+ for(const p of changed){
+  const previous=route.at(-1),before=route.at(-2);
+  if(previous&&previous.x===p.x&&previous.y===p.y)continue;
+  if(before&&(
+   (before.x===previous.x&&previous.x===p.x)||
+   (before.y===previous.y&&previous.y===p.y)))route[route.length-1]=p;
+  else route.push(p);
+ }
+ wire.via=route.slice(1,-1);
  wire.manual=true;
  // Guias completas durante a edição, sempre sobre segmentos ortogonais.
  // Ao arrastar um segmento horizontal, a guia HORIZONTAL também aparece.
