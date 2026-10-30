@@ -29,7 +29,7 @@ try{
   const errors=[];
   page.on('pageerror',e=>errors.push(e.message));
   await page.goto(url,{waitUntil:'domcontentloaded'});
-  await page.locator('#catalog .catalog-card').first().waitFor({timeout:15000});
+  await page.locator('#catalog .catalog-card').first().waitFor({state:'attached',timeout:15000});
   await page.waitForTimeout(240);
   const layout=await page.evaluate(()=>{
    const bb=id=>{const r=document.getElementById(id).getBoundingClientRect();return {x:r.x,y:r.y,width:r.width,height:r.height,right:r.right,bottom:r.bottom}};
