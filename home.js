@@ -2,6 +2,12 @@
  const W=1536,H=1024,asset='assets/welcome-approved.avif';
  const art=document.getElementById('welcomeArt'),button=document.getElementById('enterProjects');
  const blink=document.getElementById('robotBlink');
+ const beacon=document.getElementById('antennaGlow');
+ const particles=[...document.querySelectorAll('.light-dust')];
+ const particlesWorld=[
+  {x:460,y:235,n:6},{x:1092,y:310,n:5},{x:388,y:652,n:6},
+  {x:1182,y:720,n:7},{x:528,y:837,n:5},{x:1048,y:868,n:6}
+ ];
  const crops=[{el:document.getElementById('floatingArduino'),x:36,y:218,w:330,h:250},
   {el:document.getElementById('floatingMotor'),x:1230,y:222,w:290,h:280},
   {el:document.getElementById('floatingSensor'),x:198,y:678,w:265,h:170}];
@@ -33,6 +39,12 @@
   };
   place(button,504,631,526,126);
   place(blink,718,339,46,30);
+  place(beacon,726,118,92,92);
+  particles.forEach((particle,i)=>{
+   const world=particlesWorld[i];if(!world)return;
+   const n=Math.max(3,Math.round(world.n*scale));
+   place(particle,world.x,world.y,n,n);
+  });
   for(const {el,x,y,w,h}of crops){
    if(!el)continue;
    place(el,x,y,w,h);
