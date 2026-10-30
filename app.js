@@ -154,20 +154,26 @@ function ready(){
 // alimentação e sinais por um caminho conectado. Não é SPICE nem execução do ESP32.
 function powerStatus(){
  const has=(a,b)=>state.wires.some(w=>electricalKey(w.a,w.b)===electricalKey(a,b));
- const source9=exists('b1')&&exists('s1')&&exists('lm')&&state.switches.s1
-  &&has('b1.POS','s1.IN')&&has('s1.OUT','lm.INP')&&has('b1.NEG','lm.INN');
- const esp=source9&&Math.abs(state.voltage-5)<.01&&exists('esp')
+ const switched=assemblyMode()==='switched';
+ // A chave comuta apenas o positivo de cada fonte. Todos os GND são comuns.
+ const espPositive=switched
+  ?exists('s1')&&state.switches.s1&&has('b1.POS','s1.IN')&&has('s1.OUT','lm.INP')
+  :has('b1.POS','lm.INP');
+ const motorPositive=switched
+  ?exists('s2')&&state.switches.s2&&has('b2.POS','s2.IN')&&has('s2.OUT','drv.VCC')
+  :has('b2.POS','drv.VCC');
+ const buck=exists('b1')&&exists('lm')&&espPositive&&has('b1.NEG','lm.INN');
+ const esp=buck&&exists('esp')&&Math.abs(state.voltage-5)<.01
   &&has('lm.OUTP','esp.VIN')&&has('lm.OUTN','esp.GND');
- const pack6=exists('b2')&&exists('s2')&&exists('drv')&&state.switches.s2
-  &&has('b2.POS','s2.IN')&&has('s2.OUT','drv.VCC')&&has('b2.NEG','drv.GND');
+ const driver=exists('b2')&&exists('drv')&&motorPositive&&has('b2.NEG','drv.GND');
  const common=esp&&has('esp.GND','drv.GND');
- const motorA=pack6&&common&&exists('ml')
+ const motorA=driver&&common&&exists('ml')
   &&has('esp.D27','drv.IN1')&&has('esp.D26','drv.IN2')
   &&has('drv.OUT1','ml.A')&&has('drv.OUT2','ml.B');
- const motorB=pack6&&common&&exists('mr')
+ const motorB=driver&&common&&exists('mr')
   &&has('esp.D32','drv.IN3')&&has('esp.D18','drv.IN4')
   &&has('drv.OUT3','mr.A')&&has('drv.OUT4','mr.B');
- return {buck:source9,esp,driver:pack6,common,motors:{ml:motorA,mr:motorB}};
+ return {buck,esp,driver,common,motors:{ml:motorA,mr:motorB}};
 }
 function updateLiveSimulation(){
  const live=powerStatus(),enabled=simulationRunning;
@@ -373,22 +379,23 @@ function demoMotor(id){
  setTimeout(()=>el.classList.remove('demo-running'),3500);
 }
 function renderProgress(){
- const total=countGood(),errors=mistakes().length;
- Q('connectionsCount').textContent=total+' / '+EXPECTED.length;
- const partsDone=state.parts.length;
- const inAssembly=partsDone<9;
- const progress=inAssembly?partsDone/9:total/EXPECTED.length;
+ const total=countGood(),errors=mistakes().length,expected=expectedConnections();
+ const required=requiredParts(),partsDone=state.parts.length,switched=assemblyMode()==='switched';
+ const inAssembly=partsDone<required;
+ const progress=inAssembly?partsDone/required:total/expected.length;
  Q('progressBar').style.width=Math.round(progress*100)+'%';
- Q('connectionsCount').textContent=inAssembly?partsDone+'/9':total+'/'+EXPECTED.length;
+ Q('connectionsCount').textContent=inAssembly?partsDone+'/'+required:total+'/'+expected.length;
  Q('progressCaption').textContent=inAssembly?'Componentes':'Conexões corretas';
  const badge=Q('validationBadge');badge.className='validation-badge'+(ready()?' ok':errors?' error':'');
- badge.textContent=ready()?'✓ Circuito pronto para iniciar':errors?errors+' ligação(ões) fora do esquema':state.parts.length<9?'Continue adicionando componentes':'Faltam '+missing().length+' ligações';
+ badge.textContent=ready()?'✓ Circuito completo ('+(switched?'com gangorras':'sem gangorras')+')':
+  errors?errors+' ligação(ões) fora do esquema':
+  inAssembly?'Continue adicionando componentes':'Faltam '+missing().length+' ligações';
  const missionTitle=Q('missionTitle'),missionText=Q('missionText');
- if(!state.parts.length){Q('stepNumber').textContent='01';missionTitle.textContent='Sua bancada está vazia';missionText.textContent='Arraste as peças do catálogo e solte onde quiser.';}
- else if(state.parts.length<9){Q('stepNumber').textContent='01';missionTitle.textContent='Monte seu conjunto de peças';missionText.textContent='Você colocou '+state.parts.length+' das 9 peças. Continue arrastando do menu.';}
- else if(missing().length||errors){Q('stepNumber').textContent='02';missionTitle.textContent='Agora conecte os terminais';missionText.textContent=total+' ligações corretas de '+EXPECTED.length+'. Toque num pino e depois no outro.';}
- else if(!state.switches.s1||!state.switches.s2||Math.abs(state.voltage-5)>.01){Q('stepNumber').textContent='03';missionTitle.textContent='Hora de ligar a energia';missionText.textContent='Ajuste 5 V na LM2596 e ligue as duas gangorras.';}
- else {Q('stepNumber').textContent='04';missionTitle.textContent='Tudo pronto para testar!';missionText.textContent='Toque em Iniciar simulação para dirigir o carrinho.';}
+ if(!partsDone){Q('stepNumber').textContent='01';missionTitle.textContent='Sua bancada está vazia';missionText.textContent='Monte a versão direta com 7 peças ou adicione duas gangorras para a versão com chaves (9 peças).';}
+ else if(inAssembly){Q('stepNumber').textContent='01';missionTitle.textContent='Monte seu conjunto de peças';missionText.textContent='Modo '+(switched?'com gangorras':'sem gangorras')+': você colocou '+partsDone+' de '+required+' peças.';}
+ else if(missing().length||errors){Q('stepNumber').textContent='02';missionTitle.textContent='Conecte os terminais';missionText.textContent=total+' das '+expected.length+' ligações corretas no modo '+(switched?'com gangorras':'direto')+'. O negativo da MX1508 também vai ao GND do ESP32.';}
+ else if(Math.abs(state.voltage-5)>.01||(switched&&(!state.switches.s1||!state.switches.s2))){Q('stepNumber').textContent='03';missionTitle.textContent='Ligue a alimentação';missionText.textContent='Ajuste a saída do LM2596 para 5,0 V'+(switched?' e ligue as duas gangorras.':'.');}
+ else {Q('stepNumber').textContent='04';missionTitle.textContent='Circuito completo!';missionText.textContent='Parabéns! Montagem '+(switched?'com':'sem')+' gangorras validada. Inicie a simulação e abra a pista.';}
 }
 function refresh(){renderCatalog();renderParts();renderColors();renderInspector();renderProgress();persist();updateTrackLock();}
 function renderAll(){refresh();}
@@ -1198,19 +1205,27 @@ function pointerUp(e){
 
 }
 function hint(){
- if(state.parts.length<9){const next=TYPES.find(t=>t.ids.some(id=>!exists(id)));message('Pegue no catálogo: '+next.name+'. Toque para adicionar ou arraste para a bancada.',true);return;}
+ const needed=requiredParts();
+ if(state.parts.length<needed){
+  const next=TYPES.find(t=>t.ids.some(id=>!exists(id))&&(assemblyMode()==='switched'||t.kind!=='switch'));
+  if(next)message('Pegue no catálogo: '+next.name+'. Faltam '+(needed-state.parts.length)+' peça(s).',true);
+  return;
+ }
  const wrong=mistakes()[0];if(wrong){message('Revise este fio: '+portName(wrong.a)+' → '+portName(wrong.b)+'.',true);return;}
  const miss=missing()[0];if(miss){message('Experimente ligar: '+portName(miss[0])+' → '+portName(miss[1])+'.',true);return;}
- if(state.voltage!==5){message('Ajuste o LM2596 para 5,0 V.',true);return;}
- if(!state.switches.s1||!state.switches.s2){message('Ligue as duas chaves gangorra.',true);return;}
- message('Tudo correto! Toque em Iniciar simulação.',true);
+ if(Math.abs(state.voltage-5)>.01){message('Ajuste a saída do LM2596 para 5,0 V.',true);return;}
+ if(assemblyMode()==='switched'&&(!state.switches.s1||!state.switches.s2)){
+  message('Ligue as duas gangorras (cada uma controla só sua própria fonte).',true);return;
+ }
+ message('Circuito '+(assemblyMode()==='switched'?'com':'sem')+' gangorras completo! Pode iniciar a simulação.',true);
 }
 function check(){
- if(state.parts.length<9){message('Primeiro coloque todas as 9 peças. Ainda faltam '+(9-state.parts.length)+'.',true);return false;}
- if(mistakes().length){message('Existem '+mistakes().length+' fio(s) ligado(s) a terminais que não combinam. Revise os fios.',true);state.inspector='wires';renderInspector();return false;}
+ const needed=requiredParts();
+ if(state.parts.length!==needed){message('O modo '+(assemblyMode()==='switched'?'com':'sem')+' gangorras exige '+needed+' peças. Ainda faltam '+(needed-state.parts.length)+'.',true);return false;}
+ if(mistakes().length){message('Existem '+mistakes().length+' fio(s) fora do esquema escolhido.',true);state.inspector='wires';renderInspector();return false;}
  const m=missing();if(m.length){message('Faltam '+m.length+' ligações. Dica: '+portName(m[0][0])+' → '+portName(m[0][1])+'.',true);return false;}
  if(Math.abs(state.voltage-5)>.01){message('Ajuste a saída do LM2596 para 5,0 V.',true);return false;}
- if(!state.switches.s1||!state.switches.s2){message('Ligue as duas gangorras para iniciar.',true);return false;}
+ if(assemblyMode()==='switched'&&(!state.switches.s1||!state.switches.s2)){message('Ligue as duas gangorras.',true);return false;}
  return true;
 }
 function switchView(play){
