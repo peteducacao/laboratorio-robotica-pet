@@ -3,6 +3,7 @@
  const art=document.getElementById('welcomeArt'),button=document.getElementById('enterProjects');
  const blink=document.getElementById('robotBlink');
  const beacon=document.getElementById('antennaGlow');
+ const energyRails=document.getElementById('energyRails');
  const particles=[...document.querySelectorAll('.light-dust')];
  const particlesWorld=[
   {x:460,y:235,n:6},{x:1092,y:310,n:5},{x:388,y:652,n:6},
@@ -40,6 +41,7 @@
   place(button,504,631,526,126);
   place(blink,718,339,46,30);
   place(beacon,726,118,92,92);
+  place(energyRails,0,0,W,H);
   particles.forEach((particle,i)=>{
    const world=particlesWorld[i];if(!world)return;
    const n=Math.max(3,Math.round(world.n*scale));
