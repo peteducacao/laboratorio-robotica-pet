@@ -200,11 +200,12 @@ assert(js.includes("canvas.toBlob(resolve,'image/png')"),'exporta imagem PNG da 
 assert(js.includes("downloadBlob(blob,'TinkerPET-montagem.svg')"),'SVG completo é alternativa ao PNG');
 
 const panBefore=nodes.world.style.transform;
+const beforeNaturalPanEsp=saved().parts.find(p=>p.id==='esp').x;
 const naturalPanId=++pointer;
 send('pointerdown','viewport',{button:0,pointerId:naturalPanId,clientX:270,clientY:250,preventDefault(){},target:{closest(){return null}}});
 send('pointermove','window',{pointerId:naturalPanId,clientX:520,clientY:420});
 send('pointerup','window',{pointerId:naturalPanId,clientX:520,clientY:420});
-assert.equal(saved().parts.find(p=>p.id==='esp').x,originalEsp.x,'arrastar fundo não move componentes');
+assert.equal(saved().parts.find(p=>p.id==='esp').x,beforeNaturalPanEsp,'arrastar fundo não move componentes');
 assert.notEqual(nodes.world.style.transform,panBefore,'arrastar fundo move a bancada sem botão extra');
 const wheelBefore=nodes.world.style.transform;
 send('wheel','viewport',{deltaX:0,deltaY:240,shiftKey:false,ctrlKey:false,metaKey:false,clientX:400,clientY:300,preventDefault(){}});
