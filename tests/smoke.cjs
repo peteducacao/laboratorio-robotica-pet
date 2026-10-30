@@ -135,11 +135,12 @@ const win={addEventListener(type,fn){(listeners['window:'+type]??=[]).push(fn)}}
 const store={getItem(k){return storage[k]??null},setItem(k,v){storage[k]=v}};
 const fake={window:win,document:doc,localStorage:store,requestAnimationFrame(){},ResizeObserver:class{observe(){}},console,Math,JSON,confirm(){return true},setTimeout(){return 1},clearTimeout(){}};
 // Hook somente para testes: inspeciona curvas pendentes, sem expor dados na aplicação.
-const instrumented=js.replace(/\}\)\(\);\s*$/, "window.__pendingForTests=()=>({startPort:state.startPort,bends:state.bends.map(p=>({...p})),preview:previewPoint&&{...previewPoint},points:pendingWirePoints(),active:wireTipActive,alignment:pendingAlignment&&{...pendingAlignment},panX,panY,zoom});window.__alignForTests=(x,y)=>visualPendingAlignment(x,y,state.startPort);window.__previewForTests=(x,y)=>setPendingPreview({clientX:x,clientY:y});window.__portForTests=id=>getPortPos(id);window.__powerForTests=()=>({live:powerStatus(),running:simulationRunning});window.__wireForTests=()=>({points:state.wires.map(w=>wirePoints(w)),align:wireAlignment,selected:state.selectedWire,zoom});window.__drawWireForTests=drawWires;})();");
+const instrumented=js.replace(/\}\)\(\);\s*$/, "window.__pendingForTests=()=>({startPort:state.startPort,bends:state.bends.map(p=>({...p})),preview:previewPoint&&{...previewPoint},points:pendingWirePoints(),active:wireTipActive,alignment:pendingAlignment&&{...pendingAlignment},panX,panY,zoom});window.__alignForTests=(x,y)=>visualPendingAlignment(x,y,state.startPort);window.__previewForTests=(x,y)=>setPendingPreview({clientX:x,clientY:y});window.__portForTests=id=>getPortPos(id);window.__powerForTests=()=>({live:powerStatus(),running:simulationRunning});window.__assemblyForTests=()=>({mode:assemblyMode(),parts:requiredParts(),edges:expectedConnections().length,correct:countGood(),missing:missing().length,wrong:mistakes().length,ready:ready()});window.__wireForTests=()=>({points:state.wires.map(w=>wirePoints(w)),align:wireAlignment,selected:state.selectedWire,zoom});window.__drawWireForTests=drawWires;})();");
 assert.notEqual(instrumented,js,'instrumentação do teste de histórico aplicada');
 vm.runInNewContext(instrumented,fake);
 const pending=()=>win.__pendingForTests();
 const power=()=>win.__powerForTests();
+const assembly=()=>win.__assemblyForTests();
 const wiresView=()=>win.__wireForTests();
 function send(event,fnKey,target){const handlers=listeners[fnKey+':'+event];assert(handlers?.length,fnKey+':'+event);for(const handler of handlers)handler(target);}
 const saved=()=>JSON.parse(storage['tinkerpet-v2']);
@@ -616,6 +617,36 @@ send('click','zoomFitAll',{});
 assert(Number(nodes.zoomSlider.value)>=4,'enquadramento calcula um zoom válido sem forçar o limite antigo');
 
 
+
+function removeKind(id){
+ send('click','inspectorBody',{target:{closest(sel){
+  return sel==='[data-remove]'?{dataset:{remove:id}}:null;
+ }}});
+}
+removeKind('s1');removeKind('s2');
+assert.equal(saved().parts.length,7,'sem gangorras usa 7 peças');
+assert.equal(assembly().mode,'direct','modo direto detectado automaticamente');
+assert.equal(assembly().edges,15,'modo direto exige 15 ligações');
+connect('b1.POS','lm.INP');
+connect('b2.POS','drv.VCC');
+assert.equal(saved().wires.length,15,'direta tem 15 fios finais');
+assert.equal(assembly().correct,15,'progresso considera 15 fios corretos');
+assert.equal(assembly().wrong,0,'positivos diretos são aceitos');
+assert.equal(assembly().missing,0,'nenhuma ligação com gangorra é exigida');
+assert.equal(assembly().ready,true,'direta é circuito completo');
+assert(nodes.validationBadge.textContent.includes('Circuito completo'),'painel anuncia conclusão direta');
+assert.equal(nodes.connectionsCount.textContent,'15 / 15','progresso exibe 15 de 15');
+assert.equal(power().live.esp,true,'ESP32 recebe energia direto pelo LM2596');
+assert.equal(power().live.driver,true,'MX1508 recebe AA direto');
+assert.equal(power().live.motors.ml,true,'motor A funciona no modo direto');
+assert.equal(power().live.motors.mr,true,'motor B funciona no modo direto');
+connect('esp.GND','drv.GND');
+assert.equal(assembly().ready,false,'sem GND comum MX1508, circuito incompleto');
+assert.equal(power().live.motors.ml,false,'sem GND comum motor não gira');
+connect('esp.GND2','drv.GND');
+assert.equal(assembly().ready,true,'outro GND do ESP32 também conclui negativo comum');
+assert.equal(nodes.openTrackBtn.hidden,false,'pista liberada sem gangorras');
+
  // Gabarito: testa abertura, senha, 17 linhas, download, impressão e bloqueio ao reabrir.
  class KeyNode {
   constructor(name){this.name=name;this.events={};this.children=[];this.hidden=false;this.open=false;this.value='';this.textContent='';this.style={setProperty(){}};this.classList={toggle(){}};}
@@ -666,6 +697,16 @@ assert(Number(nodes.zoomSlider.value)>=4,'enquadramento calcula um zoom válido 
  assert(svgBancada.includes('esp32-devkit-v1-30p.svg'),'usa a mesma imagem ESP32 do laboratório');
  assert(svgBancada.includes('mx1508-desenhado.svg'),'usa a ponte H da bancada real');
  assert(!svgBancada.includes('NaN')&&!svgBancada.includes('undefined'),'nenhum terminal ficou sem posição');
+
+ keyNode('answerModeDirect').click();
+ const directDiagram=keyNode('answerDiagram').innerHTML;
+ assert.equal((directDiagram.match(/<image /g)||[]).length,7,'gabarito direto mostra 7 peças');
+ assert.equal((directDiagram.match(/stroke-width="10" stroke-linejoin/g)||[]).length,15,'gabarito direto mostra 15 fios');
+ assert(!directDiagram.includes('gangorra-desenhada.svg'),'sem gangorras no esquema direto');
+ assert(keyNode('answerCounter').textContent.includes('15 fios'),'gabarito conta 15 fios');
+ keyNode('answerModeSwitched').click();
+ assert.equal((keyNode('answerDiagram').innerHTML.match(/<image /g)||[]).length,9,'gabarito com chaves mostra 9 peças');
+ assert.equal((keyNode('answerDiagram').innerHTML.match(/stroke-width="10" stroke-linejoin/g)||[]).length,17,'gabarito com chaves mostra 17 fios');
  const visualWires=[...svgBancada.matchAll(/<path d="([^"]+)" fill="none" stroke="(#[a-fA-F0-9]{6})" stroke-width="10"/g)];
  assert.equal(visualWires.length,17,'gabarito usa os 17 fios do projeto');
  for(const wire of visualWires){
