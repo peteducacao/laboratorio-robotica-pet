@@ -18,3 +18,7 @@ jobs:
           node-version: '22'
       - name: Testar bancada e validações
         run: node tests/smoke.cjs
+      - name: Conferir nova interface sem alterar o simulador
+        run: |
+          node --check studio-preview.js
+          node tests/studio-preview.cjs
