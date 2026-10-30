@@ -122,3 +122,17 @@ O TinkerPET reconhece automaticamente a forma de montagem pelo uso das gangorras
 **Com duas gangorras (17 fios):** S1 recebe positivo da bateria 9 V em **IN** e leva positivo à entrada LM2596 IN+ por **OUT**. S2 recebe positivo do suporte seis AA em **IN** e leva positivo à MX1508 + por **OUT**. O terceiro pino **LED−** de cada gangorra iluminada pode ser ligado ao negativo da **mesma** fonte para iluminar a tecla (opcional, não interfere no progresso). Os negativos de alimentação continuam conectados diretamente ao LM2596 e à MX1508, e o **GND comum ESP32–MX1508 permanece obrigatório nas duas versões**. Pinagem e funcionamento das gangorras de três terminais variam por fabricante: conferir marcações e continuidade elétrica no modelo físico antes de energizar.
 
 **Atenção:** a bateria de 9 V alimenta a **entrada** da LM2596; o valor de **5 V é a saída ajustada** para o ESP32. Os pinos MOTOR A/B da MX1508 são saídas de ponte H, cuja polaridade pode inverter conforme a direção, não terminais permanentemente positivos ou negativos.
+
+## TinkerPET Studio — prévia visual isolada (outubro de 2026)
+
+**Link de avaliação:** https://peteducacao.github.io/laboratorio-robotica-pet/studio-preview.html
+
+A interface antiga permanece em `index.html`. A prévia usa **o mesmo motor elétrico de simulação** e os mesmos ativos (ESP32, MX1508, motores, suportes e jumpers). A aplicação detecta a classe `preview-studio` e cria uma cópia inicial da montagem salva em `tinkerpet-studio-preview-v1`, mantendo a versão habitual em `tinkerpet-v2`. Assim o aluno pode testar a prévia e movimentar peças **sem sobrescrever sua montagem original**.
+
+A pesquisa de interface considerou o manual oficial **Autodesk Tinkercad Circuits**, o editor interativo de componentes **Wokwi** e o repositório de identidade visual do catálogo PET Educação. A hierarquia resultante preserva: bancada contínua como protagonista, barra superior única com edição/zoom/simulação, catálogo sob demanda, progresso conciso e painel de propriedades oculto por padrão. A identidade visual reaproveita azul PET `#173d72`, creme `#fcf8f2`, turquesa `#159ca5`, brancos e bordas suaves. O CSS de prévia foi isolado em `studio-preview.css`, a interação visual em `studio-preview.js`, sem mover funções para dentro da interface.
+
+No celular, os controles ocupam duas linhas; telefones muito estreitos ganham uma terceira linha para evitar sobreposições, e o espaço de criação continua flexível. O menu lateral mostra somente a seta fechada; propriedades e fios abrem pelo botão **Detalhes**. A página de prévia inclui **Voltar ao visual atual** e mantém o Gabarito protegido.
+
+**Validação:** `node tests/smoke.cjs` verifica o simulador; `node tests/studio-preview.cjs` verifica os IDs originais, isolamento, CSS, responsividade e controles; `node tests/preview-browser.mjs` usa Chromium real em **360, 390, 430, 768 e 1366 px** (botões, catálogo, zoom, propriedades, ausência de rolagem horizontal e isolamento de montagem). O workflow armazena capturas PNG para revisão visual.
+
+A adoção definitiva da identidade Studio deve ser decidida depois de revisar esta prévia; não substituir `index.html` antes da aprovação do layout.
