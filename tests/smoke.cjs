@@ -254,6 +254,29 @@ doubleTap(430,290);
 assert.equal(nodes.world.style.transform,beforeDoubleTap,'segundo toque duplo restaura zoom e enquadramento');
 assert.equal(Number(nodes.zoomSlider.value),initialDoubleZoom,'valor de zoom também é restaurado');
 assert(css.includes('.pin-btn.connected:not(.selected)'),'pinos ligados não recebem aro verde');
+
+const circleReset = css.slice(css.indexOf('/* v31 · Terminais SEM auréola.'));
+assert(circleReset.length>3000,'o pacote de correção dos terminais está na folha de estilos');
+for(const sel of [
+ '#partsLayer .part .pin-btn:hover',
+ '#partsLayer .part .pin-btn:focus',
+ '#partsLayer .part .pin-btn:focus-visible',
+ '#partsLayer .part .pin-btn.selected',
+ '#partsLayer .part .pin-btn.connected',
+ '#partsLayer .part .pin-btn.selected:hover',
+ '#partsLayer .part .pin-btn.connected:focus-visible'
+])assert(circleReset.includes(sel),'anel deve ser removido inclusive no estado: '+sel);
+assert(circleReset.includes('background:transparent!important;'),'fundo de seleção do pino é transparente');
+assert(circleReset.includes('outline:0!important;'),'nenhum contorno azul de foco nos pinos');
+assert(circleReset.includes('box-shadow:none!important;'),'nenhum halo sombreado nos pinos');
+assert(circleReset.includes('-webkit-tap-highlight-color:transparent!important;'),'toque no celular não desenha realce nativo');
+assert(circleReset.includes('::before')&&circleReset.includes('::after'),'pseudo-elementos não desenham aro artificial');
+assert(circleReset.includes('@media(max-width:760px)'),'a bancada ganha layout móvel dedicado');
+assert(circleReset.includes('grid-template-areas:"tools" "zoom" "right"!important'),'celular estreito evita sobrepor zoom e ações');
+assert(circleReset.includes('@media(max-width:449px)'),'breakpoint celular estreito controla terceira fileira');
+assert(circleReset.includes('@media(min-width:450px) and (max-width:760px)'),'larguras maiores usam zoom centralizado e ações à direita');
+assert(circleReset.includes('overflow-x:hidden!important'),'não há rolagem lateral de página');
+
 assert(css.includes('.pin-btn.connected .pin-dot'),'terminais de motores e baterias mantêm cor neutra ao ligar');
 
 // Testa o fluxo real de toque: pino inicial → dois cliques na bancada → pino final.
