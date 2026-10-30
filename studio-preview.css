@@ -611,3 +611,68 @@
    grid-template-rows:39px 39px!important;
  }
 }
+
+/* Studio v5 — painel de componentes não modal, com montagem e catálogo simultâneos */
+.preview-studio .side-backdrop,
+.preview-studio .side-backdrop:not([hidden]){display:none!important;pointer-events:none!important}
+.preview-studio .library{z-index:80!important}
+.preview-studio .drawer-handle{z-index:83!important}
+.preview-studio .drag-ghost:not([hidden]){
+ display:flex!important;flex-direction:column!important;align-items:center!important;justify-content:center!important;
+ width:128px!important;min-width:0!important;min-height:110px!important;max-width:40vw!important;
+ gap:5px!important;padding:8px!important;z-index:110!important;
+ background:#fffdfaf5!important;border:2px solid #b7d5cf!important;border-radius:13px!important;
+ box-shadow:0 12px 32px #153c4d30!important;pointer-events:none!important
+}
+.preview-studio .drag-ghost img{width:86px;height:75px;max-width:100%;object-fit:contain;pointer-events:none}
+.preview-studio .drag-ghost strong{font:700 10px/1.25 "DM Sans",sans-serif;text-align:center;color:#355664}
+.preview-studio .drag-ghost.valid-drop{border-color:#18a4a0!important;box-shadow:0 10px 28px #137f7d38!important}
+.preview-studio .viewport.component-drop-ready{box-shadow:inset 0 0 0 2px #16a59e99!important}
+@media(min-width:860px){
+ .preview-studio.components-open .main-work{
+  width:calc(100% - min(345px,calc(100vw - 32px)))!important;
+  max-width:calc(100% - min(345px,calc(100vw - 32px)))!important;
+ }
+ .preview-studio.components-open .main-work .workspace-region{width:100%!important}
+}
+@media(max-width:859px){
+ .preview-studio .library{
+  width:min(310px,65vw)!important;max-width:65vw!important
+ }
+ .preview-studio .drawer-handle.open{right:min(310px,65vw)!important}
+}
+@media(max-width:420px){
+ .preview-studio .library{width:62vw!important;max-width:62vw!important}
+ .preview-studio .drawer-handle.open{right:62vw!important}
+ .preview-studio .catalog{grid-template-columns:repeat(2,minmax(0,1fr))!important}
+ .preview-studio .catalog-card{min-height:116px!important}
+ .preview-studio .catalog-card img{max-width:70px!important;height:59px!important}
+ .preview-studio .catalog-card strong{font-size:9px!important}
+}
+/* A gangorra recebe seus detalhes da arte, sem um retângulo de CSS cobrindo-a. */
+.preview-studio .part[data-kind="switch"] .part-actions{
+ left:23%!important;right:23%!important;top:19%!important;bottom:32%!important;
+ z-index:8!important;pointer-events:none!important;
+}
+.preview-studio .part[data-kind="switch"] .part-switch,
+.preview-studio .part[data-kind="switch"][data-powered="on"] .part-switch{
+ display:block!important;position:relative!important;pointer-events:auto!important;
+ width:100%!important;height:100%!important;
+ border:0!important;background:transparent!important;box-shadow:none!important;
+ color:transparent!important;font-size:0!important;border-radius:12px!important;
+ transform:none!important;
+ cursor:pointer!important
+}
+.preview-studio .part[data-kind="switch"] .part-switch::after{
+ content:""!important;position:absolute!important;right:12%!important;top:13%!important;
+ width:9px!important;height:9px!important;border-radius:50%!important;
+ background:#536662!important;box-shadow:0 0 0 2px #293e43!important;
+ transition:background .15s,box-shadow .15s!important;
+}
+.preview-studio .part[data-kind="switch"][data-indicator="on"] .part-switch::after{
+ background:#8cec83!important;box-shadow:0 0 0 2px #396f51,0 0 12px 3px #8cec8380!important
+}
+.preview-studio .part[data-kind="switch"][data-powered="on"][data-indicator="off"] .part-switch::after{
+ background:#688a77!important;box-shadow:0 0 0 2px #324c42!important
+}
+.preview-studio .part[data-kind="switch"] .part-switch:focus-visible{outline:3px solid #1597ba!important;outline-offset:3px!important}
