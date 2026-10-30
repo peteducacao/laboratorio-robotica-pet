@@ -11,7 +11,7 @@ const originalIds=ids(base);
 for(const id of originalIds)assert(preview.includes('id="'+id+'"'),'Prévia precisa preservar controle de simulador: '+id);
 assert.equal(new Set(ids(preview)).size,ids(preview).length,'IDs sem duplicidade');
 assert(preview.includes('href="styles.css?v=36"')&&preview.includes('src="app.js?v=38"'),'mesmo motor do site atual, sem fork de circuitos');
-assert(preview.includes('studio-preview.css?v=2')&&preview.includes('studio-preview.js?v=1'),'assets da prévia isolados');
+assert(preview.includes('studio-preview.css?v=3')&&preview.includes('studio-preview.js?v=1'),'assets da prévia isolados');
 assert(preview.includes('href="./"'),'voltar à versão atual');
 assert(preview.includes('id="previewInspectorOpen"')&&preview.includes('id="previewInspectorClose"'),'propriedades no modo sob demanda');
 for(const id of ['viewport','world','wireSvg','partsLayer','library','drawerHandle','catalog','zoomLabel','zoomIn','checkBtn','wireColorSelect','progressBar','connectionsCount','validationBadge'])
