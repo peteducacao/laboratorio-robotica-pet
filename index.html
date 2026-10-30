@@ -9,8 +9,8 @@
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&family=Manrope:wght@600;700;800&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="styles.css?v=36">
 <link rel="stylesheet" href="answer-key.css?v=37">
-<link rel="stylesheet" href="studio-preview.css?v=4">
-<script defer src="app.js?v=39"></script>
+<link rel="stylesheet" href="studio-preview.css?v=5">
+<script defer src="app.js?v=40"></script>
 <script defer src="answer-key.js?v=37"></script>
 <script defer src="studio-preview.js?v=1"></script>
 </head>
@@ -67,12 +67,12 @@
 <div class="studio">
   <aside class="library" id="library" aria-label="Catálogo de componentes">
     <div class="library-head">
-      <div><small>PEÇAS DISPONÍVEIS</small><h2>Componentes</h2></div>
+      <div><h2>Componentes</h2></div>
       <button id="closeLibrary" class="icon-btn close-library" aria-label="Fechar componentes">×</button>
     </div>
     <div class="library-search"><span>⌕</span><input id="componentSearch" type="search" placeholder="Buscar componente..." aria-label="Buscar componente"></div>
-    <div class="library-intro">Toque para adicionar ou arraste para montar. Arraste uma peça da bancada de volta para cá para excluir.</div>
-    <div id="catalog" class="catalog" aria-label="Peças disponíveis"></div>
+    <div class="library-intro">Arraste um componente para a área de criação. O painel pode permanecer aberto enquanto você monta.</div>
+    <div id="catalog" class="catalog" aria-label="Componentes"></div>
     <div class="library-footer"><b>✳ DICA</b><p>Toque em um pino para começar o fio. Clique em pontos vazios da bancada para criar curvas; termine no outro pino.</p></div>
   </aside>
   <div id="sideBackdrop" class="side-backdrop" hidden></div>
@@ -81,7 +81,7 @@
     <section class="workspace-region" id="buildPanel" aria-label="Bancada virtual">
       <div class="mission-strip" aria-label="Resumo do progresso da montagem">
         <span class="strip-number" id="stepNumber">01</span>
-        <div class="mission-copy"><strong id="missionTitle">Sua bancada está vazia</strong><span id="missionText">Escolha as peças no catálogo e coloque-as onde quiser.</span></div>
+        <div class="mission-copy"><strong id="missionTitle">Sua bancada está vazia</strong><span id="missionText">Arraste componentes do painel até a área de criação.</span></div>
         <div class="inspector-bottom"><div class="progress-head"><span id="progressCaption">Componentes</span><b id="connectionsCount">0 / 9 peças</b></div><div class="progress-track"><div id="progressBar"></div></div><div id="validationBadge" class="validation-badge">Aguardando montagem</div></div>
       </div>
       <div id="viewport" class="viewport" aria-label="Área infinita de montagem. Arraste as peças e mova a bancada para qualquer direção." tabindex="0">
