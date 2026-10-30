@@ -5,7 +5,7 @@
  const WIDTH=2050,HEIGHT=1450;
  const places={
   b1:[100,180],s1:[365,220],lm:[655,205],esp:[1040,130],
-  b2:[100,815],s2:[365,855],drv:[1010,820],ml:[1420,775],mr:[1695,775]
+  b2:[85,815],s2:[440,855],drv:[1010,820],ml:[1420,775],mr:[1695,775]
  };
  // Cada jumper possui cor identificável; motores usam famílias bem diferentes.
  const colors=['#ce3638','#e9634b','#36485b','#e59a22','#263d5b',
@@ -15,7 +15,7 @@
  const categories=[
   {id:'all',label:'Tudo',title:'Circuito completo',indices:[...Array(17).keys()]},
   {id:'esp',label:'Energia ESP32',title:'Bateria 1 → gangorra 1 → LM2596 → ESP32',indices:[0,1,2,3,4]},
-  {id:'motorPower',label:'Energia motores',title:'Bateria 2 → gangorra 2 → ponte H e GND comum',indices:[5,6,7,8]},
+  {id:'motorPower',label:'Energia motores',title:'6 pilhas AA → gangorra 2 → ponte H e GND comum',indices:[5,6,7,8]},
   {id:'control',label:'Comandos',title:'ESP32 → IN1, IN2, IN3 e IN4 da ponte H',indices:[9,10,11,12]},
   {id:'motor1',label:'Motor 1',title:'Ponte H → motor DC 1 (verde)',indices:[13,14]},
   {id:'motor2',label:'Motor 2',title:'Ponte H → motor DC 2 (laranja)',indices:[15,16]}
@@ -137,7 +137,7 @@
    if(!pos)return;
    pieces.push('<image x="'+pos[0]+'" y="'+pos[1]+'" width="'+part.width+'" height="'+part.height+'" preserveAspectRatio="none" pointer-events="none" href="'+escaped(href)+'" xlink:href="'+escaped(href)+'"><title>'+escaped(part.name)+'</title></image>');
    let labelX=pos[0]+part.width/2, labelY=pos[1]-21;
-   if(part.kind==='battery')labelY=pos[1]+part.height+37;
+   if(part.kind==='battery'||part.kind==='batteryPack')labelY=pos[1]+part.height+37;
    if(part.kind==='switch')labelY=pos[1]-22;
    if(part.kind==='motor')labelY=pos[1]+part.height+36;
    pieces.push('<rect x="'+(labelX-111)+'" y="'+(labelY-27)+'" width="222" height="39" rx="19" fill="#fff" stroke="#c5d9dd" stroke-width="2"/>');
@@ -168,7 +168,7 @@
   return pieces.join('');
  }
  const partLabels={b1:'Bateria 1',s1:'Gangorra 1',lm:'LM2596',esp:'ESP32',
-                   b2:'Bateria 2',s2:'Gangorra 2',drv:'Ponte H',ml:'Motor 1',mr:'Motor 2'};
+                   b2:'Suporte 6 AA',s2:'Gangorra 2',drv:'Ponte H',ml:'Motor 1',mr:'Motor 2'};
  const pinLabels={POS:'+',NEG:'−',INP:'IN+',INN:'IN−',OUTP:'OUT+',OUTN:'OUT−',VCC:'VCC',GND:'GND',GND2:'GND2',
                   A:'A',B:'B',IN:'IN',OUT:'OUT'};
  function wireName(i){
