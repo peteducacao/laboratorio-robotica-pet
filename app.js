@@ -672,7 +672,10 @@ function moveWireBend(g,clientX,clientY){
  };
  wire.via=via;wire.manual=true;
  // O vértice em edição recebe a mesma indicação do jumper ainda livre.
- wireAlignment=closestComponentGuide(via[g.vertex-1]);
+ const vertex=via[g.vertex-1],prev=original[g.vertex-1],next=original[g.vertex+1];
+ const straight=[prev,next].some(pt=>pt&&(
+  Math.abs(vertex.x-pt.x)<=8/zoom||Math.abs(vertex.y-pt.y)<=8/zoom));
+ wireAlignment=straight?closestComponentGuide(vertex):null;
  requestDraw();
 }
 function moveWireSegment(g,clientX,clientY){
@@ -707,7 +710,7 @@ function moveWireSegment(g,clientX,clientY){
   ?closestComponentGuide({x:(movedA.x+movedB.x)/2,y:movedA.y},'y',[movedA.x,movedB.x])
   :vertical
    ?closestComponentGuide({x:movedA.x,y:(movedA.y+movedB.y)/2},'x',[movedA.y,movedB.y])
-   :closestComponentGuide(movedB);
+   :null;
  requestDraw();
 }
 function wireRoutePoints(start,via,end,startPort,endPort){
@@ -829,7 +832,9 @@ function moveReconnect(clientX,clientY){
  const pin=nearestPort(clientX,clientY,fixed,32);
  reconnectPending.snapPort=pin;
  reconnectPending.point=pin?getPortPos(pin):worldXY(clientX,clientY);
- pendingAlignment=pin?null:visualPendingAlignment(clientX,clientY);
+ const points=wirePoints(wire);
+ const anchor=reconnectPending.corners.at(-1)||(reconnectPending.end==='b'?points.at(-2):points[1]);
+ pendingAlignment=visualPendingAlignment(clientX,clientY,anchor);
  requestDraw();
 }
 function cancelReconnect(){
@@ -865,6 +870,7 @@ function finishReconnect(newPort){
 }
 function drawWires(){
  drawPending=false;
+ Q('viewport').classList.toggle('is-wiring',!!(state.startPort||reconnectPending));
  const svg=Q('wireSvg');svg.replaceChildren();
  const ns='http://www.w3.org/2000/svg';
  for(let i=0;i<state.wires.length;i++){
@@ -1064,64 +1070,72 @@ function nearestPort(clientX,clientY,exclude,threshold=19){
 // Guias de alinhamento pelo CORPO do componente, não apenas pelos pinos.
 // Uma ponta alinhada a qualquer altura/largura da peça recebe uma régua sutil.
 // A guia não move o fio, não cria curvas e não altera a montagem salva.
-function closestComponentGuide(point,axisFilter=null,span=null){
- const tolerance=10/zoom,maxGap=520/zoom;
- let best=null,bestScore=Infinity;
- for(const part of state.parts){
-  const layout=partLayout(part);
-  const left=part.x,right=part.x+layout.w,top=part.y,bottom=part.y+layout.h;
-  for(const axis of (axisFilter?[axisFilter]:['y','x'])){
-   const isHorizontal=axis==='y';
-   const cross= isHorizontal?point.y:point.x;
-   const low=isHorizontal?top:left,high=isHorizontal?bottom:right;
-   // Permite alinhamento ao longo de TODA a silhueta, inclusive entre os pinos.
-   if(cross<low-tolerance||cross>high+tolerance)continue;
-   const value=Math.max(low,Math.min(high,cross));
-   const begin=isHorizontal?left:top,end=isHorizontal?right:bottom;
-   const fromSpan=span?Math.min(...span):isHorizontal?point.x:point.y;
-   const toSpan=span?Math.max(...span):fromSpan;
-   let fromAlong,toAlong;
-   if(toSpan<begin){fromAlong=begin;toAlong=toSpan;}
-   else if(fromSpan>end){fromAlong=end;toAlong=fromSpan;}
-   else if(span){
-    // Segmento atravessa a projeção da peça: usa a ponta fora da carcaça.
-    const leftOut=begin-fromSpan,rightOut=toSpan-end;
-    if(leftOut>0&&leftOut>=rightOut){fromAlong=begin;toAlong=fromSpan;}
-    else if(rightOut>0){fromAlong=end;toAlong=toSpan;}
-    else continue;
-   }else continue; // Não desenhar sobre um componente sob o cursor.
-   const gap=Math.abs(fromAlong-toAlong),deviation=Math.abs(cross-value);
-   if(gap<3/zoom||gap>maxGap)continue;
-   const score=gap*zoom+deviation*zoom*2;
-   if(score<bestScore){
-    bestScore=score;
-    best=isHorizontal
-      ?{axis:'y',from:{x:fromAlong,y:value},to:{x:toAlong,y:value},partId:part.id}
-      :{axis:'x',from:{x:value,y:fromAlong},to:{x:value,y:toAlong},partId:part.id};
+// Alinhamento preciso com pinos e eixo da peça, não qualquer ponto da sua caixa.
+function closestComponentGuide(point,axisFilter=null,span=null,anchor=null){
+ const tolerance=8/zoom,maxAlong=650/zoom;
+ // Guias só durante trechos retos; nenhum traço azul surge sobre fio diagonal.
+ if(anchor&&Math.abs(point.x-anchor.x)>tolerance&&Math.abs(point.y-anchor.y)>tolerance)return null;
+ const found=[];
+ for(const axis of (axisFilter?[axisFilter]:['x','y'])){
+  let best=null,scoreBest=Infinity;
+  for(const part of state.parts){
+   const box=partLayout(part),left=part.x,right=left+box.w,top=part.y,bottom=top+box.h;
+   const list=[];
+   for(const [pin] of byKind[part.kind].pins){
+    const pos=getPortPos(part.id+'.'+pin);
+    if(pos)list.push({pos,pin:true});
+   }
+   // Corpo: somente limites e centro, sem "alinhamento" falso em área inteira.
+   for(const x of [left,(left+right)/2,right])
+    for(const y of [top,(top+bottom)/2,bottom])list.push({pos:{x,y},pin:false});
+   for(const candidate of list){
+    const pos=candidate.pos;
+    const deviation=Math.abs(axis==='x'?point.x-pos.x:point.y-pos.y);
+    if(deviation>tolerance)continue;
+    const along=Math.abs(axis==='x'?point.y-pos.y:point.x-pos.x);
+    if(along>maxAlong)continue;
+    const score=deviation*zoom*40+along*zoom*.5+(candidate.pin?0:18);
+    if(score<scoreBest){
+     scoreBest=score;
+     best={axis,value:axis==='x'?pos.x:pos.y,pin:candidate.pin,partId:part.id};
+    }
    }
   }
+  if(best)found.push(best);
  }
- return best;
+ return found.length?found:null;
 }
-function drawComponentGuide(svg,guide,ns){
- if(!guide)return;
- const line=document.createElementNS(ns,'line');
- line.setAttribute('class','wire-pending-guide component-alignment-guide');
- line.setAttribute('x1',String(guide.from.x));line.setAttribute('y1',String(guide.from.y));
- line.setAttribute('x2',String(guide.to.x));line.setAttribute('y2',String(guide.to.y));
- line.style.strokeWidth=(1.5/zoom)+'px';
- line.setAttribute('aria-hidden','true');
- svg.append(line);
+function drawComponentGuide(svg,guides,ns){
+ if(!guides)return;
+ const list=Array.isArray(guides)?guides:[guides];
+ const viewport=Q('viewport').getBoundingClientRect();
+ const start=worldXY(viewport.left,viewport.top),end=worldXY(viewport.right,viewport.bottom);
+ for(const g of list){
+  if(!g||!Number.isFinite(g.value))continue;
+  const line=document.createElementNS(ns,'line');
+  line.setAttribute('class','wire-pending-guide component-alignment-guide');
+  // Régua de borda a borda da tela, horizontal OU vertical.
+  if(g.axis==='x'){
+   line.setAttribute('x1',String(g.value));line.setAttribute('x2',String(g.value));
+   line.setAttribute('y1',String(start.y));line.setAttribute('y2',String(end.y));
+  }else{
+   line.setAttribute('y1',String(g.value));line.setAttribute('y2',String(g.value));
+   line.setAttribute('x1',String(start.x));line.setAttribute('x2',String(end.x));
+  }
+  line.style.strokeWidth=1.5/zoom+'px';
+  line.setAttribute('aria-hidden','true');
+  svg.append(line);
+ }
 }
-function visualPendingAlignment(clientX,clientY){
- return closestComponentGuide(worldXY(clientX,clientY));
+function visualPendingAlignment(clientX,clientY,anchor=null){
+ return closestComponentGuide(worldXY(clientX,clientY),null,null,anchor);
 }
 function setPendingPreview(e){
  if(!wireTipActive||!state.startPort)return;
  // O jumper acompanha o ponteiro exatamente, independentemente da guia.
  previewPoint=worldXY(e.clientX,e.clientY);
  previewSnapPort=null;
- pendingAlignment=visualPendingAlignment(e.clientX,e.clientY,state.startPort);
+ pendingAlignment=visualPendingAlignment(e.clientX,e.clientY,lastWireTip());
  requestDraw();
 }
 function wireAt(clientX,clientY){return segmentAt(clientX,clientY).index;}
@@ -1248,6 +1262,26 @@ function paletteDown(e){
  e.preventDefault();
  gesture={type:'catalog',pointer:e.pointerId,kind:el.dataset.kind,startX:e.clientX,startY:e.clientY,moved:false};
 }
+function captureBendNearComponents(e){
+ if(!state.startPort&&!reconnectPending)return;
+ if(pinch||activeTouches.size>=2||Date.now()<gestureBlockedUntil||spaceHeld)return;
+ if(e.button!==undefined&&e.button!==0)return;
+ if(e.target.closest('.wire-end-handle'))return;
+ const port=e.target.closest('[data-port]');
+ if(port){
+  const at=getPortPos(port.dataset.port),r=Q('viewport').getBoundingClientRect();
+  if(at){
+   const cx=r.left+panX+at.x*zoom,cy=r.top+panY+at.y*zoom;
+   const radius=e.pointerType==='touch'?16:12;
+   if(Math.hypot(e.clientX-cx,e.clientY-cy)<=radius)return;
+  }
+ }
+ // Captura antes do componente para não o selecionar ao clicar perto dele.
+ if(e.cancelable)e.preventDefault();
+ e.stopPropagation();
+ suppressPortClickUntil=Date.now()+300;
+ gesture={type:reconnectPending?'reconnect-bend':'bend',pointer:e.pointerId,startX:e.clientX,startY:e.clientY,moved:false};
+}
 function viewportDown(e){
  if(pinch||activeTouches.size>=2||Date.now()<gestureBlockedUntil)return;
  if(e.button!==undefined&&e.button!==0&&e.button!==1)return;
@@ -1372,7 +1406,7 @@ function pointerUp(e){
  if(g.type==='reconnect-bend'){
   if(reconnectPending){
    const w=state.wires[reconnectPending.index],fixed=w?.[reconnectPending.end==='a'?'b':'a'];
-   const dest=fixed?nearestPort(e.clientX,e.clientY,fixed,32):null;
+   const dest=fixed?nearestPort(e.clientX,e.clientY,fixed,9):null;
    if(dest)finishReconnect(dest);
    else{
     const box=Q('viewport').getBoundingClientRect();
@@ -1439,7 +1473,7 @@ function pointerUp(e){
   }else if(g.moved)persist();
   else{state.selected=g.partId;renderParts();renderInspector();}
  }else if(g.type==='bend'){
-  const pin=nearestPort(e.clientX,e.clientY,state.startPort);
+  const pin=nearestPort(e.clientX,e.clientY,state.startPort,9);
   if(pin)connect(pin);else{const pos=worldXY(e.clientX,e.clientY);addCorner(pos.x,pos.y);}
  }else if(g.type==='pan'&&!g.moved&&!spaceHeld){
   const wire=wireAt(e.clientX,e.clientY);
@@ -1655,6 +1689,7 @@ function bind(){
    partDown(e);
  });
  Q('viewport').addEventListener('pointerdown',trackingTouchDown,true);
+ Q('viewport').addEventListener('pointerdown',captureBendNearComponents,true);
  Q('viewport').addEventListener('pointerdown',viewportDown);
  window.addEventListener('pointermove',pointerMove);
  window.addEventListener('pointerup',pointerUp);
