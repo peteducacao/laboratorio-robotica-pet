@@ -350,7 +350,7 @@ function inspectorWires(){
  state.wires.forEach((w,i)=>{
   const row=document.createElement('div');row.className='wire-item'+(state.selectedWire===i?' is-selected':'');row.dataset.selectWire=String(i);row.tabIndex=0;row.title='Selecionar jumper para trocar sua cor';
   const dot=document.createElement('span');dot.className='wire-dot';dot.style.background=w.color;
-  const names=document.createElement('div');names.className='wire-names';names.textContent=portName(w.a)+' → '+portName(w.b)+(w.via&&w.via.length?' · '+w.via.length+' curva(s)':'')+(valid.has(electricalKey(w.a,w.b))?' · ✓':' · Rever');
+  const names=document.createElement('div');names.className='wire-names';names.textContent=portName(w.a)+' → '+portName(w.b)+(w.via&&w.via.length?' · '+w.via.length+' curva(s)':'')+(acceptedConnectionSet().has(electricalKey(w.a,w.b))?' · ✓':' · Rever');
   const btn=document.createElement('button');btn.type='button';btn.dataset.removeWire=String(i);btn.title='Remover fio';btn.textContent='×';
   row.append(dot,names,btn);body.append(row);
  });
@@ -386,15 +386,16 @@ function renderProgress(){
  Q('progressBar').style.width=Math.round(progress*100)+'%';
  Q('connectionsCount').textContent=inAssembly?partsDone+'/'+required:total+'/'+expected.length;
  Q('progressCaption').textContent=inAssembly?'Componentes':'Conexões corretas';
- const badge=Q('validationBadge');badge.className='validation-badge'+(ready()?' ok':errors?' error':'');
- badge.textContent=ready()?'✓ Circuito completo ('+(switched?'com gangorras':'sem gangorras')+')':
+ const wiringComplete=!inAssembly&&!errors&&missing().length===0;
+ const badge=Q('validationBadge');badge.className='validation-badge'+(wiringComplete?' ok':errors?' error':'');
+ badge.textContent=wiringComplete?'✓ Montagem concluída ('+(switched?'com gangorras':'sem gangorras')+')':
   errors?errors+' ligação(ões) fora do esquema':
   inAssembly?'Continue adicionando componentes':'Faltam '+missing().length+' ligações';
  const missionTitle=Q('missionTitle'),missionText=Q('missionText');
  if(!partsDone){Q('stepNumber').textContent='01';missionTitle.textContent='Sua bancada está vazia';missionText.textContent='Monte a versão direta com 7 peças ou adicione duas gangorras para a versão com chaves (9 peças).';}
  else if(inAssembly){Q('stepNumber').textContent='01';missionTitle.textContent='Monte seu conjunto de peças';missionText.textContent='Modo '+(switched?'com gangorras':'sem gangorras')+': você colocou '+partsDone+' de '+required+' peças.';}
  else if(missing().length||errors){Q('stepNumber').textContent='02';missionTitle.textContent='Conecte os terminais';missionText.textContent=total+' das '+expected.length+' ligações corretas no modo '+(switched?'com gangorras':'direto')+'. O negativo da MX1508 também vai ao GND do ESP32.';}
- else if(Math.abs(state.voltage-5)>.01||(switched&&(!state.switches.s1||!state.switches.s2))){Q('stepNumber').textContent='03';missionTitle.textContent='Ligue a alimentação';missionText.textContent='Ajuste a saída do LM2596 para 5,0 V'+(switched?' e ligue as duas gangorras.':'.');}
+ else if(Math.abs(state.voltage-5)>.01||(switched&&(!state.switches.s1||!state.switches.s2))){Q('stepNumber').textContent='03';missionTitle.textContent='Ligações concluídas! Ative a alimentação';missionText.textContent='Ajuste a saída do LM2596 para 5,0 V'+(switched?' e ligue as duas gangorras.':'.');}
  else {Q('stepNumber').textContent='04';missionTitle.textContent='Circuito completo!';missionText.textContent='Parabéns! Montagem '+(switched?'com':'sem')+' gangorras validada. Inicie a simulação e abra a pista.';}
 }
 function refresh(){renderCatalog();renderParts();renderColors();renderInspector();renderProgress();persist();updateTrackLock();}
@@ -511,7 +512,7 @@ function connect(id){
  if(index>=0){state.wires.splice(index,1);message('Ligação existente removida.');}
  else{
   state.wires.push({a:first,b:id,color:state.wireColor,via,manual:true});
-  message(valid.has(electricalKey(first,id))?'✓ Fio sólido conectado com '+via.length+' curva(s).':'Fio criado, mas os terminais precisam ser revisados.',!valid.has(electricalKey(first,id)));
+  message(acceptedConnectionSet().has(electricalKey(first,id))?'✓ Fio sólido conectado com '+via.length+' curva(s).':'Fio criado, mas os terminais precisam ser revisados.',!acceptedConnectionSet().has(electricalKey(first,id)));
  }
  state.completed=false;refresh();
 }
@@ -704,7 +705,7 @@ function drawWires(){
   const d=wirePath(points);
   const line=document.createElementNS(ns,'path');
   line.setAttribute('d',d);
-  line.setAttribute('class','wire-line'+(valid.has(electricalKey(w.a,w.b))?'':' wire-error')+(state.selectedWire===i?' wire-selected':''));
+  line.setAttribute('class','wire-line'+(acceptedConnectionSet().has(electricalKey(w.a,w.b))?'':' wire-error')+(state.selectedWire===i?' wire-selected':''));
   line.setAttribute('stroke',w.color);svg.append(line);
   // O traço termina no furo do pino; nenhum círculo fica sobre o componente.
   // Um alvo por segmento, inclusive para fios retos sem curvas intermediárias.
