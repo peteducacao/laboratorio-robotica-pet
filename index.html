@@ -7,12 +7,37 @@
 <title>TinkerPET • Laboratório de Robótica</title>
 <link rel="icon" href="assets/logo-pet.svg" type="image/svg+xml">
 <link rel="preload" as="image" href="assets/welcome-approved.avif" type="image/avif">
-<link rel="stylesheet" href="home.css?v=4">
-<script src="home.js?v=4" defer></script>
+<link rel="stylesheet" href="home.css?v=5">
+<script src="home.js?v=5" defer></script>
 </head>
 <body>
 <main class="welcome" aria-label="Bem-vindo ao TinkerPET">
  <img id="welcomeArt" class="welcome-art" src="assets/welcome-approved.avif" alt="Robô TinkerPET sorrindo, peças de eletrônica flutuando e botão Meus circuitos em uma oficina de robótica">
+ <svg id="energyRails" class="energy-rails" viewBox="0 0 1536 1024" preserveAspectRatio="none" aria-hidden="true">
+  <defs>
+   <linearGradient id="railIce" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#2de6ff"/><stop offset=".55" stop-color="#bdfaff"/><stop offset="1" stop-color="#298eff"/></linearGradient>
+   <linearGradient id="railAmber" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffb543"/><stop offset=".55" stop-color="#fff0a0"/><stop offset="1" stop-color="#ffcd53"/></linearGradient>
+   <filter id="railGlow" x="-100%" y="-100%" width="300%" height="300%"><feGaussianBlur stdDeviation="6"/></filter>
+  </defs>
+  <g class="rail-side rail-side-left">
+   <path class="rail-track" d="M 484 249 H 457 Q 440 249 440 267 V 394 Q 440 409 425 421 L 420 426 V 599 L 464 633"/>
+   <path class="rail-haze blue" d="M 484 249 H 457 Q 440 249 440 267 V 394 Q 440 409 425 421 L 420 426 V 599 L 464 633"/>
+   <path class="rail-current blue" d="M 484 249 H 457 Q 440 249 440 267 V 394 Q 440 409 425 421 L 420 426 V 599 L 464 633"/>
+   <path class="rail-branch" d="M 440 355 H 474 V 337 H 490"/>
+   <circle class="rail-junction" cx="484" cy="249" r="9"/>
+   <circle class="rail-node" cx="490" cy="337" r="6"/>
+   <circle class="rail-node" cx="464" cy="633" r="8"/>
+  </g>
+  <g class="rail-side rail-side-right">
+   <path class="rail-track" d="M 1052 249 H 1079 Q 1096 249 1096 267 V 394 Q 1096 409 1111 421 L 1116 426 V 599 L 1072 633"/>
+   <path class="rail-haze gold" d="M 1052 249 H 1079 Q 1096 249 1096 267 V 394 Q 1096 409 1111 421 L 1116 426 V 599 L 1072 633"/>
+   <path class="rail-current gold" d="M 1052 249 H 1079 Q 1096 249 1096 267 V 394 Q 1096 409 1111 421 L 1116 426 V 599 L 1072 633"/>
+   <path class="rail-branch" d="M 1096 355 H 1062 V 337 H 1046"/>
+   <circle class="rail-junction gold" cx="1052" cy="249" r="9"/>
+   <circle class="rail-node gold" cx="1046" cy="337" r="6"/>
+   <circle class="rail-node gold" cx="1072" cy="633" r="8"/>
+  </g>
+ </svg>
  <span class="shine one" aria-hidden="true"></span><span class="shine two" aria-hidden="true"></span>
  <span id="floatingArduino" class="floating-crop arduino" aria-hidden="true"></span>
  <span id="floatingMotor" class="floating-crop motor" aria-hidden="true"></span>
