@@ -39,7 +39,7 @@ try{
     screen:bb('viewport'),header:document.querySelector('.app-header').getBoundingClientRect().height,
     bar:document.querySelector('.studio-topbar').getBoundingClientRect().height,
     zoom:bb('zoomIn'),simulation:bb('checkBtn'),
-    progress:bb('progressBar'),
+    progress:(()=>{const r=document.querySelector('.progress-track').getBoundingClientRect();return {width:r.width,height:r.height}})(),
     detailHidden:getComputedStyle(document.getElementById('previewInspector')).display==='none',
     libraryClosed:!document.getElementById('library').classList.contains('open')
    };
