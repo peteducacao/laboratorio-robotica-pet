@@ -2,22 +2,24 @@
 <html lang="pt-BR">
 <head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="theme-color" content="#f4f7fa"><meta name="description" content="Laboratório de robótica do PET Educação. Arraste as peças, conecte fios e pilote seu carrinho ESP32.">
-<title>TinkerPET • Laboratório de Robótica</title>
+<meta name="theme-color" content="#fcf8f2"><meta name="description" content="Laboratório de robótica do PET Educação. Arraste as peças, conecte fios e pilote seu carrinho ESP32.">
+<title>TinkerPET Studio • Laboratório de Robótica | PET Educação</title>
 <link rel="icon" href="assets/logo-pet.svg" type="image/svg+xml">
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&family=Manrope:wght@600;700;800&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="styles.css?v=36">
 <link rel="stylesheet" href="answer-key.css?v=37">
-<script defer src="app.js?v=37"></script>
+<link rel="stylesheet" href="studio-preview.css?v=4">
+<script defer src="app.js?v=39"></script>
 <script defer src="answer-key.js?v=37"></script>
+<script defer src="studio-preview.js?v=1"></script>
 </head>
-<body>
+<body class="preview-studio studio-main">
 <header class="app-header">
   <div class="header-start">
     <button id="menuBtn" class="icon-btn mobile-menu legacy-control" aria-label="Abrir lista de componentes" aria-expanded="false" hidden>☰</button>
     <a href="./" class="brand"><img src="assets/logo-pet.svg" alt="PET Educação"><span><strong>Tinker<span>PET</span></strong><small>LABORATÓRIO DE ROBÓTICA · UFS</small></span></a>
-    <span class="header-tag">PROJETO 01</span>
+    <span class="header-tag preview-tag">STUDIO</span>
   </div>
   <div class="header-end">
     <span class="autosave-indicator" id="savedIndicator" aria-live="polite">● Salvo automaticamente</span>
@@ -25,7 +27,8 @@
     <button id="saveBtn" class="legacy-control" hidden>Salvar</button>
   </div>
 </header>
-<div class="studio-topbar">    <div class="toolbar" role="toolbar" aria-label="Ferramentas da bancada">
+<div class="studio-topbar">
+    <div class="toolbar" role="toolbar" aria-label="Ferramentas da bancada">
       <div class="toolbar-left">
         <button id="editTab" class="legacy-control" hidden>Montagem</button>
         <button id="playTab" class="legacy-control" hidden>Simulação</button>
@@ -47,9 +50,10 @@
         </label>
       </div>
       <div class="toolbar-right">
+        <button type="button" id="previewInspectorOpen" class="control-btn preview-inspector-toggle" aria-label="Abrir propriedades e fios" title="Propriedades e fios" aria-controls="previewInspector" aria-expanded="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7h10M18 7h2M4 17h2M10 17h10"/><circle cx="16" cy="7" r="2"/><circle cx="8" cy="17" r="2"/></svg><span>Detalhes</span></button>
         <button id="hintBtn" class="control-btn hint-btn" type="button" title="Mostrar dica">💡 <span>Dica</span></button>
         <button id="downloadBtn" class="control-btn download-btn" type="button" aria-label="Baixar montagem" title="Baixar imagem da montagem"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12m-5-5 5 5 5-5M4 17v3h16v-3"/></svg></button>
-        <button id="openTrackBtn" class="control-btn track-entry-btn" type="button" hidden title="Abrir pista para pilotar com o circuito completo">🏁 <span>Abrir pista</span></button>
+        <button id="openTrackBtn" class="control-btn track-entry-btn" type="button" hidden aria-hidden="true" tabindex="-1"></button>
         <button id="checkBtn" class="simulation-toggle" type="button" aria-pressed="false"><span class="sim-icon" id="simIcon">▶</span> <span id="simLabel">Iniciar simulação</span></button>
       </div>
       <div class="toolbar-zoom toolbar-group" aria-label="Navegação da bancada">
@@ -75,7 +79,7 @@
   <button type="button" id="drawerHandle" class="drawer-handle" aria-label="Abrir componentes" aria-controls="library" aria-expanded="false"><span id="drawerArrow">❯</span></button>
   <main class="main-work">
     <section class="workspace-region" id="buildPanel" aria-label="Bancada virtual">
-      <div class="mission-strip">
+      <div class="mission-strip" aria-label="Resumo do progresso da montagem">
         <span class="strip-number" id="stepNumber">01</span>
         <div class="mission-copy"><strong id="missionTitle">Sua bancada está vazia</strong><span id="missionText">Escolha as peças no catálogo e coloque-as onde quiser.</span></div>
         <div class="inspector-bottom"><div class="progress-head"><span id="progressCaption">Componentes</span><b id="connectionsCount">0 / 9 peças</b></div><div class="progress-track"><div id="progressBar"></div></div><div id="validationBadge" class="validation-badge">Aguardando montagem</div></div>
@@ -131,13 +135,14 @@
       </div>
     </section>
   </main>
-  <aside class="inspector" aria-label="Informações e conexões">
+  <aside class="inspector" id="previewInspector" aria-label="Informações e conexões" aria-hidden="true">
+    <div class="preview-inspector-head"><strong>Detalhes da montagem</strong><button id="previewInspectorClose" type="button" aria-label="Fechar detalhes">×</button></div>
     <div class="inspector-tabs"><button id="inspectorPartsTab" class="active" type="button">Propriedades</button><button id="inspectorWiresTab" type="button">Fios <span id="wiresBadge">0</span></button></div>
     <div id="inspectorBody" class="inspector-body"><div class="inspect-empty"><span>⌁</span><h3>Escolha uma peça</h3><p>Ao selecionar um componente, você verá seus pinos e sua função.</p></div></div>
   </aside>
 </div>
 <div id="toast" class="toast" role="status" aria-live="polite"></div>
 <div id="dragGhost" class="drag-ghost" hidden></div>
-<dialog id="guideDialog"><div class="dialog-head"><h2>Como usar o TinkerPET</h2><button id="closeGuide" type="button" aria-label="Fechar">×</button></div><p><b>Agora a bancada começa vazia, igual a um laboratório de montagem.</b></p><ol><li>Abra a gaveta pela seta na lateral esquerda do meio da tela. Arraste uma peça do catálogo ou toque para adicioná-la.</li><li>Arraste cada componente pela imagem. A bancada não tem limites: solte as peças em qualquer posição, inclusive à esquerda ou acima da posição inicial.</li><li>Para navegar, arraste o fundo vazio ou mantenha Espaço pressionado enquanto arrasta no computador. Roda do mouse desloca a visão; Ctrl + roda amplia. No celular, dois dedos movimentam e dão zoom.</li><li>Toque no primeiro terminal para começar um fio contínuo. Toque em pontos vazios da bancada para fixar curvas. Toque no segundo terminal para finalizar. Também pode arrastar diretamente entre dois terminais. Cada clique na bancada fixa uma curva, mas a ponta do jumper continua seguindo o cursor. Quando alinhar a ponta com um pino próximo, aparece apenas uma linha azul fina, horizontal ou vertical; ela desaparece ao afastar o cursor, sem travar ou puxar o fio. Depois de conectar, arraste o meio de um trecho para movê-lo inteiro ou arraste o quadradinho da curva para ajustar somente aquele vértice. Selecione um fio conectado e use Cor do fio para alterar sua cor sem desconectá-lo. Ao arrastar uma peça, seus fios seguem os bornes e os demais componentes ficam parados. A cada curva fixada, Ctrl+Z (ou o botão Desfazer) volta um passo; Ctrl+Y (ou Refazer) recupera o passo. Funciona inclusive depois que o fio é conectado.</li><li><b>Escolha a montagem:</b> sem gangorras (7 peças, 15 fios) ou com duas gangorras (9 peças, 17 fios). O progresso reconhece automaticamente a alternativa pelas peças colocadas.</li><li><b>Sem gangorras:</b> bateria 9 V + → LM2596 IN+; bateria 9 V − → LM2596 IN−; LM2596 OUT+ → ESP32 VIN; LM2596 OUT− → ESP32 GND. Suporte com seis pilhas AA + → MX1508 +; AA − → MX1508 −. <b>MX1508 − → um GND do ESP32</b> também.</li><li><b>Com gangorras iluminadas de três terminais:</b> chave 1: bateria 9 V + → IN, OUT → LM2596 IN+, LED− opcional → bateria 9 V −. Chave 2: suporte AA + → IN, OUT → MX1508 +, LED− opcional → AA −. Os negativos que alimentam LM2596 e MX1508 são ligados diretamente, e MX1508 − também vai ao GND do ESP32. Confira a pinagem da sua chave física.</li><li><b>Comandos:</b> ESP32 D27 → MX1508 IN1; D26 → IN2; D32 → IN3; D18 → IN4. Conecte um motor ao par MOTOR A e o outro ao par MOTOR B. Ajuste a saída do LM2596 para 5,0 V; se usar gangorras, ligue ambas.</li><li>Iniciar simulação funciona mesmo com a montagem incompleta: os LEDs do ESP32 e os eixos dos motores só animam se a alimentação e os sinais estiverem conectados. O indicador azul representa Wi-Fi de forma didática; o suporte com seis pilhas AA alimenta a ponte H.</li><li>Com 15 ligações (sem gangorras) ou 17 ligações (com gangorras) corretas, toque em <b>Abrir pista</b> para pilotar o carrinho virtual.</li></ol><p>A simulação é educativa e não representa todas as leis elétricas ou a execução real do firmware ESP32. Ferramentas, soldas e medições físicas exigem supervisão.</p><button id="startGuide" class="run-btn">Vamos montar!</button></dialog>
-<footer>✳ TinkerPET • Laboratório virtual do PET Educação — UFS <span>Sem vídeos · Arraste, monte, experimente.</span></footer>
+<dialog id="guideDialog"><div class="dialog-head"><h2>Como usar o TinkerPET</h2><button id="closeGuide" type="button" aria-label="Fechar">×</button></div><p><b>Agora a bancada começa vazia, igual a um laboratório de montagem.</b></p><ol><li>Abra a gaveta pela seta na lateral esquerda do meio da tela. Arraste uma peça do catálogo ou toque para adicioná-la.</li><li>Arraste cada componente pela imagem. A bancada não tem limites: solte as peças em qualquer posição, inclusive à esquerda ou acima da posição inicial.</li><li>Para navegar, arraste o fundo vazio ou mantenha Espaço pressionado enquanto arrasta no computador. Roda do mouse desloca a visão; Ctrl + roda amplia. No celular, dois dedos movimentam e dão zoom.</li><li>Toque no primeiro terminal para começar um fio contínuo. Toque em pontos vazios da bancada para fixar curvas. Toque no segundo terminal para finalizar. Também pode arrastar diretamente entre dois terminais. Cada clique na bancada fixa uma curva, mas a ponta do jumper continua seguindo o cursor. Quando alinhar a ponta com um pino próximo, aparece apenas uma linha azul fina, horizontal ou vertical; ela desaparece ao afastar o cursor, sem travar ou puxar o fio. Depois de conectar, arraste o meio de um trecho para movê-lo inteiro ou arraste o quadradinho da curva para ajustar somente aquele vértice. Selecione um fio conectado e use Cor do fio para alterar sua cor sem desconectá-lo. Ao arrastar uma peça, seus fios seguem os bornes e os demais componentes ficam parados. A cada curva fixada, Ctrl+Z (ou o botão Desfazer) volta um passo; Ctrl+Y (ou Refazer) recupera o passo. Funciona inclusive depois que o fio é conectado.</li><li><b>Escolha a montagem:</b> sem gangorras (7 peças, 15 fios) ou com duas gangorras (9 peças, 17 fios). O progresso reconhece automaticamente a alternativa pelas peças colocadas.</li><li><b>Sem gangorras:</b> bateria 9 V + → LM2596 IN+; bateria 9 V − → LM2596 IN−; LM2596 OUT+ → ESP32 VIN; LM2596 OUT− → ESP32 GND. Suporte com seis pilhas AA + → MX1508 +; AA − → MX1508 −. <b>MX1508 − → um GND do ESP32</b> também.</li><li><b>Com gangorras iluminadas de três terminais:</b> chave 1: bateria 9 V + → IN, OUT → LM2596 IN+, LED− opcional → bateria 9 V −. Chave 2: suporte AA + → IN, OUT → MX1508 +, LED− opcional → AA −. Os negativos que alimentam LM2596 e MX1508 são ligados diretamente, e MX1508 − também vai ao GND do ESP32. Confira a pinagem da sua chave física.</li><li><b>Comandos:</b> ESP32 D27 → MX1508 IN1; D26 → IN2; D32 → IN3; D18 → IN4. Conecte um motor ao par MOTOR A e o outro ao par MOTOR B. Ajuste a saída do LM2596 para 5,0 V; se usar gangorras, ligue ambas.</li><li>Iniciar simulação funciona mesmo com a montagem incompleta: os LEDs do ESP32 e os eixos dos motores só animam se a alimentação e os sinais estiverem conectados. O indicador azul representa Wi-Fi de forma didática; o suporte com seis pilhas AA alimenta a ponte H.</li></ol><p>A simulação é educativa e não representa todas as leis elétricas ou a execução real do firmware ESP32. Ferramentas, soldas e medições físicas exigem supervisão.</p><button id="startGuide" class="run-btn">Vamos montar!</button></dialog>
+<footer>✳ TinkerPET Studio • PET Educação — UFS <span>Monte, conecte, simule.</span></footer>
 </body></html>
