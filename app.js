@@ -136,6 +136,7 @@ function restoreHistory(s){
  });
  wireTipActive=!!state.startPort;
  previewPoint=null;previewSnapPort=null;pendingAlignment=null;gesture=null;reconnectPending=null;selectedBend=null;partDragAlignment=null;
+ selectedParts.clear();updateMultiSelectionTool();
  renderAll();updateHistoryButtons();
 }
 function undo(){
@@ -321,6 +322,11 @@ function renderParts(){
   }
   card.className='part'+(state.selected===p.id||selectedParts.has(p.id)?' selected':'')+(selectedParts.has(p.id)?' multi-selected':'');
   card.dataset.part=p.id;card.dataset.kind=p.kind;card.style.left=p.x+'px';card.style.top=p.y+'px';
+  if(selectedParts.has(p.id)){
+   const badge=document.createElement('span');badge.className='component-selection-badge';
+   badge.textContent='✓ '+(Array.from(selectedParts).indexOf(p.id)+1);
+   badge.title=partName(p.id)+' selecionado';badge.setAttribute('aria-hidden','true');card.append(badge);
+  }
   card.style.setProperty('--part-w',layout.w+'px');card.style.setProperty('--part-h',layout.h+'px');
   card.style.transform='rotate('+normalizePartRotation(p.rotation)+'deg)';
   card.style.transformOrigin='50% 50%';
@@ -762,6 +768,17 @@ function automaticWireRoute(aId,bId,exclude=-1){
   probe([{x,y:start.y},{x,y},{x:end.x,y}]);
   probe([{x:start.x,y},{x,y},{x,y:end.y}]);
  }
+ if(!best){
+  // Nunca criar diagonal quando o roteador não encontra uma opção ideal.
+  const candidates=[
+   simplifyAutoWire([a,start,{x:end.x,y:start.y},end,b]),
+   simplifyAutoWire([a,start,{x:start.x,y:end.y},end,b])
+  ].filter(route=>route.length>=2&&route.every((p,i)=>!i||p.x===route[i-1].x||p.y===route[i-1].y));
+  if(candidates.length){
+   candidates.sort((u,v)=>autoWireScore(u.slice(1,-1),boxes,other)-autoWireScore(v.slice(1,-1),boxes,other));
+   best=candidates[0];
+  }
+ }
  return best;
 }
 function updateAutoWireButton(){
@@ -814,7 +831,8 @@ function connect(id){
  const index=state.wires.findIndex(w=>electricalKey(w.a,w.b)===electricalKey(first,id));
  if(index>=0){state.wires.splice(index,1);message('Ligação existente removida.');}
  else{
-  const route=autoPath?autoPath.slice(1,-1):via;
+  const safePath=autoPath||(!via.length?automaticWireRoute(first,id):null);
+  const route=safePath?safePath.slice(1,-1):via;
   state.wires.push({a:first,b:id,color:state.wireColor,via:route,manual:true,autoRoute:!!autoPath});
   if(state.autoWireAlign)rerouteAutomaticWires();
   message(acceptedConnectionSet().has(electricalKey(first,id))
@@ -1636,7 +1654,8 @@ function updateMultiSelectionTool(){
  button.classList.toggle('active',selectionToolActive);
  button.setAttribute('aria-pressed',String(selectionToolActive));
  button.title=selectionToolActive?'Seletor ligado: clique para escolher peças; arraste uma selecionada para mover o grupo':'Seleção múltipla (ou Shift+clique)';
- if(counter){counter.textContent=String(selectedParts.size);counter.hidden=selectedParts.size<2;}
+ if(counter){counter.textContent=String(selectedParts.size);counter.hidden=selectedParts.size===0;}
+ const label=Q('selectionSummary');if(label)label.textContent=selectedParts.size?selectedParts.size+' selecionado'+(selectedParts.size!==1?'s':''):'Selecionar';
 }
 function singleComponentSelection(id){
  selectedParts.clear();
@@ -1648,9 +1667,28 @@ function toggleComponentSelection(id){
  if(selectedParts.has(id))selectedParts.delete(id);else selectedParts.add(id);
  state.selected=selectedParts.has(id)?id:([...selectedParts].at(-1)||null);
  state.selectedWire=null;selectedBend=null;state.inspector='parts';
- renderParts();renderInspector();
+ renderParts();renderInspector();updateHistoryButtons();updateMultiSelectionTool();
  const count=selectedParts.size;
  message(count?count+' componentes selecionados. Segure Shift para acrescentar ou retirar; arraste um deles para mover todos.':'Seleção limpa.',true);
+}
+function multiSelectCapture(e){
+ // Seleção primeiro, antes dos botões dos pinos e dos fios sobrepostos.
+ if(!selectionToolActive&&!e.shiftKey)return;
+ if(state.startPort||reconnectPending||spaceHeld||pinch||activeTouches.size>=2)return;
+ if(e.button!==undefined&&e.button!==0)return;
+ if(e.target.closest('input,textarea,select,[contenteditable],[data-remove],[data-toggle]'))return;
+ let node=e.target.closest('.part');
+ if(!node&&document.elementsFromPoint)node=document.elementsFromPoint(e.clientX,e.clientY)
+  .find(el=>el.classList?.contains('part')&&el.closest('#partsLayer'));
+ if(!node||!byPart(node.dataset.part))return;
+ const id=node.dataset.part;
+ if(e.cancelable)e.preventDefault();
+ e.stopImmediatePropagation();
+ if(e.shiftKey){toggleComponentSelection(id);return;}
+ if(selectionToolActive){
+  if(selectedParts.has(id)&&selectedParts.size>1)beginGroupMove(e,id);
+  else toggleComponentSelection(id);
+ }
 }
 function beginGroupMove(e,id){
  if(selectedParts.size<2||!selectedParts.has(id))return false;
@@ -1938,10 +1976,9 @@ function pointerUp(e){
   }
  }else if(g.type==='group-move'){
   partDragAlignment=null;
-  if(g.moved){
-   rerouteAutomaticWires(true);
-   persist();message(g.parts.length+' componentes movidos juntos, com as conexões preservadas.',true);
-  }else{renderParts();renderInspector();}
+  if(g.moved){rerouteAutomaticWires(true);persist();message(g.parts.length+' componentes movidos juntos, com as conexões preservadas.',true);}
+  else if(selectionToolActive)toggleComponentSelection(g.main);
+  else{renderParts();renderInspector();}
   requestDraw();
  }else if(g.type==='move'){
   partDragAlignment=null;
@@ -2170,6 +2207,7 @@ function bind(){
    partDown(e);
  });
  Q('viewport').addEventListener('pointerdown',trackingTouchDown,true);
+ Q('viewport').addEventListener('pointerdown',multiSelectCapture,true);
  Q('viewport').addEventListener('pointerdown',captureBendNearComponents,true);
  Q('viewport').addEventListener('pointerdown',viewportDown);
  window.addEventListener('pointermove',pointerMove);
@@ -2248,6 +2286,7 @@ function bind(){
  Q('rotateBtn').addEventListener('click',rotateSelectedPart);
  Q('autoWireBtn').addEventListener('click',()=>setAutoWireAlignment(!state.autoWireAlign));
  Q('selectionToolBtn').addEventListener('click',()=>{
+  if(!selectionToolActive){if(state.startPort)cancelPendingWire();if(reconnectPending)cancelReconnect();}
   selectionToolActive=!selectionToolActive;updateMultiSelectionTool();
   message(selectionToolActive?'Seletor ligado: clique nas peças e arraste qualquer selecionada para mover o grupo.':'Seletor desligado. Shift+clique também seleciona várias peças.',true);
  });
