@@ -647,24 +647,21 @@ function drawWires(){
   }
  }
  if(wireAlignment){
+  // Também no ajuste de fio conectado: guia fina, sem atrair o segmento.
   const g=wireAlignment,guide=document.createElementNS(ns,'line');
-  const extend=34;
-  guide.setAttribute('class','wire-alignment-guide');
+  const box=Q('viewport').getBoundingClientRect();
+  const upper=worldXY(box.left,box.top);
+  const lower=worldXY(box.right,box.bottom);
+  guide.setAttribute('class','wire-pending-guide');
   if(g.horizontal){
-   guide.setAttribute('x1',String(Math.min(g.start.x,g.end.x)-extend));
-   guide.setAttribute('x2',String(Math.max(g.start.x,g.end.x)+extend));
+   guide.setAttribute('x1',String(upper.x));guide.setAttribute('x2',String(lower.x));
    guide.setAttribute('y1',String(g.value));guide.setAttribute('y2',String(g.value));
   }else{
+   guide.setAttribute('y1',String(upper.y));guide.setAttribute('y2',String(lower.y));
    guide.setAttribute('x1',String(g.value));guide.setAttribute('x2',String(g.value));
-   guide.setAttribute('y1',String(Math.min(g.start.y,g.end.y)-extend));
-   guide.setAttribute('y2',String(Math.max(g.start.y,g.end.y)+extend));
   }
+  guide.style.strokeWidth=(1.5/zoom)+'px';
   svg.append(guide);
-  const label=document.createElementNS(ns,'text');
-  label.setAttribute('class','wire-alignment-label');
-  label.setAttribute('x',String(g.horizontal?Math.min(g.start.x,g.end.x):g.value));
-  label.setAttribute('y',String(g.horizontal?g.value-15:Math.min(g.start.y,g.end.y)-15));
-  label.textContent='ALINHADO';svg.append(label);
  }
  if(state.startPort&&pendingAlignment&&previewPoint){
   // Régua fina como no Tinkercad: indica eixo coincidente sem alterar fio.
