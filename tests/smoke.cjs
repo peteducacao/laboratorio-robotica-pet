@@ -175,6 +175,30 @@ assert(saved().parts.find(p=>p.id==='esp').x>1900,'peça pode ir além da borda 
 assert(saved().parts.find(p=>p.id==='esp').y>1450,'peça pode ir além da borda inferior antiga');
 click('undoBtn');click('undoBtn');
 assert.equal(saved().parts.find(p=>p.id==='esp').x,originalEsp.x,'desfazer recupera posição anterior');
+
+dragEsp(0,0); // Seleciona ESP32 sem deslocá-lo
+click('copyBtn');
+assert.equal(nodes.pasteBtn.disabled,false,'Copiar habilita Colar');
+click('deleteBtn');
+assert.equal(saved().parts.length,8,'Lixeira remove o componente selecionado');
+click('pasteBtn');
+assert.equal(saved().parts.length,9,'Colar recupera um ESP32 removido');
+click('pasteBtn');
+assert.equal(saved().parts.length,9,'Colar respeita limite original de uma ESP32');
+const removedByDrop=++pointer;
+doc.elementFromPoint=()=>({closest(sel){return sel==='#library,#drawerHandle'?{id:'library'}:null;}});
+send('pointerdown','partsLayer',{button:0,pointerId:removedByDrop,clientX:420,clientY:290,
+ target:{closest(sel){return sel==='.part'?{dataset:{part:'esp'}}:null;}},preventDefault(){}});
+send('pointermove','window',{pointerId:removedByDrop,clientX:610,clientY:350});
+send('pointerup','window',{pointerId:removedByDrop,clientX:610,clientY:350});
+delete doc.elementFromPoint;
+assert.equal(saved().parts.length,8,'arrastar componente para catálogo remove a peça');
+click('undoBtn');
+assert.equal(saved().parts.length,9,'desfazer recupera a peça devolvida ao catálogo');
+assert(js.includes('function downloadWorkspace()'),'baixar montagem disponível no app');
+assert(js.includes("canvas.toBlob(resolve,'image/png')"),'exporta imagem PNG da montagem');
+assert(js.includes("downloadBlob(blob,'TinkerPET-montagem.svg')"),'SVG completo é alternativa ao PNG');
+
 const panBefore=nodes.world.style.transform;
 const naturalPanId=++pointer;
 send('pointerdown','viewport',{button:0,pointerId:naturalPanId,clientX:270,clientY:250,preventDefault(){},target:{closest(){return null}}});
