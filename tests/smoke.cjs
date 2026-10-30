@@ -126,7 +126,7 @@ const win={addEventListener(type,fn){(listeners['window:'+type]??=[]).push(fn)}}
 const store={getItem(k){return storage[k]??null},setItem(k,v){storage[k]=v}};
 const fake={window:win,document:doc,localStorage:store,requestAnimationFrame(){},ResizeObserver:class{observe(){}},console,Math,JSON,confirm(){return true},setTimeout(){return 1},clearTimeout(){}};
 // Hook somente para testes: inspeciona curvas pendentes, sem expor dados na aplicação.
-const instrumented=js.replace(/\}\)\(\);\s*$/, "window.__pendingForTests=()=>({startPort:state.startPort,bends:state.bends.map(p=>({...p})),preview:previewPoint&&{...previewPoint},points:pendingWirePoints(),active:wireTipActive,alignment:pendingAlignment&&{...pendingAlignment},panX,panY,zoom});window.__alignForTests=(x,y)=>visualPendingAlignment(x,y,state.startPort);window.__portForTests=id=>getPortPos(id);window.__powerForTests=()=>({live:powerStatus(),running:simulationRunning});window.__wireForTests=()=>({points:state.wires.map(w=>wirePoints(w)),align:wireAlignment,selected:state.selectedWire,zoom});window.__drawWireForTests=drawWires;})();");
+const instrumented=js.replace(/\}\)\(\);\s*$/, "window.__pendingForTests=()=>({startPort:state.startPort,bends:state.bends.map(p=>({...p})),preview:previewPoint&&{...previewPoint},points:pendingWirePoints(),active:wireTipActive,alignment:pendingAlignment&&{...pendingAlignment},panX,panY,zoom});window.__alignForTests=(x,y)=>visualPendingAlignment(x,y,state.startPort);window.__previewForTests=(x,y)=>setPendingPreview({clientX:x,clientY:y});window.__portForTests=id=>getPortPos(id);window.__powerForTests=()=>({live:powerStatus(),running:simulationRunning});window.__wireForTests=()=>({points:state.wires.map(w=>wirePoints(w)),align:wireAlignment,selected:state.selectedWire,zoom});window.__drawWireForTests=drawWires;})();");
 assert.notEqual(instrumented,js,'instrumentação do teste de histórico aplicada');
 vm.runInNewContext(instrumented,fake);
 const pending=()=>win.__pendingForTests();
@@ -312,11 +312,11 @@ const testY=pinScreenY+95; // Fora do contato elétrico real.
 const alignment=win.__alignForTests(pinScreenX+3,testY);
 assert(alignment&&alignment.axis==='x','guia vertical aparece quando cursor alinha ao X do pino');
 const positionBeforeGuide=pending();
-send('pointermove','window',{pointerId:9877,clientX:pinScreenX+3,clientY:testY});
+win.__previewForTests(pinScreenX+3,testY);
 assert.equal(pending().alignment.axis,'x','alinhamento mostra guia azul sem afetar fio');
 assert(Math.abs(pending().preview.x-(pinScreenX+3-positionBeforeGuide.panX)/positionBeforeGuide.zoom)<.001,
  'a guia não empurra o jumper para posição do pino');
-send('pointermove','window',{pointerId:9877,clientX:pinScreenX+40,clientY:testY});
+win.__previewForTests(pinScreenX+40,testY);
 assert.equal(pending().alignment,null,'guia some quando cursor sai do alinhamento');
 assert(Math.abs(pending().preview.x-(pinScreenX+40-positionBeforeGuide.panX)/positionBeforeGuide.zoom)<.001,
  'jumper segue o cursor sem travar fora da guia');
@@ -403,6 +403,32 @@ send('click','colorPalette',{target:{closest(sel){
  return sel==='[data-color]'?{dataset:{color:'#ed654d'}}:null;
 }}});
 assert.equal(saved().wires[0].color,'#ed654d','paleta também recolore fio selecionado');
+// Editar apenas a PONTA (vértice) da curva, sem movimentar as demais curvas.
+const bendBefore=JSON.parse(JSON.stringify(saved().wires[0]));
+assert(bendBefore.via.length>=2,'jumper testado possui ao menos duas curvas');
+const bendPartsBefore=JSON.stringify(saved().parts);
+win.__drawWireForTests();
+assert(nodes.wireSvg.children.some(node=>node.dataset.wireVertex==='1'&&node.dataset.wireIndex==='0'),'primeira curva tem ponto independente para edição');
+const bendMoveId=++pointer;
+let bendPrevented=false;
+send('pointerdown','wireSvg',{button:0,pointerId:bendMoveId,clientX:250,clientY:190,
+ preventDefault(){bendPrevented=true},stopPropagation(){},
+ target:{closest(sel){return sel==='[data-wire-index]'?{dataset:{wireIndex:'0',wireVertex:'1'}}:null;}}});
+assert(bendPrevented,'toque na curva inicia edição do vértice em vez do segmento');
+send('pointermove','window',{pointerId:bendMoveId,clientX:310,clientY:214});
+send('pointerup','window',{pointerId:bendMoveId,clientX:310,clientY:214});
+assert.equal(saved().wires[0].via.length,bendBefore.via.length,'arrastar curva não introduz novos pontos');
+assert.notDeepEqual(saved().wires[0].via[0],bendBefore.via[0],'apenas a ponta arrastada muda posição');
+assert.deepEqual(saved().wires[0].via.slice(1),bendBefore.via.slice(1),'outras curvas ficam exatamente no mesmo lugar');
+assert.equal(saved().wires[0].a,bendBefore.a,'pino de origem continua conectado');
+assert.equal(saved().wires[0].b,bendBefore.b,'pino de destino continua conectado');
+assert.equal(JSON.stringify(saved().parts),bendPartsBefore,'nenhum componente é arrastado ao ajustar vértice');
+click('undoBtn');
+assert.deepEqual(saved().wires[0].via,bendBefore.via,'Ctrl+Z restaura apenas a correção de ângulo');
+click('redoBtn');
+assert.notDeepEqual(saved().wires[0].via[0],bendBefore.via[0],'Ctrl+Y refaz o ajuste da curva');
+click('undoBtn');
+
 
 
 assert.equal(saved().wires[0].via.length,2,'guardar exatamente os dois vértices escolhidos');
