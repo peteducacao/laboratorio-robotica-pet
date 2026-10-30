@@ -126,7 +126,7 @@ const win={addEventListener(type,fn){(listeners['window:'+type]??=[]).push(fn)}}
 const store={getItem(k){return storage[k]??null},setItem(k,v){storage[k]=v}};
 const fake={window:win,document:doc,localStorage:store,requestAnimationFrame(){},ResizeObserver:class{observe(){}},console,Math,JSON,confirm(){return true},setTimeout(){return 1},clearTimeout(){}};
 // Hook somente para testes: inspeciona curvas pendentes, sem expor dados na aplicação.
-const instrumented=js.replace(/\}\)\(\);\s*$/, "window.__pendingForTests=()=>({startPort:state.startPort,bends:state.bends.map(p=>({...p})),preview:previewPoint&&{...previewPoint}});window.__powerForTests=()=>({live:powerStatus(),running:simulationRunning});})();");
+const instrumented=js.replace(/\}\)\(\);\s*$/, "window.__pendingForTests=()=>({startPort:state.startPort,bends:state.bends.map(p=>({...p})),preview:previewPoint&&{...previewPoint},points:pendingWirePoints()});window.__powerForTests=()=>({live:powerStatus(),running:simulationRunning});})();");
 assert.notEqual(instrumented,js,'instrumentação do teste de histórico aplicada');
 vm.runInNewContext(instrumented,fake);
 const pending=()=>win.__pendingForTests();
@@ -271,6 +271,16 @@ function tapCanvas(x,y){
 }
 tapPin('b1.POS');
 assert.equal(saved().wires.length,0,'primeiro pino não fecha a ligação');
+const firstPortPos=pending().points[0];
+assert.equal(pending().points.length,1,'a prévia começa apenas no pino, sem trecho curto artificial');
+// O ponteiro anda livre: apenas uma linha do borne até sua posição, mesmo na diagonal.
+send('pointermove','window',{pointerId:9877,clientX:580,clientY:315});
+const straightPreview=pending().points;
+assert.equal(straightPreview.length,2,'antes do clique o jumper tem somente uma linha reta');
+assert.notEqual(straightPreview[1].x,firstPortPos.x,'ponta segue a posição horizontal do cursor');
+assert.notEqual(straightPreview[1].y,firstPortPos.y,'ponta segue a posição vertical do cursor');
+assert.equal(pending().bends.length,0,'movimentar o cursor não registra curva automaticamente');
+
 // Enquanto um jumper está em andamento, Espaço + arrastar move a câmera.
 send('keydown','doc',{key:' ',preventDefault(){},target:{closest(){return null}}});
 const beforePendingPan=nodes.world.style.transform;
@@ -281,17 +291,20 @@ send('pointerup','window',{pointerId:panId,clientX:440,clientY:370});
 assert.notEqual(nodes.world.style.transform,beforePendingPan,'Espaço permite mover a câmera durante uma ligação');
 send('keyup','doc',{key:' '});
 tapCanvas(205,180);
+assert.equal(pending().bends.length,1,'primeiro clique fixa um único vértice escolhido');
 const frozenFirst=JSON.stringify(pending().bends);
+assert.equal(pending().points.length,2,'após clique a ponta termina no vértice fixado');
 send('pointermove','window',{pointerId:9878,clientX:750,clientY:540});
 const freeTipA=pending().preview;
 assert(freeTipA&&Number.isFinite(freeTipA.x),'ponta continua seguindo o mouse sem botão pressionado');
 assert.equal(JSON.stringify(pending().bends),frozenFirst,'mover o mouse não altera o trecho já fixado');
+assert.equal(pending().points.length,3,'após o clique surge apenas uma nova linha reta até o cursor');
 send('pointermove','window',{pointerId:9878,clientX:695,clientY:510});
 assert.notEqual(JSON.stringify(pending().preview),JSON.stringify(freeTipA),'ponta livre acompanha novo movimento do cursor');
 tapCanvas(295,240);
 assert.equal(saved().wires.length,0,'curvas devem ficar pendentes até o segundo pino');
 assert.equal(pending().startPort,'b1.POS','primeiro terminal continua selecionado');
-assert(pending().bends.length>=2,'dois trechos fixados na mesma ligação');
+assert.equal(pending().bends.length,2,'cada clique da bancada fixa só uma curva');
 const firstTrailLength=JSON.parse(JSON.stringify(pending().bends)).length;
 const beforeUndoBends=JSON.stringify(pending().bends);
 function shortcut(key,opts={}){
@@ -301,7 +314,7 @@ function shortcut(key,opts={}){
  return prevented;
 }
 assert(shortcut('z'),'Ctrl+Z impede desfazer padrão do navegador na bancada');
-assert(pending().bends.length>0&&pending().bends.length<firstTrailLength,'primeiro Ctrl+Z desfaz somente o último clique, mesmo com duas pernas');
+assert.equal(pending().bends.length,1,'primeiro Ctrl+Z desfaz só a última curva fixada');
 assert(shortcut('z'),'segundo Ctrl+Z é interceptado');
 assert.equal(pending().bends.length,0,'segundo Ctrl+Z desfaz a curva anterior, sem apagar o fio iniciado');
 assert.equal(pending().startPort,'b1.POS','origem ainda selecionada após desfazer curvas');
@@ -310,7 +323,7 @@ assert.equal(pending().startPort,null,'terceiro Ctrl+Z desfaz a seleção do pin
 assert(shortcut('y'),'Ctrl+Y refaz a primeira ação');
 assert.equal(pending().startPort,'b1.POS','Ctrl+Y refaz a origem do jumper');
 assert(shortcut('z',{shiftKey:true}),'Ctrl+Shift+Z refaz');
-assert(pending().bends.length>0&&pending().bends.length<firstTrailLength,'Ctrl+Shift+Z refaz a primeira curva completa');
+assert.equal(pending().bends.length,1,'Ctrl+Shift+Z refaz somente o clique anterior');
 assert(shortcut('y'),'Ctrl+Y refaz a segunda curva');
 assert.equal(JSON.stringify(pending().bends),beforeUndoBends,'refazer recompõe a rota exatamente');
 const notPrevented=shortcut('z',{editing:true});
@@ -322,15 +335,17 @@ assert(shortcut('z'),'Ctrl+Z também funciona após conexão terminada');
 assert.equal(saved().wires.length,0,'desfazer conexão retorna jumper ao estado em construção');
 assert.equal(pending().startPort,'b1.POS','desfazer conexão restaura pino inicial');
 assert.equal(JSON.stringify(pending().bends),beforeUndoBends,'desfazer conexão restaura todas as curvas');
-click('undoBtn');assert(pending().bends.length>0&&pending().bends.length<firstTrailLength,'botão Desfazer também volta só o último clique');
+click('undoBtn');assert.equal(pending().bends.length,1,'botão Desfazer volta a última curva');
 click('redoBtn');assert.equal(pending().bends.length,firstTrailLength,'botão Refazer recupera curva do jumper');
 assert(shortcut('y'),'Ctrl+Y refaz a conexão');
 assert.equal(saved().wires.length,1,'refazer restabelece o fio conectado');
 assert.equal(pending().startPort,null,'ao refazer conexão não resta fio solto');
 
-assert(saved().wires[0].via.length>=2,'guardar todos os pontos de ambos os trechos');
+assert.equal(saved().wires[0].via.length,2,'guardar exatamente os dois vértices escolhidos');
 const bends=saved().wires[0].via;
-for(let i=1;i<bends.length;i++)assert(bends[i-1].x===bends[i].x||bends[i-1].y===bends[i].y,'trajeto congelado preserva linhas ortogonais');
+assert.equal(saved().wires[0].manual,true,'a conexão nova preserva rota manual sem curvas automáticas');
+assert.notEqual(bends[0].x,bends[1].x,'trechos diagonais são permitidos entre cliques');
+assert.notEqual(bends[0].y,bends[1].y,'trechos seguem cursor sem dobrar sozinhos');
 const curved=JSON.stringify(saved().wires[0].via);
 click('saveBtn');
 assert.equal(JSON.stringify(saved().wires[0].via),curved,'persistir curvas da ligação');
@@ -344,7 +359,8 @@ assert(!js.includes("setAttribute('stroke-dasharray'"),'nenhum fio tracejado');
 assert(js.includes("hit.dataset.wireIndex=String(i)"),'fio tem área clicável própria');
 assert(js.includes("setAttribute('r','10')")===false,'encaixe da ponta do jumper não fica como bola gigante');
 assert(js.includes("// O traço termina no furo do pino; nenhum círculo"),'jumper termina no terminal sem círculo extra');
-assert(js.includes("orthogonalTrail(last,{x,y},previousWirePoint())"),'curva mantém dois eixos livres do ponteiro');
+assert(js.includes("const pts=pendingWirePoints();"),'prévia usa pontos sem dobras automáticas');
+assert(js.includes("state.bends.push(tip);"),'somente clique fixa novo vértice');
 assert(js.includes('function nearestPort('),'pino atrai fio quando ponta está próxima');
 assert(js.includes('function wireAt('),'seleciona fio por toque no caminho');
 assert(html.includes('answer-key.js?v='),'gabarito carrega na bancada');
