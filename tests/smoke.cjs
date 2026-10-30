@@ -49,7 +49,9 @@ assert(rocker.includes('três terminais'),'gangorra desenhada com três contatos
 const lm=fs.readFileSync(path.join(base,'assets/lm2596-desenhado.svg'),'utf8');
 for(const v of ['470','>220<','>100<','STEP-DOWN'])assert(!lm.includes(v),'LM2596 não repete '+v);
 const drv=fs.readFileSync(path.join(base,'assets/mx1508-desenhado.svg'),'utf8');
-assert(!drv.includes('100</text>')&&!drv.includes('16V'),'MX1508 sem legendas de capacitor');
+assert(drv.includes('MOTOR A')&&drv.includes('MOTOR B'),'MX1508 traz pares de saída separados como na placa de referência');
+assert(drv.includes('MX1508')&&drv.includes('16 V'),'arte inclui circuito integrado e capacitores reais da placa');
+assert(drv.includes('IN1')&&drv.includes('IN4'),'arte mostra os 4 pinos de comando');
 const battery=fs.readFileSync(path.join(base,'assets/bateria-9v-desenhada.svg'),'utf8');
 assert(battery.includes('#d83b3c')&&battery.includes('#1f2b34'),'polos da bateria vermelho/preto');
 assert(!js.includes("cap(a,w.color,'wire-end-cap')"),'nenhum círculo extra desenhado sobre o borne');
@@ -80,6 +82,13 @@ assert.equal((packAsset.match(/<g transform="translate\(/g)||[]).length,6,'supor
 assert(packAsset.includes('6 × AA · 9 V'),'suporte identifica seis AA de 1,5V');
 assert.equal(types.reduce((sum,t)=>sum+t.ids.length,0),9);
 assert.equal(edges.length,17);
+const directSource=js.match(/const DIRECT_CONNECTIONS=\[([\s\S]*?)\];/);
+assert(directSource,'segunda alternativa de conexões declarada');
+assert(js.includes("['b1.POS','lm.INP']")&&js.includes("['b2.POS','drv.VCC']"),'positivos diretos chegam a LM2596 e MX1508');
+assert(edges.some(([a,b])=>a==='esp.GND'&&b==='drv.GND'),'negativo MX1508 também ligado ao GND ESP32');
+assert(js.includes("assemblyMode()==='switched'?SWITCHED_CONNECTIONS:DIRECT_CONNECTIONS"),'validação muda conforme presença de gangorras');
+assert(js.includes('return assemblyMode()===\'switched\'?9:7'),'sem gangorra requer sete peças');
+
 // Os quatro comandos e as saídas do MX1508 são conferidos com a imagem de referência.
 // As chaves e baterias devem continuar sendo as peças originais do TinkerPET.
 for(const [origin,target] of [
@@ -592,7 +601,7 @@ assert(html.includes('id="zoomSlider"')&&html.includes('id="zoomTool"'),'lupa e 
 assert(!js.includes("title.textContent=partName(p.id)"),'sem nome flutuante no topo das peças');
 assert(!rocker.includes('>IN</text>')&&!rocker.includes('>OUT</text>')&&!rocker.includes('>LED−</text>'),'gangorra sem nomes impressos');
 assert(!lm.includes('<ellipse'),'LM2596 sem componentes redondos centrais');
-assert(!drv.includes('<ellipse')&&!drv.includes('y="216" width="15"'),'MX1508 sem peças redondas e três traços');
+assert(drv.includes('<ellipse')&&drv.includes('<rect'),'MX1508 redesenhada com dois capacitores e CI físico');
 const beforeZoom=Number(nodes.zoomSlider.value);
 const pinchEvent=(pointerId,x,y)=>({pointerType:'touch',pointerId,clientX:x,clientY:y,button:0,preventDefault(){},target:{closest(){return null}}});
 send('pointerdown','viewport',pinchEvent(9001,100,100));
@@ -609,7 +618,7 @@ assert(Number(nodes.zoomSlider.value)>=4,'enquadramento calcula um zoom válido 
 
  // Gabarito: testa abertura, senha, 17 linhas, download, impressão e bloqueio ao reabrir.
  class KeyNode {
-  constructor(name){this.name=name;this.events={};this.children=[];this.hidden=false;this.open=false;this.value='';this.textContent='';this.style={setProperty(){}};}
+  constructor(name){this.name=name;this.events={};this.children=[];this.hidden=false;this.open=false;this.value='';this.textContent='';this.style={setProperty(){}};this.classList={toggle(){}};}
   addEventListener(type,fn){this.events[type]=fn;}
   setAttribute(){}
   append(...children){this.children.push(...children);}
