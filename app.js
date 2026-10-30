@@ -273,6 +273,17 @@ function renderParts(){
  updateLiveSimulation();
  updateHistoryButtons();requestDraw();
 }
+function chooseWireColor(color){
+ if(!COLORS.includes(color))return;
+ const selected=Number.isInteger(state.selectedWire)?state.wires[state.selectedWire]:null;
+ if(selected&&selected.color!==color){
+  snapshot(); // Ctrl+Z restaura a cor anterior do fio.
+  selected.color=color;
+  message('Cor do jumper selecionado alterada.',true);
+ }
+ state.wireColor=color; // Também permanece como cor para o próximo fio.
+ renderColors();renderInspector();requestDraw();persist();
+}
 function renderColors(){
  const dropdown=Q('wireColorSelect');if(dropdown)dropdown.value=state.wireColor;
  const preview=Q('wireColorPreview');if(preview)preview.style.background=state.wireColor;
@@ -303,7 +314,7 @@ function inspectorWires(){
  const body=Q('inspectorBody');body.replaceChildren();
  if(!state.wires.length){body.innerHTML='<div class="inspect-empty"><span>〰</span><h3>Nenhum fio ainda</h3><p>Toque num terminal, marque as curvas na bancada e finalize no outro terminal.</p></div>';return;}
  state.wires.forEach((w,i)=>{
-  const row=document.createElement('div');row.className='wire-item';
+  const row=document.createElement('div');row.className='wire-item'+(state.selectedWire===i?' is-selected':'');row.dataset.selectWire=String(i);row.tabIndex=0;row.title='Selecionar jumper para trocar sua cor';
   const dot=document.createElement('span');dot.className='wire-dot';dot.style.background=w.color;
   const names=document.createElement('div');names.className='wire-names';names.textContent=portName(w.a)+' → '+portName(w.b)+(w.via&&w.via.length?' · '+w.via.length+' curva(s)':'')+(valid.has(electricalKey(w.a,w.b))?' · ✓':' · Rever');
   const btn=document.createElement('button');btn.type='button';btn.dataset.removeWire=String(i);btn.title='Remover fio';btn.textContent='×';
@@ -839,7 +850,8 @@ function wireAt(clientX,clientY){return segmentAt(clientX,clientY).index;}
 function selectWire(i){
  if(!state.wires[i])return;
  state.selectedWire=i;state.selected=null;state.inspector='wires';
- renderParts();renderInspector();updateHistoryButtons();requestDraw();
+ state.wireColor=state.wires[i].color; // O seletor exibe a cor do fio clicado.
+ renderParts();renderColors();renderInspector();updateHistoryButtons();requestDraw();
  message('Jumper selecionado. Arraste um trecho para mudar o caminho; as pontas ficam conectadas.',true);
 }
 function centerPart(kind){
@@ -903,7 +915,8 @@ function beginWireDrag(e,index,segment){
  if(segment<0||segment>=original.length-1)return false;
  if(e.cancelable!==false)e.preventDefault();
  state.selectedWire=index;state.selected=null;state.inspector='wires';
- renderInspector();updateHistoryButtons();
+ state.wireColor=wire.color;
+ renderColors();renderInspector();updateHistoryButtons();
  gesture={type:'wire-segment',pointer:e.pointerId,wireIndex:index,segment,
   original:original.map(p=>({...p})),startX:e.clientX,startY:e.clientY,
   moved:false,saved:false};
@@ -1307,11 +1320,14 @@ function bind(){
    if(!state.wires[i])return;
    selectWire(i);
  });
- Q('inspectorBody').addEventListener('click',e=>{const view=e.target.closest('[data-motor-view]');if(view){toggleMotorView(view.dataset.motorView);return;}const demo=e.target.closest('[data-demo-motor]');if(demo){demoMotor(demo.dataset.demoMotor);return;}const del=e.target.closest('[data-remove]');if(del)removePart(del.dataset.remove);const w=e.target.closest('[data-remove-wire]');if(w)removeWire(Number(w.dataset.removeWire));});
+ Q('inspectorBody').addEventListener('click',e=>{const view=e.target.closest('[data-motor-view]');if(view){toggleMotorView(view.dataset.motorView);return;}const demo=e.target.closest('[data-demo-motor]');if(demo){demoMotor(demo.dataset.demoMotor);return;}const del=e.target.closest('[data-remove]');if(del)removePart(del.dataset.remove);const w=e.target.closest('[data-remove-wire]');if(w){removeWire(Number(w.dataset.removeWire));return;}const row=e.target.closest('[data-select-wire]');if(row)selectWire(Number(row.dataset.selectWire));});
  Q('inspectorPartsTab').addEventListener('click',()=>{state.inspector='parts';renderInspector();});
  Q('inspectorWiresTab').addEventListener('click',()=>{state.inspector='wires';renderInspector();});
- Q('colorPalette').addEventListener('click',e=>{const swatch=e.target.closest('[data-color]');if(swatch){state.wireColor=swatch.dataset.color;renderColors();requestDraw();persist();}});
- Q('wireColorSelect').addEventListener('change',e=>{if(COLORS.includes(e.target.value)){state.wireColor=e.target.value;renderColors();requestDraw();persist();}});
+ Q('colorPalette').addEventListener('click',e=>{
+  const swatch=e.target.closest('[data-color]');
+  if(swatch)chooseWireColor(swatch.dataset.color);
+ });
+ Q('wireColorSelect').addEventListener('change',e=>chooseWireColor(e.target.value));
  Q('undoBtn').addEventListener('click',undo);
  Q('redoBtn').addEventListener('click',redo);
  Q('copyBtn').addEventListener('click',copySelection);
