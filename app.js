@@ -929,10 +929,11 @@ async function downloadWorkspace(){
  try{
   // Exportação integral: imagens são embutidas, portanto funcionam fora do site.
   const pad=85;
-  const minX=Math.min(...state.parts.map(p=>p.x))-pad;
-  const minY=Math.min(...state.parts.map(p=>p.y))-pad;
-  const maxX=Math.max(...state.parts.map(p=>p.x+partLayout(p).w))+pad;
-  const maxY=Math.max(...state.parts.map(p=>p.y+partLayout(p).h))+pad;
+  const routePoints=state.wires.flatMap(w=>w.via||[]);
+  const minX=Math.min(...state.parts.map(p=>p.x),...routePoints.map(p=>p.x))-pad;
+  const minY=Math.min(...state.parts.map(p=>p.y),...routePoints.map(p=>p.y))-pad;
+  const maxX=Math.max(...state.parts.map(p=>p.x+partLayout(p).w),...routePoints.map(p=>p.x))+pad;
+  const maxY=Math.max(...state.parts.map(p=>p.y+partLayout(p).h),...routePoints.map(p=>p.y))+pad;
   const width=Math.ceil(maxX-minX),height=Math.ceil(maxY-minY);
   const imageCache=new Map();
   const parts=[];
