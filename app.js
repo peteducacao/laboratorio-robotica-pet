@@ -222,7 +222,39 @@ function selectedSwitchWiring(){
  }
  return best;
 }
-function expectedConnections(){return assemblyMode()==='switched'?selectedSwitchWiring().edges:DIRECT_CONNECTIONS;}
+// Os dois canais da MX1508 são equivalentes para motores DC.
+// A posição visual de um motor na bancada e a ordem em que foi criado
+// não determinam se ele precisa ficar obrigatoriamente no canal A ou B.
+// Inverter os dois contatos do mesmo motor somente inverte seu giro.
+const MOTOR_WIRING_VARIANTS=(()=>{
+ const alternatives=[];
+ for(const swap of [false,true])for(const reverseLeft of [false,true])for(const reverseRight of [false,true]){
+  const wireMotor=(id,channel,reverse)=>{
+   const ports=channel==='A'?['drv.OUT1','drv.OUT2']:['drv.OUT3','drv.OUT4'];
+   return [[ports[0],id+'.'+(reverse?'B':'A')],[ports[1],id+'.'+(reverse?'A':'B')]];
+  };
+  alternatives.push([
+   ...wireMotor('ml',swap?'B':'A',reverseLeft),
+   ...wireMotor('mr',swap?'A':'B',reverseRight)
+  ]);
+ }
+ return alternatives;
+})();
+function selectedMotorConnections(){
+ const actual=new Set(state.wires.map(w=>electricalKey(w.a,w.b)));
+ let best=MOTOR_WIRING_VARIANTS[0],score=-1;
+ for(const variant of MOTOR_WIRING_VARIANTS){
+  const matches=variant.filter(([a,b])=>actual.has(electricalKey(a,b))).length;
+  if(matches>score){best=variant;score=matches;}
+ }
+ return best;
+}
+function expectedConnections(){
+ const baseline=assemblyMode()==='switched'?selectedSwitchWiring().edges:DIRECT_CONNECTIONS;
+ // Troca somente os quatro fios dos motores; preserva alimentação, GND,
+ // sinais e o comportamento da gangorra da montagem original.
+ return baseline.filter(([a])=>!a.startsWith('drv.OUT')).concat(selectedMotorConnections());
+}
 function acceptedConnectionSet(){
  const edges=[...expectedConnections()];
  if(assemblyMode()==='switched')edges.push(...OPTIONAL,
@@ -267,13 +299,17 @@ function powerStatus(){
   &&has('lm.OUTN','esp.GND');
  const driver=exists('b2')&&exists('drv')&&motorPositive&&has('b2.NEG','drv.GND');
  const common=esp&&has('esp.GND','drv.GND');
- const motorA=driver&&common&&exists('ml')
-  &&has('esp.D27','drv.IN1')&&has('esp.D26','drv.IN2')
-  &&has('drv.OUT1','ml.A')&&has('drv.OUT2','ml.B');
- const motorB=driver&&common&&exists('mr')
-  &&has('esp.D32','drv.IN3')&&has('esp.D18','drv.IN4')
-  &&has('drv.OUT3','mr.A')&&has('drv.OUT4','mr.B');
- return {buck,esp,driver,common,motors:{ml:motorA,mr:motorB}};
+ const assigned=selectedMotorConnections();
+ const motorOn=(id)=>{
+  const edges=assigned.filter(([,port])=>port.startsWith(id+'.'));
+  if(edges.length!==2||!edges.every(([a,b])=>has(a,b)))return false;
+  const channel=edges[0][0].startsWith('drv.OUT1')||edges[0][0].startsWith('drv.OUT2')?'A':'B';
+  const control=channel==='A'
+   ?has('esp.D27','drv.IN1')&&has('esp.D26','drv.IN2')
+   :has('esp.D32','drv.IN3')&&has('esp.D18','drv.IN4');
+  return driver&&common&&exists(id)&&control;
+ };
+ return {buck,esp,driver,common,motors:{ml:motorOn('ml'),mr:motorOn('mr')}};
 }
 function updateLiveSimulation(){
  const live=powerStatus(),enabled=simulationRunning;
