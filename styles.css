@@ -1304,7 +1304,7 @@
 
 
 /* v31.1 — Zoom precisamente centralizado no celular, comandos na ponta direita */
-@media(min-width:375px) and (max-width:760px){
+@media(min-width:450px) and (max-width:760px){
  .toolbar{
   grid-template-columns:minmax(0,1fr)!important;
   grid-template-areas:"tools" "bottom"!important;
@@ -1318,7 +1318,7 @@
   grid-area:bottom!important;justify-self:end!important;z-index:2!important
  }
 }
-@media(max-width:374px){
+@media(max-width:449px){
  .toolbar{
   grid-template-columns:minmax(0,1fr)!important;
   grid-template-areas:"tools" "zoom" "right"!important;
