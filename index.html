@@ -7,9 +7,9 @@
 <link rel="icon" href="assets/logo-pet.svg" type="image/svg+xml">
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="styles.css?v=20">
+<link rel="stylesheet" href="styles.css?v=25">
 <link rel="stylesheet" href="answer-key.css?v=17">
-<script defer src="app.js?v=24"></script>
+<script defer src="app.js?v=25"></script>
 <script defer src="answer-key.js?v=17"></script>
 </head>
 <body>
@@ -28,26 +28,32 @@
 <div class="studio">
   <aside class="library" id="library" aria-label="Catálogo de componentes">
     <div class="library-head">
-      <div><small>CATÁLOGO</small><h2>Componentes</h2></div>
+      <div><small>PEÇAS DISPONÍVEIS</small><h2>Componentes</h2></div>
       <button id="closeLibrary" class="icon-btn close-library" aria-label="Fechar componentes">×</button>
     </div>
     <div class="library-search"><span>⌕</span><input id="componentSearch" type="search" placeholder="Buscar componente..." aria-label="Buscar componente"></div>
-    <div class="library-intro">Arraste uma peça para a bancada ou toque para adicionar. Depois conecte pelos terminais.</div>
+    <div class="library-intro">Toque para adicionar ou arraste para montar. Arraste uma peça da bancada de volta para cá para excluir.</div>
     <div id="catalog" class="catalog" aria-label="Peças disponíveis"></div>
     <div class="library-footer"><b>✳ DICA</b><p>Toque em um pino para começar o fio. Clique em pontos vazios da bancada para criar curvas; termine no outro pino.</p></div>
   </aside>
   <div id="sideBackdrop" class="side-backdrop" hidden></div>
-  <button type="button" id="drawerHandle" class="drawer-handle" aria-label="Abrir componentes" aria-controls="library" aria-expanded="false"><span id="drawerArrow">❯</span><small>PEÇAS</small></button>
+  <button type="button" id="drawerHandle" class="drawer-handle" aria-label="Abrir componentes" aria-controls="library" aria-expanded="false"><span id="drawerArrow">❯</span></button>
   <main class="main-work">
     <div class="toolbar" role="toolbar" aria-label="Ferramentas da bancada">
       <div class="toolbar-left">
         <button id="editTab" class="legacy-control" hidden>Montagem</button>
         <button id="playTab" class="legacy-control" hidden>Simulação</button>
-        <button id="undoBtn" class="control-btn" type="button" title="Desfazer etapa (Ctrl+Z)" aria-label="Desfazer etapa (Ctrl+Z)">↶ <span>Desfazer</span></button>
-        <button id="redoBtn" class="control-btn" type="button" title="Refazer etapa (Ctrl+Y)" aria-label="Refazer etapa (Ctrl+Y)">↷ <span>Refazer</span></button>
-        <button id="deleteBtn" class="control-btn delete-btn" type="button" title="Excluir peça ou fio selecionado" aria-label="Excluir peça ou fio selecionado">⌫ <span>Excluir</span></button>
+        <div class="toolbar-group history-group" aria-label="Histórico">
+          <button id="undoBtn" class="control-btn" type="button" title="Desfazer (Ctrl+Z)" aria-label="Desfazer (Ctrl+Z)">↶</button>
+          <button id="redoBtn" class="control-btn" type="button" title="Refazer (Ctrl+Y)" aria-label="Refazer (Ctrl+Y)">↷</button>
+        </div>
+        <div class="toolbar-group edit-group" aria-label="Editar montagem">
+          <button id="copyBtn" class="control-btn" type="button" title="Copiar peça selecionada (Ctrl+C)" aria-label="Copiar peça">▣</button>
+          <button id="pasteBtn" class="control-btn" type="button" title="Colar peça copiada (Ctrl+V)" aria-label="Colar peça">▤</button>
+          <button id="deleteBtn" class="control-btn delete-btn" type="button" title="Excluir selecionado (Delete)" aria-label="Excluir peça ou fio selecionado">♜</button>
+        </div>
         <button id="clearBtn" class="legacy-control" hidden>Limpar</button>
-        <label class="wire-color-picker" for="wireColorSelect"><span>Cor do fio</span><span class="wire-color-preview" id="wireColorPreview"></span>
+        <label class="wire-color-picker" for="wireColorSelect" title="Cor do fio"><span class="wire-color-preview" id="wireColorPreview"></span><span class="wire-color-caption">Cor do fio</span>
           <select id="wireColorSelect" aria-label="Cor do fio">
             <option value="#ed654d">Vermelho</option><option value="#316fc0">Azul</option><option value="#1f434c">Preto</option>
             <option value="#32a47b">Verde</option><option value="#e5a13d">Amarelo</option><option value="#a378c8">Roxo</option>
@@ -56,9 +62,10 @@
       </div>
       <div class="toolbar-right">
         <button id="hintBtn" class="control-btn hint-btn" type="button" title="Mostrar dica">💡 <span>Dica</span></button>
+        <button id="downloadBtn" class="control-btn download-btn" type="button" title="Baixar imagem da montagem que está na bancada">⇩ <span>Baixar montagem</span></button>
         <button id="checkBtn" class="simulation-toggle" type="button" aria-pressed="false"><span class="sim-icon" id="simIcon">▶</span> <span id="simLabel">Iniciar simulação</span></button>
       </div>
-      <div class="toolbar-zoom" aria-label="Navegação da bancada">
+      <div class="toolbar-zoom toolbar-group" aria-label="Navegação da bancada">
         <button class="control-btn zoom-btn" id="zoomOut" aria-label="Diminuir zoom">−</button>
         <span id="zoomLabel" class="zoom-label">100%</span>
         <button class="control-btn zoom-btn" id="zoomIn" aria-label="Aumentar zoom">+</button>
@@ -90,7 +97,7 @@
           <div class="canvas-zoom-actions"><button type="button" id="zoomFitPart">Enquadrar peça</button><button type="button" id="zoomFitAll">Ver montagem</button></div>
           <small>Bancada sem limites: arraste o fundo para mover. No computador, Espaço + arrastar e Ctrl + roda para zoom. No celular, arraste o fundo ou use dois dedos para mover e ampliar.</small>
         </div>
-        <div class="canvas-corner" id="canvasHint">Fio: toque no pino → marque as curvas → toque no outro pino</div>
+        <div class="canvas-corner" id="canvasHint">Fio: clique no pino, mova a ponta, clique para fixar uma curva e finalize no destino</div>
       </div>
       <div class="bottom-controls">
         <div id="colorPalette" class="legacy-control" hidden></div>
