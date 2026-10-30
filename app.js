@@ -2014,64 +2014,157 @@ function downloadBlob(blob,filename){
  document.body.append(link);link.click();link.remove();
  setTimeout(()=>URL.revokeObjectURL(url),1800);
 }
-async function downloadWorkspace(){
- if(!state.parts.length){message('Adicione peças para baixar a montagem.',true);return;}
- const button=Q('downloadBtn');button.disabled=true;
- const escapeXml=value=>String(value).replace(/[&<>"']/g,char=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&apos;'}[char]));
- try{
-  // Exportação integral: imagens são embutidas, portanto funcionam fora do site.
-  const pad=85;
-  const routePoints=state.wires.flatMap(w=>w.via||[]);
-  const minX=Math.min(...state.parts.map(p=>p.x),...routePoints.map(p=>p.x))-pad;
-  const minY=Math.min(...state.parts.map(p=>p.y),...routePoints.map(p=>p.y))-pad;
-  const maxX=Math.max(...state.parts.map(p=>p.x+partLayout(p).w),...routePoints.map(p=>p.x))+pad;
-  const maxY=Math.max(...state.parts.map(p=>p.y+partLayout(p).h),...routePoints.map(p=>p.y))+pad;
-  const width=Math.ceil(maxX-minX),height=Math.ceil(maxY-minY);
-  const imageCache=new Map();
-  const parts=[];
-  for(const p of state.parts){
-   const src=p.kind==='motor'?motorImage(p):imageUrl(byKind[p.kind]);
-   let href=imageCache.get(src);
-   if(!href){
-    const response=await fetch(src);
-    if(!response.ok)throw Error('Não foi possível obter imagem de '+partName(p.id));
-    const raw=await response.text();
-    href='data:image/svg+xml;charset=utf-8,'+encodeURIComponent(raw);
-    imageCache.set(src,href);
-   }
-   const size=partLayout(p);
-   parts.push('<image href="'+escapeXml(href)+'" x="'+p.x+'" y="'+p.y+'" width="'+size.w+'" height="'+size.h+'" preserveAspectRatio="xMidYMid meet"/>');
+// A mesma imagem SVG é usada na prévia E no PNG. Nunca recrie o caminho
+// com um roteador diferente, nem suponha que a arte ocupe toda a caixa HTML.
+let exportPreviewSnapshot=null;
+function exportEsc(value){
+ return String(value).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&apos;'}[c]));
+}
+function exportImageLocalRect(img,card){
+ // Offset é pré-transformação: não sofre o giro de 90° nem o zoom/pan.
+ // Inclui as margens, padding e centralização reais do CSS da bancada.
+ let x=0,y=0,node=img,steps=0;
+ while(node&&node!==card&&steps++<12){
+  x+=node.offsetLeft||0;y+=node.offsetTop||0;
+  node=node.offsetParent;
+ }
+ if(node!==card)throw Error('Não foi possível medir a posição real da imagem.');
+ return {x,y,w:img.offsetWidth,h:img.offsetHeight};
+}
+function exportRotatedBounds(rect,part){
+ const d=partLayout(part),cx=part.x+d.w/2,cy=part.y+d.h/2;
+ const corners=[
+  {x:rect.x,y:rect.y},{x:rect.x+rect.w,y:rect.y},
+  {x:rect.x+rect.w,y:rect.y+rect.h},{x:rect.x,y:rect.y+rect.h}
+ ].map(p=>{
+  const rotated=rotateVector({x:p.x-cx,y:p.y-cy},part.rotation);
+  return {x:cx+rotated.x,y:cy+rotated.y};
+ });
+ return {minX:Math.min(...corners.map(p=>p.x)),minY:Math.min(...corners.map(p=>p.y)),
+  maxX:Math.max(...corners.map(p=>p.x)),maxY:Math.max(...corners.map(p=>p.y))};
+}
+async function buildWorkspaceExport(){
+ // O editor desenha cada fio num path.wire-line; é essa mesma geometria,
+ // inclusive as curvas manuais e posições exatas dos contatos, que copiamos.
+ drawWires();
+ const svgLayer=Q('wireSvg'),partLayer=Q('partsLayer');
+ const paths=[...svgLayer.querySelectorAll('path.wire-line')]
+  .filter(el=>!el.classList.contains('wire-pending')&&!el.classList.contains('wire-reconnect-preview'));
+ if(paths.length!==state.wires.length){
+  throw Error('Termine a conexão ou reconexão pendente antes de gerar a prévia.');
+ }
+ const wireBounds=paths.map(path=>{
+  const b=path.getBBox(),style=getComputedStyle(path);
+  const width=parseFloat(style.strokeWidth)||9;
+  return {minX:b.x-width,minY:b.y-width,maxX:b.x+b.width+width,maxY:b.y+b.height+width};
+ });
+ const imageCache=new Map(),parts=[],bounds=[...wireBounds];
+ for(const p of state.parts){
+  const card=[...partLayer.querySelectorAll('.part')].find(el=>el.dataset.part===p.id);
+  const img=card?.querySelector('.part-image img');
+  if(!card||!img)throw Error('Componente sem imagem na bancada: '+partName(p.id));
+  const relative=exportImageLocalRect(img,card),image={
+   x:p.x+relative.x,y:p.y+relative.y,w:relative.w,h:relative.h
+  };
+  if(!(image.w>0&&image.h>0))throw Error('A imagem de '+partName(p.id)+' ainda não carregou.');
+  bounds.push(exportRotatedBounds(image,p));
+  const url=img.currentSrc||img.src;
+  let href=imageCache.get(url);
+  if(!href){
+   const response=await fetch(url);
+   if(!response.ok)throw Error('Não foi possível carregar a arte de '+partName(p.id));
+   const raw=await response.text();
+   href='data:image/svg+xml;charset=utf-8,'+encodeURIComponent(raw);
+   imageCache.set(url,href);
   }
-  const wires=state.wires.map(w=>{
-   const from=getPortPos(w.a),to=getPortPos(w.b);
-   if(!from||!to)return '';
-   return '<path d="'+escapeXml(w.manual?wirePath(manualWirePoints(from,w.via||[],to)):wireRoute(from,w.via||[],to,w.a,w.b))+'" fill="none" stroke="'+escapeXml(w.color)+'" stroke-width="10" stroke-linejoin="round" stroke-linecap="round"/>';
-  }).join('');
-  const svg='<?xml version="1.0" encoding="UTF-8"?>'
-   +'<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="'+minX+' '+minY+' '+width+' '+height+'" width="'+width+'" height="'+height+'">'
-   +'<rect x="'+minX+'" y="'+minY+'" width="'+width+'" height="'+height+'" fill="#f4f5f6"/>'
-   +parts.join('')+wires+'</svg>';
-  const blob=new Blob([svg],{type:'image/svg+xml;charset=utf-8'});
-  // PNG permite compartilhar a montagem; SVG vetorial é alternativa universal.
+  const angle=normalizePartRotation(p.rotation);
+  const d=partLayout(p),centerX=p.x+d.w/2,centerY=p.y+d.h/2;
+  const fit=getComputedStyle(img).objectFit==='fill'?'none':'xMidYMid meet';
+  parts.push('<g'+(angle?' transform="rotate('+angle+' '+centerX+' '+centerY+')"':'')+'>'
+   +'<image href="'+exportEsc(href)+'" x="'+image.x+'" y="'+image.y+'" width="'+image.w
+   +'" height="'+image.h+'" preserveAspectRatio="'+fit+'"/></g>');
+ }
+ const pad=55;
+ const minX=Math.floor(Math.min(...bounds.map(b=>b.minX))-pad);
+ const minY=Math.floor(Math.min(...bounds.map(b=>b.minY))-pad);
+ const maxX=Math.ceil(Math.max(...bounds.map(b=>b.maxX))+pad);
+ const maxY=Math.ceil(Math.max(...bounds.map(b=>b.maxY))+pad);
+ const width=Math.max(1,maxX-minX),height=Math.max(1,maxY-minY);
+ const wires=paths.map(path=>{
+  const style=getComputedStyle(path);
+  // Mesmo d, mesma cor, espessura e junção que a linha visível no editor.
+  const stroke=path.getAttribute('stroke')||style.stroke||'#284452';
+  const thickness=parseFloat(style.strokeWidth)||9;
+  const opacity=parseFloat(style.opacity);
+  return '<path d="'+exportEsc(path.getAttribute('d')||'')+'" fill="none" stroke="'
+   +exportEsc(stroke)+'" stroke-width="'+thickness
+   +'" stroke-linejoin="round" stroke-linecap="round"'
+   +(Number.isFinite(opacity)&&opacity<1?' opacity="'+opacity+'"':'')+'/>';
+ }).join('');
+ const background=getComputedStyle(Q('viewport')).backgroundColor;
+ const fill=/^rgba?\(/.test(background)&&background==='rgba(0, 0, 0, 0)'?'#f7f9fa':(background||'#f7f9fa');
+ const xml='<?xml version="1.0" encoding="UTF-8"?>'
+  +'<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"'
+  +' viewBox="'+minX+' '+minY+' '+width+' '+height+'" width="'+width+'" height="'+height+'">'
+  +'<defs><pattern id="bench-dots" width="20" height="20" patternUnits="userSpaceOnUse">'
+  +'<circle cx="1" cy="1" r="1.05" fill="#cfdae0"/></pattern></defs>'
+  +'<rect x="'+minX+'" y="'+minY+'" width="'+width+'" height="'+height+'" fill="'+exportEsc(fill)+'"/>'
+  +'<rect x="'+minX+'" y="'+minY+'" width="'+width+'" height="'+height+'" fill="url(#bench-dots)"/>'
+  +parts.join('')+wires+'</svg>';
+ return {svg:xml,width,height};
+}
+function clearExportPreview(){
+ if(exportPreviewSnapshot?.url)URL.revokeObjectURL(exportPreviewSnapshot.url);
+ exportPreviewSnapshot=null;
+ const img=Q('exportPreviewImage');if(img)img.removeAttribute('src');
+}
+async function downloadWorkspace(){
+ if(!state.parts.length){message('Adicione componentes para visualizar a montagem.',true);return;}
+ const button=Q('downloadBtn');button.disabled=true;
+ try{
+  clearExportPreview();
+  const image=await buildWorkspaceExport();
+  const blob=new Blob([image.svg],{type:'image/svg+xml;charset=utf-8'});
   const url=URL.createObjectURL(blob);
-  try{
-   const bitmap=new Image();
-   await new Promise((resolve,reject)=>{bitmap.onload=resolve;bitmap.onerror=reject;bitmap.src=url;});
-   const canvas=document.createElement('canvas');
-   const factor=Math.min(2.25,3600/Math.max(width,height));
-   canvas.width=Math.round(width*factor);canvas.height=Math.round(height*factor);
-   canvas.getContext('2d').drawImage(bitmap,0,0,canvas.width,canvas.height);
-   const png=await new Promise(resolve=>canvas.toBlob(resolve,'image/png'));
-   if(!png)throw Error('PNG indisponível');
-   downloadBlob(png,'TinkerPET-montagem.png');
-   message('Imagem PNG da montagem baixada com os componentes e jumpers.',true);
-  }catch(err){
-   downloadBlob(blob,'TinkerPET-montagem.svg');
-   message('Montagem vetorial SVG baixada.',true);
-  }finally{URL.revokeObjectURL(url);}
- }catch(err){message('Falha ao baixar montagem: '+err.message,true);}
+  exportPreviewSnapshot={...image,blob,url};
+  Q('exportPreviewImage').src=url;
+  Q('exportPreviewSize').textContent=image.width+' × '+image.height+' px · prévia do arquivo';
+  Q('exportPreviewDialog').showModal();
+ }catch(err){clearExportPreview();message('Não foi possível gerar a prévia: '+err.message,true);}
  finally{button.disabled=false;}
 }
+async function confirmExportDownload(){
+ const snapshot=exportPreviewSnapshot;
+ if(!snapshot)return;
+ const button=Q('exportConfirmDownload');
+ button.disabled=true;button.textContent='Preparando PNG…';
+ try{
+  const picture=new Image();picture.src=snapshot.url;
+  await picture.decode();
+  const scale=Math.max(.1,Math.min(2.4,3600/Math.max(snapshot.width,snapshot.height),
+   Math.sqrt(13500000/(snapshot.width*snapshot.height))));
+  const canvas=document.createElement('canvas');
+  canvas.width=Math.max(1,Math.round(snapshot.width*scale));
+  canvas.height=Math.max(1,Math.round(snapshot.height*scale));
+  const ctx=canvas.getContext('2d');
+  if(!ctx)throw Error('Canvas indisponível');
+  ctx.drawImage(picture,0,0,canvas.width,canvas.height);
+  const png=await new Promise(resolve=>canvas.toBlob(resolve,'image/png'));
+  if(!png)throw Error('Não foi possível converter a imagem para PNG.');
+  downloadBlob(png,'TinkerPET-montagem.png');
+  message('PNG baixado com o mesmo desenho mostrado na prévia.',true);
+ }catch(err){
+  message('Falha ao gerar PNG: '+err.message+'. Você pode salvar em SVG.',true);
+ }finally{
+  button.disabled=false;button.textContent='Baixar PNG';
+ }
+}
+function downloadExportVector(){
+ if(!exportPreviewSnapshot)return;
+ downloadBlob(exportPreviewSnapshot.blob,'TinkerPET-montagem.svg');
+ message('Prévia salva em SVG.',true);
+}
+
 function bind(){
  Q('menuBtn').addEventListener('click',()=>libraryOpen(!Q('library').classList.contains('open')));
  Q('drawerHandle').addEventListener('click',()=>libraryOpen(!Q('library').classList.contains('open')));
@@ -2206,6 +2299,13 @@ function bind(){
  });
  Q('clearBtn').addEventListener('click',()=>{if(!state.parts.length)return;if(confirm('Apagar todas as peças e fios da bancada?')){snapshot();selectedParts.clear();state.parts=[];state.wires=[];state.selected=null;state.startPort=null;state.bends=[];previewPoint=null;state.switches={s1:false,s2:false};state.voltage=4;refresh();message('Bancada limpa. Comece de novo!');}});
  Q('downloadBtn').addEventListener('click',downloadWorkspace);
+ Q('exportConfirmDownload').addEventListener('click',confirmExportDownload);
+ Q('exportDownloadSvg').addEventListener('click',downloadExportVector);
+ Q('exportPreviewClose').addEventListener('click',()=>Q('exportPreviewDialog').close());
+ Q('exportPreviewDialog').addEventListener('close',clearExportPreview);
+ Q('exportPreviewDialog').addEventListener('click',e=>{
+  if(e.target===Q('exportPreviewDialog'))Q('exportPreviewDialog').close();
+ });
  Q('hintBtn').addEventListener('click',hint);
  Q('saveBtn').addEventListener('click',()=>{persist();message('Seu projeto foi salvo neste navegador.',true);});
  Q('checkBtn').addEventListener('click',toggleSimulation);
