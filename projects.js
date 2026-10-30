@@ -10,7 +10,7 @@
   motor:[190,405,'assets/motor-frontal.svg']
  };
  const pins={
-  esp:{VIN:[14.4,18.5],GND:[19.43,18.5],D27:[39.55,18.5],D26:[44.58,18.5],D32:[59.67,18.5],D18:[54.64,85.7]},
+  esp:{"VIN":[14.4,18.5],"GND":[19.43,18.5],"D13":[24.46,18.5],"D12":[29.49,18.5],"D14":[34.52,18.5],"D27":[39.55,18.5],"D26":[44.58,18.5],"D25":[49.61,18.5],"D33":[54.64,18.5],"D32":[59.67,18.5],"D35":[64.7,18.5],"D34":[69.73,18.5],"VN":[74.76,18.5],"VP":[79.79,18.5],"EN":[84.82,18.5],"3V3":[14.4,85.7],"GND2":[19.43,85.7],"D15":[24.46,85.7],"D2":[29.49,85.7],"D4":[34.52,85.7],"RX2":[39.55,85.7],"TX2":[44.58,85.7],"D5":[49.61,85.7],"D18":[54.64,85.7],"D19":[59.67,85.7],"D21":[64.7,85.7],"RX0":[69.73,85.7],"TX0":[74.76,85.7],"D22":[79.79,85.7],"D23":[84.82,85.7]},
   driver:{VCC:[24.3,84.5],GND:[34.7,84.5],IN1:[45,84.5],IN2:[55.3,84.5],IN3:[65.7,84.5],IN4:[76,84.5],OUT1:[70.7,16.5],OUT2:[85.7,16.5],OUT3:[24.3,16.5],OUT4:[39.3,16.5]},
   buck:{INP:[14.72,35.1],INN:[14.72,63.1],OUTP:[85,35.1],OUTN:[85,63.1]},
   battery:{POS:[30.6,4.7],NEG:[68.6,6.2]},batteryPack:{POS:[16.1,7.7],NEG:[84.7,7.7]},
@@ -146,9 +146,16 @@
   const map=(x,y)=>({x:W/2+(x-midX)*scale,y:H/2+(y-midY)*scale});
   const getPort=port=>{
    const [pid,name]=port.split('.'),p=parts.find(p=>p.id===pid);if(!p)return null;
-   const sz=p.kind==='motor'&&p.view==='side'?[340,170]:geometry[p.kind];
-   const pos=pins[p.kind]?.[name];if(!pos)return null;
-   return map(p.x+sz[0]*pos[0]/100,p.y+sz[1]*pos[1]/100);
+   const side=p.kind==='motor'&&p.view==='side';
+   const sz=side?[340,170]:geometry[p.kind];
+   const pos=side?({A:[96,42],B:[96,63]})[name]:pins[p.kind]?.[name];
+   if(!pos)return null;
+   let x=p.x+sz[0]*pos[0]/100,y=p.y+sz[1]*pos[1]/100;
+   const angle=((p.rotation||0)%360)*Math.PI/180;
+   if(angle){const cx=p.x+sz[0]/2,cy=p.y+sz[1]/2,dx=x-cx,dy=y-cy;
+    x=cx+dx*Math.cos(angle)-dy*Math.sin(angle);
+    y=cy+dx*Math.sin(angle)+dy*Math.cos(angle);}
+   return map(x,y);
   };
   const renderWires=()=>{
    ctx.lineWidth=Math.max(2,8*scale);ctx.lineCap='round';ctx.lineJoin='round';
