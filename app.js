@@ -34,13 +34,13 @@ const DIRECT_CONNECTIONS=[
  ['b1.POS','lm.INP'],['b2.POS','drv.VCC'],
  ...COMMON_CONNECTIONS
 ];
-const SWITCHED_CONNECTIONS=[
+// Gabarito canônico com interruptores, também usado pelos testes existentes.
+const EXPECTED=[
  ['b1.POS','s1.IN'],['s1.OUT','lm.INP'],
  ['b2.POS','s2.IN'],['s2.OUT','drv.VCC'],
  ...COMMON_CONNECTIONS
 ];
-// Mantém EXPECTED como gabarito da alternativa com duas gangorras.
-const EXPECTED=SWITCHED_CONNECTIONS;
+const SWITCHED_CONNECTIONS=EXPECTED;
 const OPTIONAL=[['b1.NEG','s1.LEDG'],['b2.NEG','s2.LEDG']];
 const key=(a,b)=>[a,b].sort().join('|');
 const canonicalPort=p=>p==='esp.GND2'?'esp.GND':p;
