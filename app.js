@@ -64,6 +64,7 @@ let zoom=1,panX=0,panY=0,gesture=null,history=[],future=[],toastTimer=0,previewP
 let spaceHeld=false;
 let recentTap=null,doubleTapRestore=null,copiedKind=null,simulationRunning=false;
 let wireAlignment=null;
+let partDragAlignment=null; // Guias transitórias ao mover peças
 let selectedBend=null; // quadrado isolado do jumper, não persiste.
 let wireTipActive=false,pendingAlignment=null;
 // Alça de reconexão temporária: o fio original permanece salvo até confirmar outro pino.
@@ -128,7 +129,7 @@ function restoreHistory(s){
   selected:null,selectedWire:null,completed:false
  });
  wireTipActive=!!state.startPort;
- previewPoint=null;previewSnapPort=null;pendingAlignment=null;gesture=null;reconnectPending=null;selectedBend=null;
+ previewPoint=null;previewSnapPort=null;pendingAlignment=null;gesture=null;reconnectPending=null;selectedBend=null;partDragAlignment=null;
  renderAll();updateHistoryButtons();
 }
 function undo(){
@@ -681,6 +682,20 @@ function getPortPos(id){
  const offset=rotateVector({x:d.w*(pin[0]/100-.5),y:d.h*(pin[1]/100-.5)},p.rotation);
  return {x:p.x+d.w/2+offset.x,y:p.y+d.h/2+offset.y};
 }
+// Desempata os dois terminais do motor pelas coordenadas reais, mesmo
+// se o navegador escolher a caixa de clique do terminal vizinho.
+function actualMotorPort(e,id){
+ const [partId,pin]=id.split('.'),p=byPart(partId);
+ if(p?.kind!=='motor'||!['A','B'].includes(pin))return id;
+ const box=Q('viewport').getBoundingClientRect();
+ let winner=id,distance=Infinity;
+ for(const name of ['A','B']){
+  const v=getPortPos(partId+'.'+name);if(!v)continue;
+  const d=Math.hypot(box.left+panX+v.x*zoom-e.clientX,box.top+panY+v.y*zoom-e.clientY);
+  if(d<distance){distance=d;winner=partId+'.'+name;}
+ }
+ return winner;
+}
 function portDirection(id){
  if(!id)return {x:0,y:-1};
  const [partId,code]=id.split('.');
@@ -1050,6 +1065,7 @@ function drawWires(){
  }
  // Tanto a edição do jumper quanto o seu traçado usam a mesma geometria.
  drawComponentGuide(svg,wireAlignment,ns);
+ drawComponentGuide(svg,partDragAlignment,ns);
  if((state.startPort&&previewPoint)||reconnectPending)drawComponentGuide(svg,pendingAlignment,ns);
  if(reconnectPending){
   const w=state.wires[reconnectPending.index];
@@ -1247,6 +1263,40 @@ function drawComponentGuide(svg,guides,ns){
   svg.append(line);
  }
 }
+function partAlignmentAnchors(p){
+ const b=partBounds(p),cx=b.x+b.w/2,cy=b.y+b.h/2;
+ const anchors=[{x:cx,y:cy,role:'center'},{x:b.x,y:cy,role:'left'},
+ {x:b.x+b.w,y:cy,role:'right'},{x:cx,y:b.y,role:'top'},
+ {x:cx,y:b.y+b.h,role:'bottom'}];
+ for(const [name] of byKind[p.kind].pins){
+  const pin=getPortPos(p.id+'.'+name);if(pin)anchors.push({...pin,role:'pin'});
+ }
+ return anchors;
+}
+function componentDragGuides(partId){
+ const moving=byPart(partId);if(!moving)return null;
+ const sources=partAlignmentAnchors(moving),tolerance=8/zoom,maxDistance=1100/zoom,found=[];
+ for(const axis of ['x','y']){
+  let best=null,scoreBest=Infinity;
+  for(const other of state.parts){
+   if(other.id===partId)continue;
+   const targets=partAlignmentAnchors(other);
+   for(const m of sources)for(const n of targets){
+    if(m.role!==n.role)continue;
+    const deviation=Math.abs(axis==='x'?m.x-n.x:m.y-n.y);
+    if(deviation>tolerance)continue;
+    const along=Math.abs(axis==='x'?m.y-n.y:m.x-n.x);
+    if(along>maxDistance)continue;
+    const score=deviation*zoom*30+along*zoom*.2+(m.role==='pin'?0:m.role==='center'?4:9);
+    if(score<scoreBest){
+     scoreBest=score;best={axis,value:axis==='x'?n.x:n.y,partId:other.id,role:m.role};
+    }
+   }
+  }
+  if(best)found.push(best);
+ }
+ return found.length?found:null;
+}
 function visualPendingAlignment(clientX,clientY,anchor=null){
  return closestComponentGuide(worldXY(clientX,clientY),null,null,anchor);
 }
@@ -1378,6 +1428,7 @@ function partDown(e){
  const p=byPart(el.dataset.part);if(!p)return;
  e.preventDefault();
  state.selected=p.id;state.selectedWire=null;selectedBend=null;state.inspector='parts';
+ partDragAlignment=null;
  renderInspector();renderParts();
  gesture={type:'move',pointer:e.pointerId,partId:p.id,startX:e.clientX,startY:e.clientY,partX:p.x,partY:p.y,
   anchors:state.wires.map((w,i)=>({
@@ -1462,6 +1513,7 @@ function pointerMove(e){
     p.x=Math.round(g.partX+dx/zoom);
     p.y=Math.round(g.partY+dy/zoom);
     anchoredWireBends(p,p.x-g.partX,p.y-g.partY,g.anchors);
+    partDragAlignment=componentDragGuides(p.id);
     const el=[...Q('partsLayer').querySelectorAll('.part')].find(node=>node.dataset.part===p.id);
     if(el){el.style.left=p.x+'px';el.style.top=p.y+'px';}
     highlightDropZone(removeZoneAt(e.clientX,e.clientY));
@@ -1524,7 +1576,7 @@ function pointerUp(e){
  if(e.type==='pointercancel'&&gesture?.pointer===e.pointerId){
   if(gesture.type==='wire-end')cancelReconnect();
   gesture=null;Q('dragGhost').hidden=true;Q('viewport').classList.remove('component-drop-ready');
-  wireAlignment=null;highlightDropZone(false);trackingTouchEnd(e);requestDraw();return;
+  wireAlignment=null;partDragAlignment=null;highlightDropZone(false);trackingTouchEnd(e);requestDraw();return;
  }
  if(trackingTouchEnd(e)||pinch)return;
  if(!gesture||e.pointerId!==gesture.pointer)return;
@@ -1597,11 +1649,13 @@ function pointerUp(e){
    connect(g.port);
   }
  }else if(g.type==='move'){
+  partDragAlignment=null;
   if(g.moved&&removeZoneAt(e.clientX,e.clientY)){
    removePart(g.partId,true);
    message('Peça devolvida ao catálogo e removida da montagem.',true);
   }else if(g.moved)persist();
   else{state.selected=g.partId;renderParts();renderInspector();}
+  requestDraw();
  }else if(g.type==='bend'){
   const pin=nearestPort(e.clientX,e.clientY,state.startPort,9);
   if(pin)connect(pin);else{const pos=worldXY(e.clientX,e.clientY);addCorner(pos.x,pos.y);}
@@ -1799,9 +1853,10 @@ function bind(){
    // A ferramenta mão não deve desativar o seletor de tensão ou as teclas das gangorras.
    if((spaceHeld||e.button===1)&&!e.target.closest('input,select,[data-toggle],[data-remove]')){startPan(e);return;}
    const port=e.target.closest('[data-port]');
+   const exactPort=port?actualMotorPort(e,port.dataset.port):null;
    if(reconnectPending&&port){
     // No toque, finalizar aqui (o preventDefault pode suprimir o click).
-    if(e.pointerType==='touch'){e.preventDefault();suppressPortClickUntil=Date.now()+450;finishReconnect(port.dataset.port);}
+    if(e.pointerType==='touch'){e.preventDefault();suppressPortClickUntil=Date.now()+450;finishReconnect(exactPort);}
     return;
    }
    if(port&&e.button!==2){
@@ -1813,7 +1868,7 @@ function bind(){
       Q('componentSearch').blur?.();
       if(e.cancelable!==false)e.preventDefault();
      }
-     gesture={type:'wire',pointer:e.pointerId,port:port.dataset.port,startX:e.clientX,startY:e.clientY,moved:false};
+     gesture={type:'wire',pointer:e.pointerId,port:exactPort,startX:e.clientX,startY:e.clientY,moved:false};
      requestDraw();return;
    }
    partDown(e);
@@ -1826,6 +1881,7 @@ function bind(){
  window.addEventListener('pointercancel',pointerUp);
  Q('partsLayer').addEventListener('click',e=>{
   const pin=e.target.closest('[data-port]');if(pin){
+    const exactPort=actualMotorPort(e,pin.dataset.port);
     e.stopPropagation();
     if(spaceHeld||Date.now()<suppressPortClickUntil)return;
     // Em telas pequenas o espaçamento físico dos 30 contatos diminui bastante.
@@ -1835,8 +1891,8 @@ function bind(){
       message('ESP32 ampliado para selecionar o contato com precisão.',true);
       return;
     }
-    if(reconnectPending)finishReconnect(pin.dataset.port);
-    else connect(pin.dataset.port);
+    if(reconnectPending)finishReconnect(exactPort);
+    else connect(exactPort);
     return;
   }
   const del=e.target.closest('[data-remove]');if(del){removePart(del.dataset.remove);return;}
