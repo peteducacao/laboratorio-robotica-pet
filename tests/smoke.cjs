@@ -603,21 +603,6 @@ assert(!js.includes("title.textContent=partName(p.id)"),'sem nome flutuante no t
 assert(!rocker.includes('>IN</text>')&&!rocker.includes('>OUT</text>')&&!rocker.includes('>LED−</text>'),'gangorra sem nomes impressos');
 assert(!lm.includes('<ellipse'),'LM2596 sem componentes redondos centrais');
 assert(drv.includes('<ellipse')&&drv.includes('<rect'),'MX1508 redesenhada com dois capacitores e CI físico');
-const beforeZoom=Number(nodes.zoomSlider.value);
-const pinchEvent=(pointerId,x,y)=>({pointerType:'touch',pointerId,clientX:x,clientY:y,button:0,preventDefault(){},target:{closest(){return null}}});
-send('pointerdown','viewport',pinchEvent(9001,100,100));
-send('pointerdown','viewport',pinchEvent(9002,200,100));
-send('pointermove','window',pinchEvent(9002,260,100));
-assert(Number(nodes.zoomSlider.value)>beforeZoom,'pinça com dois dedos amplia');
-send('pointerup','window',pinchEvent(9002,260,100));
-send('pointerup','window',pinchEvent(9001,100,100));
-send('input','zoomSlider',{target:{value:'25'}});
-assert.equal(nodes.zoomSlider.value,'25','lupa permite reduzir o zoom até 25%');
-send('click','zoomFitAll',{});
-assert(Number(nodes.zoomSlider.value)>=4,'enquadramento calcula um zoom válido sem forçar o limite antigo');
-
-
-
 function removeKind(id){
  send('click','inspectorBody',{target:{closest(sel){
   return sel==='[data-remove]'?{dataset:{remove:id}}:null;
@@ -646,6 +631,21 @@ assert.equal(power().live.motors.ml,false,'sem GND comum motor não gira');
 connect('esp.GND2','drv.GND');
 assert.equal(assembly().ready,true,'outro GND do ESP32 também conclui negativo comum');
 assert.equal(nodes.openTrackBtn.hidden,false,'pista liberada sem gangorras');
+
+const beforeZoom=Number(nodes.zoomSlider.value);
+const pinchEvent=(pointerId,x,y)=>({pointerType:'touch',pointerId,clientX:x,clientY:y,button:0,preventDefault(){},target:{closest(){return null}}});
+send('pointerdown','viewport',pinchEvent(9001,100,100));
+send('pointerdown','viewport',pinchEvent(9002,200,100));
+send('pointermove','window',pinchEvent(9002,260,100));
+assert(Number(nodes.zoomSlider.value)>beforeZoom,'pinça com dois dedos amplia');
+send('pointerup','window',pinchEvent(9002,260,100));
+send('pointerup','window',pinchEvent(9001,100,100));
+send('input','zoomSlider',{target:{value:'25'}});
+assert.equal(nodes.zoomSlider.value,'25','lupa permite reduzir o zoom até 25%');
+send('click','zoomFitAll',{});
+assert(Number(nodes.zoomSlider.value)>=4,'enquadramento calcula um zoom válido sem forçar o limite antigo');
+
+
 
  // Gabarito: testa abertura, senha, 17 linhas, download, impressão e bloqueio ao reabrir.
  class KeyNode {
