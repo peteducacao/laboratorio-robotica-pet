@@ -1301,3 +1301,30 @@
  .toolbar .wire-color-picker select{width:55px!important;max-width:55px!important;font-size:10px!important}
  .toolbar .toolbar-zoom .zoom-btn{width:29px!important;min-width:29px!important}
 }
+
+
+/* v31.1 — Zoom precisamente centralizado no celular, comandos na ponta direita */
+@media(min-width:375px) and (max-width:760px){
+ .toolbar{
+  grid-template-columns:minmax(0,1fr)!important;
+  grid-template-areas:"tools" "bottom"!important;
+  grid-template-rows:auto auto!important;
+ }
+ .toolbar-left{grid-area:tools!important}
+ .toolbar-zoom,.toolbar .toolbar-zoom{
+  grid-area:bottom!important;justify-self:center!important;z-index:1!important;
+ }
+ .toolbar-right{
+  grid-area:bottom!important;justify-self:end!important;z-index:2!important
+ }
+}
+@media(max-width:374px){
+ .toolbar{
+  grid-template-columns:minmax(0,1fr)!important;
+  grid-template-areas:"tools" "zoom" "right"!important;
+  grid-template-rows:auto auto auto!important
+ }
+ .toolbar-left{grid-area:tools!important}
+ .toolbar-zoom,.toolbar .toolbar-zoom{grid-area:zoom!important;justify-self:center!important}
+ .toolbar-right{grid-area:right!important;justify-self:end!important}
+}
