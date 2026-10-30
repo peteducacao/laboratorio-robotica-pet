@@ -1123,7 +1123,7 @@ function pointerUp(e){
    }else{
      const box=Q('viewport').getBoundingClientRect();
      if(e.clientX>=box.left&&e.clientX<=box.right&&e.clientY>=box.top&&e.clientY<=box.bottom){
-       const pos=previewPoint||worldXY(e.clientX,e.clientY);addCorner(pos.x,pos.y);
+       const pos=magneticPendingPoint(e.clientX,e.clientY,state.startPort).point;addCorner(pos.x,pos.y);
      }else{previewPoint=null;requestDraw();}
    }
   }
@@ -1141,11 +1141,11 @@ function pointerUp(e){
   else{state.selected=g.partId;renderParts();renderInspector();}
  }else if(g.type==='bend'){
   const pin=nearestPort(e.clientX,e.clientY,state.startPort);
-  if(pin)connect(pin);else{const pos=previewPoint||worldXY(e.clientX,e.clientY);addCorner(pos.x,pos.y);}
+  if(pin)connect(pin);else{const pos=magneticPendingPoint(e.clientX,e.clientY,state.startPort).point;addCorner(pos.x,pos.y);}
  }else if(g.type==='resume-wire'){
   if(g.moved){
    const pin=nearestPort(e.clientX,e.clientY,state.startPort);
-   if(pin)connect(pin);else{const pos=previewPoint||worldXY(e.clientX,e.clientY);addCorner(pos.x,pos.y);}
+   if(pin)connect(pin);else{const pos=magneticPendingPoint(e.clientX,e.clientY,state.startPort).point;addCorner(pos.x,pos.y);}
   }else message('Ponta reativada. Mova o cursor para continuar o jumper.',true);
  }else if(g.type==='pan'&&!g.moved&&!spaceHeld){
   const wire=wireAt(e.clientX,e.clientY);
