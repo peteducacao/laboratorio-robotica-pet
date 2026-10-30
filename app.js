@@ -87,7 +87,7 @@ function safeRestore(){
   const s=JSON.parse(localStorage.getItem(STORAGE_KEY)||'null');
   if(!s||!Array.isArray(s.parts)||!Array.isArray(s.wires))return;
   const names=new Set();
-  state.parts=s.parts.filter(p=>p&&byId[p.id]&&!names.has(p.id)&&names.add(p.id)&&Number.isFinite(p.x)&&Number.isFinite(p.y)).map(p=>({id:p.id,kind:byId[p.id].kind,x:p.x,y:p.y,view:byId[p.id].kind==='motor'&&p.view==='side'?'side':'front'}));
+  state.parts=s.parts.filter(p=>p&&byId[p.id]&&!names.has(p.id)&&names.add(p.id)&&Number.isFinite(p.x)&&Number.isFinite(p.y)).map(p=>({id:p.id,kind:byId[p.id].kind,x:p.x,y:p.y,view:byId[p.id].kind==='motor'&&p.view==='side'?'side':'front',rotation:normalizePartRotation(p.rotation)}));
   state.wires=s.wires.filter(w=>w&&allPorts.has(w.a)&&allPorts.has(w.b)&&w.a!==w.b&&exists(w.a.split('.')[0])&&exists(w.b.split('.')[0])).slice(0,80).map(w=>({a:w.a,b:w.b,color:COLORS.includes(w.color)?w.color:COLORS[0],via:Array.isArray(w.via)?w.via.filter(p=>p&&Number.isFinite(p.x)&&Number.isFinite(p.y)).slice(0,48).map(p=>({x:p.x,y:p.y})):[],manual:w.manual===true}));
   if(Number.isFinite(s.voltage))state.voltage=limit(s.voltage,3,6);
   if(s.switches)state.switches={s1:!!s.switches.s1,s2:!!s.switches.s2};
@@ -104,6 +104,8 @@ function historyState(){return JSON.stringify({
 });}
 function updateHistoryButtons(){
  const undoBtn=Q('undoBtn'),redoBtn=Q('redoBtn'),delBtn=Q('deleteBtn');
+ const rotateBtn=Q('rotateBtn'),p=byPart(state.selected);
+ if(rotateBtn){rotateBtn.disabled=!p;rotateBtn.title=p?'Girar '+partName(p.id)+' 90° (R)':'Selecione um componente para girar 90°';rotateBtn.setAttribute('aria-label',rotateBtn.title);}
  if(undoBtn)undoBtn.disabled=history.length===0;
  if(redoBtn)redoBtn.disabled=future.length===0;
  if(delBtn){
@@ -146,6 +148,15 @@ const portName=id=>{const [part,code]=id.split('.');const t=byId[part];const p=t
 function imageUrl(p){return p.img.startsWith('assets/')?p.img:ROOT+p.img;}
 function motorImage(p){return p.view==='side'?'assets/motor-lateral.svg':'assets/motor-frontal.svg';}
 function partLayout(p){return p.kind==='motor'&&p.view==='side'?PART_LAYOUTS.motorSide:PART_LAYOUTS[p.kind];}
+function normalizePartRotation(v){return Number.isFinite(v)?((Math.round(v/90)*90%360)+360)%360:0;}
+function rotateVector(d,v){
+ const a=normalizePartRotation(v);
+ return a===90?{x:-d.y,y:d.x}:a===180?{x:-d.x,y:-d.y}:a===270?{x:d.y,y:-d.x}:{x:d.x,y:d.y};
+}
+function partBounds(p){
+ const d=partLayout(p),side=normalizePartRotation(p.rotation)%180===90;
+ return side?{x:p.x+(d.w-d.h)/2,y:p.y+(d.h-d.w)/2,w:d.h,h:d.w}:{x:p.x,y:p.y,w:d.w,h:d.h};
+}
 function message(msg,toast=false){Q('statusText').textContent=msg;if(toast){const el=Q('toast');el.textContent=msg;el.classList.add('show');clearTimeout(toastTimer);toastTimer=setTimeout(()=>el.classList.remove('show'),2600);}}
 function assemblyMode(){return exists('s1')||exists('s2')?'switched':'direct';}
 function requiredParts(){return assemblyMode()==='switched'?9:7;}
@@ -302,6 +313,9 @@ function renderParts(){
   card.className='part'+(state.selected===p.id?' selected':'');
   card.dataset.part=p.id;card.dataset.kind=p.kind;card.style.left=p.x+'px';card.style.top=p.y+'px';
   card.style.setProperty('--part-w',layout.w+'px');card.style.setProperty('--part-h',layout.h+'px');
+  card.style.transform='rotate('+normalizePartRotation(p.rotation)+'deg)';
+  card.style.transformOrigin='50% 50%';
+  card.dataset.rotation=String(normalizePartRotation(p.rotation));
   card.style.zIndex=state.selected===p.id?'5':'3';
   const head=document.createElement('div');head.className='part-head';
   card.setAttribute('aria-label',partName(p.id));
@@ -393,6 +407,9 @@ function inspectorPart(p){
  const note=document.createElement('div');note.className='inspect-pins';note.textContent='✳ '+t.tip;
  const pins=document.createElement('p');pins.className='inspect-paragraph';pins.textContent=t.pins.length+' terminais disponíveis. Toque em um terminal na bancada para começar a ligação.';
  const actions=document.createElement('div');actions.className='inspect-actions';
+ const rotate=document.createElement('button');rotate.type='button';rotate.className='inspect-action';
+ rotate.dataset.rotatePart=p.id;rotate.textContent='↻ Girar 90° · '+normalizePartRotation(p.rotation)+'°';
+ rotate.setAttribute('aria-label','Girar '+partName(p.id)+' 90 graus');actions.append(rotate);
  if(p.kind==='motor'){
   const change=document.createElement('button');change.type='button';change.className='inspect-action';change.dataset.motorView=p.id;change.textContent=p.view==='side'?'↻ Ver vista frontal':'↻ Ver vista lateral';actions.append(change);
   const demo=document.createElement('button');demo.type='button';demo.className='inspect-action';demo.dataset.demoMotor=p.id;
@@ -463,10 +480,43 @@ function addPart(kind,x,y){
  const t=byKind[kind];if(!t)return false;
  const id=t.ids.find(id=>!exists(id));if(!id){message('Você já colocou todas as peças deste tipo.',true);return false;}
  snapshot();
- state.parts.push({id,kind,x:Math.round(x),y:Math.round(y),view:'front'});
+ state.parts.push({id,kind,x:Math.round(x),y:Math.round(y),view:'front',rotation:0});
  state.selected=id;state.selectedWire=null;state.inspector='parts';state.completed=false;state.startPort=null;refresh();
  message(partName(id)+' adicionado. Arraste pela imagem; toque nos contatos para ligar os fios.',true);
  return true;
+}
+// Gira em passos de 90° mantendo o centro visual e os fios nos mesmos pinos.
+function rotatePart(id){
+ const p=byPart(id);if(!p)return false;
+ if(reconnectPending)cancelReconnect();
+ if(state.startPort)cancelPendingWire();
+ const attached=state.wires.filter(w=>w.a.split('.')[0]===id||w.b.split('.')[0]===id);
+ const previous=new Map(attached.map(w=>[w,{a:getPortPos(w.a),b:getPortPos(w.b)}]));
+ snapshot();
+ p.rotation=(normalizePartRotation(p.rotation)+90)%360;
+ for(const w of attached){
+  if(!w.manual||!w.via?.length)continue;
+  const old=previous.get(w),via=w.via.map(point=>({...point}));
+  if(w.a.split('.')[0]===id){
+   const before=old.a,after=getPortPos(w.a),first=via[0];
+   if(Math.abs(before.x-first.x)<2)first.x=Math.round(after.x);
+   else if(Math.abs(before.y-first.y)<2)first.y=Math.round(after.y);
+  }
+  if(w.b.split('.')[0]===id){
+   const before=old.b,after=getPortPos(w.b),last=via.at(-1);
+   if(Math.abs(before.x-last.x)<2)last.x=Math.round(after.x);
+   else if(Math.abs(before.y-last.y)<2)last.y=Math.round(after.y);
+  }
+  w.via=via;
+ }
+ state.selected=id;state.selectedWire=null;state.inspector='parts';state.completed=false;refresh();
+ message(partName(id)+' girado para '+p.rotation+'°. Conexões mantidas.',true);
+ return true;
+}
+function rotateSelectedPart(){
+ const p=byPart(state.selected);
+ if(!p){message('Selecione um componente para girar.',true);return false;}
+ return rotatePart(p.id);
 }
 function removePart(id,skipSnapshot=false){
  if(!exists(id))return;
@@ -581,20 +631,22 @@ function removeWire(i){if(!state.wires[i])return;snapshot();reconnectPending=nul
 function getPortPos(id){
  const [partId,pinId]=id.split('.');
  const p=byPart(partId);if(!p)return null;
- const layout=partLayout(p),pos=layout.pins[pinId];if(!pos)return null;
- return {x:p.x+layout.w*pos[0]/100,y:p.y+layout.h*pos[1]/100};
+ const d=partLayout(p),pin=d.pins[pinId];if(!pin)return null;
+ const offset=rotateVector({x:d.w*(pin[0]/100-.5),y:d.h*(pin[1]/100-.5)},p.rotation);
+ return {x:p.x+d.w/2+offset.x,y:p.y+d.h/2+offset.y};
 }
 function portDirection(id){
  if(!id)return {x:0,y:-1};
  const [partId,code]=id.split('.');
  const p=byPart(partId);if(!p)return {x:0,y:-1};
- if(p.kind==='esp')return {x:0,y:['3V3','GND2','D15','D2','D4','RX2','TX2','D5','D18','D19','D21','RX0','TX0','D22','D23'].includes(code)?1:-1};
- if(p.kind==='driver')return {x:0,y:code.startsWith('OUT')?-1:1};
- if(p.kind==='buck')return {x:code.startsWith('IN')?-1:1,y:0};
- if(p.kind==='battery')return {x:0,y:-1};
- if(p.kind==='switch')return {x:0,y:1};
- if(p.kind==='motor')return p.view==='side'?{x:1,y:0}:{x:-1,y:0};
- return {x:0,y:-1};
+ let d={x:0,y:-1};
+ if(p.kind==='esp')d={x:0,y:['3V3','GND2','D15','D2','D4','RX2','TX2','D5','D18','D19','D21','RX0','TX0','D22','D23'].includes(code)?1:-1};
+ else if(p.kind==='driver')d={x:0,y:code.startsWith('OUT')?-1:1};
+ else if(p.kind==='buck')d={x:code.startsWith('IN')?-1:1,y:0};
+ else if(p.kind==='battery')d={x:0,y:-1};
+ else if(p.kind==='switch')d={x:0,y:1};
+ else if(p.kind==='motor')d=p.view==='side'?{x:1,y:0}:{x:-1,y:0};
+ return rotateVector(d,p.rotation);
 }
 // Caminho manual: cada ponto do desenho é uma escolha explícita do usuário.
 // Não insere a dobra ortogonal antes do clique nem cria cotovelos automáticos.
@@ -1027,15 +1079,14 @@ function fitRegion(box){
 }
 function focusPart(id){
  const p=byPart(id);if(!p)return;
- const d=partLayout(p);
- fitRegion({x:p.x,y:p.y,w:d.w,h:d.h});
+ fitRegion(partBounds(p));
 }
 function fitCamera(){
  if(state.parts.length){
-  const x=Math.min(...state.parts.map(p=>p.x));
-  const y=Math.min(...state.parts.map(p=>p.y));
-  const right=Math.max(...state.parts.map(p=>p.x+partLayout(p).w));
-  const bottom=Math.max(...state.parts.map(p=>p.y+partLayout(p).h));
+  const x=Math.min(...state.parts.map(p=>partBounds(p).x));
+  const y=Math.min(...state.parts.map(p=>partBounds(p).y));
+  const right=Math.max(...state.parts.map(p=>partBounds(p).x+partBounds(p).w));
+  const bottom=Math.max(...state.parts.map(p=>partBounds(p).y+partBounds(p).h));
   fitRegion({x,y,w:right-x,h:bottom-y});
  }else fitRegion({x:-370,y:-250,w:740,h:500});
 }
@@ -1769,7 +1820,7 @@ function bind(){
    if(!state.wires[i])return;
    selectWire(i);
  });
- Q('inspectorBody').addEventListener('click',e=>{const view=e.target.closest('[data-motor-view]');if(view){toggleMotorView(view.dataset.motorView);return;}const demo=e.target.closest('[data-demo-motor]');if(demo){demoMotor(demo.dataset.demoMotor);return;}const del=e.target.closest('[data-remove]');if(del)removePart(del.dataset.remove);const w=e.target.closest('[data-remove-wire]');if(w){removeWire(Number(w.dataset.removeWire));return;}const row=e.target.closest('[data-select-wire]');if(row)selectWire(Number(row.dataset.selectWire));});
+ Q('inspectorBody').addEventListener('click',e=>{const rotate=e.target.closest('[data-rotate-part]');if(rotate){rotatePart(rotate.dataset.rotatePart);return;}const view=e.target.closest('[data-motor-view]');if(view){toggleMotorView(view.dataset.motorView);return;}const demo=e.target.closest('[data-demo-motor]');if(demo){demoMotor(demo.dataset.demoMotor);return;}const del=e.target.closest('[data-remove]');if(del)removePart(del.dataset.remove);const w=e.target.closest('[data-remove-wire]');if(w){removeWire(Number(w.dataset.removeWire));return;}const row=e.target.closest('[data-select-wire]');if(row)selectWire(Number(row.dataset.selectWire));});
  Q('inspectorPartsTab').addEventListener('click',()=>{state.inspector='parts';renderInspector();});
  Q('inspectorWiresTab').addEventListener('click',()=>{state.inspector='wires';renderInspector();});
  Q('colorPalette').addEventListener('click',e=>{
@@ -1780,6 +1831,7 @@ function bind(){
  Q('undoBtn').addEventListener('click',undo);
  Q('redoBtn').addEventListener('click',redo);
  Q('copyBtn').addEventListener('click',copySelection);
+ Q('rotateBtn').addEventListener('click',rotateSelectedPart);
  Q('pasteBtn').disabled=true;
  Q('pasteBtn').addEventListener('click',pasteSelection);
  Q('deleteBtn').addEventListener('click',()=>{
@@ -1843,6 +1895,9 @@ function bind(){
   if(e.key==='Escape'&&state.startPort){e.preventDefault();cancelPendingWire();message('Fio cancelado.');return;}
   if(e.key==='Backspace'&&state.startPort&&!e.target.closest('input,textarea,select')){
    e.preventDefault();undo();return;
+  }
+  if((e.key==='r'||e.key==='R')&&!e.ctrlKey&&!e.metaKey&&!e.altKey&&!e.target.closest('input,textarea,select,[contenteditable]')&&byPart(state.selected)){
+   e.preventDefault();rotateSelectedPart();return;
   }
   if(['Delete','Backspace'].includes(e.key)&&!e.target.closest('input,textarea,select')){
     if(Number.isInteger(state.selectedWire)&&state.wires[state.selectedWire]){e.preventDefault();removeWire(state.selectedWire);return;}
