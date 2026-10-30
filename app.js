@@ -446,6 +446,7 @@ function renderInspector(){
 function toggleMotorView(id){
  const part=byPart(id);if(!part||part.kind!=='motor')return;
  snapshot();part.view=part.view==='side'?'front':'side';
+ rerouteAutomaticWires();
  // Alternar a vista não desloca nem limita a posição escolhida na área infinita.
  refresh();message('Motor: vista '+(part.view==='side'?'lateral':'frontal')+'. Os fios foram preservados.',true);
 }
@@ -512,6 +513,7 @@ function rotatePart(id){
   }
   w.via=via;
  }
+ rerouteAutomaticWires();
  state.selected=id;state.selectedWire=null;selectedBend=null;state.inspector='parts';state.completed=false;refresh();
  message(partName(id)+' girado para '+p.rotation+'°. Conexões mantidas.',true);
  return true;
@@ -607,6 +609,118 @@ function addCorner(x,y){
  updateHistoryButtons();requestDraw();
  message('Curva fixada. Continue movimentando o cursor até a próxima curva ou pino.');
 }
+
+// ~1 cm visual de separação entre fios = 38 unidades da bancada a 100%.
+// Proximidade nos pinos é inevitável; o afastamento é preferencial.
+const AUTO_WIRE_CLEARANCE=38;
+function autoWireExit(id,padding=20){
+ const p=getPortPos(id),part=byPart(id.split('.')[0]);if(!p||!part)return p;
+ const b=partBounds(part),d=portDirection(id);
+ if(d.x<0)return {x:Math.round(Math.min(p.x-25,b.x-padding)),y:Math.round(p.y)};
+ if(d.x>0)return {x:Math.round(Math.max(p.x+25,b.x+b.w+padding)),y:Math.round(p.y)};
+ if(d.y<0)return {x:Math.round(p.x),y:Math.round(Math.min(p.y-25,b.y-padding))};
+ return {x:Math.round(p.x),y:Math.round(Math.max(p.y+25,b.y+b.h+padding))};
+}
+function simplifyAutoWire(points){
+ const result=[];
+ for(const raw of points){
+  if(!raw||!Number.isFinite(raw.x)||!Number.isFinite(raw.y))continue;
+  const p={x:Math.round(raw.x),y:Math.round(raw.y)};
+  const a=result.at(-1),b=result.at(-2);
+  if(a&&a.x===p.x&&a.y===p.y)continue;
+  if(b&&((b.x===a.x&&a.x===p.x)||(b.y===a.y&&a.y===p.y)))result[result.length-1]=p;
+  else result.push(p);
+ }
+ return result;
+}
+function autoWireScore(path,boxes,wires){
+ let score=0;
+ for(let k=0;k<path.length-1;k++){
+  const a=path[k],b=path[k+1],horizontal=Math.abs(a.y-b.y)<2;
+  if(!horizontal&&Math.abs(a.x-b.x)>2)return Infinity;
+  const lo=horizontal?Math.min(a.x,b.x):Math.min(a.y,b.y);
+  const hi=horizontal?Math.max(a.x,b.x):Math.max(a.y,b.y);
+  const cross=horizontal?a.y:a.x;
+  score+=hi-lo;
+  for(const box of boxes){
+   const clo=horizontal?box.x:box.y,chi=horizontal?box.x+box.w:box.y+box.h;
+   const overlap=Math.max(0,Math.min(hi,chi)-Math.max(lo,clo));
+   if(overlap<2)continue;
+   const low=horizontal?box.y:box.x,high=horizontal?box.y+box.h:box.x+box.w;
+   const dist=cross<low?low-cross:cross>high?cross-high:0;
+   if(dist<2)score+=50000+overlap*90;
+   else if(dist<16)score+=400+overlap*8;
+  }
+  for(const other of wires){
+   for(let n=0;n<other.length-1;n++){
+    const u=other[n],v=other[n+1],par=horizontal?Math.abs(u.y-v.y)<2:Math.abs(u.x-v.x)<2;
+    if(par){
+     const gap=Math.abs(cross-(horizontal?u.y:u.x));
+     if(gap>=AUTO_WIRE_CLEARANCE)continue;
+     const oLo=horizontal?Math.min(u.x,v.x):Math.min(u.y,v.y);
+     const oHi=horizontal?Math.max(u.x,v.x):Math.max(u.y,v.y);
+     const overlap=Math.max(0,Math.min(hi,oHi)-Math.max(lo,oLo));
+     if(overlap>2)score+=(700+overlap*28)*(AUTO_WIRE_CLEARANCE-gap)/AUTO_WIRE_CLEARANCE;
+    }else{
+     const x=Math.abs(u.x-v.x)<2?u.x:null;
+     const y=Math.abs(u.y-v.y)<2?u.y:null;
+     const crossing=horizontal
+      ?x!==null&&x>=lo&&x<=hi&&cross>=Math.min(u.y,v.y)&&cross<=Math.max(u.y,v.y)
+      :y!==null&&y>=lo&&y<=hi&&cross>=Math.min(u.x,v.x)&&cross<=Math.max(u.x,v.x);
+     if(crossing)score+=1800;
+    }
+   }
+  }
+ }
+ return score+(path.length-2)*58;
+}
+function automaticWireRoute(aId,bId,exclude=-1){
+ const a=getPortPos(aId),b=getPortPos(bId);
+ if(!a||!b)return null;
+ const start=autoWireExit(aId),end=autoWireExit(bId);
+ const boxes=state.parts.map(p=>partBounds(p));
+ const other=state.wires.filter((w,i)=>i!==exclude).map(w=>wirePoints(w)).filter(route=>route.length>1);
+ const xx=[start.x,end.x,(start.x+end.x)/2],yy=[start.y,end.y,(start.y+end.y)/2];
+ for(const box of boxes){
+  xx.push(box.x-24,box.x+box.w+24);
+  yy.push(box.y-24,box.y+box.h+24);
+ }
+ for(const route of other)for(const p of route){
+  xx.push(p.x-38,p.x+38);yy.push(p.y-38,p.y+38);
+ }
+ const lanes=(all,u,v)=>[...new Set(all.map(Math.round))]
+  .filter(x=>x>=Math.min(u,v)-450&&x<=Math.max(u,v)+450)
+  .sort((x,y)=>Math.abs(x-(u+v)/2)-Math.abs(y-(u+v)/2)).slice(0,18);
+ const xs=lanes(xx,start.x,end.x),ys=lanes(yy,start.y,end.y);
+ let best=null,cost=Infinity;
+ const probe=between=>{
+  const core=simplifyAutoWire([start,...between,end]);
+  if(core.some((p,i)=>i>0&&p.x!==core[i-1].x&&p.y!==core[i-1].y))return;
+  // Avalia o caminho ENTRE os dois stubs. Não use o caminho
+  // simplificado completo, que pode apagar ambos os stubs colineares.
+  const score=autoWireScore(core,boxes,other);
+  if(score<cost){
+   const full=simplifyAutoWire([a,...core,b]);
+   if(full.some((p,i)=>i>0&&p.x!==full[i-1].x&&p.y!==full[i-1].y))return;
+   cost=score;best=full;
+  }
+ };
+ probe([]);probe([{x:end.x,y:start.y}]);probe([{x:start.x,y:end.y}]);
+ for(const x of xs)probe([{x,y:start.y},{x,y:end.y}]);
+ for(const y of ys)probe([{x:start.x,y},{x:end.x,y}]);
+ for(const x of xs)for(const y of ys){
+  probe([{x,y:start.y},{x,y},{x:end.x,y}]);
+  probe([{x:start.x,y},{x,y},{x,y:end.y}]);
+ }
+ return best;
+}
+function rerouteAutomaticWires(){
+ for(let i=0;i<state.wires.length;i++){
+  const w=state.wires[i];if(!w.autoRoute)continue;
+  const p=automaticWireRoute(w.a,w.b,i);
+  if(p&&p.length>1){w.manual=true;w.via=p.slice(1,-1);}
+ }
+}
 function connect(id){
  if(reconnectPending){finishReconnect(id);return;}
  const part=id.split('.')[0];if(!exists(part))return;
@@ -620,14 +734,18 @@ function connect(id){
  const first=state.startPort;
  if(id===first){cancelPendingWire();message('Ligação cancelada.');return;}
  const via=state.bends.map(p=>({x:p.x,y:p.y}));
+ const autoPath=via.length?null:automaticWireRoute(first,id);
  // Antes de finalizar, guarda o jumper parcialmente desenhado.
  snapshot();
  state.startPort=null;state.bends=[];wireTipActive=false;previewPoint=null;previewSnapPort=null;pendingAlignment=null;
  const index=state.wires.findIndex(w=>electricalKey(w.a,w.b)===electricalKey(first,id));
  if(index>=0){state.wires.splice(index,1);message('Ligação existente removida.');}
  else{
-  state.wires.push({a:first,b:id,color:state.wireColor,via,manual:true});
-  message(acceptedConnectionSet().has(electricalKey(first,id))?'✓ Fio sólido conectado com '+via.length+' curva(s).':'Fio criado, mas os terminais precisam ser revisados.',!acceptedConnectionSet().has(electricalKey(first,id)));
+  const route=autoPath?autoPath.slice(1,-1):via;
+  state.wires.push({a:first,b:id,color:state.wireColor,via:route,manual:true,autoRoute:!!autoPath});
+  message(acceptedConnectionSet().has(electricalKey(first,id))
+   ?(autoPath?'✓ Fio conectado e alinhado automaticamente.':'✓ Fio com '+route.length+' curva(s) conectado.')
+   :'Fio criado, mas os terminais precisam ser revisados.',!acceptedConnectionSet().has(electricalKey(first,id)));
  }
  state.completed=false;refresh();
 }
@@ -668,7 +786,7 @@ function removeSelectedBend(){
  const points=wirePoints(w),route=removeBendFromRoute(points,vertex);
  if(!route||route.length<2)return false;
  snapshot();
- w.manual=true;w.via=route.slice(1,-1);
+ w.manual=true;w.via=route.slice(1,-1);w.autoRoute=false;
  selectedBend=null;state.selectedWire=index;state.selected=null;state.inspector='wires';state.completed=false;
  refresh();
  message(route.length<points.length?'Ponto removido. Fio e conexões preservados.':'Ponto removido e curva ajustada para manter o fio reto.',true);
@@ -724,9 +842,12 @@ function manualWirePoints(start,via,end){
 }
 function pendingWirePoints(){
  if(!state.startPort)return [];
- const start=getPortPos(state.startPort);
- const tip=previewPoint;
- return manualWirePoints(start,state.bends,tip);
+ const start=getPortPos(state.startPort),tip=previewPoint;
+ if(!tip)return [start].filter(Boolean);
+ if(state.bends.length)return manualWirePoints(start,state.bends,tip);
+ const exit=autoWireExit(state.startPort),d=portDirection(state.startPort);
+ const elbow=d.x!==0?{x:tip.x,y:exit.y}:{x:exit.x,y:tip.y};
+ return simplifyAutoWire([start,exit,elbow,tip]);
 }
 // Edita um segmento de um jumper conectado sem alterar os dois bornes.
 // A primeira movimentação converte ligações antigas para a rota manual visível.
@@ -784,6 +905,7 @@ function moveWireBend(g,clientX,clientY){
  const wire=state.wires[g.wireIndex];if(!wire)return;
  const original=g.original,target=original[g.vertex];if(!target)return;
  const via=original.slice(1,-1).map(p=>({...p}));
+ wire.autoRoute=false;
  via[g.vertex-1]={
   x:Math.round(target.x+(clientX-g.startX)/zoom),
   y:Math.round(target.y+(clientY-g.startY)/zoom)
@@ -832,7 +954,7 @@ function moveWireSegment(g,clientX,clientY){
   else route.push(p);
  }
  wire.via=route.slice(1,-1);
- wire.manual=true;
+ wire.manual=true;wire.autoRoute=false;
  // Guias completas durante a edição, sempre sobre segmentos ortogonais.
  // Ao arrastar um segmento horizontal, a guia HORIZONTAL também aparece.
  const guides=horizontal
@@ -992,7 +1114,7 @@ function finishReconnect(newPort){
  if(route.length<2)return false;
  snapshot();
  wire[pending.end]=newPort;wire.via=route.slice(1,-1);
- wire.manual=true;
+ wire.manual=true;wire.autoRoute=false;
  state.selectedWire=pending.index;state.selected=null;state.inspector='wires';
  state.wireColor=wire.color;state.completed=false;
  reconnectPending=null;pendingAlignment=null;wireAlignment=null;
@@ -1653,7 +1775,7 @@ function pointerUp(e){
   if(g.moved&&removeZoneAt(e.clientX,e.clientY)){
    removePart(g.partId,true);
    message('Peça devolvida ao catálogo e removida da montagem.',true);
-  }else if(g.moved)persist();
+  }else if(g.moved){rerouteAutomaticWires();persist();}
   else{state.selected=g.partId;renderParts();renderInspector();}
   requestDraw();
  }else if(g.type==='bend'){
