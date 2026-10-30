@@ -25,21 +25,7 @@
     <button id="saveBtn" class="legacy-control" hidden>Salvar</button>
   </div>
 </header>
-<div class="studio">
-  <aside class="library" id="library" aria-label="Catálogo de componentes">
-    <div class="library-head">
-      <div><small>PEÇAS DISPONÍVEIS</small><h2>Componentes</h2></div>
-      <button id="closeLibrary" class="icon-btn close-library" aria-label="Fechar componentes">×</button>
-    </div>
-    <div class="library-search"><span>⌕</span><input id="componentSearch" type="search" placeholder="Buscar componente..." aria-label="Buscar componente"></div>
-    <div class="library-intro">Toque para adicionar ou arraste para montar. Arraste uma peça da bancada de volta para cá para excluir.</div>
-    <div id="catalog" class="catalog" aria-label="Peças disponíveis"></div>
-    <div class="library-footer"><b>✳ DICA</b><p>Toque em um pino para começar o fio. Clique em pontos vazios da bancada para criar curvas; termine no outro pino.</p></div>
-  </aside>
-  <div id="sideBackdrop" class="side-backdrop" hidden></div>
-  <button type="button" id="drawerHandle" class="drawer-handle" aria-label="Abrir componentes" aria-controls="library" aria-expanded="false"><span id="drawerArrow">❯</span></button>
-  <main class="main-work">
-    <div class="toolbar" role="toolbar" aria-label="Ferramentas da bancada">
+<div class="studio-topbar">    <div class="toolbar" role="toolbar" aria-label="Ferramentas da bancada">
       <div class="toolbar-left">
         <button id="editTab" class="legacy-control" hidden>Montagem</button>
         <button id="playTab" class="legacy-control" hidden>Simulação</button>
@@ -72,6 +58,21 @@
         <button class="control-btn zoom-btn" id="fitBtn" aria-label="Enquadrar montagem" title="Enquadrar montagem">⛶</button>
       </div>
     </div>
+</div>
+<div class="studio">
+  <aside class="library" id="library" aria-label="Catálogo de componentes">
+    <div class="library-head">
+      <div><small>PEÇAS DISPONÍVEIS</small><h2>Componentes</h2></div>
+      <button id="closeLibrary" class="icon-btn close-library" aria-label="Fechar componentes">×</button>
+    </div>
+    <div class="library-search"><span>⌕</span><input id="componentSearch" type="search" placeholder="Buscar componente..." aria-label="Buscar componente"></div>
+    <div class="library-intro">Toque para adicionar ou arraste para montar. Arraste uma peça da bancada de volta para cá para excluir.</div>
+    <div id="catalog" class="catalog" aria-label="Peças disponíveis"></div>
+    <div class="library-footer"><b>✳ DICA</b><p>Toque em um pino para começar o fio. Clique em pontos vazios da bancada para criar curvas; termine no outro pino.</p></div>
+  </aside>
+  <div id="sideBackdrop" class="side-backdrop" hidden></div>
+  <button type="button" id="drawerHandle" class="drawer-handle" aria-label="Abrir componentes" aria-controls="library" aria-expanded="false"><span id="drawerArrow">❯</span></button>
+  <main class="main-work">
     <section class="workspace-region" id="buildPanel" aria-label="Bancada virtual">
       <div class="mission-strip">
         <span class="strip-number" id="stepNumber">01</span>
