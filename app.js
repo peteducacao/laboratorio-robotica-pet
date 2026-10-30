@@ -67,6 +67,8 @@ let recentTap=null,doubleTapRestore=null,copiedKind=null,simulationRunning=false
 let wireAlignment=null;
 let partDragAlignment=null; // Guias transitórias ao mover peças
 let selectedBend=null; // quadrado isolado do jumper, não persiste.
+const selectedParts=new Set(); // seleção temporária múltipla, não altera o projeto salvo
+let selectionToolActive=false;
 let wireTipActive=false,pendingAlignment=null;
 // Alça de reconexão temporária: o fio original permanece salvo até confirmar outro pino.
 let reconnectPending=null;
@@ -108,7 +110,8 @@ function historyState(){return JSON.stringify({
 function updateHistoryButtons(){
  const undoBtn=Q('undoBtn'),redoBtn=Q('redoBtn'),delBtn=Q('deleteBtn');
  const rotateBtn=Q('rotateBtn'),p=byPart(state.selected);
- if(rotateBtn){rotateBtn.disabled=!p;rotateBtn.title=p?'Girar '+partName(p.id)+' 90° (R)':'Selecione um componente para girar 90°';rotateBtn.setAttribute('aria-label',rotateBtn.title);}
+ if(rotateBtn){rotateBtn.disabled=!p||selectedParts.size>1;rotateBtn.title=selectedParts.size>1?'Girar: selecione uma peça por vez':p?'Girar '+partName(p.id)+' 90° (R)':'Selecione um componente para girar 90°';rotateBtn.setAttribute('aria-label',rotateBtn.title);}
+ updateMultiSelectionTool();
  if(undoBtn)undoBtn.disabled=history.length===0;
  if(redoBtn)redoBtn.disabled=future.length===0;
  if(delBtn){
@@ -314,13 +317,13 @@ function renderParts(){
     const ledConnected=state.wires.some(w=>electricalKey(w.a,w.b)===electricalKey(battery+'.NEG',p.id+'.LEDG'));
     card.dataset.indicator=state.switches[p.id]&&ledConnected?'on':'off';
   }
-  card.className='part'+(state.selected===p.id?' selected':'');
+  card.className='part'+(state.selected===p.id||selectedParts.has(p.id)?' selected':'')+(selectedParts.has(p.id)?' multi-selected':'');
   card.dataset.part=p.id;card.dataset.kind=p.kind;card.style.left=p.x+'px';card.style.top=p.y+'px';
   card.style.setProperty('--part-w',layout.w+'px');card.style.setProperty('--part-h',layout.h+'px');
   card.style.transform='rotate('+normalizePartRotation(p.rotation)+'deg)';
   card.style.transformOrigin='50% 50%';
   card.dataset.rotation=String(normalizePartRotation(p.rotation));
-  card.style.zIndex=state.selected===p.id?'5':'3';
+  card.style.zIndex=selectedParts.has(p.id)?'6':state.selected===p.id?'5':'3';
   const head=document.createElement('div');head.className='part-head';
   card.setAttribute('aria-label',partName(p.id));
   const del=document.createElement('button');del.type='button';del.className='part-remove';del.dataset.remove=p.id;
@@ -527,6 +530,7 @@ function addPart(kind,x,y){
  const t=byKind[kind];if(!t)return false;
  const id=t.ids.find(id=>!exists(id));if(!id){message('Você já colocou todas as peças deste tipo.',true);return false;}
  snapshot();
+ selectedParts.clear();selectedParts.add(id);
  state.parts.push({id,kind,x:Math.round(x),y:Math.round(y),view:'front',rotation:0});
  state.selected=id;state.selectedWire=null;selectedBend=null;state.inspector='parts';state.completed=false;state.startPort=null;refresh();
  message(partName(id)+' adicionado. Arraste pela imagem; toque nos contatos para ligar os fios.',true);
@@ -570,7 +574,7 @@ function removePart(id,skipSnapshot=false){
  if(!exists(id))return;
  if(reconnectPending)cancelReconnect();
  if(!skipSnapshot)snapshot();
- selectedBend=null;
+ selectedBend=null;selectedParts.delete(id);
  state.parts=state.parts.filter(p=>p.id!==id);
  state.wires=state.wires.filter(w=>w.a.split('.')[0]!==id&&w.b.split('.')[0]!==id);
  if(state.selected===id)state.selected=null;
@@ -757,9 +761,10 @@ function automaticWireRoute(aId,bId,exclude=-1){
  }
  return best;
 }
-function rerouteAutomaticWires(){
+function rerouteAutomaticWires(preserveGroup=false){
  for(let i=0;i<state.wires.length;i++){
   const w=state.wires[i];if(!w.autoRoute)continue;
+  if(preserveGroup&&selectedParts.size>1&&selectedParts.has(w.a.split('.')[0])&&selectedParts.has(w.b.split('.')[0]))continue;
   const p=automaticWireRoute(w.a,w.b,i);
   if(p&&p.length>1){w.manual=true;w.via=p.slice(1,-1);}
  }
@@ -1438,13 +1443,13 @@ function partAlignmentAnchors(p){
  }
  return anchors;
 }
-function componentDragGuides(partId){
+function componentDragGuides(partId,ignoreIds=null){
  const moving=byPart(partId);if(!moving)return null;
  const sources=partAlignmentAnchors(moving),tolerance=8/zoom,maxDistance=1100/zoom,found=[];
  for(const axis of ['x','y']){
   let best=null,scoreBest=Infinity;
   for(const other of state.parts){
-   if(other.id===partId)continue;
+   if(other.id===partId||ignoreIds?.has(other.id))continue;
    const targets=partAlignmentAnchors(other);
    for(const m of sources)for(const n of targets){
     if(m.role!==n.role)continue;
@@ -1476,6 +1481,7 @@ function setPendingPreview(e){
 function wireAt(clientX,clientY){return segmentAt(clientX,clientY).index;}
 function selectWire(i){
  if(!state.wires[i])return;
+ selectedParts.clear();updateMultiSelectionTool();
  selectedBend=null;
  if(reconnectPending&&reconnectPending.index!==i)reconnectPending=null;
  state.selectedWire=i;state.selected=null;state.inspector='wires';
@@ -1585,6 +1591,67 @@ function anchoredWireBends(part,dx,dy,anchors){
   wire.via=via;
  }
 }
+function updateMultiSelectionTool(){
+ const button=Q('selectionToolBtn'),counter=Q('selectionCount');
+ if(!button)return;
+ button.classList.toggle('active',selectionToolActive);
+ button.setAttribute('aria-pressed',String(selectionToolActive));
+ button.title=selectionToolActive?'Seletor ligado: clique para escolher peças; arraste uma selecionada para mover o grupo':'Seleção múltipla (ou Shift+clique)';
+ if(counter){counter.textContent=String(selectedParts.size);counter.hidden=selectedParts.size<2;}
+}
+function singleComponentSelection(id){
+ selectedParts.clear();
+ if(id&&byPart(id))selectedParts.add(id);
+ updateMultiSelectionTool();
+}
+function toggleComponentSelection(id){
+ if(!byPart(id))return;
+ if(selectedParts.has(id))selectedParts.delete(id);else selectedParts.add(id);
+ state.selected=selectedParts.has(id)?id:([...selectedParts].at(-1)||null);
+ state.selectedWire=null;selectedBend=null;state.inspector='parts';
+ renderParts();renderInspector();
+ const count=selectedParts.size;
+ message(count?count+' componentes selecionados. Segure Shift para acrescentar ou retirar; arraste um deles para mover todos.':'Seleção limpa.',true);
+}
+function beginGroupMove(e,id){
+ if(selectedParts.size<2||!selectedParts.has(id))return false;
+ if(e.cancelable)e.preventDefault();
+ const parts=[...selectedParts].map(key=>byPart(key)).filter(Boolean).map(p=>({id:p.id,x:p.x,y:p.y}));
+ const wires=state.wires.map((w,i)=>{
+  const moveA=selectedParts.has(w.a.split('.')[0]),moveB=selectedParts.has(w.b.split('.')[0]);
+  if(!moveA&&!moveB)return null;
+  return {i,moveA,moveB,via:(w.via||[]).map(v=>({...v})),start:getPortPos(w.a),end:getPortPos(w.b)};
+ }).filter(Boolean);
+ state.selected=id;state.selectedWire=null;state.inspector='parts';selectedBend=null;
+ partDragAlignment=null;
+ gesture={type:'group-move',pointer:e.pointerId,startX:e.clientX,startY:e.clientY,parts,wires,main:id,moved:false,saved:false};
+ renderParts();renderInspector();
+ return true;
+}
+function translateGroup(group,dx,dy){
+ const x=Math.round(dx),y=Math.round(dy);
+ for(const item of group.parts){
+  const p=byPart(item.id);if(p){p.x=item.x+x;p.y=item.y+y;}
+ }
+ for(const item of group.wires){
+  const w=state.wires[item.i];if(!w)continue;
+  const points=item.via.map(p=>({...p}));
+  if(item.moveA&&item.moveB)w.via=points.map(p=>({x:p.x+x,y:p.y+y}));
+  else if(points.length&&w.manual){
+   if(item.moveA){
+    const first=points[0];
+    if(item.start&&Math.abs(first.x-item.start.x)<2)first.x+=x;
+    if(item.start&&Math.abs(first.y-item.start.y)<2)first.y+=y;
+   }
+   if(item.moveB){
+    const last=points.at(-1);
+    if(item.end&&Math.abs(last.x-item.end.x)<2)last.x+=x;
+    if(item.end&&Math.abs(last.y-item.end.y)<2)last.y+=y;
+   }
+   w.via=points;
+  }
+ }
+}
 function partDown(e){
  if(pinch||activeTouches.size>=2||Date.now()<gestureBlockedUntil)return;
  if(e.button!==undefined&&e.button!==0)return;
@@ -1592,9 +1659,12 @@ function partDown(e){
  const el=e.target.closest('.part');if(!el)return;
  const p=byPart(el.dataset.part);if(!p)return;
  e.preventDefault();
+ if(e.shiftKey){toggleComponentSelection(p.id);return;}
+ if(selectionToolActive&&!selectedParts.has(p.id)){toggleComponentSelection(p.id);return;}
+ if(selectedParts.size>1&&selectedParts.has(p.id)){beginGroupMove(e,p.id);return;}
+ singleComponentSelection(p.id);
  state.selected=p.id;state.selectedWire=null;selectedBend=null;state.inspector='parts';
- partDragAlignment=null;
- renderInspector();renderParts();
+ partDragAlignment=null;renderInspector();renderParts();
  gesture={type:'move',pointer:e.pointerId,partId:p.id,startX:e.clientX,startY:e.clientY,partX:p.x,partY:p.y,
   anchors:state.wires.map((w,i)=>({
    i,a:w.a.split('.')[0]===p.id,b:w.b.split('.')[0]===p.id,
@@ -1670,6 +1740,18 @@ function pointerMove(e){
     ghost.hidden=false;ghost.classList.toggle('valid-drop',validDrop);
     ghost.style.left=e.clientX+'px';ghost.style.top=e.clientY+'px';
     Q('viewport').classList.toggle('component-drop-ready',validDrop);
+   }
+  }else if(g.type==='group-move'){
+   if(g.moved&&!g.saved){snapshot();g.saved=true;}
+   if(g.moved){
+    translateGroup(g,dx/zoom,dy/zoom);
+    partDragAlignment=componentDragGuides(g.main,selectedParts);
+    for(const item of g.parts){
+     const part=byPart(item.id);
+     const node=[...Q('partsLayer').querySelectorAll('.part')].find(el=>el.dataset.part===item.id);
+     if(part&&node){node.style.left=part.x+'px';node.style.top=part.y+'px';}
+    }
+    requestDraw();
    }
   }else if(g.type==='move'){
    const p=byPart(g.partId);if(!p)return;
@@ -1813,6 +1895,13 @@ function pointerUp(e){
    suppressPortClickUntil=Date.now()+350;
    connect(g.port);
   }
+ }else if(g.type==='group-move'){
+  partDragAlignment=null;
+  if(g.moved){
+   rerouteAutomaticWires(true);
+   persist();message(g.parts.length+' componentes movidos juntos, com as conexões preservadas.',true);
+  }else{renderParts();renderInspector();}
+  requestDraw();
  }else if(g.type==='move'){
   partDragAlignment=null;
   if(g.moved&&removeZoneAt(e.clientX,e.clientY)){
@@ -1827,7 +1916,7 @@ function pointerUp(e){
  }else if(g.type==='pan'&&!g.moved&&!spaceHeld){
   const wire=wireAt(e.clientX,e.clientY);
   if(wire>=0)selectWire(wire);
-  else{state.selected=null;state.selectedWire=null;selectedBend=null;renderParts();renderInspector();updateHistoryButtons();requestDraw();}
+  else{state.selected=null;state.selectedWire=null;selectedBend=null;selectedParts.clear();renderParts();renderInspector();updateHistoryButtons();requestDraw();}
  }
 
 }
@@ -2115,17 +2204,22 @@ function bind(){
  Q('redoBtn').addEventListener('click',redo);
  Q('copyBtn').addEventListener('click',copySelection);
  Q('rotateBtn').addEventListener('click',rotateSelectedPart);
+ Q('selectionToolBtn').addEventListener('click',()=>{
+  selectionToolActive=!selectionToolActive;updateMultiSelectionTool();
+  message(selectionToolActive?'Seletor ligado: clique nas peças e arraste qualquer selecionada para mover o grupo.':'Seletor desligado. Shift+clique também seleciona várias peças.',true);
+ });
  Q('pasteBtn').disabled=true;
  Q('pasteBtn').addEventListener('click',pasteSelection);
  Q('deleteBtn').addEventListener('click',()=>{
   if(selectedBend&&removeSelectedBend())return;
+  if(selectedParts.size>1){message('Selecione uma única peça para excluí-la.',true);return;}
   if(Number.isInteger(state.selectedWire)&&state.wires[state.selectedWire]){removeWire(state.selectedWire);return;}
   const selected=byPart(state.selected);
   if(selected)removePart(selected.id);
   else if(state.startPort)cancelPendingWire();
   else message('Toque em uma peça ou em um fio para selecionar e excluir.',true);
  });
- Q('clearBtn').addEventListener('click',()=>{if(!state.parts.length)return;if(confirm('Apagar todas as peças e fios da bancada?')){snapshot();state.parts=[];state.wires=[];state.selected=null;state.startPort=null;state.bends=[];previewPoint=null;state.switches={s1:false,s2:false};state.voltage=4;refresh();message('Bancada limpa. Comece de novo!');}});
+ Q('clearBtn').addEventListener('click',()=>{if(!state.parts.length)return;if(confirm('Apagar todas as peças e fios da bancada?')){snapshot();selectedParts.clear();state.parts=[];state.wires=[];state.selected=null;state.startPort=null;state.bends=[];previewPoint=null;state.switches={s1:false,s2:false};state.voltage=4;refresh();message('Bancada limpa. Comece de novo!');}});
  Q('downloadBtn').addEventListener('click',downloadWorkspace);
  Q('hintBtn').addEventListener('click',hint);
  Q('saveBtn').addEventListener('click',()=>{persist();message('Seu projeto foi salvo neste navegador.',true);});
@@ -2180,6 +2274,10 @@ function bind(){
   }
   if(e.key==='Escape'&&reconnectPending){e.preventDefault();cancelReconnect();message('Ponta restaurada ao contato original.');return;}
   if(e.key==='Escape'&&state.startPort){e.preventDefault();cancelPendingWire();message('Fio cancelado.');return;}
+  if(e.key==='Escape'&&selectedParts.size>0){
+   e.preventDefault();selectedParts.clear();selectionToolActive=false;state.selected=null;
+   updateMultiSelectionTool();renderParts();renderInspector();message('Seleção desfeita.',true);return;
+  }
   if(e.key==='Backspace'&&state.startPort&&!e.target.closest('input,textarea,select')){
    e.preventDefault();undo();return;
   }
@@ -2189,6 +2287,7 @@ function bind(){
   if(['Delete','Backspace'].includes(e.key)&&!e.target.closest('input,textarea,select')){
     if(selectedBend){e.preventDefault();removeSelectedBend();return;}
     if(Number.isInteger(state.selectedWire)&&state.wires[state.selectedWire]){e.preventDefault();removeWire(state.selectedWire);return;}
+    if(selectedParts.size>1){e.preventDefault();message('Para excluir uma única peça, selecione-a individualmente.',true);return;}
     if(byPart(state.selected)){e.preventDefault();removePart(state.selected);return;}
    }
    if(Q('playPanel').hidden||!ready()||e.target.closest('input,textarea,select'))return;
