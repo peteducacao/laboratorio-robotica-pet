@@ -12,7 +12,7 @@ const TYPES=[
  {kind:'buck',name:'Regulador LM2596',img:'assets/lm2596-desenhado.svg',ids:['lm'],pins:[['INP','IN +'],['INN','IN −'],['OUTP','OUT +'],['OUTN','OUT −']],info:'Regulador de tensão. Neste projeto, a saída para o ESP32 deve ser ajustada para 5,0 V.',tip:'Na montagem real, um responsável deve medir 5 V com multímetro antes de conectar VIN.'},
  {kind:'battery',name:'Bateria 9 V',img:'assets/bateria-9v-desenhada.svg',ids:['b1'],pins:[['POS','+'],['NEG','−']],info:'Uma bateria de 9 V alimenta o regulador LM2596 e o ESP32.',tip:'Bateria de 9 V → IN+ e IN− do LM2596; ajuste OUT+ / OUT− para 5 V antes de ligar VIN e GND do ESP32.'},
  {kind:'batteryPack',name:'Suporte de 6 pilhas AA',img:'assets/suporte-6-pilhas.svg',ids:['b2'],pins:[['POS','+'],['NEG','−']],info:'Porta-pilhas com seis células AA: 9 V nominais se forem seis pilhas de 1,5 V. Alimenta a ponte H, não o ESP32.',tip:'Com seis pilhas AA de 1,5 V, são 9 V nominais; seis NiMH de 1,2 V dão 7,2 V. Verifique a tensão nominal dos motores: 9 V pode exceder a especificação de motores de 3–6 V.'},
- {kind:'switch',name:'Chave gangorra',img:'assets/gangorra-desenhada.svg',ids:['s1','s2'],pins:[['IN','IN +'],['OUT','SAÍDA'],['LEDG','LED −']],info:'Gangorra iluminada de 3 terminais: IN recebe o positivo da fonte, OUT leva o positivo à carga e LED− é o retorno opcional da iluminação.',tip:'S1: 9 V + → IN; OUT → LM2596 IN+; LED− → 9 V − (opcional). S2: seis AA + → IN; OUT → MX1508 +; LED− → AA − (opcional). Os negativos principais ficam diretos. Confirme a pinagem física da sua gangorra.'},
+ {kind:'switch',name:'Chave gangorra',img:'assets/gangorra-desenhada.svg?v=2',ids:['s1','s2'],pins:[['IN','IN +'],['OUT','SAÍDA'],['LEDG','LED −']],info:'Gangorra iluminada de 3 terminais: IN recebe o positivo da fonte, OUT leva o positivo à carga e LED− é o retorno opcional da iluminação.',tip:'S1: 9 V + → IN; OUT → LM2596 IN+; LED− → 9 V − (opcional). S2: seis AA + → IN; OUT → MX1508 +; LED− → AA − (opcional). Os negativos principais ficam diretos. Confirme a pinagem física da sua gangorra.'},
  {kind:'motor',name:'Motor DC',img:'assets/motor-frontal.svg',ids:['ml','mr'],pins:[['A','+'],['B','−']],info:'Motor DC com caixa de redução amarela, eixo lateral para a roda e dois contatos no motor metálico. Na simulação, a ponte H controla o sentido de giro.',tip:'Os dois contatos ficam ao lado do motor metálico, identificados em vermelho e preto. O eixo de saída fica na caixa amarela.'}
 ];
 const byKind=Object.fromEntries(TYPES.map(p=>[p.kind,p]));
@@ -1011,7 +1011,9 @@ function libraryOpen(open){
  // Encerrar o foco da busca ao fechar a gaveta evita teclado preso no Android.
  if(!yes)Q('componentSearch').blur?.();
  Q('library').classList.toggle('open',yes);
- Q('sideBackdrop').hidden=!yes;
+ // A lista de componentes não é modal: bancada e painel permanecem ativos.
+ Q('sideBackdrop').hidden=true;
+ document.body.classList.toggle('components-open',yes);
  Q('menuBtn').setAttribute('aria-expanded',String(yes));
  Q('drawerHandle').setAttribute('aria-expanded',String(yes));
  Q('drawerHandle').setAttribute('aria-label',yes?'Fechar componentes':'Abrir componentes');
@@ -1098,7 +1100,22 @@ function pointerMove(e){
   const g=gesture,dx=e.clientX-g.startX,dy=e.clientY-g.startY;
   if(Math.hypot(dx,dy)>(g.type==='wire'?12:g.type==='pan'?9:6))g.moved=true;
   if(g.type==='catalog'){
-   if(g.moved){const ghost=Q('dragGhost');ghost.hidden=false;ghost.textContent=byKind[g.kind].name;ghost.style.left=e.clientX+'px';ghost.style.top=e.clientY+'px';}
+   if(g.moved){
+    const ghost=Q('dragGhost');
+    if(ghost.dataset.kind!==g.kind||!ghost.firstElementChild){
+     const img=document.createElement('img');img.src=imageUrl(byKind[g.kind]);img.alt='';img.draggable=false;
+     const title=document.createElement('strong');title.textContent=byKind[g.kind].name;
+     ghost.replaceChildren(img,title);ghost.dataset.kind=g.kind;
+    }
+    const box=Q('viewport').getBoundingClientRect();
+    const inside=e.clientX>=box.left&&e.clientX<=box.right&&e.clientY>=box.top&&e.clientY<=box.bottom;
+    const sidebar=Q('library').getBoundingClientRect();
+    const overSidebar=Q('library').classList.contains('open')&&e.clientX>=sidebar.left&&e.clientX<=sidebar.right&&e.clientY>=sidebar.top&&e.clientY<=sidebar.bottom;
+    const validDrop=inside&&!overSidebar;
+    ghost.hidden=false;ghost.classList.toggle('valid-drop',validDrop);
+    ghost.style.left=e.clientX+'px';ghost.style.top=e.clientY+'px';
+    Q('viewport').classList.toggle('component-drop-ready',validDrop);
+   }
   }else if(g.type==='move'){
    const p=byPart(g.partId);if(!p)return;
    if(g.moved&&!g.saved){snapshot();g.saved=true;}
@@ -1161,17 +1178,27 @@ function handleDoubleTap(e,g){
  return true;
 }
 function pointerUp(e){
+ if(e.type==='pointercancel'&&gesture?.pointer===e.pointerId){
+  gesture=null;Q('dragGhost').hidden=true;Q('viewport').classList.remove('component-drop-ready');
+  highlightDropZone(false);trackingTouchEnd(e);return;
+ }
  if(trackingTouchEnd(e)||pinch)return;
  if(!gesture||e.pointerId!==gesture.pointer)return;
  const g=gesture;gesture=null;Q('dragGhost').hidden=true;
+ Q('viewport').classList.remove('component-drop-ready');
  highlightDropZone(false);
  if(handleDoubleTap(e,g))return;
  if(g.type==='catalog'){
-  if(!g.moved){centerPart(g.kind);libraryOpen(false);}
+  // O painel permanece aberto para arrastar vários componentes seguidos.
+  if(!g.moved){centerPart(g.kind);}
   else{
    const box=Q('viewport').getBoundingClientRect();
-   if(e.clientX>=box.left&&e.clientX<=box.right&&e.clientY>=box.top&&e.clientY<=box.bottom){const p=worldXY(e.clientX,e.clientY);addPart(g.kind,p.x-PART_LAYOUTS[g.kind].w/2,p.y-PART_LAYOUTS[g.kind].h/2);libraryOpen(false);}
-   else message('Solte a peça sobre a bancada para adicioná-la.',true);
+   const panel=Q('library').getBoundingClientRect();
+   const overSidebar=Q('library').classList.contains('open')&&e.clientX>=panel.left&&e.clientX<=panel.right&&e.clientY>=panel.top&&e.clientY<=panel.bottom;
+   if(!overSidebar&&e.clientX>=box.left&&e.clientX<=box.right&&e.clientY>=box.top&&e.clientY<=box.bottom){
+    const p=worldXY(e.clientX,e.clientY);
+    addPart(g.kind,p.x-PART_LAYOUTS[g.kind].w/2,p.y-PART_LAYOUTS[g.kind].h/2);
+   }else if(!overSidebar)message('Solte o componente na área de criação.',true);
   }
  }else if(g.type==='wire-bend'){
   if(g.moved){persist();renderInspector();message('Ângulo da curva ajustado. Outros pontos e conexões mantidos.',true);}
