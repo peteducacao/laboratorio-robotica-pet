@@ -3,17 +3,17 @@
 const ROOT='https://raw.githubusercontent.com/gabrieljsantos/Fundamentos-de-Prototipagem-e-Fabrica--o-Digital/main/assets/images/componentes/';
 const TYPES=[
  {kind:'esp',name:'ESP32 DevKit V1',img:'assets/esp32-devkit-v1-30p.svg?v=29',ids:['esp'],pins:[["VIN","VIN"],["GND","GND"],["D13","D13"],["D12","D12"],["D14","D14"],["D27","D27"],["D26","D26"],["D25","D25"],["D33","D33"],["D32","D32"],["D35","D35"],["D34","D34"],["VN","VN"],["VP","VP"],["EN","EN"],["3V3","3V3"],["GND2","GND"],["D15","D15"],["D2","D2"],["D4","D4"],["RX2","RX2"],["TX2","TX2"],["D5","D5"],["D18","D18"],["D19","D19"],["D21","D21"],["RX0","RX0"],["TX0","TX0"],["D22","D22"],["D23","D23"]],info:'Placa de 30 pinos com USB à esquerda e nomes em cada contato. Os dois GND são equivalentes.',tip:'Neste carrinho: VIN recebe 5 V, GND comum, D27→IN1, D26→IN2, D32→IN3 e D18→IN4.'},
- {kind:'driver',name:'Ponte H MX1508',img:'assets/mx1508-desenhado.svg',ids:['drv'],pins:[['VCC','+ motores'],['GND','GND motores'],['IN1','IN1'],['IN2','IN2'],['IN3','IN3'],['IN4','IN4'],['OUT1','A • 1'],['OUT2','A • 2'],['OUT3','B • 1'],['OUT4','B • 2']],info:'A ponte H recebe os sinais do ESP32 e controla os dois motores. Cada motor utiliza um par de saídas.',tip:'As saídas A e B têm dois bornes cada; a numeração 1 e 2 aqui é didática.'},
+ {kind:'driver',name:'Ponte H MX1508',img:'assets/mx1508-desenhado.svg?v=37',ids:['drv'],pins:[['VCC','+ motores'],['GND','GND motores'],['IN1','IN1'],['IN2','IN2'],['IN3','IN3'],['IN4','IN4'],['OUT1','A • 1'],['OUT2','A • 2'],['OUT3','B • 1'],['OUT4','B • 2']],info:'MX1508: os dois bornes MOTOR A (na direita) são de um motor; os dois MOTOR B (na esquerda) são do outro. + e − recebem o suporte de seis pilhas. O − também deve ser ligado a um GND do ESP32.',tip:'IN1→GPIO27, IN2→GPIO26, IN3→GPIO32, IN4→GPIO18. Compartilhe o GND entre ESP32 e ponte H.'},
  {kind:'buck',name:'Regulador LM2596',img:'assets/lm2596-desenhado.svg',ids:['lm'],pins:[['INP','IN +'],['INN','IN −'],['OUTP','OUT +'],['OUTN','OUT −']],info:'Regulador de tensão. Neste projeto, a saída para o ESP32 deve ser ajustada para 5,0 V.',tip:'Na montagem real, um responsável deve medir 5 V com multímetro antes de conectar VIN.'},
- {kind:'battery',name:'Bateria 9 V',img:'assets/bateria-9v-desenhada.svg',ids:['b1'],pins:[['POS','+'],['NEG','−']],info:'Uma bateria de 9 V alimenta o regulador LM2596 e o ESP32.',tip:'O LM2596 deve reduzir a tensão para 5,0 V antes de alimentar o VIN do ESP32.'},
+ {kind:'battery',name:'Bateria 9 V',img:'assets/bateria-9v-desenhada.svg',ids:['b1'],pins:[['POS','+'],['NEG','−']],info:'Uma bateria de 9 V alimenta o regulador LM2596 e o ESP32.',tip:'Bateria de 9 V → IN+ e IN− do LM2596; ajuste OUT+ / OUT− para 5 V antes de ligar VIN e GND do ESP32.'},
  {kind:'batteryPack',name:'Suporte de 6 pilhas AA',img:'assets/suporte-6-pilhas.svg',ids:['b2'],pins:[['POS','+'],['NEG','−']],info:'Porta-pilhas com seis células AA: 9 V nominais se forem seis pilhas de 1,5 V. Alimenta a ponte H, não o ESP32.',tip:'Com seis pilhas AA de 1,5 V, são 9 V nominais; seis NiMH de 1,2 V dão 7,2 V. Verifique a tensão nominal dos motores: 9 V pode exceder a especificação de motores de 3–6 V.'},
- {kind:'switch',name:'Chave gangorra',img:'assets/gangorra-desenhada.svg',ids:['s1','s2'],pins:[['IN','IN +'],['OUT','SAÍDA'],['LEDG','LED −']],info:'Gangorra iluminada de 3 terminais: entrada positiva, saída comutada e negativo opcional do LED. A tecla bascula ao ligar.',tip:'O terceiro contato acende o indicador quando ligado ao negativo da bateria correspondente. Confirme o esquema do seu modelo físico antes de montar.'},
+ {kind:'switch',name:'Chave gangorra',img:'assets/gangorra-desenhada.svg',ids:['s1','s2'],pins:[['IN','IN +'],['OUT','SAÍDA'],['LEDG','LED −']],info:'Gangorra iluminada de 3 terminais: IN recebe o positivo da fonte, OUT leva o positivo à carga e LED− é o retorno opcional da iluminação.',tip:'S1: 9 V + → IN; OUT → LM2596 IN+; LED− → 9 V − (opcional). S2: seis AA + → IN; OUT → MX1508 +; LED− → AA − (opcional). Os negativos principais ficam diretos. Confirme a pinagem física da sua gangorra.'},
  {kind:'motor',name:'Motor DC',img:'assets/motor-frontal.svg',ids:['ml','mr'],pins:[['A','+'],['B','−']],info:'Motor DC com caixa de redução amarela, eixo lateral para a roda e dois contatos no motor metálico. Na simulação, a ponte H controla o sentido de giro.',tip:'Os dois contatos ficam ao lado do motor metálico, identificados em vermelho e preto. O eixo de saída fica na caixa amarela.'}
 ];
 const byKind=Object.fromEntries(TYPES.map(p=>[p.kind,p]));
 const PART_LAYOUTS={
  esp:{w:790,h:365,pins:{"VIN":[14.4,18.5],"GND":[19.43,18.5],"D13":[24.46,18.5],"D12":[29.49,18.5],"D14":[34.52,18.5],"D27":[39.55,18.5],"D26":[44.58,18.5],"D25":[49.61,18.5],"D33":[54.64,18.5],"D32":[59.67,18.5],"D35":[64.7,18.5],"D34":[69.73,18.5],"VN":[74.76,18.5],"VP":[79.79,18.5],"EN":[84.82,18.5],"3V3":[14.4,85.7],"GND2":[19.43,85.7],"D15":[24.46,85.7],"D2":[29.49,85.7],"D4":[34.52,85.7],"RX2":[39.55,85.7],"TX2":[44.58,85.7],"D5":[49.61,85.7],"D18":[54.64,85.7],"D19":[59.67,85.7],"D21":[64.7,85.7],"RX0":[69.73,85.7],"TX0":[74.76,85.7],"D22":[79.79,85.7],"D23":[84.82,85.7]}},
- driver:{w:250,h:317,pins:{VCC:[24.3,84.5],GND:[34.7,84.5],IN1:[45,84.5],IN2:[55.3,84.5],IN3:[65.7,84.5],IN4:[76,84.5],OUT1:[25.3,12.9],OUT2:[40.7,12.9],OUT3:[58.7,12.9],OUT4:[73.7,12.9]}},
+ driver:{w:250,h:317,pins:{VCC:[24.3,84.5],GND:[34.7,84.5],IN1:[45,84.5],IN2:[55.3,84.5],IN3:[65.7,84.5],IN4:[76,84.5],OUT1:[70.7,16.5],OUT2:[85.7,16.5],OUT3:[24.3,16.5],OUT4:[39.3,16.5]}},
  buck:{w:288,h:180,pins:{INP:[14.72,35.1],INN:[14.72,63.1],OUTP:[85,35.1],OUTN:[85,63.1]}},
  battery:{w:170,h:228,pins:{POS:[30.6,4.7],NEG:[68.6,6.2]}},
  batteryPack:{w:265,h:255,pins:{POS:[16.1,7.7],NEG:[84.7,7.7]}},
@@ -22,18 +22,31 @@ const PART_LAYOUTS={
  motorSide:{w:340,h:170,pins:{A:[96,42],B:[96,63]}}
 };
 const byId=Object.fromEntries(TYPES.flatMap(p=>p.ids.map(id=>[id,p])));
-const EXPECTED=[
- ['b1.POS','s1.IN'],['s1.OUT','lm.INP'],['b1.NEG','lm.INN'],['lm.OUTP','esp.VIN'],['lm.OUTN','esp.GND'],
- ['b2.POS','s2.IN'],['s2.OUT','drv.VCC'],['b2.NEG','drv.GND'],['esp.GND','drv.GND'],
+// Os dois esquemas têm as mesmas ligações de controle, motores e GND comum.
+// A única diferença é se cada positivo passa ou não por uma gangorra.
+const COMMON_CONNECTIONS=[
+ ['b1.NEG','lm.INN'],['lm.OUTP','esp.VIN'],['lm.OUTN','esp.GND'],
+ ['b2.NEG','drv.GND'],['esp.GND','drv.GND'],
  ['esp.D27','drv.IN1'],['esp.D26','drv.IN2'],['esp.D32','drv.IN3'],['esp.D18','drv.IN4'],
  ['drv.OUT1','ml.A'],['drv.OUT2','ml.B'],['drv.OUT3','mr.A'],['drv.OUT4','mr.B']
 ];
+const DIRECT_CONNECTIONS=[
+ ['b1.POS','lm.INP'],['b2.POS','drv.VCC'],
+ ...COMMON_CONNECTIONS
+];
+const SWITCHED_CONNECTIONS=[
+ ['b1.POS','s1.IN'],['s1.OUT','lm.INP'],
+ ['b2.POS','s2.IN'],['s2.OUT','drv.VCC'],
+ ...COMMON_CONNECTIONS
+];
+// Mantém EXPECTED como gabarito da alternativa com duas gangorras.
+const EXPECTED=SWITCHED_CONNECTIONS;
+const OPTIONAL=[['b1.NEG','s1.LEDG'],['b2.NEG','s2.LEDG']];
 const key=(a,b)=>[a,b].sort().join('|');
 const canonicalPort=p=>p==='esp.GND2'?'esp.GND':p;
 const electricalKey=(a,b)=>key(canonicalPort(a),canonicalPort(b));
-const OPTIONAL=[['b1.NEG','s1.LEDG'],['b2.NEG','s2.LEDG']];
 const REQUIRED=new Set(EXPECTED.map(([a,b])=>electricalKey(a,b)));
-const valid=new Set([...EXPECTED,...OPTIONAL].map(([a,b])=>electricalKey(a,b)));
+const valid=new Set([...DIRECT_CONNECTIONS,...SWITCHED_CONNECTIONS,...OPTIONAL].map(([a,b])=>electricalKey(a,b)));
 const allPorts=new Set(TYPES.flatMap(t=>t.ids.flatMap(id=>t.pins.map(p=>id+'.'+p[0]))));
 const Q=id=>document.getElementById(id);
 // Coordenadas da bancada são livres: a câmera não impõe bordas às peças ou fios.
@@ -118,10 +131,25 @@ function imageUrl(p){return p.img.startsWith('assets/')?p.img:ROOT+p.img;}
 function motorImage(p){return p.view==='side'?'assets/motor-lateral.svg':'assets/motor-frontal.svg';}
 function partLayout(p){return p.kind==='motor'&&p.view==='side'?PART_LAYOUTS.motorSide:PART_LAYOUTS[p.kind];}
 function message(msg,toast=false){Q('statusText').textContent=msg;if(toast){const el=Q('toast');el.textContent=msg;el.classList.add('show');clearTimeout(toastTimer);toastTimer=setTimeout(()=>el.classList.remove('show'),2600);}}
-function countGood(){return new Set(state.wires.filter(w=>REQUIRED.has(electricalKey(w.a,w.b))).map(w=>electricalKey(w.a,w.b))).size;}
-function mistakes(){return state.wires.filter(w=>!valid.has(electricalKey(w.a,w.b)));}
-function missing(){const wired=new Set(state.wires.map(w=>electricalKey(w.a,w.b)));return EXPECTED.filter(([a,b])=>!wired.has(electricalKey(a,b)));}
-function ready(){return state.parts.length===9&&missing().length===0&&mistakes().length===0&&Math.abs(state.voltage-5)<.01&&state.switches.s1&&state.switches.s2;}
+function assemblyMode(){return exists('s1')||exists('s2')?'switched':'direct';}
+function requiredParts(){return assemblyMode()==='switched'?9:7;}
+function expectedConnections(){return assemblyMode()==='switched'?SWITCHED_CONNECTIONS:DIRECT_CONNECTIONS;}
+function acceptedConnectionSet(){
+ const edges=[...expectedConnections()];
+ if(assemblyMode()==='switched')edges.push(...OPTIONAL);
+ return new Set(edges.map(([a,b])=>electricalKey(a,b)));
+}
+function countGood(){
+ const expected=new Set(expectedConnections().map(([a,b])=>electricalKey(a,b)));
+ return new Set(state.wires.filter(w=>expected.has(electricalKey(w.a,w.b))).map(w=>electricalKey(w.a,w.b))).size;
+}
+function mistakes(){const allowed=acceptedConnectionSet();return state.wires.filter(w=>!allowed.has(electricalKey(w.a,w.b)));}
+function missing(){const wired=new Set(state.wires.map(w=>electricalKey(w.a,w.b)));return expectedConnections().filter(([a,b])=>!wired.has(electricalKey(a,b)));}
+function ready(){
+ const switched=assemblyMode()==='switched';
+ return state.parts.length===requiredParts()&&missing().length===0&&mistakes().length===0&&
+ Math.abs(state.voltage-5)<.01&&(!switched||(state.switches.s1&&state.switches.s2));
+}
 // Modelo pedagógico: cada circuito acende e funciona somente quando recebe
 // alimentação e sinais por um caminho conectado. Não é SPICE nem execução do ESP32.
 function powerStatus(){
