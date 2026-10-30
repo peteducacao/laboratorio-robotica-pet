@@ -133,3 +133,12 @@
   mask-image:linear-gradient(to right,transparent 0%,#000 2%,#000 98%,transparent 100%);
  }
 }
+
+/* Desktop panorâmico v7: oficina sem barras desfocadas.
+   Canvas amplia somente as EXTREMIDADES da arte; o centro não distorce. */
+.welcome-panorama{position:absolute;inset:0;z-index:1;display:none;width:100%;height:100%;pointer-events:none}
+.welcome.panorama-on .welcome-panorama{display:block}
+.welcome.panorama-on .welcome-art{visibility:hidden}
+.welcome.panorama-on::before{display:none}
+.welcome.panorama-on .floating-crop{display:none}
+.welcome.panorama-on .shine{opacity:.4}
