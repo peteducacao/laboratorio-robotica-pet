@@ -1297,6 +1297,14 @@ window.tinkerpetAnswerData={
  {title:'Saídas para os motores',from:13,to:17,color:'#229786',info:'Ponte H conectada aos dois motores DC'}
  ],
  connections:EXPECTED.map(([a,b],i)=>({n:i+1,from:portName(a),to:portName(b),a,b})),
+ directConnections:DIRECT_CONNECTIONS.map(([a,b],i)=>({n:i+1,from:portName(a),to:portName(b),a,b})),
+ directGroups:[
+  {title:'Alimentação do ESP32 (direta)',from:0,to:1,color:'#d9634e',info:'Bateria 9 V positiva diretamente no IN+ do LM2596'},
+  {title:'Alimentação dos motores (direta)',from:1,to:2,color:'#d38f39',info:'Seis pilhas AA positivas diretamente no + da MX1508'},
+  {title:'Negativos e GND comum',from:2,to:7,color:'#6c8797',info:'LM2596 e MX1508 compartilham terra com ESP32; − da ponte H vai ao GND do ESP32'},
+  {title:'Sinais ESP32 → MX1508',from:7,to:11,color:'#3d84b8',info:'GPIO27→IN1, GPIO26→IN2, GPIO32→IN3, GPIO18→IN4'},
+  {title:'Motores A e B',from:11,to:15,color:'#229786',info:'Motor A: saídas à direita; Motor B: saídas à esquerda'}
+ ],
  components:TYPES.flatMap(t=>t.ids.map(id=>({id,kind:t.kind,name:partName(id),image:t.img,width:PART_LAYOUTS[t.kind].w,height:PART_LAYOUTS[t.kind].h,pins:PART_LAYOUTS[t.kind].pins})))
 };
 
