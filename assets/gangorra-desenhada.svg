@@ -1,12 +1,49 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 280 225" role="img" aria-labelledby="title desc">
-<title id="title">Interruptor gangorra iluminado de três terminais</title><desc id="desc">Corpo preto, tecla basculante e três contatos dourados na parte inferior: entrada de alimentação, saída para carga e negativo do LED indicador.</desc>
-<defs><linearGradient id="case" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#66747a"/><stop offset=".35" stop-color="#1c262e"/><stop offset="1" stop-color="#0e151c"/></linearGradient><linearGradient id="gold" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#ffe4a2"/><stop offset=".6" stop-color="#ca9d48"/><stop offset="1" stop-color="#906328"/></linearGradient><filter id="sh"><feDropShadow dy="4" stdDeviation="3" flood-opacity=".28"/></filter></defs>
-<rect x="41" y="16" width="198" height="169" rx="23" fill="url(#case)" stroke="#141c21" stroke-width="5" filter="url(#sh)"/>
-<rect x="56" y="30" width="168" height="138" rx="16" fill="#0d151b" stroke="#64717c" stroke-width="3"/>
-<rect x="66" y="37" width="148" height="126" rx="12" fill="#121b21" stroke="#4e5c67" stroke-width="2"/>
-<!-- 3 bottom metal contacts integrated into housing -->
-<g><rect x="56" y="172" width="28" height="46" rx="4" fill="url(#gold)" stroke="#8e6e37" stroke-width="3"/><rect x="61" y="190" width="18" height="14" rx="2" fill="#f5d27d"/></g><g><rect x="126" y="172" width="28" height="46" rx="4" fill="url(#gold)" stroke="#8e6e37" stroke-width="3"/><rect x="131" y="190" width="18" height="14" rx="2" fill="#f5d27d"/></g><g><rect x="196" y="172" width="28" height="46" rx="4" fill="#353c41" stroke="#17232a" stroke-width="3"/><rect x="201" y="190" width="18" height="14" rx="2" fill="#151b21"/></g>
-
-
-
+<title id="title">Chave gangorra de três terminais — interruptor basculante detalhado</title>
+<desc id="desc">Chave preta com aro moldado, tecla inclinada com marcas I e O, lente indicadora e três terminais metálicos identificados como IN, OUT e LED menos.</desc>
+<defs>
+ <linearGradient id="housing" x1="0" y1="0" x2=".95" y2="1"><stop stop-color="#7c8891"/><stop offset=".12" stop-color="#3c474f"/><stop offset=".5" stop-color="#19242d"/><stop offset="1" stop-color="#0d151d"/></linearGradient>
+ <linearGradient id="bezel" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#9dabb0"/><stop offset=".24" stop-color="#52616c"/><stop offset=".51" stop-color="#1c2830"/><stop offset=".78" stop-color="#0d181f"/><stop offset="1" stop-color="#64717a"/></linearGradient>
+ <linearGradient id="topKey" x1="0" y1="0" x2=".55" y2="1"><stop stop-color="#5c707b"/><stop offset=".2" stop-color="#3b4b56"/><stop offset=".67" stop-color="#1c2933"/><stop offset="1" stop-color="#111a22"/></linearGradient>
+ <linearGradient id="bottomKey" x1="0" y1="0" x2=".5" y2="1"><stop stop-color="#0b1218"/><stop offset=".45" stop-color="#1c2831"/><stop offset=".83" stop-color="#35434c"/><stop offset="1" stop-color="#55616a"/></linearGradient>
+ <linearGradient id="metal" x1="0" y1="0" x2="1" y2=".3"><stop stop-color="#8f692d"/><stop offset=".18" stop-color="#ffe3a3"/><stop offset=".5" stop-color="#d9a655"/><stop offset=".78" stop-color="#936b36"/><stop offset="1" stop-color="#e4be7e"/></linearGradient>
+ <radialGradient id="lens"><stop stop-color="#9cc6b7"/><stop offset=".5" stop-color="#507769"/><stop offset="1" stop-color="#2b4c47"/></radialGradient>
+ <filter id="shadow" x="-25%" y="-25%" width="150%" height="150%"><feDropShadow dx="0" dy="3" stdDeviation="3" flood-color="#0d222b" flood-opacity=".24"/></filter>
+</defs>
+<!-- corpo moldado e borda de encaixe -->
+<rect x="34" y="14" width="212" height="166" rx="21" fill="#182229" opacity=".24"/>
+<rect x="32" y="9" width="216" height="171" rx="21" fill="url(#housing)" stroke="#17232a" stroke-width="4" filter="url(#shadow)"/>
+<path d="M50 18H230Q241 18 240 30M42 41V151" fill="none" stroke="#a4b2b7" stroke-width="2.4" opacity=".56" stroke-linecap="round"/>
+<rect x="47" y="24" width="186" height="140" rx="17" fill="url(#bezel)" stroke="#0b1319" stroke-width="3.5"/>
+<rect x="56" y="33" width="168" height="123" rx="14" fill="#0a1219" stroke="#8a9da5" stroke-width="1.4"/>
+<!-- tecla basculante, com superfície superior erguida e inferior recuada -->
+<path d="M68 39H212Q217 39 217 45L211 97Q210 103 205 103H74Q69 103 68 96L63 47Q63 39 68 39Z" fill="url(#topKey)" stroke="#2b3c46" stroke-width="1.8"/>
+<path d="M69 43H210" stroke="#acc4ce" stroke-width="2.2" opacity=".55" stroke-linecap="round"/>
+<path d="M74 48L78 91M207 48L201 91" stroke="#6f8490" opacity=".36" stroke-width="2"/>
+<path d="M74 106H205Q210 106 211 112L217 145Q218 151 210 152H70Q62 152 63 146L68 112Q69 106 74 106Z" fill="url(#bottomKey)" stroke="#27343d" stroke-width="2"/>
+<path d="M77 145H203" stroke="#7b8d96" stroke-width="2" opacity=".65" stroke-linecap="round"/>
+<!-- junção e pivô visíveis -->
+<path d="M70 103H210" stroke="#080e13" stroke-width="5" opacity=".85"/>
+<path d="M78 107H201" stroke="#778891" stroke-width="1" opacity=".58"/>
+<!-- símbolos de liga/desliga gravados na tecla -->
+<path d="M140 57V79" stroke="#e9f2f4" stroke-width="5.4" stroke-linecap="round"/>
+<path d="M139.5 119a10.5 10.5 0 1 0 .1 0" fill="none" stroke="#d3e0e5" stroke-width="4.4"/>
+<!-- ranhuras e luz indicadora acima -->
+<path d="M89 53V90M95 52V91M184 52V91M190 52V90" fill="none" stroke="#a3b3be" stroke-width="1.2" opacity=".17"/>
+<circle cx="192" cy="60" r="10" fill="#0b1618" stroke="#5e7374" stroke-width="2.4"/>
+<circle cx="192" cy="60" r="6.9" fill="url(#lens)"/>
+<circle cx="190" cy="57.6" r="2.1" fill="#bad4c9" opacity=".6"/>
+<!-- três lâminas terminais, alinhadas aos bornes interativos -->
+<g>
+ <rect x="57" y="171" width="27" height="46" rx="3.5" fill="url(#metal)" stroke="#805b2e" stroke-width="2"/>
+ <rect x="63" y="190" width="15" height="16" rx="2" fill="#f8d58f" opacity=".8"/>
+ <rect x="127" y="171" width="27" height="46" rx="3.5" fill="url(#metal)" stroke="#805b2e" stroke-width="2"/>
+ <rect x="133" y="190" width="15" height="16" rx="2" fill="#f8d58f" opacity=".8"/>
+ <rect x="197" y="171" width="27" height="46" rx="3.5" fill="url(#metal)" stroke="#805b2e" stroke-width="2"/>
+ <rect x="203" y="190" width="15" height="16" rx="2" fill="#f8d58f" opacity=".8"/>
+</g>
+<!-- etiquetas funcionais discretas nos bornes -->
+<g font-family="Arial,sans-serif" font-weight="700" font-size="11" fill="#eff2ed" text-anchor="middle">
+ <text x="70" y="169">IN</text><text x="140" y="169">OUT</text><text x="210" y="169">LED−</text>
+</g>
 </svg>
