@@ -707,3 +707,30 @@
   box-shadow:none!important;
 }
 .preview-studio #partsLayer .part .part-image img{background:transparent!important}
+
+/* Studio v7 — Tinkercad: alças circulares nas duas pontas do fio selecionado. */
+.preview-studio .wire-handles{
+ position:absolute!important;inset:0!important;width:100%!important;height:100%!important;
+ z-index:27!important;overflow:visible!important;pointer-events:none!important;
+}
+.preview-studio .wire-end-handle,.preview-studio .wire-end-handle:not(:disabled){
+ position:absolute!important;display:block!important;transform:translate(-50%,-50%)!important;
+ padding:0!important;margin:0!important;min-width:0!important;min-height:0!important;
+ border-style:solid!important;border-color:#fff!important;border-radius:50%!important;
+ background:#1d9bc0!important;
+ box-shadow:0 0 0 var(--handle-shadow-size,3px) #167d9bb0,0 3px 10px #163c4f40!important;
+ pointer-events:auto!important;cursor:grab!important;touch-action:none!important;
+ user-select:none!important;-webkit-user-select:none!important;
+ transition:background .12s ease,box-shadow .12s ease!important;
+}
+.preview-studio .wire-end-handle:hover,.preview-studio .wire-end-handle.reconnecting{
+ background:#f3ab47!important;
+ box-shadow:0 0 0 var(--handle-shadow-size,3px) #df8627aa,0 3px 12px #7b47234d!important;
+}
+.preview-studio .wire-end-handle:active{cursor:grabbing!important}
+.preview-studio .wire-end-handle[hidden]{display:none!important}
+.preview-studio .wire-reconnect-preview{
+ stroke-width:9!important;stroke-linecap:round!important;stroke-linejoin:round!important;
+ fill:none!important;pointer-events:none!important;
+ filter:drop-shadow(0 1px 2px #21475533)!important;
+}
