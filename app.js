@@ -227,6 +227,13 @@ function renderParts(){
    ledBlue.title='Atividade Wi-Fi simulada (indicador didático)';
    imgbox.append(ledRed,ledBlue);
   }
+  if(p.kind==='buck'||p.kind==='driver'){
+   const badge=document.createElement('span');
+   badge.className='powered-tag';
+   badge.textContent=p.kind==='buck'?'SAÍDA · 5 V':'ALIMENTAÇÃO';
+   badge.title='Estado energético didático; esta versão da placa não apresenta LED de indicação no desenho.';
+   imgbox.append(badge);
+  }
   const pins=document.createElement('div');pins.className='part-pins';
   t.pins.forEach(([code,txt])=>{
    const id=p.id+'.'+code,connected=state.wires.some(w=>w.a===id||w.b===id),wrong=mistakes().some(w=>w.a===id||w.b===id);
