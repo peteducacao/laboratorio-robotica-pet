@@ -44,6 +44,7 @@ let zoom=1,panX=0,panY=0,gesture=null,history=[],future=[],toastTimer=0,previewP
 let spaceHeld=false;
 let recentTap=null,doubleTapRestore=null,copiedKind=null,simulationRunning=false;
 let wireAlignment=null;
+let wireTipActive=false,pendingMagnet=null,pendingAlignment=null;
 const activeTouches=new Map();
 let pinch=null;
 let gestureBlockedUntil=0;
@@ -71,7 +72,7 @@ function persist(){
 // Cada curva e cada origem de jumper entram na linha do tempo de ações.
 function historyState(){return JSON.stringify({
  parts:state.parts,wires:state.wires,voltage:state.voltage,switches:state.switches,
- startPort:state.startPort,bends:state.bends
+ startPort:state.startPort,bends:state.bends,wireTipActive
 });}
 function updateHistoryButtons(){
  const undoBtn=Q('undoBtn'),redoBtn=Q('redoBtn'),delBtn=Q('deleteBtn');
@@ -94,7 +95,8 @@ function restoreHistory(s){
   startPort:saved.startPort||null,bends:Array.isArray(saved.bends)?saved.bends:[],
   selected:null,selectedWire:null,completed:false
  });
- previewPoint=null;previewSnapPort=null;gesture=null;
+ wireTipActive=!!state.startPort&&(saved.wireTipActive===undefined?!state.bends.length:!!saved.wireTipActive);
+ previewPoint=null;previewSnapPort=null;pendingMagnet=null;pendingAlignment=null;gesture=null;
  renderAll();updateHistoryButtons();
 }
 function undo(){
@@ -399,7 +401,8 @@ function highlightDropZone(active){
 function cancelPendingWire(){
  if(!state.startPort)return;
  snapshot();
- state.startPort=null;state.bends=[];previewPoint=null;previewSnapPort=null;
+ state.startPort=null;state.bends=[];wireTipActive=false;previewPoint=null;previewSnapPort=null;
+ pendingMagnet=null;pendingAlignment=null;
  renderParts();requestDraw();updateHistoryButtons();
 }
 function tipOrigin(){
@@ -438,16 +441,17 @@ function addCorner(x,y){
  // Somente o clique fixa a ponta. Enquanto o cursor se move, não há curvas.
  // Cada clique é um passo independente para Ctrl+Z / Ctrl+Y.
  snapshot();state.bends.push(tip);
- previewPoint=tip;previewSnapPort=null;
+ // A ponta solta-se do cursor e permanece no último clique.
+ wireTipActive=false;previewPoint=null;previewSnapPort=null;pendingMagnet=null;pendingAlignment=null;
  updateHistoryButtons();requestDraw();
- message('Curva fixada no clique. A próxima ponta segue o cursor em linha reta.');
+ message('Ponta fixada. Clique na ponta do jumper para puxar novamente.',true);
 }
 function connect(id){
  const part=id.split('.')[0];if(!exists(part))return;
  state.selected=part;state.selectedWire=null;state.inspector='parts';
  if(!state.startPort){
   snapshot();
-  state.startPort=id;state.bends=[];previewPoint=null;previewSnapPort=null;updateHistoryButtons();
+  state.startPort=id;state.bends=[];wireTipActive=true;previewPoint=null;previewSnapPort=null;pendingMagnet=null;pendingAlignment=null;updateHistoryButtons();
   message('Fio iniciado em '+portName(id)+'. Toque na bancada para criar curvas, depois no pino de destino.');
   renderParts();renderInspector();requestDraw();return;
  }
@@ -456,7 +460,7 @@ function connect(id){
  const via=state.bends.map(p=>({x:p.x,y:p.y}));
  // Antes de finalizar, guarda o jumper parcialmente desenhado.
  snapshot();
- state.startPort=null;state.bends=[];previewPoint=null;previewSnapPort=null;
+ state.startPort=null;state.bends=[];wireTipActive=false;previewPoint=null;previewSnapPort=null;pendingMagnet=null;pendingAlignment=null;
  const index=state.wires.findIndex(w=>electricalKey(w.a,w.b)===electricalKey(first,id));
  if(index>=0){state.wires.splice(index,1);message('Ligação existente removida.');}
  else{
@@ -500,7 +504,7 @@ function manualWirePoints(start,via,end){
 function pendingWirePoints(){
  if(!state.startPort)return [];
  const start=getPortPos(state.startPort);
- const tip=previewSnapPort?getPortPos(previewSnapPort):previewPoint;
+ const tip=wireTipActive?(previewSnapPort?getPortPos(previewSnapPort):previewPoint):null;
  return manualWirePoints(start,state.bends,tip);
 }
 // Edita um segmento de um jumper conectado sem alterar os dois bornes.
