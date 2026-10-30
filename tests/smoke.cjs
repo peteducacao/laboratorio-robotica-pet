@@ -495,7 +495,7 @@ assert(js.includes("hit.dataset.wireSegment=String(seg)"),'cada segmento recebe 
 assert(js.includes("function moveWireSegment("),'geometria do jumper pode ser reposicionada');
 assert(js.includes("function anchoredWireBends("),'cotovelos próximos aos bornes acompanham peça arrastada');
 assert(css.includes("cursor:grab!important"),'o cursor indica que o fio pode ser arrastado');
-assert(js.includes("movedA.y=movedB.y=guideValue")&&js.includes("movedA.x=movedB.x=guideValue"),'o guia endireita segmentos horizontais ou verticais');
+assert(!js.includes("movedA.y=movedB.y=guideValue")&&!js.includes("movedA.x=movedB.x=guideValue"),'guia de alinhamento é somente visual, sem prender o jumper');
 
 
 assert(!js.includes("setAttribute('stroke-dasharray'"),'nenhum fio tracejado');
