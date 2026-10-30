@@ -957,3 +957,76 @@
  .preview-studio .toolbar-group #selectionToolBtn{padding:0 7px!important;gap:4px!important;min-height:35px!important}
  .preview-studio #selectionToolBtn .selection-btn-label{font-size:10px!important}
 }
+
+/* Studio v19 — confirmação do download com prévia da MESMA imagem exportada. */
+.export-preview-dialog{
+ box-sizing:border-box!important;width:min(1100px,calc(100vw - 28px))!important;
+ max-width:1100px!important;max-height:min(92dvh,920px)!important;
+ margin:auto!important;padding:0!important;border:1px solid #d5e4e3!important;
+ border-radius:18px!important;background:#fbfdfc!important;
+ color:#193b50!important;overflow:hidden!important;
+ box-shadow:0 28px 90px #132f4566!important
+}
+.export-preview-dialog::backdrop{background:#0b2239bb;backdrop-filter:blur(3px)}
+.export-preview-dialog .export-preview-header{
+ display:flex!important;justify-content:space-between!important;align-items:flex-start!important;
+ gap:16px!important;padding:19px 23px!important;border-bottom:1px solid #deebe8!important;
+ background:linear-gradient(110deg,#fff,#eef7f4)!important
+}
+.export-preview-dialog .export-preview-header strong{
+ display:block!important;font-size:20px!important;font-weight:800!important;color:#164357!important
+}
+.export-preview-dialog .export-preview-header p{
+ margin:5px 0 0!important;color:#5c7480!important;font-size:12px!important;line-height:1.55!important
+}
+.export-preview-dialog .export-preview-close{
+ flex:none!important;display:grid!important;place-items:center!important;
+ width:35px!important;height:35px!important;padding:0!important;border:1px solid #d3e5df!important;
+ border-radius:10px!important;background:white!important;color:#476974!important;
+ font:26px/1 Arial,sans-serif!important;cursor:pointer!important
+}
+.export-preview-dialog .export-preview-view{
+ display:flex!important;align-items:center!important;justify-content:center!important;
+ width:100%!important;height:min(67dvh,650px)!important;min-height:180px!important;
+ padding:20px!important;overflow:auto!important;box-sizing:border-box!important;
+ background-color:#f4f7f9!important;background-image:radial-gradient(#d9e5e8 1px,transparent 1px)!important;
+ background-size:20px 20px!important
+}
+.export-preview-dialog #exportPreviewImage{
+ display:block!important;object-fit:contain!important;max-width:100%!important;
+ max-height:100%!important;width:auto!important;height:auto!important;
+ background:#f7fafb!important;box-shadow:0 4px 20px #20354520!important
+}
+.export-preview-dialog .export-preview-footer{
+ display:flex!important;align-items:center!important;justify-content:space-between!important;
+ gap:18px!important;padding:14px 23px!important;border-top:1px solid #deebe8!important;
+ background:white!important
+}
+.export-preview-dialog #exportPreviewSize{
+ font:600 11px/1.4 "DM Sans",Arial,sans-serif!important;color:#728992!important
+}
+.export-preview-dialog .export-preview-actions{
+ display:flex!important;align-items:center!important;justify-content:flex-end!important;
+ flex-wrap:wrap!important;gap:10px!important
+}
+.export-preview-dialog .export-secondary-btn,.export-preview-dialog .export-primary-btn{
+ display:inline-flex!important;align-items:center!important;justify-content:center!important;
+ min-height:39px!important;padding:8px 14px!important;
+ border-radius:9px!important;font:800 12px/1 "DM Sans",Arial,sans-serif!important;cursor:pointer!important
+}
+.export-preview-dialog .export-secondary-btn{
+ background:white!important;border:1px solid #bdcfca!important;color:#30666a!important
+}
+.export-preview-dialog .export-primary-btn{
+ background:#166976!important;border:1px solid #166976!important;color:white!important
+}
+.export-preview-dialog button:disabled{opacity:.6!important;cursor:wait!important}
+@media(max-width:580px){
+ .export-preview-dialog .export-preview-header{padding:13px 15px!important}
+ .export-preview-dialog .export-preview-view{height:58dvh!important;padding:10px!important}
+ .export-preview-dialog .export-preview-footer{
+  padding:12px 15px!important;flex-direction:column!important;align-items:stretch!important;gap:8px!important
+ }
+ .export-preview-dialog .export-preview-actions{justify-content:stretch!important}
+ .export-preview-dialog .export-preview-actions button{flex:1!important}
+}
