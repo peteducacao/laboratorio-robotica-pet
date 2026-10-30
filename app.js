@@ -43,6 +43,7 @@ let state={parts:[],wires:[],voltage:4,switches:{s1:false,s2:false},wireColor:CO
 let zoom=1,panX=0,panY=0,gesture=null,history=[],future=[],toastTimer=0,previewPoint=null,previewSnapPort=null,drawPending=false;
 let spaceHeld=false;
 let recentTap=null,doubleTapRestore=null,copiedKind=null,simulationRunning=false;
+let wireAlignment=null;
 const activeTouches=new Map();
 let pinch=null;
 let gestureBlockedUntil=0;
@@ -502,6 +503,65 @@ function pendingWirePoints(){
  const tip=previewSnapPort?getPortPos(previewSnapPort):previewPoint;
  return manualWirePoints(start,state.bends,tip);
 }
+// Edita um segmento de um jumper conectado sem alterar os dois bornes.
+// A primeira movimentação converte ligações antigas para a rota manual visível.
+function wirePoints(w){
+ const a=getPortPos(w.a),b=getPortPos(w.b);
+ return a&&b?(w.manual?manualWirePoints(a,w.via||[],b):wireRoutePoints(a,w.via||[],b,w.a,w.b)):[];
+}
+function segmentAt(clientX,clientY){
+ const p=worldXY(clientX,clientY),tolerance=Math.min(90,Math.max(15,17/zoom));
+ let best={index:-1,segment:-1,dist:tolerance*tolerance};
+ state.wires.forEach((w,i)=>{
+  const pts=wirePoints(w);
+  for(let k=0;k<pts.length-1;k++){
+   const a=pts[k],b=pts[k+1],dx=b.x-a.x,dy=b.y-a.y,len=dx*dx+dy*dy;
+   const t=len?limit(((p.x-a.x)*dx+(p.y-a.y)*dy)/len,0,1):0;
+   const dist=(p.x-a.x-t*dx)**2+(p.y-a.y-t*dy)**2;
+   if(dist<best.dist){best={index:i,segment:k,dist};}
+  }
+ });
+ return best;
+}
+function moveWireSegment(g,clientX,clientY){
+ const wire=state.wires[g.wireIndex];
+ if(!wire)return;
+ const original=g.original,a=original[g.segment],b=original[g.segment+1];
+ if(!a||!b)return;
+ const axisX=b.x-a.x,axisY=b.y-a.y,length=Math.hypot(axisX,axisY);
+ if(length<3)return;
+ const nx=-axisY/length,ny=axisX/length;
+ const deltaX=(clientX-g.startX)/zoom,deltaY=(clientY-g.startY)/zoom;
+ let shift=deltaX*nx+deltaY*ny;
+ let aligned=false,guideValue=null;
+ const horizontal=Math.abs(axisY)<length*.15,vertical=Math.abs(axisX)<length*.15;
+ if(horizontal||vertical){
+  const base=horizontal?a.y:a.x,perp=horizontal?ny:nx;
+  const value=base+shift*perp;
+  const candidates=[Math.round(value/20)*20];
+  const portA=getPortPos(wire.a),portB=getPortPos(wire.b);
+  for(const port of [portA,portB])if(port)candidates.push(horizontal?port.y:port.x);
+  const match=candidates.find(candidate=>Math.abs(candidate-value)<=Math.min(14,7/zoom));
+  if(match!==undefined){shift=(match-base)/perp;guideValue=match;aligned=true;}
+ }
+ const movedA={x:Math.round(a.x+nx*shift),y:Math.round(a.y+ny*shift)};
+ const movedB={x:Math.round(b.x+nx*shift),y:Math.round(b.y+ny*shift)};
+ // Preserva os terminais originais. Acrescenta cotovelos somente ao arrastar.
+ const nodes=[
+  ...original.slice(0,g.segment+1),
+  movedA,movedB,
+  ...original.slice(g.segment+1)
+ ];
+ const clean=[];
+ for(const pt of nodes){
+  const last=clean.at(-1);
+  if(!last||last.x!==pt.x||last.y!==pt.y)clean.push({...pt});
+ }
+ wire.via=clean.slice(1,-1);
+ wire.manual=true;
+ wireAlignment=aligned?{horizontal,value:guideValue,start:movedA,end:movedB}:null;
+ requestDraw();
+}
 function wireRoutePoints(start,via,end,startPort,endPort){
  const round=p=>({x:Math.round(p.x),y:Math.round(p.y)});
  const direction=portDirection(startPort);
@@ -544,28 +604,56 @@ function drawWires(){
  const svg=Q('wireSvg');svg.replaceChildren();
  const ns='http://www.w3.org/2000/svg';
  for(let i=0;i<state.wires.length;i++){
-  const w=state.wires[i],a=getPortPos(w.a),b=getPortPos(w.b);
-  if(!a||!b)continue;
-  const points=w.manual?manualWirePoints(a,w.via||[],b):wireRoutePoints(a,w.via||[],b,w.a,w.b);
+  const w=state.wires[i],points=wirePoints(w);
+  if(points.length<2)continue;
   const d=wirePath(points);
   const line=document.createElementNS(ns,'path');
   line.setAttribute('d',d);
   line.setAttribute('class','wire-line'+(valid.has(electricalKey(w.a,w.b))?'':' wire-error')+(state.selectedWire===i?' wire-selected':''));
   line.setAttribute('stroke',w.color);svg.append(line);
   // O traço termina no furo do pino; nenhum círculo fica sobre o componente.
-  // Alvo para tocar e selecionar o fio. Não cobre os furos dos pinos.
-  const hitPts=points.slice(1,-1);
-  if(hitPts.length>1){
+  // Um alvo por segmento, inclusive para fios retos sem curvas intermediárias.
+  // Encurta o trecho perto dos bornes para não bloquear os cliques nos pinos.
+  for(let seg=0;seg<points.length-1;seg++){
+   const from=points[seg],to=points[seg+1];
+   const dx=to.x-from.x,dy=to.y-from.y,length=Math.hypot(dx,dy);
+   if(length<8)continue;
+   const trimStart=seg===0?Math.min(length*.22,24/zoom):0;
+   const trimEnd=seg===points.length-2?Math.min(length*.22,24/zoom):0;
+   const u={x:from.x+dx*trimStart/length,y:from.y+dy*trimStart/length};
+   const v={x:to.x-dx*trimEnd/length,y:to.y-dy*trimEnd/length};
    const hit=document.createElementNS(ns,'path');
-   hit.setAttribute('d',wirePath(hitPts));
+   hit.setAttribute('d',wirePath([u,v]));
    hit.setAttribute('class','wire-target');
    hit.setAttribute('stroke','transparent');
    hit.setAttribute('fill','none');
-   hit.setAttribute('stroke-width','24');
+   hit.setAttribute('stroke-width',String(Math.min(90,Math.max(22,20/zoom))));
+   hit.setAttribute('stroke-linecap','butt');
    hit.dataset.wireIndex=String(i);
-   hit.setAttribute('aria-label','Selecionar fio '+portName(w.a)+' a '+portName(w.b));
+   hit.dataset.wireSegment=String(seg);
+   hit.setAttribute('aria-label','Arrastar trecho '+(seg+1)+' do jumper '+portName(w.a)+' a '+portName(w.b));
    svg.append(hit);
   }
+ }
+ if(wireAlignment){
+  const g=wireAlignment,guide=document.createElementNS(ns,'line');
+  const extend=34;
+  guide.setAttribute('class','wire-alignment-guide');
+  if(g.horizontal){
+   guide.setAttribute('x1',String(Math.min(g.start.x,g.end.x)-extend));
+   guide.setAttribute('x2',String(Math.max(g.start.x,g.end.x)+extend));
+   guide.setAttribute('y1',String(g.value));guide.setAttribute('y2',String(g.value));
+  }else{
+   guide.setAttribute('x1',String(g.value));guide.setAttribute('x2',String(g.value));
+   guide.setAttribute('y1',String(Math.min(g.start.y,g.end.y)-extend));
+   guide.setAttribute('y2',String(Math.max(g.start.y,g.end.y)+extend));
+  }
+  svg.append(guide);
+  const label=document.createElementNS(ns,'text');
+  label.setAttribute('class','wire-alignment-label');
+  label.setAttribute('x',String(g.horizontal?Math.min(g.start.x,g.end.x):g.value));
+  label.setAttribute('y',String(g.horizontal?g.value-15:Math.min(g.start.y,g.end.y)-15));
+  label.textContent='ALINHADO';svg.append(label);
  }
  if(state.startPort){
   const start=getPortPos(state.startPort);
