@@ -44,7 +44,7 @@ let zoom=1,panX=0,panY=0,gesture=null,history=[],future=[],toastTimer=0,previewP
 let spaceHeld=false;
 let recentTap=null,doubleTapRestore=null,copiedKind=null,simulationRunning=false;
 let wireAlignment=null;
-let wireTipActive=false,pendingMagnet=null,pendingAlignment=null;
+let wireTipActive=false,pendingAlignment=null;
 const activeTouches=new Map();
 let pinch=null;
 let gestureBlockedUntil=0;
@@ -72,7 +72,7 @@ function persist(){
 // Cada curva e cada origem de jumper entram na linha do tempo de ações.
 function historyState(){return JSON.stringify({
  parts:state.parts,wires:state.wires,voltage:state.voltage,switches:state.switches,
- startPort:state.startPort,bends:state.bends,wireTipActive
+ startPort:state.startPort,bends:state.bends
 });}
 function updateHistoryButtons(){
  const undoBtn=Q('undoBtn'),redoBtn=Q('redoBtn'),delBtn=Q('deleteBtn');
@@ -95,8 +95,8 @@ function restoreHistory(s){
   startPort:saved.startPort||null,bends:Array.isArray(saved.bends)?saved.bends:[],
   selected:null,selectedWire:null,completed:false
  });
- wireTipActive=!!state.startPort&&(saved.wireTipActive===undefined?!state.bends.length:!!saved.wireTipActive);
- previewPoint=null;previewSnapPort=null;pendingMagnet=null;pendingAlignment=null;gesture=null;
+ wireTipActive=!!state.startPort;
+ previewPoint=null;previewSnapPort=null;pendingAlignment=null;gesture=null;
  renderAll();updateHistoryButtons();
 }
 function undo(){
@@ -402,7 +402,7 @@ function cancelPendingWire(){
  if(!state.startPort)return;
  snapshot();
  state.startPort=null;state.bends=[];wireTipActive=false;previewPoint=null;previewSnapPort=null;
- pendingMagnet=null;pendingAlignment=null;
+ pendingAlignment=null;
  renderParts();requestDraw();updateHistoryButtons();
 }
 function tipOrigin(){
@@ -441,17 +441,17 @@ function addCorner(x,y){
  // Somente o clique fixa a ponta. Enquanto o cursor se move, não há curvas.
  // Cada clique é um passo independente para Ctrl+Z / Ctrl+Y.
  snapshot();state.bends.push(tip);
- // A ponta solta-se do cursor e permanece no último clique.
- wireTipActive=false;previewPoint=null;previewSnapPort=null;pendingMagnet=null;pendingAlignment=null;
+ // O clique fixa o vértice, mas a próxima ponta continua seguindo o cursor.
+ wireTipActive=true;previewPoint=tip;previewSnapPort=null;pendingAlignment=null;
  updateHistoryButtons();requestDraw();
- message('Ponta fixada. Clique na ponta do jumper para puxar novamente.',true);
+ message('Curva fixada. Continue movimentando o cursor até a próxima curva ou pino.');
 }
 function connect(id){
  const part=id.split('.')[0];if(!exists(part))return;
  state.selected=part;state.selectedWire=null;state.inspector='parts';
  if(!state.startPort){
   snapshot();
-  state.startPort=id;state.bends=[];wireTipActive=true;previewPoint=null;previewSnapPort=null;pendingMagnet=null;pendingAlignment=null;updateHistoryButtons();
+  state.startPort=id;state.bends=[];wireTipActive=true;previewPoint=null;previewSnapPort=null;pendingAlignment=null;updateHistoryButtons();
   message('Fio iniciado em '+portName(id)+'. Toque na bancada para criar curvas, depois no pino de destino.');
   renderParts();renderInspector();requestDraw();return;
  }
@@ -460,7 +460,7 @@ function connect(id){
  const via=state.bends.map(p=>({x:p.x,y:p.y}));
  // Antes de finalizar, guarda o jumper parcialmente desenhado.
  snapshot();
- state.startPort=null;state.bends=[];wireTipActive=false;previewPoint=null;previewSnapPort=null;pendingMagnet=null;pendingAlignment=null;
+ state.startPort=null;state.bends=[];wireTipActive=false;previewPoint=null;previewSnapPort=null;pendingAlignment=null;
  const index=state.wires.findIndex(w=>electricalKey(w.a,w.b)===electricalKey(first,id));
  if(index>=0){state.wires.splice(index,1);message('Ligação existente removida.');}
  else{
@@ -504,7 +504,7 @@ function manualWirePoints(start,via,end){
 function pendingWirePoints(){
  if(!state.startPort)return [];
  const start=getPortPos(state.startPort);
- const tip=wireTipActive?(previewSnapPort?getPortPos(previewSnapPort):previewPoint):null;
+ const tip=previewPoint;
  return manualWirePoints(start,state.bends,tip);
 }
 // Edita um segmento de um jumper conectado sem alterar os dois bornes.
@@ -549,24 +549,14 @@ function moveWireSegment(g,clientX,clientY){
    const along=Math.abs(horizontal?pos.x-midpoint.x:pos.y-midpoint.y)*zoom;
    if(along<=250)candidates.push(horizontal?pos.y:pos.x);
   }
-  if(zoom>=.8)candidates.push(Math.round(value/20)*20);
-  // Retém o alinhamento mesmo com pequenos movimentos. Solta ao forçar.
-  let match;
-  if(g.magnetLock!==undefined&&Math.abs(value-g.magnetLock)<=24/zoom){
-   match=g.magnetLock;
-  }else{
-   g.magnetLock=undefined;
-   match=candidates.sort((left,right)=>Math.abs(left-value)-Math.abs(right-value))
-    .find(candidate=>Math.abs(candidate-value)<=10/zoom);
-   if(match!==undefined)g.magnetLock=match;
-  }
-  if(match!==undefined){shift=(match-base)/perp;guideValue=match;aligned=true;}
+  // Indicador visual momentâneo; não atrai nem muda a posição do fio.
+  const match=candidates.sort((left,right)=>Math.abs(left-value)-Math.abs(right-value))
+   .find(candidate=>Math.abs(candidate-value)<=6/zoom);
+  if(match!==undefined){guideValue=match;aligned=true;}
  }
  const movedA={x:Math.round(a.x+nx*shift),y:Math.round(a.y+ny*shift)};
  const movedB={x:Math.round(b.x+nx*shift),y:Math.round(b.y+ny*shift)};
- // Encaixe magnético também endireita o segmento na guia, sem inclinação.
- if(aligned&&horizontal)movedA.y=movedB.y=guideValue;
- if(aligned&&vertical)movedA.x=movedB.x=guideValue;
+ // A guia não movimenta o segmento, apenas sinaliza o alinhamento.
  // Preserva os terminais originais. Acrescenta cotovelos somente ao arrastar.
  const nodes=[
   ...original.slice(0,g.segment+1),
@@ -835,65 +825,34 @@ function nearestPort(clientX,clientY,exclude){
  }
  return chosen;
 }
-// Imã para o jumper: um alinhamento com pino segura até 24px de desvio.
-// O usuário pode forçar além desse raio para soltar e continuar normalmente.
-function magneticPendingPoint(clientX,clientY,exclude){
- const raw=worldXY(clientX,clientY);
- const near=nearestPort(clientX,clientY,exclude);
- if(near){
-  pendingMagnet=null;
-  const pin=getPortPos(near);
-  pendingAlignment={axis:'both',point:pin,port:near,pin};
-  return {point:pin,port:near};
- }
- const view=Q('viewport').getBoundingClientRect(),release=24,capture=11;
- const screen=point=>({x:view.left+panX+point.x*zoom,y:view.top+panY+point.y*zoom});
- let choice=null;
- if(pendingMagnet){
-  const pos=getPortPos(pendingMagnet.port);
-  if(pos){
-   const sp=screen(pos),distance=Math.abs(pendingMagnet.axis==='x'?sp.x-clientX:sp.y-clientY);
-   const along=Math.abs(pendingMagnet.axis==='x'?sp.y-clientY:sp.x-clientX);
-   if(distance<=release&&along<=280)choice={port:pendingMagnet.port,axis:pendingMagnet.axis,pos};
-  }
- }
- if(!choice){
-  let best=Infinity;
-  for(const part of state.parts)for(const [pin] of byKind[part.kind].pins){
-   const id=part.id+'.'+pin;if(id===exclude)continue;
-   const pos=getPortPos(id);if(!pos)continue;
-   const sp=screen(pos);
-   for(const axis of ['x','y']){
-    const deviation=Math.abs(axis==='x'?sp.x-clientX:sp.y-clientY);
-    const along=Math.abs(axis==='x'?sp.y-clientY:sp.x-clientX);
-    const score=deviation+along*.02;
-    if(deviation<=capture&&along<=240&&score<best){best=score;choice={port:id,axis,pos};}
+// Guia exclusivamente visual. Detecta coordenada de pino próxima ao cursor
+// sem alterar a posição real da ponta nem aplicar qualquer resistência.
+function visualPendingAlignment(clientX,clientY,exclude){
+ const box=Q('viewport').getBoundingClientRect();
+ const raw=worldXY(clientX,clientY),screen=p=>({x:box.left+panX+p.x*zoom,y:box.top+panY+p.y*zoom});
+ const threshold=6;let best=null,bestScore=Infinity;
+ for(const part of state.parts)for(const [pin] of byKind[part.kind].pins){
+  const id=part.id+'.'+pin;if(id===exclude)continue;
+  const pos=getPortPos(id);if(!pos)continue;
+  const sp=screen(pos),dx=Math.abs(sp.x-clientX),dy=Math.abs(sp.y-clientY);
+  for(const axis of ['x','y']){
+   const deviation=axis==='x'?dx:dy;
+   const along=axis==='x'?dy:dx;
+   const score=deviation+along*.015;
+   if(deviation<=threshold&&along<=280&&score<bestScore){
+    bestScore=score;best={axis,point:raw,pin:pos,port:id};
    }
   }
  }
- if(!choice){pendingMagnet=null;pendingAlignment=null;return {point:raw,port:null};}
- pendingMagnet={port:choice.port,axis:choice.axis};
- const point={x:choice.axis==='x'?choice.pos.x:raw.x,y:choice.axis==='y'?choice.pos.y:raw.y};
- pendingAlignment={axis:choice.axis,point,port:choice.port,pin:choice.pos};
- return {point,port:null};
+ return best;
 }
-function setPendingPreview(e,exclude=state.startPort){
+function setPendingPreview(e){
  if(!wireTipActive||!state.startPort)return;
- const position=magneticPendingPoint(e.clientX,e.clientY,exclude);
- previewSnapPort=position.port;previewPoint=position.point;requestDraw();
-}
-function pendingTipNear(clientX,clientY){
- if(!state.startPort||wireTipActive||!state.bends.length)return false;
- const tip=lastWireTip(),r=Q('viewport').getBoundingClientRect();
- return Math.hypot(r.left+panX+tip.x*zoom-clientX,r.top+panY+tip.y*zoom-clientY)<=30;
-}
-function resumePendingTip(e){
- if(!pendingTipNear(e.clientX,e.clientY))return false;
- if(e.cancelable!==false)e.preventDefault();
- wireTipActive=true;pendingMagnet=null;pendingAlignment=null;
- previewSnapPort=null;previewPoint={...lastWireTip()};
- gesture={type:'resume-wire',pointer:e.pointerId,startX:e.clientX,startY:e.clientY,moved:false};
- requestDraw();return true;
+ // O jumper acompanha o ponteiro exatamente, independentemente da guia.
+ previewPoint=worldXY(e.clientX,e.clientY);
+ previewSnapPort=null;
+ pendingAlignment=visualPendingAlignment(e.clientX,e.clientY,state.startPort);
+ requestDraw();
 }
 function wireAt(clientX,clientY){return segmentAt(clientX,clientY).index;}
 function selectWire(i){
@@ -1019,14 +978,13 @@ function viewportDown(e){
  if(e.button!==undefined&&e.button!==0&&e.button!==1)return;
  if(e.target.closest('.canvas-zoom-button,.canvas-zoom-panel,button,input'))return;
  if(spaceHeld||e.button===1){startPan(e);return;}
- if(state.startPort&&!wireTipActive&&resumePendingTip(e))return;
  if(e.target.closest('.part,.wire-target'))return;
  if(!state.startPort){
   const selected=segmentAt(e.clientX,e.clientY);
   if(selected.index>=0&&beginWireDrag(e,selected.index,selected.segment))return;
  }
  e.preventDefault();
- gesture={type:state.startPort&&wireTipActive?'bend':'pan',pointer:e.pointerId,startX:e.clientX,startY:e.clientY,x:panX,y:panY,moved:false};
+ gesture={type:state.startPort?'bend':'pan',pointer:e.pointerId,startX:e.clientX,startY:e.clientY,x:panX,y:panY,moved:false};
 }
 let suppressPortClickUntil=0;
 function pointerMove(e){
@@ -1056,11 +1014,11 @@ function pointerMove(e){
     if(!state.startPort){snapshot();state.startPort=g.port;state.bends=[];wireTipActive=true;updateHistoryButtons();}
     setPendingPreview(e,g.port);
    }
-  }else if(g.type==='bend'||g.type==='resume-wire'){
+  }else if(g.type==='bend'){
    setPendingPreview(e);
   }
   else if(g.type==='pan'){if(g.moved){panX=g.x+dx;panY=g.y+dy;camera();}}
- }else if(state.startPort&&wireTipActive){
+ }else if(state.startPort){
   const r=Q('viewport').getBoundingClientRect();
   if(e.clientX>=r.left&&e.clientX<=r.right&&e.clientY>=r.top&&e.clientY<=r.bottom){
    setPendingPreview(e);
@@ -1123,7 +1081,7 @@ function pointerUp(e){
    }else{
      const box=Q('viewport').getBoundingClientRect();
      if(e.clientX>=box.left&&e.clientX<=box.right&&e.clientY>=box.top&&e.clientY<=box.bottom){
-       const pos=magneticPendingPoint(e.clientX,e.clientY,state.startPort).point;addCorner(pos.x,pos.y);
+       const pos=worldXY(e.clientX,e.clientY);addCorner(pos.x,pos.y);
      }else{previewPoint=null;requestDraw();}
    }
   }
@@ -1142,11 +1100,6 @@ function pointerUp(e){
  }else if(g.type==='bend'){
   const pin=nearestPort(e.clientX,e.clientY,state.startPort);
   if(pin)connect(pin);else{const pos=magneticPendingPoint(e.clientX,e.clientY,state.startPort).point;addCorner(pos.x,pos.y);}
- }else if(g.type==='resume-wire'){
-  if(g.moved){
-   const pin=nearestPort(e.clientX,e.clientY,state.startPort);
-   if(pin)connect(pin);else{const pos=magneticPendingPoint(e.clientX,e.clientY,state.startPort).point;addCorner(pos.x,pos.y);}
-  }else message('Ponta reativada. Mova o cursor para continuar o jumper.',true);
  }else if(g.type==='pan'&&!g.moved&&!spaceHeld){
   const wire=wireAt(e.clientX,e.clientY);
   if(wire>=0)selectWire(wire);
