@@ -5,7 +5,8 @@ const TYPES=[
  {kind:'esp',name:'ESP32 DevKit V1',img:'assets/esp32-devkit-v1-30p.svg?v=26',ids:['esp'],pins:[["VIN","VIN"],["GND","GND"],["D13","D13"],["D12","D12"],["D14","D14"],["D27","D27"],["D26","D26"],["D25","D25"],["D33","D33"],["D32","D32"],["D35","D35"],["D34","D34"],["VN","VN"],["VP","VP"],["EN","EN"],["3V3","3V3"],["GND2","GND"],["D15","D15"],["D2","D2"],["D4","D4"],["RX2","RX2"],["TX2","TX2"],["D5","D5"],["D18","D18"],["D19","D19"],["D21","D21"],["RX0","RX0"],["TX0","TX0"],["D22","D22"],["D23","D23"]],info:'Placa de 30 pinos com USB à esquerda e nomes em cada contato. Os dois GND são equivalentes.',tip:'Neste carrinho: VIN recebe 5 V, GND comum, D27→IN1, D26→IN2, D32→IN3 e D18→IN4.'},
  {kind:'driver',name:'Ponte H MX1508',img:'assets/mx1508-desenhado.svg',ids:['drv'],pins:[['VCC','+ motores'],['GND','GND motores'],['IN1','IN1'],['IN2','IN2'],['IN3','IN3'],['IN4','IN4'],['OUT1','A • 1'],['OUT2','A • 2'],['OUT3','B • 1'],['OUT4','B • 2']],info:'A ponte H recebe os sinais do ESP32 e controla os dois motores. Cada motor utiliza um par de saídas.',tip:'As saídas A e B têm dois bornes cada; a numeração 1 e 2 aqui é didática.'},
  {kind:'buck',name:'Regulador LM2596',img:'assets/lm2596-desenhado.svg',ids:['lm'],pins:[['INP','IN +'],['INN','IN −'],['OUTP','OUT +'],['OUTN','OUT −']],info:'Regulador de tensão. Neste projeto, a saída para o ESP32 deve ser ajustada para 5,0 V.',tip:'Na montagem real, um responsável deve medir 5 V com multímetro antes de conectar VIN.'},
- {kind:'battery',name:'Bateria 9 V',img:'assets/bateria-9v-desenhada.svg',ids:['b1','b2'],pins:[['POS','+'],['NEG','−']],info:'Duas baterias em circuitos independentes: uma para o ESP32 e outra para os motores.',tip:'A bateria 1 alimenta o LM2596 por uma gangorra; a bateria 2 alimenta a ponte H pela outra.'},
+ {kind:'battery',name:'Bateria 9 V',img:'assets/bateria-9v-desenhada.svg',ids:['b1'],pins:[['POS','+'],['NEG','−']],info:'Uma bateria de 9 V alimenta o regulador LM2596 e o ESP32.',tip:'O LM2596 deve reduzir a tensão para 5,0 V antes de alimentar o VIN do ESP32.'},
+ {kind:'batteryPack',name:'Suporte de 6 pilhas AA',img:'assets/suporte-6-pilhas.svg',ids:['b2'],pins:[['POS','+'],['NEG','−']],info:'Porta-pilhas com seis células AA: 9 V nominais se forem seis pilhas de 1,5 V. Alimenta a ponte H, não o ESP32.',tip:'Se forem seis AA recarregáveis NiMH de 1,2 V, a tensão nominal será 7,2 V. Confira a corrente exigida pelos motores.'},
  {kind:'switch',name:'Chave gangorra',img:'assets/gangorra-desenhada.svg',ids:['s1','s2'],pins:[['IN','IN +'],['OUT','SAÍDA'],['LEDG','LED −']],info:'Gangorra iluminada de 3 terminais: entrada positiva, saída comutada e negativo opcional do LED. A tecla bascula ao ligar.',tip:'O terceiro contato acende o indicador quando ligado ao negativo da bateria correspondente. Confirme o esquema do seu modelo físico antes de montar.'},
  {kind:'motor',name:'Motor DC',img:'assets/motor-frontal.svg',ids:['ml','mr'],pins:[['A','+'],['B','−']],info:'Motor DC com caixa de redução amarela, eixo lateral para a roda e dois contatos no motor metálico. Na simulação, a ponte H controla o sentido de giro.',tip:'Os dois contatos ficam ao lado do motor metálico, identificados em vermelho e preto. O eixo de saída fica na caixa amarela.'}
 ];
@@ -15,6 +16,7 @@ const PART_LAYOUTS={
  driver:{w:250,h:317,pins:{VCC:[24.3,84.5],GND:[34.7,84.5],IN1:[45,84.5],IN2:[55.3,84.5],IN3:[65.7,84.5],IN4:[76,84.5],OUT1:[25.3,12.9],OUT2:[40.7,12.9],OUT3:[58.7,12.9],OUT4:[73.7,12.9]}},
  buck:{w:288,h:180,pins:{INP:[14.72,35.1],INN:[14.72,63.1],OUTP:[85,35.1],OUTN:[85,63.1]}},
  battery:{w:170,h:228,pins:{POS:[30.6,4.7],NEG:[68.6,6.2]}},
+ batteryPack:{w:265,h:255,pins:{POS:[17.1,5.1],NEG:[86.6,5.1]}},
  switch:{w:205,h:165,pins:{IN:[25,89.8],OUT:[50,89.8],LEDG:[75,89.8]}},
  motor:{w:190,h:405,pins:{A:[18,85],B:[18,80]}},
  motorSide:{w:340,h:170,pins:{A:[96,42],B:[96,63]}}
@@ -40,7 +42,7 @@ const COLORS=['#ed654d','#316fc0','#1f434c','#32a47b','#e5a13d','#a378c8'];
 let state={parts:[],wires:[],voltage:4,switches:{s1:false,s2:false},wireColor:COLORS[0],selected:null,startPort:null,inspector:'parts',completed:false,bends:[],selectedWire:null};
 let zoom=1,panX=0,panY=0,gesture=null,history=[],future=[],toastTimer=0,previewPoint=null,previewSnapPort=null,drawPending=false;
 let spaceHeld=false;
-let recentTap=null,doubleTapRestore=null,copiedKind=null;
+let recentTap=null,doubleTapRestore=null,copiedKind=null,simulationRunning=false;
 const activeTouches=new Map();
 let pinch=null;
 let gestureBlockedUntil=0;
@@ -905,7 +907,7 @@ function resetDrive(){car.x=150;car.y=447;car.a=0;car.finished=false;Object.keys
 window.tinkerpetAnswerData={
  groups:[
  {title:'Alimentação do ESP32',from:0,to:5,color:'#d9634e',info:'Bateria 1, gangorra e regulador LM2596'},
- {title:'Energia dos motores',from:5,to:9,color:'#d38f39',info:'Bateria 2, gangorra, ponte H e GND comum'},
+ {title:'Energia dos motores',from:5,to:9,color:'#d38f39',info:'Suporte de 6 pilhas AA, gangorra, ponte H e GND comum'},
  {title:'Sinais de controle',from:9,to:13,color:'#3d84b8',info:'GPIOs da ESP32 ligados à ponte H'},
  {title:'Saídas para os motores',from:13,to:17,color:'#229786',info:'Ponte H conectada aos dois motores DC'}
  ],
