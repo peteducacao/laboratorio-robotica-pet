@@ -64,6 +64,7 @@ let zoom=1,panX=0,panY=0,gesture=null,history=[],future=[],toastTimer=0,previewP
 let spaceHeld=false;
 let recentTap=null,doubleTapRestore=null,copiedKind=null,simulationRunning=false;
 let wireAlignment=null;
+let selectedBend=null; // quadrado isolado do jumper, não persiste.
 let wireTipActive=false,pendingAlignment=null;
 // Alça de reconexão temporária: o fio original permanece salvo até confirmar outro pino.
 let reconnectPending=null;
@@ -110,8 +111,9 @@ function updateHistoryButtons(){
  if(redoBtn)redoBtn.disabled=future.length===0;
  if(delBtn){
   const wireSelected=Number.isInteger(state.selectedWire)&&state.wires[state.selectedWire];
-  delBtn.disabled=!byPart(state.selected)&&!wireSelected;
-  delBtn.title=wireSelected?'Excluir fio selecionado':byPart(state.selected)?'Excluir '+partName(state.selected):'Selecione uma peça ou fio para excluir';
+  const bendSelected=selectedBend&&state.wires[selectedBend.index]&&selectedBend.index===state.selectedWire;
+  delBtn.disabled=!byPart(state.selected)&&!wireSelected&&!bendSelected;
+  delBtn.title=bendSelected?'Excluir só este ponto de curva':wireSelected?'Excluir fio selecionado':byPart(state.selected)?'Excluir '+partName(state.selected):'Selecione uma peça, fio ou curva';
   delBtn.setAttribute('aria-label',delBtn.title);
  }
 }
@@ -126,7 +128,7 @@ function restoreHistory(s){
   selected:null,selectedWire:null,completed:false
  });
  wireTipActive=!!state.startPort;
- previewPoint=null;previewSnapPort=null;pendingAlignment=null;gesture=null;reconnectPending=null;
+ previewPoint=null;previewSnapPort=null;pendingAlignment=null;gesture=null;reconnectPending=null;selectedBend=null;
  renderAll();updateHistoryButtons();
 }
 function undo(){
@@ -481,7 +483,7 @@ function addPart(kind,x,y){
  const id=t.ids.find(id=>!exists(id));if(!id){message('Você já colocou todas as peças deste tipo.',true);return false;}
  snapshot();
  state.parts.push({id,kind,x:Math.round(x),y:Math.round(y),view:'front',rotation:0});
- state.selected=id;state.selectedWire=null;state.inspector='parts';state.completed=false;state.startPort=null;refresh();
+ state.selected=id;state.selectedWire=null;selectedBend=null;state.inspector='parts';state.completed=false;state.startPort=null;refresh();
  message(partName(id)+' adicionado. Arraste pela imagem; toque nos contatos para ligar os fios.',true);
  return true;
 }
@@ -509,7 +511,7 @@ function rotatePart(id){
   }
   w.via=via;
  }
- state.selected=id;state.selectedWire=null;state.inspector='parts';state.completed=false;refresh();
+ state.selected=id;state.selectedWire=null;selectedBend=null;state.inspector='parts';state.completed=false;refresh();
  message(partName(id)+' girado para '+p.rotation+'°. Conexões mantidas.',true);
  return true;
 }
@@ -522,6 +524,7 @@ function removePart(id,skipSnapshot=false){
  if(!exists(id))return;
  if(reconnectPending)cancelReconnect();
  if(!skipSnapshot)snapshot();
+ selectedBend=null;
  state.parts=state.parts.filter(p=>p.id!==id);
  state.wires=state.wires.filter(w=>w.a.split('.')[0]!==id&&w.b.split('.')[0]!==id);
  if(state.selected===id)state.selected=null;
@@ -627,7 +630,50 @@ function connect(id){
  }
  state.completed=false;refresh();
 }
-function removeWire(i){if(!state.wires[i])return;snapshot();reconnectPending=null;state.wires.splice(i,1);state.selectedWire=null;state.completed=false;refresh();message('Fio removido.');}
+// Ao selecionar uma curva, o botão Excluir atua só no quadrado ativo.
+function selectBend(index,vertex){
+ const w=state.wires[index],pts=w&&wirePoints(w);
+ if(!pts||vertex<=0||vertex>=pts.length-1)return false;
+ selectedBend={index,vertex};state.selectedWire=index;state.selected=null;state.inspector='wires';
+ state.wireColor=w.color;renderParts();renderColors();renderInspector();updateHistoryButtons();requestDraw();
+ message('Quadrado selecionado. Pressione Delete ou Excluir para remover só este ponto.',true);
+ return true;
+}
+function removeBendFromRoute(points,vertex){
+ if(!Array.isArray(points)||vertex<1||vertex>=points.length-1)return null;
+ const route=points.map(p=>({x:Math.round(p.x),y:Math.round(p.y)}));
+ const chosen=route[vertex],prev=route[vertex-1],next=route[vertex+1];
+ route.splice(vertex,1);
+ if(prev.x!==next.x&&prev.y!==next.y){
+  // Uma conexão ortogonal sempre precisa de uma curva; troca a posição
+  // do cotovelo em vez de transformar o fio em diagonal.
+  const variants=[{x:prev.x,y:next.y},{x:next.x,y:prev.y}];
+  const corner=variants.find(p=>p.x!==chosen.x||p.y!==chosen.y)||variants[0];
+  route.splice(vertex,0,corner);
+ }
+ const result=[];
+ for(const p of route){
+  const last=result.at(-1),before=result.at(-2);
+  if(last&&last.x===p.x&&last.y===p.y)continue;
+  if(before&&((before.x===last.x&&last.x===p.x)||(before.y===last.y&&last.y===p.y)))result[result.length-1]=p;
+  else result.push(p);
+ }
+ return result;
+}
+function removeSelectedBend(){
+ if(!selectedBend)return false;
+ const {index,vertex}=selectedBend,w=state.wires[index];
+ if(!w){selectedBend=null;updateHistoryButtons();return false;}
+ const points=wirePoints(w),route=removeBendFromRoute(points,vertex);
+ if(!route||route.length<2)return false;
+ snapshot();
+ w.manual=true;w.via=route.slice(1,-1);
+ selectedBend=null;state.selectedWire=index;state.selected=null;state.inspector='wires';state.completed=false;
+ refresh();
+ message(route.length<points.length?'Ponto removido. Fio e conexões preservados.':'Ponto removido e curva ajustada para manter o fio reto.',true);
+ return true;
+}
+function removeWire(i){if(!state.wires[i])return;snapshot();reconnectPending=null;selectedBend=null;state.wires.splice(i,1);state.selectedWire=null;state.completed=false;refresh();message('Fio removido.');}
 function getPortPos(id){
  const [partId,pinId]=id.split('.');
  const p=byPart(partId);if(!p)return null;
@@ -710,6 +756,7 @@ function beginBendDrag(e,index,vertex){
  if(!Number.isInteger(vertex)||vertex<1||vertex>=original.length-1)return false;
  if(e.cancelable!==false)e.preventDefault();
  state.selectedWire=index;state.selected=null;state.inspector='wires';
+ selectedBend={index,vertex};
  state.wireColor=wire.color;
  renderColors();renderInspector();updateHistoryButtons();
  gesture={type:'wire-bend',pointer:e.pointerId,wireIndex:index,vertex,
@@ -997,7 +1044,7 @@ function drawWires(){
     const mark=document.createElementNS(ns,'rect');
     mark.setAttribute('x',String(p.x-size/2));mark.setAttribute('y',String(p.y-size/2));
     mark.setAttribute('width',String(size));mark.setAttribute('height',String(size));
-    mark.setAttribute('class','wire-bend-mark');svg.append(mark);
+    mark.setAttribute('class','wire-bend-mark'+(selectedBend?.index===i&&selectedBend.vertex===vertex?' bend-picked':''));svg.append(mark);
    }
   }
  }
@@ -1214,6 +1261,7 @@ function setPendingPreview(e){
 function wireAt(clientX,clientY){return segmentAt(clientX,clientY).index;}
 function selectWire(i){
  if(!state.wires[i])return;
+ selectedBend=null;
  if(reconnectPending&&reconnectPending.index!==i)reconnectPending=null;
  state.selectedWire=i;state.selected=null;state.inspector='wires';
  state.wireColor=state.wires[i].color; // O seletor exibe a cor do fio clicado.
@@ -1278,6 +1326,7 @@ function libraryOpen(open){
  Q('drawerHandle').classList.toggle('open',yes);
 }
 function beginWireDrag(e,index,segment){
+ selectedBend=null;
  const wire=state.wires[index];if(!wire||state.startPort||reconnectPending)return false;
  const original=wirePoints(wire);
  if(segment<0||segment>=original.length-1)return false;
@@ -1328,7 +1377,7 @@ function partDown(e){
  const el=e.target.closest('.part');if(!el)return;
  const p=byPart(el.dataset.part);if(!p)return;
  e.preventDefault();
- state.selected=p.id;state.selectedWire=null;state.inspector='parts';
+ state.selected=p.id;state.selectedWire=null;selectedBend=null;state.inspector='parts';
  renderInspector();renderParts();
  gesture={type:'move',pointer:e.pointerId,partId:p.id,startX:e.clientX,startY:e.clientY,partX:p.x,partY:p.y,
   anchors:state.wires.map((w,i)=>({
@@ -1516,10 +1565,11 @@ function pointerUp(e){
     addPart(g.kind,p.x-PART_LAYOUTS[g.kind].w/2,p.y-PART_LAYOUTS[g.kind].h/2);
    }else if(!overSidebar)message('Solte o componente na área de criação.',true);
   }
- }else if(g.type==='wire-bend'){
+  }else if(g.type==='wire-bend'){
   wireAlignment=null;
   if(g.moved){persist();renderInspector();message('Ângulo da curva ajustado. Outros pontos e conexões mantidos.',true);}
-  requestDraw();
+  else message('Ponto selecionado. Excluir apaga somente este quadrado.',true);
+  updateHistoryButtons();requestDraw();
  }else if(g.type==='wire-segment'){
   wireAlignment=null;
   if(g.moved){persist();renderInspector();message('Trecho do jumper ajustado. As peças permanecem no lugar.',true);}
@@ -1558,7 +1608,7 @@ function pointerUp(e){
  }else if(g.type==='pan'&&!g.moved&&!spaceHeld){
   const wire=wireAt(e.clientX,e.clientY);
   if(wire>=0)selectWire(wire);
-  else{state.selected=null;state.selectedWire=null;renderParts();renderInspector();updateHistoryButtons();requestDraw();}
+  else{state.selected=null;state.selectedWire=null;selectedBend=null;renderParts();renderInspector();updateHistoryButtons();requestDraw();}
  }
 
 }
@@ -1818,6 +1868,10 @@ function bind(){
    e.stopPropagation?.();
    const i=Number(target.dataset.wireIndex);
    if(!state.wires[i])return;
+   if(target.dataset.wireVertex!==undefined){
+    selectBend(i,Number(target.dataset.wireVertex));return;
+   }
+   if(selectedBend?.index===i&&target.classList?.contains('wire-bend-mark'))return;
    selectWire(i);
  });
  Q('inspectorBody').addEventListener('click',e=>{const rotate=e.target.closest('[data-rotate-part]');if(rotate){rotatePart(rotate.dataset.rotatePart);return;}const view=e.target.closest('[data-motor-view]');if(view){toggleMotorView(view.dataset.motorView);return;}const demo=e.target.closest('[data-demo-motor]');if(demo){demoMotor(demo.dataset.demoMotor);return;}const del=e.target.closest('[data-remove]');if(del)removePart(del.dataset.remove);const w=e.target.closest('[data-remove-wire]');if(w){removeWire(Number(w.dataset.removeWire));return;}const row=e.target.closest('[data-select-wire]');if(row)selectWire(Number(row.dataset.selectWire));});
@@ -1835,6 +1889,7 @@ function bind(){
  Q('pasteBtn').disabled=true;
  Q('pasteBtn').addEventListener('click',pasteSelection);
  Q('deleteBtn').addEventListener('click',()=>{
+  if(selectedBend&&removeSelectedBend())return;
   if(Number.isInteger(state.selectedWire)&&state.wires[state.selectedWire]){removeWire(state.selectedWire);return;}
   const selected=byPart(state.selected);
   if(selected)removePart(selected.id);
@@ -1900,6 +1955,7 @@ function bind(){
    e.preventDefault();rotateSelectedPart();return;
   }
   if(['Delete','Backspace'].includes(e.key)&&!e.target.closest('input,textarea,select')){
+    if(selectedBend){e.preventDefault();removeSelectedBend();return;}
     if(Number.isInteger(state.selectedWire)&&state.wires[state.selectedWire]){e.preventDefault();removeWire(state.selectedWire);return;}
     if(byPart(state.selected)){e.preventDefault();removePart(state.selected);return;}
    }
