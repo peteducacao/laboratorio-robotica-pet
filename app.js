@@ -656,6 +656,15 @@ function centerPart(kind){
 }
 function libraryOpen(open){
  const yes=!!open;
+ // Posiciona a gaveta abaixo do painel superior também em telas estreitas.
+ if(window.matchMedia?.('(max-width:1190px)')?.matches){
+  const bar=document.querySelector?.('.studio-topbar');
+  const top=Math.max(0,Math.ceil(bar?.getBoundingClientRect?.().bottom||0));
+  if(top){
+   Q('library').style.setProperty('top',top+'px','important');
+   Q('sideBackdrop').style.setProperty('top',top+'px','important');
+  }
+ }
  // Encerrar o foco da busca ao fechar a gaveta evita teclado preso no Android.
  if(!yes)Q('componentSearch').blur?.();
  Q('library').classList.toggle('open',yes);
