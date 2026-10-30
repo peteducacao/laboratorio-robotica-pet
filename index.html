@@ -7,12 +7,13 @@
 <title>TinkerPET • Laboratório de Robótica</title>
 <link rel="icon" href="assets/logo-pet.svg" type="image/svg+xml">
 <link rel="preload" as="image" href="assets/welcome-approved.avif" type="image/avif">
-<link rel="stylesheet" href="home.css?v=6">
-<script src="home.js?v=6" defer></script>
+<link rel="stylesheet" href="home.css?v=7">
+<script src="home.js?v=7" defer></script>
 </head>
 <body>
 <main class="welcome" aria-label="Bem-vindo ao TinkerPET">
  <img id="welcomeArt" class="welcome-art" src="assets/welcome-approved.avif" alt="Robô TinkerPET sorrindo, peças de eletrônica flutuando e botão Meus circuitos em uma oficina de robótica">
+ <canvas id="welcomePanorama" class="welcome-panorama" aria-hidden="true"></canvas>
  <span class="shine one" aria-hidden="true"></span><span class="shine two" aria-hidden="true"></span>
  <span id="floatingArduino" class="floating-crop arduino" aria-hidden="true"></span>
  <span id="floatingMotor" class="floating-crop motor" aria-hidden="true"></span>
