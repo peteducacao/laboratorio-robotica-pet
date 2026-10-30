@@ -822,3 +822,14 @@
  filter:drop-shadow(0 0 5px #efb45177)!important
 }
 .preview-studio .wire-svg .wire-bend-target{cursor:pointer!important}
+
+/* Studio v13 — contornos de clique isolados dos terminais do motor DC.
+   Com 20 px de distância vertical, os dois botões de 44 px se sobrepunham. */
+.preview-studio #partsLayer .part[data-kind="motor"] .pin-btn{
+ width:26px!important;min-width:26px!important;max-width:26px!important;
+ height:19px!important;min-height:19px!important;max-height:19px!important;
+ padding:0!important;border:0!important;background:transparent!important;
+ touch-action:none!important;pointer-events:auto!important
+}
+/* Guias de alinhamento atravessam a bancada sem bloquear ações. */
+.preview-studio #viewport .component-alignment-guide{pointer-events:none!important}
