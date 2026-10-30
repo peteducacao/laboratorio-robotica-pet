@@ -1,120 +1,101 @@
-/* TinkerPET | abertura limpa. Somente mascote, identidade e botão. */
+/* TinkerPET Studio — abertura com a arte aprovada, intacta e proporcional */
 *{box-sizing:border-box}
 html,body{width:100%;height:100%;margin:0}
-body{overflow:hidden;background:#071b39;font-family:'DM Sans',Arial,sans-serif}
+body{overflow:hidden;background:#091e39;font-family:'DM Sans',Arial,sans-serif}
 .welcome{
- position:relative;isolation:isolate;width:100%;height:100dvh;min-height:350px;overflow:hidden;
- background:
-  radial-gradient(ellipse 50% 110% at -12% 25%,#64314a77,transparent 75%),
-  radial-gradient(ellipse 50% 95% at 112% 24%,#1473ba66,transparent 73%),
-  linear-gradient(180deg,#081932 0%,#082248 72%,#064d83 100%);
+ position:relative;isolation:isolate;overflow:hidden;width:100%;min-height:350px;
+ height:100vh;height:100dvh;background:#091e39;
 }
+/* Apenas em telas verticais: a mesma oficina desfocada complementa a
+   imagem central sem esticar letras, robô ou botão e sem barras vazias. */
 .welcome::before{
- content:"";position:absolute;inset:0;pointer-events:none;z-index:0;
- background:radial-gradient(ellipse 45% 55% at 50% 71%,#17a2e21c,transparent 100%);
+ content:"";position:absolute;inset:-26px;z-index:0;pointer-events:none;
+ background:url('assets/welcome-clean-2026.svg') center / cover no-repeat;
+ filter:blur(19px) brightness(.66) saturate(.9);
+ transform:scale(1.04);
 }
-/* A arte original não é esticada em NENHUMA resolução. Apenas as
-   áreas laterais, onde o Arduino, microservo, sensores, motor e
-   protoboard estão desenhados, são ocultadas no resultado visível. */
 .welcome-art{
- position:absolute;z-index:1;max-width:none;max-height:none;object-fit:fill;
- user-select:none;pointer-events:none;
- -webkit-mask-image:
-  radial-gradient(ellipse 17% 23% at 50% 28%,#000 72%,transparent 100%),
-  radial-gradient(ellipse 25% 14% at 50% 50%,#000 89%,transparent 100%),
-  radial-gradient(ellipse 20.5% 10% at 50% 69%,#000 85%,transparent 100%);
- mask-image:
-  radial-gradient(ellipse 17% 23% at 50% 28%,#000 72%,transparent 100%),
-  radial-gradient(ellipse 25% 14% at 50% 50%,#000 89%,transparent 100%),
-  radial-gradient(ellipse 20.5% 10% at 50% 69%,#000 85%,transparent 100%);
-}
-.visually-hidden{
- position:absolute!important;width:1px!important;height:1px!important;padding:0!important;
- margin:-1px!important;overflow:hidden!important;clip:rect(0,0,0,0)!important;
- white-space:nowrap!important;border:0!important
+ position:absolute;z-index:1;display:block;max-width:none;max-height:none;
+ object-fit:fill;user-select:none;pointer-events:none;
 }
 .main-action{
- position:absolute;z-index:10;display:block;border:0;border-radius:18px;outline:0;
- cursor:pointer;overflow:visible;touch-action:manipulation;
- animation:ctaBreathing 3.4s ease-in-out infinite;
- transition:filter .25s ease,box-shadow .25s ease,transform .25s ease;
+ position:absolute;z-index:10;display:block;cursor:pointer;touch-action:manipulation;
+ border-radius:34px;outline:0;transition:filter .25s ease,transform .2s ease;
+ animation:buttonGlow 3.7s ease-in-out infinite;
 }
-.main-action:focus-visible{outline:3px solid #efffff;outline-offset:4px}
-.main-action:hover{filter:brightness(1.06)}
-.main-action:active{transform:scale(.985)}
-.main-action .cta-energy{position:absolute;inset:0;width:100%;height:100%;overflow:visible;pointer-events:none}
+.main-action:hover{filter:brightness(1.09)}
+.main-action:active{transform:scale(.987)}
+.main-action:focus-visible{outline:3px solid #fff;outline-offset:4px}
+.main-action .cta-energy{width:100%;height:100%;position:absolute;inset:0;pointer-events:none;overflow:visible}
 .main-action .cta-energy rect{fill:none;vector-effect:non-scaling-stroke}
-.main-action .cta-track{stroke:#86faff;stroke-width:3.5;opacity:.68}
+.main-action .cta-track{stroke:#91faff;stroke-width:1.9;opacity:.18}
 .main-action .cta-trace{
- stroke-linecap:round;stroke-linejoin:round;stroke-width:5;
- stroke-dasharray:145 855;filter:drop-shadow(0 0 6px #e8ffff);
- animation:ctaElectricFlow 2.85s linear infinite;
+ stroke:#ccffff;stroke-width:3.3;stroke-linecap:round;
+ stroke-linejoin:round;stroke-dasharray:112 888;
+ filter:drop-shadow(0 0 4px #b9ffff);
+ animation:energyLap 4.1s linear infinite;
 }
-.main-action .cta-trace.cyan{stroke:#e2ffff}
 .main-action .cta-trace.gold{
- stroke:#f7df92;stroke-dasharray:72 928;stroke-width:4.1;
- filter:drop-shadow(0 0 5px #ffe88b);
- animation-duration:4.3s;animation-direction:reverse;animation-delay:-2s;
+ stroke:#f9d97f;stroke-width:2.8;stroke-dasharray:51 949;
+ animation-duration:5.6s;animation-direction:reverse;animation-delay:-2.1s;
+ filter:drop-shadow(0 0 4px #f5dc8e);
 }
-.main-action .side-energy{
- position:absolute;top:12%;width:3px;height:25%;border-radius:20px;
- background:linear-gradient(180deg,transparent,#d6ffff,#58d4fb,transparent);
- box-shadow:0 0 9px 2px #69e0f085;pointer-events:none;
- animation:sideCurrent 3.6s ease-in-out infinite alternate;
+.side-energy{
+ position:absolute;top:12%;width:2px;height:20%;border-radius:7px;
+ background:linear-gradient(180deg,transparent,#e4ffff,#8fe6ff,transparent);
+ filter:drop-shadow(0 0 4px #7feaff);
+ pointer-events:none;animation:sideFlow 3.5s ease-in-out infinite alternate;
 }
-.main-action .side-left{left:1.4%}
-.main-action .side-right{right:1.4%;animation-delay:-2.5s}
-/* A seta e seu círculo já estão centralizados na arte.
-   Não criar sobre ela um segundo círculo artificial deslocado. */
+.side-left{left:1.5%}.side-right{right:1.5%;animation-delay:-1.7s}
 .robot-blink{
- position:absolute;z-index:5;pointer-events:none;opacity:0;transform:translate(-50%,-50%);
- border-radius:50%;background:radial-gradient(ellipse at center,#e5ebff 40%,#cfdaf7 87%,transparent);
- animation:blinkAlive 3.5s steps(1,end) infinite;
+ position:absolute;z-index:4;opacity:0;pointer-events:none;
+ transform:translate(-50%,-50%);
+ background:radial-gradient(ellipse at center,#e9f3ff 54%,#d8e7fe 91%,transparent 100%);
+ border-radius:50%;animation:blink 4.7s steps(1,end) infinite;
 }
 .robot-blink::after{
- content:"";position:absolute;top:46%;left:20%;width:60%;height:35%;
- border-top:5px solid #0c2049;border-radius:55% 55% 0 0;transform:rotate(-3deg)
+ content:"";position:absolute;left:15%;top:44%;width:70%;height:25%;
+ border-top:4px solid #0b2553;border-radius:50%;transform:rotate(1deg);
 }
 .antenna-beacon{
  position:absolute;z-index:5;pointer-events:none;border-radius:50%;
- background:radial-gradient(circle,#fff9a85c 0%,#f9dd5650 15%,#21befe24 43%,transparent 75%);
- mix-blend-mode:screen;transform-origin:center;animation:antennaSignal 2.65s ease-in-out infinite;
+ background:radial-gradient(circle,#ffe89c7d,#ffdf5743 26%,#28bafb20 56%,transparent 76%);
+ mix-blend-mode:screen;animation:antennaPulse 3.2s ease-in-out infinite;
 }
-.shine{
- position:absolute;z-index:3;pointer-events:none;mix-blend-mode:screen;filter:blur(17px);
- border-radius:50%;width:55px;height:55px;background:#39a9ff26;
- animation:shimmer 10s ease-in-out infinite alternate;
+.shine{position:absolute;z-index:2;pointer-events:none;border-radius:50%;filter:blur(17px);
+ width:48px;height:48px;background:#30c4ff21;animation:shimmer 9s ease-in-out infinite alternate}
+.shine.one{top:15%;left:10%}
+.shine.two{bottom:16%;right:12%;background:#ffd07425;animation-delay:-4s}
+.ambient-particles{position:absolute;inset:0;z-index:3;pointer-events:none}
+.light-dust{position:absolute;display:block;width:5px;height:5px;border-radius:50%;
+ background:#a2f2ff;box-shadow:0 0 9px 3px #38bdff80;opacity:.3;
+ animation:drift 6s ease-in-out infinite alternate}
+.light-dust.gold{background:#ffd793;box-shadow:0 0 9px 3px #ffb95570}
+.light-dust:nth-child(2){animation-delay:-1.5s;animation-duration:7s}
+.light-dust:nth-child(3){animation-delay:-3.6s;animation-duration:6.4s}
+.light-dust:nth-child(4){animation-delay:-2.2s;animation-duration:8s}
+.light-dust:nth-child(5){animation-delay:-4.6s;animation-duration:7.5s}
+.light-dust:nth-child(6){animation-delay:-3s;animation-duration:6.9s}
+.visually-hidden{position:absolute!important;width:1px!important;height:1px!important;padding:0!important;margin:-1px!important;overflow:hidden!important;clip:rect(0,0,0,0)!important;white-space:nowrap!important;border:0!important}
+@keyframes energyLap{to{stroke-dashoffset:-1000}}
+@keyframes buttonGlow{0%,100%{box-shadow:0 0 7px 2px #43d9fc1f}50%{box-shadow:0 0 15px 5px #42e4ff65}}
+@keyframes sideFlow{0%{top:13%;opacity:.22}100%{top:68%;opacity:.79}}
+@keyframes blink{0%,36%,39%,100%{opacity:0}37%,38%{opacity:1}}
+@keyframes antennaPulse{0%,100%{opacity:.2;transform:scale(.84)}50%{opacity:.65;transform:scale(1.1)}}
+@keyframes shimmer{0%{transform:translateY(-6px);opacity:.2}100%{transform:translateY(9px);opacity:.5}}
+@keyframes drift{0%{opacity:.08;transform:translate3d(-5px,6px,0)}100%{opacity:.4;transform:translate3d(5px,-11px,0)}}
+@media(min-aspect-ratio:12/10) and (min-width:901px){
+ /* A arte ocupa toda a largura com cover SEM deformação e sem esticar. */
+ .welcome::before{display:none}
 }
-.shine.one{top:14%;left:10%}
-.shine.two{right:14%;bottom:15%;animation-delay:-4s;background:#fbbd5542}
-.ambient-particles{position:absolute;inset:0;z-index:4;pointer-events:none}
-.light-dust{
- position:absolute;display:block;border-radius:50%;width:6px;height:6px;opacity:.35;
- background:#a1f0ff;box-shadow:0 0 12px 3px #33bdff8a;
- animation:dustFloat 5.8s ease-in-out infinite alternate;
-}
-.light-dust.gold{background:#ffe0a4;box-shadow:0 0 12px 3px #ffb24e85}
-.light-dust:nth-child(2){animation-delay:-2.1s;animation-duration:6.5s}
-.light-dust:nth-child(3){animation-delay:-3.7s;animation-duration:5.1s}
-.light-dust:nth-child(4){animation-delay:-1.1s;animation-duration:7.3s}
-.light-dust:nth-child(5){animation-delay:-4.3s;animation-duration:6.9s}
-.light-dust:nth-child(6){animation-delay:-2.8s;animation-duration:7.5s}
-@keyframes ctaElectricFlow{to{stroke-dashoffset:-1000}}
-@keyframes ctaBreathing{0%,100%{box-shadow:0 0 9px 2px #12cfff33}50%{box-shadow:0 0 21px 5px #38e5ff88}}
-@keyframes sideCurrent{0%{top:11%;opacity:.2}50%{opacity:1}100%{top:68%;opacity:.43}}
-@keyframes blinkAlive{0%,20%,23%,63%,66%,100%{opacity:0}21%,22%,64%,65%{opacity:1}}
-@keyframes antennaSignal{0%,100%{opacity:.28;transform:scale(.83)}45%{opacity:.83;transform:scale(1.16)}}
-@keyframes shimmer{from{opacity:.4;transform:translateY(-7px)}to{opacity:1;transform:translateY(11px)}}
-@keyframes dustFloat{0%{opacity:.08;transform:translate3d(-4px,9px,0) scale(.75)}50%{opacity:.48}100%{opacity:.19;transform:translate3d(5px,-13px,0) scale(1.15)}}
 @media(max-width:900px){
- .main-action .cta-trace{stroke-width:4.1;filter:drop-shadow(0 0 3px #e8ffff)}
- .main-action .cta-trace.gold{stroke-width:3.5}
- .main-action .side-energy{width:2px;box-shadow:0 0 5px #8feeff8f}
- .light-dust{opacity:.3}
+ .main-action .cta-track{opacity:.15}
+ .main-action .cta-trace{stroke-width:2.5;filter:drop-shadow(0 0 2px #adf7ff)}
+ .main-action .cta-trace.gold{stroke-width:2.1}
+ .side-energy{width:2px}
 }
 @media(prefers-reduced-motion:reduce){
- .main-action,.main-action .cta-trace,.main-action .side-energy,.robot-blink,
+ .main-action,.main-action .cta-trace,.side-energy,.robot-blink,
  .antenna-beacon,.shine,.light-dust{animation:none!important;transition:none!important}
  .robot-blink{opacity:0!important}
- .light-dust{opacity:.15!important}
 }
