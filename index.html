@@ -7,12 +7,13 @@
 <title>TinkerPET • Laboratório de Robótica</title>
 <link rel="icon" href="assets/logo-pet.svg" type="image/svg+xml">
 <link rel="preload" as="image" href="assets/welcome-clean-2026.svg" type="image/svg+xml">
-<link rel="stylesheet" href="home.css?v=10">
-<script src="home.js?v=9" defer></script>
+<link rel="stylesheet" href="home.css?v=11">
+<script src="home.js?v=10" defer></script>
 </head>
 <body>
 <main class="welcome" aria-label="Bem-vindo ao TinkerPET">
  <img id="welcomeArt" class="welcome-art" src="assets/welcome-clean-2026.svg" alt="Mascote TinkerPET, nome do laboratório e botão Meus circuitos">
+ <canvas id="welcomeBackdrop" class="welcome-backdrop" aria-hidden="true"></canvas>
  <span class="shine one" aria-hidden="true"></span><span class="shine two" aria-hidden="true"></span>
  <span id="robotBlink" class="robot-blink" aria-hidden="true"></span>
  <span id="antennaGlow" class="antenna-beacon" aria-hidden="true"></span>
@@ -23,9 +24,9 @@
  </div>
  <a id="enterProjects" class="main-action" href="projects.html" aria-label="Abrir Meus circuitos">
   <svg class="cta-energy" viewBox="0 0 604 133" preserveAspectRatio="none" aria-hidden="true">
-   <rect class="cta-track" x="8" y="7" width="588" height="119" rx="33" pathLength="1000"/>
-   <rect class="cta-trace cyan" x="8" y="7" width="588" height="119" rx="33" pathLength="1000"/>
-   <rect class="cta-trace gold" x="8" y="7" width="588" height="119" rx="33" pathLength="1000"/>
+   <rect class="cta-track" x="1" y="1" width="602" height="131" rx="33" pathLength="1000"/>
+   <rect class="cta-trace cyan" x="1" y="1" width="602" height="131" rx="33" pathLength="1000"/>
+   <rect class="cta-trace gold" x="1" y="1" width="602" height="131" rx="33" pathLength="1000"/>
   </svg>
   <span class="side-energy side-left" aria-hidden="true"></span>
   <span class="side-energy side-right" aria-hidden="true"></span>
