@@ -94,37 +94,6 @@
 }
 
 
-/* Correntes de circuito efetivamente VISÍVEIS em telas móveis: trilhas
-   nas laterais do robô e transições brilhantes dos sinais. */
-.energy-rails{
- position:absolute;z-index:3;pointer-events:none;overflow:visible;
- contain:layout style;will-change:auto;
-}
-.energy-rails .rail-track,
-.energy-rails .rail-current,
-.energy-rails .rail-haze,
-.energy-rails .rail-branch{
- fill:none;stroke-linecap:round;stroke-linejoin:round;
-}
-.energy-rails .rail-track{stroke:#1ddcfa;stroke-width:5.5;opacity:.53}
-.energy-rails .rail-side-right .rail-track{stroke:#ffc35d}
-.energy-rails .rail-haze{stroke-width:17;opacity:.7;filter:url(#railGlow);stroke-dasharray:110 760;animation:railFlow 4s linear infinite}
-.energy-rails .rail-haze.blue{stroke:#36e9ff}
-.energy-rails .rail-haze.gold{stroke:#ffc85e;animation-delay:-2.2s;animation-direction:reverse}
-.energy-rails .rail-current{stroke-width:8;stroke-dasharray:100 800;animation:railFlow 4s linear infinite;filter:drop-shadow(0 0 5px #8affff)}
-.energy-rails .rail-current.blue{stroke:url(#railIce)}
-.energy-rails .rail-current.gold{stroke:url(#railAmber);animation-direction:reverse;animation-delay:-2.2s;filter:drop-shadow(0 0 6px #ffbb51)}
-.energy-rails .rail-branch{stroke:#62dbec;stroke-width:3.8;opacity:.75;stroke-dasharray:13 12;animation:branchFlow 1.4s linear infinite}
-.energy-rails .rail-side-right .rail-branch{stroke:#f7c879;animation-direction:reverse}
-.energy-rails .rail-node,.energy-rails .rail-junction{
- fill:#dcffff;stroke:#16c5e7;stroke-width:3;filter:drop-shadow(0 0 8px #5cecff);
- animation:railNodePulse 2.2s ease-in-out infinite;
-}
-.energy-rails .gold{stroke-color:#f8c36b}
-.energy-rails .rail-node.gold,.energy-rails .rail-junction.gold{fill:#fff3be;stroke:#faac40;filter:drop-shadow(0 0 8px #ffbd63);animation-delay:-1.3s}
-@keyframes railFlow{from{stroke-dashoffset:0}to{stroke-dashoffset:-900}}
-@keyframes branchFlow{to{stroke-dashoffset:-100}}
-@keyframes railNodePulse{0%,100%{opacity:.45}45%{opacity:1}}
 /* O CTA já tem iluminação na imagem original: elevamos a pulsação e a
    largura da trilha para que o percurso possa ser percebido no celular. */
 .main-action{animation:ctaBreathing 3.4s ease-in-out infinite;box-shadow:0 0 10px 3px #1de9ff45}
@@ -139,18 +108,28 @@
 .robot-blink{animation:blinkAlive 3.5s steps(1,end) infinite}
 .antenna-beacon{animation:antennaSignal 2.65s ease-in-out infinite}
 @media(max-width:900px){
- .energy-rails .rail-track{stroke-width:7;opacity:.68}
- .energy-rails .rail-current{stroke-width:10}
- .energy-rails .rail-node{filter:drop-shadow(0 0 8px #5cecff)}
  .main-action .cta-trace{stroke-width:5.5}
  .main-action .cta-trace.gold{stroke-width:4.3}
  .main-action .side-energy{width:3px;box-shadow:0 0 8px 2px #74ecff88}
 }
 @media(prefers-reduced-motion:reduce){
- .energy-rails .rail-haze,.energy-rails .rail-current,
- .energy-rails .rail-branch,.energy-rails .rail-node,.energy-rails .rail-junction,
  .main-action{animation:none!important}
- .energy-rails .rail-track{opacity:.38}
- .energy-rails .rail-current{stroke-dasharray:none;opacity:.4}
- .energy-rails .rail-haze{opacity:0}
+}
+
+
+/* v6 — No computador, a arte aprovada aparece inteira. As laterais
+   de monitores largos são preenchidas pela própria oficina desfocada. */
+.welcome::before{
+ content:"";position:absolute;inset:-36px;z-index:0;pointer-events:none;
+ background-image:url("assets/welcome-approved.avif");
+ background-size:cover;background-position:center;
+ filter:blur(30px) brightness(.57) saturate(.95);
+ transform:scale(1.06);
+}
+.welcome-art{z-index:1;object-fit:fill;max-width:none;max-height:none}
+@media(min-width:901px) and (min-aspect-ratio:5/4){
+ .welcome-art{
+  -webkit-mask-image:linear-gradient(to right,transparent 0%,#000 2%,#000 98%,transparent 100%);
+  mask-image:linear-gradient(to right,transparent 0%,#000 2%,#000 98%,transparent 100%);
+ }
 }
