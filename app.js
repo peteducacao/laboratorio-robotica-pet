@@ -99,6 +99,7 @@ function safeRestore(){
   if(COLORS.includes(s.wireColor))state.wireColor=s.wireColor;
   state.autoWireAlign=s.autoWireAlign===true;
   state.autoWireBackup=Array.isArray(s.autoWireBackup)?s.autoWireBackup.filter(w=>w&&typeof w.a==='string'&&typeof w.b==='string').slice(0,80):null;
+  enforceManualMode(); // Mesmo circuitos anteriores à opção ON/OFF ficam editáveis.
  }catch(err){console.warn('Progresso indisponível',err);}
 }
 function persist(){
@@ -137,6 +138,7 @@ function restoreHistory(s){
   autoWireBackup:Array.isArray(saved.autoWireBackup)?saved.autoWireBackup:null
  });
  wireTipActive=!!state.startPort;
+ enforceManualMode();
  previewPoint=null;previewSnapPort=null;pendingAlignment=null;gesture=null;reconnectPending=null;selectedBend=null;partDragAlignment=null;
  selectedParts.clear();updateMultiSelectionTool();
  renderAll();updateHistoryButtons();
@@ -832,7 +834,8 @@ function setAutoWireAlignment(enabled){
    manual:w.manual===true,originA:getPortPos(w.a),originB:getPortPos(w.b)
   }));
   state.autoWireAlign=true;
-  state.bends=[];wireTipActive=!!state.startPort;
+  // Não descartar cotovelos que o aluno já clicou em um fio pendente.
+  wireTipActive=!!state.startPort;
   for(const w of state.wires)w.autoRoute=true;
   rerouteAutomaticWires();
  }else{
@@ -863,6 +866,7 @@ function setAutoWireAlignment(enabled){
    w.autoRoute=false;
   }
   state.autoWireBackup=null;
+  enforceManualMode();
  }
  state.completed=false;refresh();
  message(enabled?'Alinhamento ON: fios espaçados. O traçado manual foi guardado.':
@@ -1023,6 +1027,22 @@ function pendingWirePoints(){
 function wirePoints(w){
  const a=getPortPos(w.a),b=getPortPos(w.b);
  return a&&b?(w.manual?manualWirePoints(a,w.via||[],b):wireRoutePoints(a,w.via||[],b,w.a,w.b)):[];
+}
+// Compatibilidade: alguns jumpers antigos usam o gerador procedural de
+// cantos mesmo com "Fios auto OFF". Converte o que já aparece na tela
+// em vértices EXPLÍCITOS, sem mudar seu desenho ou a conexão.
+function makeWireFullyManual(w){
+ if(!w)return;
+ if(w.manual!==true){
+  const points=wirePoints(w);
+  if(points.length>=2)w.via=points.slice(1,-1).map(p=>({...p}));
+  w.manual=true;
+ }
+ w.autoRoute=false;
+}
+function enforceManualMode(){
+ if(state.autoWireAlign)return;
+ for(const w of state.wires)makeWireFullyManual(w);
 }
 function segmentAt(clientX,clientY){
  const p=worldXY(clientX,clientY),tolerance=Math.min(90,Math.max(15,17/zoom));
@@ -1186,7 +1206,9 @@ function reconnectRoute(pending,position){
  const append=pt=>{
   const prev=path.at(-1),p={x:Math.round(pt.x),y:Math.round(pt.y)};
   if(!prev||Math.hypot(p.x-prev.x,p.y-prev.y)<2)return;
-  if(Math.abs(p.x-prev.x)>1&&Math.abs(p.y-prev.y)>1){
+  // Somente ON insere automaticamente uma dobra em reconexões. No OFF,
+  // os cantos são exatamente os clicados, sem atalhos invisíveis.
+  if(state.autoWireAlign&&Math.abs(p.x-prev.x)>1&&Math.abs(p.y-prev.y)>1){
    const before=path.at(-2),horizontal=before&&Math.abs(before.y-prev.y)<2;
    const elbow=horizontal?{x:p.x,y:prev.y}:{x:prev.x,y:p.y};
    if(Math.hypot(elbow.x-prev.x,elbow.y-prev.y)>1)path.push(elbow);
@@ -2034,9 +2056,11 @@ function pointerUp(e){
    if(!state.startPort)connect(first);
    if(destination){connect(destination);
    }else{
+     // Arrastar a ponta e soltar NÃO equivale a um clique de curva.
+     // A conexão continua pendente, acompanhando o cursor, sem criar nós.
      const box=Q('viewport').getBoundingClientRect();
      if(e.clientX>=box.left&&e.clientX<=box.right&&e.clientY>=box.top&&e.clientY<=box.bottom){
-       const pos=worldXY(e.clientX,e.clientY);if(!state.autoWireAlign)addCorner(pos.x,pos.y);
+       if(state.startPort){wireTipActive=true;setPendingPreview(e);}
      }else{previewPoint=null;requestDraw();}
    }
   }
@@ -2062,8 +2086,14 @@ function pointerUp(e){
   requestDraw();
  }else if(g.type==='bend'){
   if(state.autoWireAlign)return;
-  const pin=nearestPort(e.clientX,e.clientY,state.startPort,9);
-  if(pin)connect(pin);else{const pos=worldXY(e.clientX,e.clientY);addCorner(pos.x,pos.y);}
+  if(g.moved){
+   // Não transformar um arraste casual da bancada em uma curva nova.
+   setPendingPreview(e);
+  }else{
+   const pin=nearestPort(e.clientX,e.clientY,state.startPort,9);
+   if(pin)connect(pin);
+   else{const pos=worldXY(e.clientX,e.clientY);addCorner(pos.x,pos.y);}
+  }
  }else if(g.type==='pan'&&!g.moved&&!spaceHeld){
   const wire=wireAt(e.clientX,e.clientY);
   if(wire>=0)selectWire(wire);
