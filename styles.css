@@ -1374,3 +1374,24 @@
  stroke-linecap:butt!important;
  filter:none!important;
 }
+
+/* v36 — editar vértice individual do jumper: quadradinho sutil, nunca aro. */
+.wire-svg .wire-bend-target{
+ fill:transparent!important;
+ stroke:none!important;
+ pointer-events:all!important;
+ touch-action:none!important;
+ cursor:crosshair!important;
+}
+.wire-svg .wire-bend-target:active{cursor:grabbing!important}
+.wire-svg .wire-bend-mark{
+ pointer-events:none!important;
+ fill:#edfaff!important;
+ stroke:#148aa8!important;
+ stroke-width:2!important;
+ filter:none!important;
+}
+.wire-item.is-selected{
+ border-color:#8dc0d1!important;
+ background:#edf9fc!important;
+}
