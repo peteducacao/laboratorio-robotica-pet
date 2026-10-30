@@ -63,7 +63,7 @@
 <rect x="347" y="184" width="60" height="45" rx="4" fill="#151d27" stroke="#8a9baa" stroke-width="3"/>
 <rect x="358" y="190" width="38" height="33" fill="#1b2430"/>
 <path d="M338 187v41 M343 187v41 M410 187v41 M415 187v41" stroke="#d6bf8e" stroke-width="2" stroke-dasharray="4 4"/>
-<circle cx="416" cy="279" r="9" fill="#dcedb1" stroke="#81a26a" stroke-width="4"/>
+<circle cx="416" cy="279" r="9" fill="#233745" stroke="#6e8791" stroke-width="3"/>
 <!-- WROOM-32 radio module -->
 <rect x="449" y="110" width="371" height="211" rx="10" fill="#202b35" stroke="#6e8290" stroke-width="4"/>
 <rect x="476" y="116" width="9" height="17" rx="2" fill="#c9a96f" stroke="#67522f" stroke-width="1"/>
