@@ -905,6 +905,71 @@ window.tinkerpetAnswerData={
  connections:EXPECTED.map(([a,b],i)=>({n:i+1,from:portName(a),to:portName(b),a,b})),
  components:TYPES.flatMap(t=>t.ids.map(id=>({id,kind:t.kind,name:partName(id),image:t.img,width:PART_LAYOUTS[t.kind].w,height:PART_LAYOUTS[t.kind].h,pins:PART_LAYOUTS[t.kind].pins})))
 };
+
+function downloadBlob(blob,filename){
+ const url=URL.createObjectURL(blob);
+ const link=document.createElement('a');
+ link.href=url;link.download=filename;
+ document.body.append(link);link.click();link.remove();
+ setTimeout(()=>URL.revokeObjectURL(url),1800);
+}
+async function downloadWorkspace(){
+ if(!state.parts.length){message('Adicione peças para baixar a montagem.',true);return;}
+ const button=Q('downloadBtn');button.disabled=true;
+ const escapeXml=value=>String(value).replace(/[&<>"']/g,char=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&apos;'}[char]));
+ try{
+  // Exportação integral: imagens são embutidas, portanto funcionam fora do site.
+  const pad=85;
+  const minX=Math.min(...state.parts.map(p=>p.x))-pad;
+  const minY=Math.min(...state.parts.map(p=>p.y))-pad;
+  const maxX=Math.max(...state.parts.map(p=>p.x+partLayout(p).w))+pad;
+  const maxY=Math.max(...state.parts.map(p=>p.y+partLayout(p).h))+pad;
+  const width=Math.ceil(maxX-minX),height=Math.ceil(maxY-minY);
+  const imageCache=new Map();
+  const parts=[];
+  for(const p of state.parts){
+   const src=p.kind==='motor'?motorImage(p):imageUrl(byKind[p.kind]);
+   let href=imageCache.get(src);
+   if(!href){
+    const response=await fetch(src);
+    if(!response.ok)throw Error('Não foi possível obter imagem de '+partName(p.id));
+    const raw=await response.text();
+    href='data:image/svg+xml;charset=utf-8,'+encodeURIComponent(raw);
+    imageCache.set(src,href);
+   }
+   const size=partLayout(p);
+   parts.push('<image href="'+escapeXml(href)+'" x="'+p.x+'" y="'+p.y+'" width="'+size.w+'" height="'+size.h+'" preserveAspectRatio="xMidYMid meet"/>');
+  }
+  const wires=state.wires.map(w=>{
+   const from=getPortPos(w.a),to=getPortPos(w.b);
+   if(!from||!to)return '';
+   return '<path d="'+escapeXml(wireRoute(from,w.via||[],to,w.a,w.b))+'" fill="none" stroke="'+escapeXml(w.color)+'" stroke-width="10" stroke-linejoin="round" stroke-linecap="round"/>';
+  }).join('');
+  const svg='<?xml version="1.0" encoding="UTF-8"?>'
+   +'<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="'+minX+' '+minY+' '+width+' '+height+'" width="'+width+'" height="'+height+'">'
+   +'<rect x="'+minX+'" y="'+minY+'" width="'+width+'" height="'+height+'" fill="#f4f5f6"/>'
+   +parts.join('')+wires+'</svg>';
+  const blob=new Blob([svg],{type:'image/svg+xml;charset=utf-8'});
+  // PNG permite compartilhar a montagem; SVG vetorial é alternativa universal.
+  const url=URL.createObjectURL(blob);
+  try{
+   const bitmap=new Image();
+   await new Promise((resolve,reject)=>{bitmap.onload=resolve;bitmap.onerror=reject;bitmap.src=url;});
+   const canvas=document.createElement('canvas');
+   const factor=Math.min(2.25,3600/Math.max(width,height));
+   canvas.width=Math.round(width*factor);canvas.height=Math.round(height*factor);
+   canvas.getContext('2d').drawImage(bitmap,0,0,canvas.width,canvas.height);
+   const png=await new Promise(resolve=>canvas.toBlob(resolve,'image/png'));
+   if(!png)throw Error('PNG indisponível');
+   downloadBlob(png,'TinkerPET-montagem.png');
+   message('Imagem PNG da montagem baixada com os componentes e jumpers.',true);
+  }catch(err){
+   downloadBlob(blob,'TinkerPET-montagem.svg');
+   message('Montagem vetorial SVG baixada.',true);
+  }finally{URL.revokeObjectURL(url);}
+ }catch(err){message('Falha ao baixar montagem: '+err.message,true);}
+ finally{button.disabled=false;}
+}
 function bind(){
  Q('menuBtn').addEventListener('click',()=>libraryOpen(!Q('library').classList.contains('open')));
  Q('drawerHandle').addEventListener('click',()=>libraryOpen(!Q('library').classList.contains('open')));
@@ -980,6 +1045,7 @@ function bind(){
   else message('Toque em uma peça ou em um fio para selecionar e excluir.',true);
  });
  Q('clearBtn').addEventListener('click',()=>{if(!state.parts.length)return;if(confirm('Apagar todas as peças e fios da bancada?')){snapshot();state.parts=[];state.wires=[];state.selected=null;state.startPort=null;state.bends=[];previewPoint=null;state.switches={s1:false,s2:false};state.voltage=4;refresh();message('Bancada limpa. Comece de novo!');}});
+ Q('downloadBtn').addEventListener('click',downloadWorkspace);
  Q('hintBtn').addEventListener('click',hint);
  Q('saveBtn').addEventListener('click',()=>{persist();message('Seu projeto foi salvo neste navegador.',true);});
  Q('checkBtn').addEventListener('click',()=>{
