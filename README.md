@@ -10,8 +10,8 @@ Laboratório educativo e responsivo do **PET Educação — UFS**, publicado em 
 5. Toque numa área livre da bancada para **prolongar o jumper a partir da última ponta**. As curvas são ortogonais e não permitem voltar pelo segmento anterior.
 6. Aproxime o jumper do **segundo terminal** e solte para encaixar automaticamente no pino. O caminho completo é salvo sem duplicar a ponta.
 7. Se errar antes de finalizar, use **Desfazer** para remover a última curva (ou Escape no teclado para cancelar). Para apagar uma ligação pronta, toque no próprio fio e use **Excluir**, ou remova pelo × da aba **Fios**.
-8. Ajuste o **LM2596 para 5,0 V**, ligue as duas **gangorras** pelo botão sobre a tecla e confira as 17 ligações.
-9. Clique em **Iniciar simulação** e pilote o carrinho na pista com os controles de toque ou as teclas WASD / setas.
+8. Ajuste o **LM2596 para 5,0 V** e ligue as duas **gangorras** pelo botão sobre a tecla.
+9. Clique em **Iniciar simulação** a qualquer momento para observar os componentes energizados na própria bancada. Após completar as 17 ligações, clique em **Abrir pista** para dirigir com WASD, setas ou controles de toque.
 
 **Ao mover uma peça já conectada, os fios acompanham a origem e o destino, mantendo os pontos intermediários no lugar.** As cores e rotas concluídas são salvas automaticamente no navegador do dispositivo. Toque em **Salvar** para confirmar.
 
@@ -22,12 +22,13 @@ Laboratório educativo e responsivo do **PET Educação — UFS**, publicado em 
 | 1 | ESP32 DevKit V1 | 30 pinos com nomes impressos no desenho; VIN, dois GND, GPIOs |
 | 1 | Ponte H MX1508 | placa vermelha, bornes de motor, VCC, GND e IN1–IN4 |
 | 1 | Regulador LM2596 | placa azul, entrada/saída IN± e OUT±, ajuste virtual |
-| 2 | Bateria 9 V | polo positivo e negativo integrados à imagem |
+| 1 | Bateria 9 V | fonte do regulador LM2596 e do ESP32 |
+| 1 | Suporte de 6 pilhas AA | fonte da ponte H MX1508, seis células AA de 1,5 V (9 V nominais) |
 | 2 | Gangorra iluminada | três contatos: entrada positiva, saída comutada e negativo opcional da luz indicadora; tecla basculante animada |
 | 2 | Motor DC com redução | engrenagem amarela, duas vistas e contatos, prévia animada |
 
 A logo do PET Educação foi copiada do catálogo original. **Nenhum arquivo do catálogo foi alterado.** O simulador agora armazena seus quatro desenhos complementares em:
-`assets/mx1508-desenhado.svg`, `assets/lm2596-desenhado.svg`, `assets/bateria-9v-desenhada.svg`, `assets/gangorra-desenhada.svg`.
+`assets/mx1508-desenhado.svg`, `assets/lm2596-desenhado.svg`, `assets/bateria-9v-desenhada.svg`, `assets/suporte-6-pilhas.svg`, `assets/gangorra-desenhada.svg`.
 
 ## Verificação
 
@@ -39,8 +40,8 @@ Referência do projeto físico: [Carrinho Wi-Fi ESP32 — Fundamentos de Prototi
 
 ## Revisão visual e elétrica da v9
 
-- A alimentação positiva é vermelha e o negativo/GND é preto. **As duas baterias ilustradas são de 9 V**, não fontes de 5 V; apenas a saída do LM2596 é ajustada para 5 V para alimentar VIN do ESP32.
-- A ponte H MX1508 recebe o positivo da bateria dos motores no terminal + e o negativo no terminal −. Os comandos chegam em IN1–IN4.
+- A alimentação positiva é vermelha e o negativo/GND é preto. **Há uma bateria de 9 V para o ESP32 e um suporte de seis pilhas AA para a ponte H**. Com pilhas alcalinas de 1,5 V, o suporte fornece 9 V nominais; com seis NiMH recarregáveis de 1,2 V, a tensão nominal é 7,2 V. Apenas a saída do LM2596 é ajustada para 5 V para alimentar VIN.
+- A ponte H MX1508 recebe o positivo do suporte de seis pilhas no terminal + e o negativo no terminal −. Os comandos chegam em IN1–IN4.
 - A gangorra ilustrada agora é um **modelo iluminado de três terminais**: IN (positivo de entrada), OUT (saída comutada) e LED− (retorno opcional do indicador). As 17 ligações de funcionamento continuam obrigatórias; um fio adicional para LED− em cada gangorra é aceito e acende o indicador quando ligada. **Não assuma que todos os modelos reais de três terminais usam a mesma pinagem: consulte o esquema impresso na peça real.**
 - O interruptor bascula visualmente ao ligar e desligar. As conexões são desenhadas sobre os pontos reais dos terminais e as linhas são contínuas, sem traços interrompidos.
 - Removidas legendas excessivas de bobinas e capacitores dos desenhos.
@@ -85,3 +86,9 @@ A barra de ferramentas agora fica acima do catálogo e da bancada, com grupos co
 A bancada mantém zoom por pinça, duplo toque reversível e área infinita, agora com fundo cinza-neutro. O catálogo usa cartões pequenos em mosaico e sua alça tem **apenas a seta**. Para excluir componentes, selecione e use **Lixeira** ou **Delete**, ou arraste a peça de volta para o catálogo (ou para a alça de abertura, no celular). As peças não exibem uma caixa tracejada em volta; o ESP32 conserva os nomes dos pinos, mas não apresenta texto dentro da blindagem metálica.
 
 Os jumpers não desenham círculos extras nos pinos. Clique no pino inicial e movimente livremente o cursor: a ponta acompanha a posição com curvas ortogonais, sem exigir que o botão do mouse permaneça pressionado. Cada clique na bancada fixa o trecho percorrido **sem desconectar o restante do fio**, e o próximo movimento continua da última ponta; clique no borne final para fechar. Uma pequena faísca animada marca a ponta em construção (respeitando a preferência do sistema de reduzir animações). O histórico **Ctrl+Z / Ctrl+Y** conserva cada clique como um único passo.
+
+### v28 — simulação progressiva na bancada e alimentação corrigida
+
+**Iniciar simulação** não exige as nove peças ou as 17 ligações: aciona um modo de observação na bancada. Cada efeito é habilitado por um caminho elétrico didático de alimentação e controle efetivamente montado. Uma fonte de 9 V alimenta a LM2596 por S1; uma segunda fonte, o **suporte de seis pilhas AA**, alimenta a MX1508 por S2. O ESP32 acende um **LED vermelho** quando VIN recebe os 5 V ajustados no regulador, e pisca um **LED azul** como **representação didática de atividade Wi-Fi**, não indicação de comunicação Wi-Fi real. Os motores DC giram separadamente quando a alimentação das duas partes, o GND comum, seus GPIOs IN e terminais de saída estão conectados. O usuário pode testar apenas parte do circuito e enxergar o efeito dos interruptores e dos fios faltantes. A pista é um recurso separado: o botão **Abrir pista** fica disponível com os 17 pares do gabarito corretos, as nove peças, as duas gangorras ligadas e a LM2596 em 5 V.
+
+**Indicadores honestos:** o desenho utilizado para a LM2596 e a MX1508 não mostra LED físico de indicação; em vez de acrescentar LEDs fictícios, o simulador mostra uma pequena etiqueta de alimentação quando esses componentes recebem energia. A bateria de 9 V e o suporte das seis AA não apresentam luz nem animação artificial. Este é um **modelo educativo de lógica de conexões** e não um modelo elétrico real: não simula falhas, calor, desgaste das pilhas, tensão sob carga, programação nem conexão Wi-Fi física.
