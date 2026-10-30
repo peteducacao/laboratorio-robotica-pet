@@ -778,26 +778,12 @@ function nearestPort(clientX,clientY,exclude){
  }
  return chosen;
 }
-function wireAt(clientX,clientY){
- const p=worldXY(clientX,clientY),tolerance=17/zoom;
- let min=tolerance*tolerance,result=-1;
- state.wires.forEach((w,i)=>{
-  const a=getPortPos(w.a),b=getPortPos(w.b);if(!a||!b)return;
-  const points=w.manual?manualWirePoints(a,w.via||[],b):wireRoutePoints(a,w.via||[],b,w.a,w.b);
-  for(let j=1;j<points.length;j++){
-   const u=points[j-1],v=points[j],dx=v.x-u.x,dy=v.y-u.y,len=dx*dx+dy*dy;
-   const along=len?limit(((p.x-u.x)*dx+(p.y-u.y)*dy)/len,0,1):0;
-   const d=(p.x-u.x-along*dx)**2+(p.y-u.y-along*dy)**2;
-   if(d<min){min=d;result=i;}
-  }
- });
- return result;
-}
+function wireAt(clientX,clientY){return segmentAt(clientX,clientY).index;}
 function selectWire(i){
  if(!state.wires[i])return;
  state.selectedWire=i;state.selected=null;state.inspector='wires';
  renderParts();renderInspector();updateHistoryButtons();requestDraw();
- message('Fio selecionado. Use Excluir para apagá-lo.',true);
+ message('Jumper selecionado. Arraste um trecho para mudar o caminho; as pontas ficam conectadas.',true);
 }
 function centerPart(kind){
  const v=Q('viewport').getBoundingClientRect();
@@ -904,6 +890,9 @@ function pointerMove(e){
     highlightDropZone(removeZoneAt(e.clientX,e.clientY));
     requestDraw();
    }
+  }else if(g.type==='wire-segment'){
+   if(g.moved&&!g.saved){snapshot();g.saved=true;}
+   if(g.moved)moveWireSegment(g,e.clientX,e.clientY);
   }else if(g.type==='wire'){
    if(g.moved){
     if(!state.startPort){snapshot();state.startPort=g.port;state.bends=[];updateHistoryButtons();}
@@ -965,6 +954,10 @@ function pointerUp(e){
    if(e.clientX>=box.left&&e.clientX<=box.right&&e.clientY>=box.top&&e.clientY<=box.bottom){const p=worldXY(e.clientX,e.clientY);addPart(g.kind,p.x-PART_LAYOUTS[g.kind].w/2,p.y-PART_LAYOUTS[g.kind].h/2);libraryOpen(false);}
    else message('Solte a peça sobre a bancada para adicioná-la.',true);
   }
+ }else if(g.type==='wire-segment'){
+  wireAlignment=null;
+  if(g.moved){persist();renderInspector();message('Trecho do jumper ajustado. As peças permanecem no lugar.',true);}
+  requestDraw();
  }else if(g.type==='wire'){
   if(g.moved){
    const found=document.elementFromPoint?document.elementFromPoint(e.clientX,e.clientY):null;
@@ -1205,6 +1198,23 @@ function bind(){
  });
  Q('partsLayer').addEventListener('input',e=>{if(e.target.id==='voltageInput'){state.voltage=Number(e.target.value);const out=Q('voltageOutput');if(out)out.textContent=state.voltage.toFixed(1).replace('.',',')+' V';renderProgress();persist();updateTrackLock();updateLiveSimulation();}});
  Q('partsLayer').addEventListener('change',e=>{if(e.target.id==='voltageInput')message('LM2596 ajustado para '+state.voltage.toFixed(1).replace('.',',')+' V.');});
+ Q('wireSvg').addEventListener('pointerdown',e=>{
+  if(pinch||activeTouches.size>=2||Date.now()<gestureBlockedUntil||spaceHeld)return;
+  if(e.button!==undefined&&e.button!==0)return;
+  const path=e.target.closest?.('[data-wire-index]');
+  if(!path)return;
+  const index=Number(path.dataset.wireIndex),wire=state.wires[index];
+  if(!wire||state.startPort)return;
+  const original=wirePoints(wire),seg=Number(path.dataset.wireSegment);
+  if(!Number.isInteger(seg)||seg<0||seg>=original.length-1)return;
+  if(e.cancelable!==false)e.preventDefault();
+  e.stopPropagation?.();
+  state.selectedWire=index;state.selected=null;state.inspector='wires';
+  renderInspector();updateHistoryButtons();
+  gesture={type:'wire-segment',pointer:e.pointerId,wireIndex:index,segment:seg,
+   original:original.map(p=>({...p})),startX:e.clientX,startY:e.clientY,moved:false,saved:false};
+  wireAlignment=null;requestDraw();
+ });
  Q('wireSvg').addEventListener('click',e=>{
    if(spaceHeld)return;
    const target=e.target.closest('[data-wire-index]');if(!target)return;
