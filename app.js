@@ -58,7 +58,8 @@ const allPorts=new Set(TYPES.flatMap(t=>t.ids.flatMap(id=>t.pins.map(p=>id+'.'+p
 const Q=id=>document.getElementById(id);
 // Coordenadas da bancada são livres: a câmera não impõe bordas às peças ou fios.
 const WORLD={w:1900,h:1450};
-const COLORS=['#ed654d','#316fc0','#1f434c','#32a47b','#e5a13d','#a378c8'];
+const COLOR_CHOICES=[{"name":"Vermelho","value":"#ed654d"},{"name":"Azul","value":"#316fc0"},{"name":"Preto","value":"#1f434c"},{"name":"Verde","value":"#32a47b"},{"name":"Amarelo","value":"#e5a13d"},{"name":"Roxo","value":"#a378c8"},{"name":"Laranja","value":"#f17a32"},{"name":"Azul-claro","value":"#26a9e0"},{"name":"Rosa","value":"#e66da9"},{"name":"Branco","value":"#f5f7f5"},{"name":"Marrom","value":"#8e603f"},{"name":"Cinza","value":"#8895a1"},{"name":"Verde-limão","value":"#a7be4c"},{"name":"Azul-marinho","value":"#253c80"},{"name":"Turquesa","value":"#19b5ac"},{"name":"Vinho","value":"#8f3d63"},{"name":"Dourado","value":"#d0ad55"},{"name":"Lilás","value":"#c6a5f0"}];
+const COLORS=COLOR_CHOICES.map(c=>c.value);
 let state={parts:[],wires:[],voltage:4,switches:{s1:false,s2:false},wireColor:COLORS[0],selected:null,startPort:null,inspector:'parts',completed:false,bends:[],selectedWire:null};
 let zoom=1,panX=0,panY=0,gesture=null,history=[],future=[],toastTimer=0,previewPoint=null,previewSnapPort=null,drawPending=false;
 let spaceHeld=false;
@@ -394,12 +395,54 @@ function chooseWireColor(color){
  renderColors();renderInspector();requestDraw();persist();
 }
 function renderColors(){
- const dropdown=Q('wireColorSelect');if(dropdown)dropdown.value=state.wireColor;
- const preview=Q('wireColorPreview');if(preview)preview.style.background=state.wireColor;
- Q('colorPalette').replaceChildren();
- COLORS.forEach((c,i)=>{
-  const b=document.createElement('button');b.type='button';b.className='swatch'+(state.wireColor===c?' active':'');b.title='Fio '+(i+1);b.style.background=c;b.dataset.color=c;b.setAttribute('aria-label','Selecionar cor '+(i+1));b.setAttribute('aria-pressed',String(state.wireColor===c));Q('colorPalette').append(b);
- });
+ const selected=COLOR_CHOICES.find(c=>c.value===state.wireColor)||COLOR_CHOICES[0];
+ const preview=Q('wireColorPreview');
+ if(preview)preview.style.background=selected.value;
+ const trigger=Q('wireColorButton');
+ if(trigger)trigger.title='Cor do fio: '+selected.name+'. Clique para escolher outra.';
+ // O menu usa bolinhas em grade, sem nomes visíveis, e fica FORA da barra.
+ const menu=Q('wireColorMenu');
+ if(menu){
+  menu.replaceChildren();
+  COLOR_CHOICES.forEach(({name,value})=>{
+   const button=document.createElement('button');button.type='button';
+   button.className='wire-color-choice'+(selected.value===value?' active':'');
+   button.style.setProperty('--choice-color',value);
+   button.dataset.color=value;button.title=name;
+   button.setAttribute('aria-label',name);
+   button.setAttribute('aria-pressed',String(selected.value===value));
+   const dot=document.createElement('span');dot.setAttribute('aria-hidden','true');
+   button.append(dot);menu.append(button);
+  });
+ }
+ // Preserva a paleta legada, oculta, para compatibilidade com outras telas.
+ const legacy=Q('colorPalette');
+ if(legacy)legacy.replaceChildren();
+}
+function positionWireColorMenu(){
+ const button=Q('wireColorButton'),menu=Q('wireColorMenu');
+ if(!button||!menu||menu.hidden)return;
+ const box=button.getBoundingClientRect(),gap=8;
+ const width=208,maxH=Math.min(320,window.innerHeight-20);
+ const estimatedHeight=210;
+ const top=box.bottom+gap+estimatedHeight>window.innerHeight-8&&box.top>estimatedHeight+gap
+  ?box.top-estimatedHeight-gap:box.bottom+gap;
+ const left=Math.max(8,Math.min(window.innerWidth-width-8,box.left));
+ menu.style.left=left+'px';
+ menu.style.top=Math.max(8,Math.min(top,window.innerHeight-48))+'px';
+ menu.style.maxHeight=maxH+'px';
+}
+function closeWireColorMenu(restoreFocus=false){
+ const menu=Q('wireColorMenu'),button=Q('wireColorButton');if(!menu||!button)return;
+ menu.hidden=true;button.setAttribute('aria-expanded','false');
+ if(restoreFocus)button.focus();
+}
+function toggleWireColorMenu(){
+ const menu=Q('wireColorMenu'),button=Q('wireColorButton');
+ if(!menu||!button)return;
+ const open=menu.hidden;menu.hidden=!open;
+ button.setAttribute('aria-expanded',String(open));
+ if(open)positionWireColorMenu();
 }
 function inspectorPart(p){
  const t=byId[p.id];const body=Q('inspectorBody');body.replaceChildren();
@@ -2059,7 +2102,15 @@ function bind(){
   const swatch=e.target.closest('[data-color]');
   if(swatch)chooseWireColor(swatch.dataset.color);
  });
- Q('wireColorSelect').addEventListener('change',e=>chooseWireColor(e.target.value));
+ Q('wireColorButton').addEventListener('click',e=>{e.stopPropagation();toggleWireColorMenu();});
+ Q('wireColorMenu').addEventListener('click',e=>{
+  const item=e.target.closest('[data-color]');if(!item)return;
+  chooseWireColor(item.dataset.color);closeWireColorMenu(true);
+ });
+ document.addEventListener('pointerdown',e=>{
+  if(!e.target.closest('#wireColorButton,#wireColorMenu'))closeWireColorMenu();
+ },true);
+ window.addEventListener('resize',positionWireColorMenu,{passive:true});
  Q('undoBtn').addEventListener('click',undo);
  Q('redoBtn').addEventListener('click',redo);
  Q('copyBtn').addEventListener('click',copySelection);
@@ -2108,6 +2159,9 @@ function bind(){
  Q('restartDrive').addEventListener('click',resetDrive);
  const binds={ArrowUp:'up',w:'up',W:'up',ArrowDown:'down',s:'down',S:'down',ArrowLeft:'left',a:'left',A:'left',ArrowRight:'right',d:'right',D:'right'};
  document.addEventListener('keydown',e=>{
+  if(e.key==='Escape'&&!Q('wireColorMenu').hidden){
+   e.preventDefault();closeWireColorMenu(true);return;
+  }
   // Ctrl+Z / Cmd+Z desfaz uma etapa de cada vez; Ctrl+Y ou Ctrl+Shift+Z refaz.
   // A edição de campos de texto conserva o desfazer próprio do navegador.
   const editable=e.target?.closest?.('input,textarea,select,[contenteditable="true"]');
