@@ -96,3 +96,9 @@ Os jumpers não desenham círculos extras nos pinos. Clique no pino inicial e mo
 ### v30 — movimento reto do jumper até o clique
 
 A ponta livre agora segue o mouse ou o dedo **por um único segmento reto**, desde o último ponto fixado até o cursor, em qualquer direção. Não há cotovelo automático durante a movimentação. O clique em uma área vazia **fixa exatamente um vértice** no ponto escolhido; a partir dali, a nova ponta continua reta até o próximo clique ou pino de destino. Conectar ao pino termina diretamente nele, sem criar curvas adicionais. **Ctrl+Z** remove uma curva fixada por clique e **Ctrl+Y** a restaura. As novas ligações usam o formato manual de pontos e continuam salvas; os jumpers antigos preservam seus caminhos anteriores por compatibilidade.
+
+### v32 — ajuste de jumper conectado, semelhante ao Tinkercad
+
+Depois de conectar um jumper, clique/toque e **arraste um trecho visível do fio**. O trecho move-se transversalmente e surgem cotovelos de adaptação, enquanto os terminais de origem e destino continuam ligados às mesmas peças. Segmentos retos podem ser alinhados pela grade de 20 unidades ou pela altura/posição dos bornes; aparece uma **linha-guia azul pontilhada com “ALINHADO”** apenas durante o arraste próximo do alinhamento. O desenho atualizado é salvo localmente e participa do **Ctrl+Z/Ctrl+Y**. Funciona inclusive em fios originalmente retos sem curvas e nos fios antigos.
+
+Ao **arrastar a bateria, o ESP32 ou outro componente**, só a peça selecionada se desloca e os fios ligados a ela acompanham os pinos. As demais peças permanecem no lugar. Nos caminhos manuais com trechos alinhados aos bornes, o cotovelo próximo acompanha o componente para evitar diagonais indesejadas. Esse ajuste não muda nem desconecta o circuito elétrico e não altera a animação ou as 17 ligações esperadas.
