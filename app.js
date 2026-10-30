@@ -314,36 +314,32 @@ function previousWirePoint(){
  if(state.bends.length>1)return state.bends.at(-2);
  return state.bends.length?tipOrigin():getPortPos(state.startPort);
 }
+// Jumper flexível: os dois eixos acompanham o cursor sem recuar nem travar.
+function orthogonalTrail(last,wanted,previous){
+ if(!last||!wanted)return [];
+ const p={x:Math.round(wanted.x),y:Math.round(wanted.y)};
+ const dx=p.x-last.x,dy=p.y-last.y;
+ if(Math.abs(dx)<2&&Math.abs(dy)<2)return [];
+ if(Math.abs(dx)<2||Math.abs(dy)<2)return [p];
+ const vertical=previous?Math.abs(last.y-previous.y)>=Math.abs(last.x-previous.x):true;
+ const elbow=vertical?{x:last.x,y:p.y}:{x:p.x,y:last.y};
+ return [elbow,p];
+}
 function projectFromTip(from,wanted,previous=null){
- if(!from||!wanted)return null;
- const dx=wanted.x-from.x,dy=wanted.y-from.y,xFirst=Math.abs(dx)>=Math.abs(dy);
- if(previous){
-  const vx=from.x-previous.x,vy=from.y-previous.y;
-  // O jumper só cresce da última ponta: não pode percorrer o trecho de volta.
-  if(Math.abs(vx)>Math.abs(vy)&&xFirst&&dx*vx<=0){
-   if(Math.abs(dy)<12)return null;
-   return {x:Math.round(from.x),y:Math.round(wanted.y)};
-  }
-  if(Math.abs(vy)>=Math.abs(vx)&&!xFirst&&dy*vy<=0){
-   if(Math.abs(dx)<12)return null;
-   return {x:Math.round(wanted.x),y:Math.round(from.y)};
-  }
- }
- return xFirst?{x:Math.round(wanted.x),y:Math.round(from.y)}:
-  {x:Math.round(from.x),y:Math.round(wanted.y)};
+ const points=orthogonalTrail(from,wanted,previous);
+ return points.length?points[points.length-1]:null;
 }
 function addCorner(x,y){
  if(!state.startPort)return;
- const last=lastWireTip(),pt=projectFromTip(last,{x,y},previousWirePoint());
- if(!pt||Math.hypot(pt.x-last.x,pt.y-last.y)<12){
-  previewPoint=null;requestDraw();return;
- }
- if(state.bends.length>=24){message('Limite de curvas: finalize em um pino.',true);return;}
- // Cada clique fixa uma etapa do trajeto: Ctrl+Z volta exatamente uma curva.
- snapshot();
- state.bends.push(pt);previewPoint=null;previewSnapPort=null;
+ const last=lastWireTip(),trail=orthogonalTrail(last,{x,y},previousWirePoint());
+ const tip=trail.at(-1);
+ if(!tip||Math.hypot(tip.x-last.x,tip.y-last.y)<6){requestDraw();return;}
+ if(state.bends.length+trail.length>48){message('Limite de curvas: finalize em um pino.',true);return;}
+ // Um clique fixa as curvas até o cursor, em um único passo Ctrl+Z.
+ snapshot();state.bends.push(...trail);
+ previewPoint={x,y};previewSnapPort=null;
  updateHistoryButtons();requestDraw();
- message('Ponta fixada. Toque em outra posição para continuar ou no pino de destino para terminar.');
+ message('Trecho fixado. Continue movendo o mouse ou toque no destino.');
 }
 function connect(id){
  const part=id.split('.')[0];if(!exists(part))return;
@@ -428,15 +424,6 @@ function drawWires(){
  drawPending=false;
  const svg=Q('wireSvg');svg.replaceChildren();
  const ns='http://www.w3.org/2000/svg';
- function cap(point,color,cls){
-  const node=document.createElementNS(ns,'circle');
-  node.setAttribute('cx',String(Math.round(point.x)));
-  node.setAttribute('cy',String(Math.round(point.y)));
-  // Preenche o furo preto do terminal, sem aro branco deslocado.
-  node.setAttribute('r',cls==='wire-corner'?'7':'7.8');
-  node.setAttribute('fill',color);node.setAttribute('stroke','none');
-  node.setAttribute('class',cls);svg.append(node);
- }
  for(let i=0;i<state.wires.length;i++){
   const w=state.wires[i],a=getPortPos(w.a),b=getPortPos(w.b);
   if(!a||!b)continue;
@@ -446,7 +433,7 @@ function drawWires(){
   line.setAttribute('d',d);
   line.setAttribute('class','wire-line'+(valid.has(electricalKey(w.a,w.b))?'':' wire-error')+(state.selectedWire===i?' wire-selected':''));
   line.setAttribute('stroke',w.color);svg.append(line);
-  cap(a,w.color,'wire-end-cap');cap(b,w.color,'wire-end-cap');
+  // O traço termina no furo do pino; nenhum círculo fica sobre o componente.
   // Alvo para tocar e selecionar o fio. Não cobre os furos dos pinos.
   const hitPts=points.slice(1,-1);
   if(hitPts.length>1){
@@ -465,13 +452,29 @@ function drawWires(){
   const start=getPortPos(state.startPort);
   if(!start)return;
   const last=lastWireTip(),target=previewPoint?projectFromTip(last,previewPoint,previousWirePoint()):null;
-  const pts=[...state.bends];if(!previewSnapPort&&target&&Math.hypot(target.x-last.x,target.y-last.y)>2)pts.push(target);
+  const pts=[...state.bends];
+  if(!previewSnapPort&&target&&Math.hypot(target.x-last.x,target.y-last.y)>2)pts.push(...orthogonalTrail(last,previewPoint,previousWirePoint()));
   const preview=document.createElementNS(ns,'path');
   preview.setAttribute('d',wireRoute(start,pts,previewSnapPort?getPortPos(previewSnapPort):null,state.startPort,previewSnapPort));
   preview.setAttribute('class','wire-line wire-pending');
   preview.setAttribute('stroke',state.wireColor);svg.append(preview);
-  cap(start,state.wireColor,'wire-end-cap');
-  cap((previewSnapPort&&getPortPos(previewSnapPort))||pts.at(-1)||last,state.wireColor,'wire-active-tip');
+  const tip=(previewSnapPort&&getPortPos(previewSnapPort))||pts.at(-1)||last;
+  if(tip&&previewPoint){
+   const spark=document.createElementNS(ns,'g');
+   spark.setAttribute('class','wire-spark');
+   spark.setAttribute('transform','translate('+Math.round(tip.x)+' '+Math.round(tip.y)+')');
+   spark.setAttribute('stroke','#ffbd53');spark.setAttribute('stroke-width','3.5');
+   spark.setAttribute('stroke-linecap','round');
+   for(const angle of [-90,-30,30,90,150,210]){
+    const line=document.createElementNS(ns,'line'),r=angle*Math.PI/180;
+    line.setAttribute('x1',String(Math.round(Math.cos(r)*9)));
+    line.setAttribute('y1',String(Math.round(Math.sin(r)*9)));
+    line.setAttribute('x2',String(Math.round(Math.cos(r)*15)));
+    line.setAttribute('y2',String(Math.round(Math.sin(r)*15)));
+    spark.append(line);
+   }
+   svg.append(spark);
+  }
  }
 }
 function requestDraw(){if(drawPending)return;drawPending=true;requestAnimationFrame(drawWires);}
