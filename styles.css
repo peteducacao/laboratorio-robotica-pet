@@ -1364,18 +1364,13 @@
 }
 
 
-/* v33: a ponta só volta a ser arrastável quando o usuário toca no marcador. */
-.wire-svg .wire-frozen-tip{
- fill:transparent!important;stroke:transparent!important;
- pointer-events:all!important;touch-action:none!important;cursor:grab!important;
-}
-.wire-svg .wire-frozen-tip:hover,.wire-svg .wire-frozen-tip:active{
- cursor:grabbing!important;fill:#48aabc13!important;
-}
-.wire-svg .wire-tip-square{
- fill:#ffe2a0!important;stroke:#be7720!important;stroke-width:2.5!important;
+/* v35: indicador de alinhamento puramente visual, traço fino e contínuo. */
+.wire-svg .wire-pending-guide{
+ stroke:#79c8ef!important;
+ stroke-dasharray:none!important;
+ fill:none!important;
+ opacity:.96!important;
  pointer-events:none!important;
- filter:drop-shadow(0 1px 3px #875b3073)!important;
+ stroke-linecap:butt!important;
+ filter:none!important;
 }
-.wire-svg .wire-alignment-guide{stroke:#159fb5!important;stroke-dasharray:6 5!important}
-.wire-svg .wire-alignment-label{fill:#117d90!important}
