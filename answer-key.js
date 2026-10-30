@@ -106,7 +106,7 @@
  }
  function makeSvg(embedded={},category=activeCategory,wire=activeWire){
   const pieces=[];
-  pieces.push('<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 '+WIDTH+' '+HEIGHT+'" width="'+WIDTH+'" height="'+HEIGHT+'" role="img" aria-label="Gabarito visual do carrinho ESP32, com nove componentes reais e dezessete fios conectados">');
+  pieces.push('<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 '+WIDTH+' '+HEIGHT+'" width="'+WIDTH+'" height="'+HEIGHT+'" role="img" aria-label="Gabarito visual das duas formas de montagem do carrinho ESP32">');
   pieces.push('<defs><pattern id="answerDots" width="28" height="28" patternUnits="userSpaceOnUse"><circle cx="3" cy="3" r="1.45" fill="#ccdce1"/></pattern></defs>');
   pieces.push('<rect width="'+WIDTH+'" height="'+HEIGHT+'" rx="30" fill="#eef5f6"/>');
   pieces.push('<rect x="24" y="24" width="2002" height="1402" rx="28" fill="#f8fbfc" stroke="#b4cbd2" stroke-width="3"/>');
@@ -114,7 +114,7 @@
   pieces.push('<rect x="55" y="77" width="1938" height="486" rx="27" fill="#e4eff5" fill-opacity=".43" stroke="#d5e5eb" stroke-width="2"/>');
   pieces.push('<rect x="55" y="600" width="1938" height="725" rx="27" fill="#e4f2ed" fill-opacity=".30" stroke="#d5e6de" stroke-width="2"/>');
   pieces.push('<text x="75" y="67" fill="#1a5362" font-family="Arial,sans-serif" font-weight="bold" font-size="29">CIRCUITO PRONTO · ESP32</text>');
-  pieces.push('<text x="1280" y="67" fill="#63838c" font-family="Arial,sans-serif" font-size="23">TinkerPET • PET Educação • 9 componentes / 17 conexões</text>');
+  pieces.push('<text x="1280" y="67" fill="#63838c" font-family="Arial,sans-serif" font-size="23">TinkerPET • PET Educação • '+components.length+' peças / '+connections.length+' conexões</text>');
   pieces.push('<text x="81" y="146" fill="#347e82" font-family="Arial,sans-serif" font-weight="bold" font-size="20" letter-spacing="2">ALIMENTAÇÃO E CONTROLE</text>');
   pieces.push('<text x="81" y="678" fill="#347e82" font-family="Arial,sans-serif" font-weight="bold" font-size="20" letter-spacing="2">ALIMENTAÇÃO DOS MOTORES</text>');
   const contacts=[];
@@ -256,10 +256,23 @@
   el('answerDiagram').innerHTML=makeSvg();
   renderFilters();applyZoom();
  }
- function renderCircuit(){
+ function setAnswerMode(mode){
+  answerMode=mode==='direct'?'direct':'switched';
+  connections=answerMode==='direct'?data.directConnections:data.connections;
+  components=answerMode==='direct'?data.components.filter(p=>p.kind!=='switch'):data.components;
+  groups=answerMode==='direct'?data.directGroups:data.groups;
+  categories=answerMode==='direct'?directCategories:switchedCategories;
+  for(const id of ['Direct','Switched']){
+   const active=id.toLowerCase()===answerMode;
+   el('answerMode'+id).classList.toggle('is-active',active);
+   el('answerMode'+id).setAttribute('aria-pressed',String(active));
+  }
+  el('answerCounter').textContent='✓ '+components.length+' peças • '+connections.length+' fios conectados';
+  el('answerDetailsTitle').textContent='Ver resumo das '+connections.length+' conexões';
   activeCategory='all';activeWire=-1;magnification=1;
   renderSummary();refresh();
  }
+ function renderCircuit(){setAnswerMode(answerMode);}
  function open(){
   el('answerForm').hidden=false;el('answerContent').hidden=true;
   el('answerError').textContent='';el('answerPassword').value='';
@@ -278,6 +291,8 @@
   el('answerForm').hidden=true;el('answerContent').hidden=false;
   renderCircuit();
  });
+ el('answerModeDirect').addEventListener('click',()=>setAnswerMode('direct'));
+ el('answerModeSwitched').addEventListener('click',()=>setAnswerMode('switched'));
  el('answerDiagram').addEventListener('click',e=>{
   const index=e.target?.getAttribute?.('data-answer-wire');
   if(index!==null&&index!==undefined)showWire(Number(index));
