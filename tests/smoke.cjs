@@ -12,7 +12,7 @@ new vm.Script(answerKey);
 new vm.Script(js);
 const projectsHtml=fs.readFileSync(path.join(base,'projects.html'),'utf8');
 const projectsJs=fs.readFileSync(path.join(base,'projects.js'),'utf8');
-assert(/id="openGate"[^>]*>[\\s\\S]*?<svg[\\s\\S]*?<\\/svg><span id="gateLabel">/.test(projectsHtml),'Gabaritos preserva seu ícone no menu');
+assert(projectsHtml.includes('<button type="button" id="openGate"><svg')&&projectsHtml.includes('</svg><span id="gateLabel">'),'Gabaritos preserva seu ícone no menu');
 assert(projectsJs.includes("$('gateLabel').textContent='Gabaritos'"),'desbloqueio atualiza somente o texto do Gabarito');
 assert(!projectsJs.includes("openGate').innerHTML='Gabaritos'"),'desbloqueio não remove SVG do Gabarito');
 new vm.Script(projectsJs);
