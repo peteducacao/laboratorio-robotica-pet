@@ -161,7 +161,9 @@ function historyState(){return JSON.stringify({
 function updateHistoryButtons(){
  const undoBtn=Q('undoBtn'),redoBtn=Q('redoBtn'),delBtn=Q('deleteBtn');
  const rotateBtn=Q('rotateBtn'),flipBtn=Q('flipBtn'),p=byPart(state.selected);
- if(rotateBtn){rotateBtn.disabled=!p||selectedParts.size>1;rotateBtn.title=selectedParts.size>1?'Girar: selecione uma peça por vez':p?'Girar '+partName(p.id)+' 90° (R)':'Selecione um componente para girar 90°';rotateBtn.setAttribute('aria-label',rotateBtn.title);}
+ // O controle permanece acionável sem peça para orientar a seleção,
+ // sem parecer permanentemente quebrado ou apagado na barra.
+ if(rotateBtn){rotateBtn.disabled=selectedParts.size>1;rotateBtn.title=selectedParts.size>1?'Girar: selecione uma peça por vez':p?'Girar '+partName(p.id)+' 90° (R)':'Selecione um componente para girar 90°';rotateBtn.setAttribute('aria-label',rotateBtn.title);}
  if(flipBtn){
   flipBtn.disabled=!p||selectedParts.size>1;
   flipBtn.title=selectedParts.size>1?'Inverter: selecione uma peça por vez':p?'Inverter esquerda/direita de '+partName(p.id)+' (I)':'Selecione um componente para inverter esquerda e direita';
@@ -606,7 +608,71 @@ function renderProgress(){
  else if(Math.abs(state.voltage-5)>.01||(switched&&(!state.switches.s1||!state.switches.s2))){Q('stepNumber').textContent='03';missionTitle.textContent='Ligações concluídas! Ative a alimentação';missionText.textContent='Ajuste a saída do LM2596 para 5,0 V'+(switched?' e ligue as duas gangorras.':'.');}
  else {Q('stepNumber').textContent='04';missionTitle.textContent='Circuito completo!';missionText.textContent='Parabéns! Montagem '+(switched?'com':'sem')+' gangorras validada. Inicie a simulação e abra a pista.';}
 }
-function refresh(){renderCatalog();renderParts();renderColors();renderInspector();renderProgress();persist();updateTrackLock();}
+// Celebra somente quando uma edição transforma um circuito incompleto em
+// completo. A primeira renderização após F5 estabelece o estado inicial e
+// nunca abre a mensagem. Toda edição posterior pode rearmar a celebração.
+let completionKnown=false,completionWasValid=false;
+let completionCloseTimer=0,completionCountTimer=0,completionLastFocus=null;
+function dismissCompletionCelebration(){
+ const dialog=Q('completionDialog');
+ clearTimeout(completionCloseTimer);clearInterval(completionCountTimer);
+ completionCloseTimer=0;completionCountTimer=0;
+ if(dialog?.open)dialog.close();
+ if(completionLastFocus?.isConnected && typeof completionLastFocus.focus==='function'){
+  try{completionLastFocus.focus({preventScroll:true});}catch{completionLastFocus.focus();}
+ }
+ completionLastFocus=null;
+}
+function showCompletionCelebration(){
+ const dialog=Q('completionDialog');
+ if(!dialog||dialog.open)return;
+ const label=Q('completionConnections');
+ if(label)label.textContent=expectedConnections().length+' conexões corretas';
+ const mode=Q('completionMode');
+ if(mode)mode.textContent=assemblyMode()==='switched'?'Montagem com gangorras':'Montagem sem gangorras';
+ const confetti=Q('completionConfetti');
+ if(confetti){
+  confetti.replaceChildren();
+  const colors=['#16a394','#1b7ab7','#f3bd50','#d8a5e9','#f18670'];
+  for(let i=0;i<22;i++){
+   const piece=document.createElement('span');
+   piece.className='completion-confetti-piece';
+   piece.style.setProperty('--c',colors[i%colors.length]);
+   piece.style.setProperty('--x',(3+(i*37)%94)+'%');
+   piece.style.setProperty('--d',(i%9)*-.16+'s');
+   piece.style.setProperty('--side',((i%2?-1:1)*(28+(i*13)%115))+'px');
+   piece.style.setProperty('--turn',((i%2?-1:1)*(210+(i*71)%400))+'deg');
+   confetti.append(piece);
+  }
+ }
+ const ring=Q('completionTimerRing');
+ if(ring){ring.style.animation='none';void ring.getBoundingClientRect();ring.style.animation='';}
+ const count=Q('completionSeconds');
+ if(count)count.textContent='3';
+ completionLastFocus=document.activeElement;
+ try{dialog.showModal()}catch{return;}
+ Q('completionClose')?.focus({preventScroll:true});
+ const end=performance.now()+3000;
+ clearTimeout(completionCloseTimer);clearInterval(completionCountTimer);
+ completionCountTimer=setInterval(()=>{
+  if(!dialog.open){clearInterval(completionCountTimer);return;}
+  if(count)count.textContent=String(Math.max(0,Math.ceil((end-performance.now())/1000)));
+ },100);
+ completionCloseTimer=setTimeout(dismissCompletionCelebration,3000);
+}
+function syncCompletionCelebration(){
+ // A exigência de 5 V e todas as ligações certas faz parte de ready().
+ const correct=ready();
+ if(!completionKnown){
+  completionKnown=true;completionWasValid=correct;return;
+ }
+ if(!completionWasValid&&correct)showCompletionCelebration();
+ completionWasValid=correct;
+}
+function refresh(){
+ renderCatalog();renderParts();renderColors();renderInspector();renderProgress();
+ persist();updateTrackLock();syncCompletionCelebration();
+}
 function renderAll(){refresh();}
 function addPart(kind,x,y){
  if(reconnectPending)cancelReconnect();
@@ -2465,6 +2531,12 @@ function bind(){
   progressDetails.addEventListener('keydown',e=>{
    if(e.key==='Enter'||e.key===' '){e.preventDefault();explain();}
   });
+ }
+ const done=Q('completionDialog');
+ if(done){
+  Q('completionClose')?.addEventListener('click',dismissCompletionCelebration);
+  done.addEventListener('cancel',e=>{e.preventDefault();dismissCompletionCelebration();});
+  done.addEventListener('close',()=>{clearTimeout(completionCloseTimer);clearInterval(completionCountTimer);completionCloseTimer=0;completionCountTimer=0;});
  }
  Q('checkBtn').addEventListener('click',toggleSimulation);
  Q('openTrackBtn').addEventListener('click',()=>{
