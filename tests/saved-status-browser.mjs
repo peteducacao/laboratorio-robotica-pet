@@ -75,9 +75,13 @@ try{
    }
   });
   await page.waitForFunction(()=>JSON.parse(localStorage.getItem('tinkerpet-library-v1')).projects[0].circuit.wires.length===1);
-  assert.equal(await page.locator('#savedIndicator').isVisible(),true,'alteração na bancada mostra confirmação '+width);
+  assert.equal(await page.locator('#savedIndicator').evaluate(el=>el.hidden),false,
+   'alteração na bancada aciona confirmação '+width);
+  if(width>700)assert.equal(await page.locator('#savedIndicator').isVisible(),true,
+   'confirmação fica visível no cabeçalho do computador '+width);
   await page.waitForTimeout(3150);
-  assert.equal(await page.locator('#savedIndicator').isVisible(),false,'confirmação na bancada desaparece '+width);
+  assert.equal(await page.locator('#savedIndicator').evaluate(el=>el.hidden),true,
+   'confirmação da bancada desaparece '+width);
   await page.goto(origin+'/projects.html',{waitUntil:'domcontentloaded'});
   assert.equal(await badge.count(),1,'modificar ligação mostra selo ao voltar '+width);
   await page.reload({waitUntil:'domcontentloaded'});
