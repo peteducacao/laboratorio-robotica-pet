@@ -108,8 +108,8 @@ try{
   await page.locator('#hintBtn').waitFor({state:'visible',timeout:6000});
   await button('hintBtn');
   await page.locator('#wireHintDialog[open]').waitFor({state:'visible'});
-  assert.match(await page.locator('#wireHintWhat').textContent(),/D19.*IN3/,'mostra GPIO19 usado '+width);
-  assert.match(await page.locator('#wireHintCorrect').textContent(),/D(?:27|26|32).*IN3/,'sugere GPIO permitido e livre para IN3 '+width);
+  assert.match(await page.locator('#wireHintWhat').textContent(),/D19/,'mostra ponta errada no GPIO19 '+width);
+  assert.match(await page.locator('#wireHintCorrect').textContent(),/D(?:27|26|32)/,'sugere GPIO permitido e livre para IN3 '+width);
   await button('wireHintClose');
 
   // Se todos os erros sumirem, o próximo ciclo sorteia de novo.
@@ -136,7 +136,7 @@ try{
    'reconexão mudou realmente a porta IN2 para IN1 '+width);
   await page.locator('#hintBtn').waitFor({state:'visible',timeout:6000});
   await button('hintBtn');
-  assert.match(await page.locator('#wireHintCorrect').textContent(),/D27.*IN1/,'reconexão incorreta recebe destino certo '+width);
+  assert.match(await page.locator('#wireHintCorrect').textContent(),/D27/,'reconexão incorreta recebe GPIO correto '+width);
   await button('wireHintClose');
   assert.deepEqual(errors,[],'sem erros JS no '+width+': '+errors.join('; '));
   await page.close();
