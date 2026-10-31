@@ -636,14 +636,21 @@ function showCompletionCelebration(){
  if(confetti){
   confetti.replaceChildren();
   const colors=['#16a394','#1b7ab7','#f3bd50','#d8a5e9','#f18670'];
-  for(let i=0;i<22;i++){
+  // Confetes caem em toda a área desfocada, atrás do cartão central.
+  // Fases diferentes mantêm uma chuva leve durante os 10 segundos.
+  const reducedMotion=window.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches===true;
+  for(let i=0;i<(reducedMotion?0:56);i++){
    const piece=document.createElement('span');
    piece.className='completion-confetti-piece';
    piece.style.setProperty('--c',colors[i%colors.length]);
-   piece.style.setProperty('--x',(3+(i*37)%94)+'%');
-   piece.style.setProperty('--d',(i%9)*-.16+'s');
-   piece.style.setProperty('--side',((i%2?-1:1)*(28+(i*13)%115))+'px');
-   piece.style.setProperty('--turn',((i%2?-1:1)*(210+(i*71)%400))+'deg');
+   piece.style.setProperty('--x',(2+(i*43)%96)+'%');
+   piece.style.setProperty('--delay',(-((i*23)%67)/10)+'s');
+   piece.style.setProperty('--duration',(4.7+(i%7)*.47)+'s');
+   piece.style.setProperty('--side',((i%2?-1:1)*(22+(i*13)%85))+'px');
+   piece.style.setProperty('--turn',((i%2?-1:1)*(180+(i*71)%540))+'deg');
+   piece.style.setProperty('--w',(4+i%4)+'px');
+   piece.style.setProperty('--h',(7+(i*3)%7)+'px');
+   piece.style.setProperty('--round',i%8===0?'50%':'2px');
    confetti.append(piece);
   }
  }
