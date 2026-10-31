@@ -71,7 +71,7 @@ const allPorts=new Set(TYPES.flatMap(t=>t.ids.flatMap(id=>t.pins.map(p=>id+'.'+p
 const Q=id=>document.getElementById(id);
 // Coordenadas da bancada são livres: a câmera não impõe bordas às peças ou fios.
 const WORLD={w:1900,h:1450};
-const COLOR_CHOICES=[{"name":"Vermelho","value":"#ed654d"},{"name":"Azul","value":"#316fc0"},{"name":"Preto","value":"#1f434c"},{"name":"Verde","value":"#32a47b"},{"name":"Amarelo","value":"#e5a13d"},{"name":"Roxo","value":"#a378c8"},{"name":"Laranja","value":"#f17a32"},{"name":"Azul-claro","value":"#26a9e0"},{"name":"Rosa","value":"#e66da9"},{"name":"Branco","value":"#f5f7f5"},{"name":"Marrom","value":"#8e603f"},{"name":"Cinza","value":"#8895a1"},{"name":"Verde-limão","value":"#a7be4c"},{"name":"Azul-marinho","value":"#253c80"},{"name":"Turquesa","value":"#19b5ac"},{"name":"Vinho","value":"#8f3d63"},{"name":"Dourado","value":"#d0ad55"},{"name":"Lilás","value":"#c6a5f0"}];
+const COLOR_CHOICES=[{"name":"Vermelho","value":"#df1724"},{"name":"Azul","value":"#316fc0"},{"name":"Preto","value":"#1f434c"},{"name":"Verde","value":"#32a47b"},{"name":"Amarelo","value":"#e5a13d"},{"name":"Roxo","value":"#a378c8"},{"name":"Laranja","value":"#f17a32"},{"name":"Azul-claro","value":"#26a9e0"},{"name":"Rosa","value":"#e66da9"},{"name":"Branco","value":"#f5f7f5"},{"name":"Marrom","value":"#8e603f"},{"name":"Cinza","value":"#8895a1"},{"name":"Verde-limão","value":"#a7be4c"},{"name":"Azul-marinho","value":"#253c80"},{"name":"Turquesa","value":"#19b5ac"},{"name":"Vinho","value":"#8f3d63"},{"name":"Dourado","value":"#d0ad55"},{"name":"Lilás","value":"#c6a5f0"}];
 const COLORS=COLOR_CHOICES.map(c=>c.value);
 let state={parts:[],wires:[],voltage:4,switches:{s1:false,s2:false},wireColor:COLORS[0],selected:null,startPort:null,inspector:'parts',completed:false,bends:[],selectedWire:null};
 let zoom=1,panX=0,panY=0,gesture=null,history=[],future=[],toastTimer=0,previewPoint=null,previewSnapPort=null,drawPending=false;
@@ -108,10 +108,11 @@ function safeRestore(){
   if(!s||!Array.isArray(s.parts)||!Array.isArray(s.wires))return;
   const names=new Set();
   state.parts=s.parts.filter(p=>p&&byId[p.id]&&!names.has(p.id)&&names.add(p.id)&&Number.isFinite(p.x)&&Number.isFinite(p.y)).map(p=>({id:p.id,kind:byId[p.id].kind,x:p.x,y:p.y,view:byId[p.id].kind==='motor'&&p.view==='side'?'side':'front',rotation:normalizePartRotation(p.rotation),flipped:p.flipped===true}));
-  state.wires=s.wires.filter(w=>w&&allPorts.has(w.a)&&allPorts.has(w.b)&&(w.a!==w.b||!!w.loose)&&exists(w.a.split('.')[0])&&exists(w.b.split('.')[0])).slice(0,80).map(w=>({a:w.a,b:w.b,color:COLORS.includes(w.color)?w.color:COLORS[0],via:Array.isArray(w.via)?w.via.filter(p=>p&&Number.isFinite(p.x)&&Number.isFinite(p.y)).slice(0,48).map(p=>({x:p.x,y:p.y})):[],manual:w.manual===true,loose:(['a','b'].includes(w.loose?.end)&&Number.isFinite(w.loose?.point?.x)&&Number.isFinite(w.loose?.point?.y))?{end:w.loose.end,point:{x:w.loose.point.x,y:w.loose.point.y}}:null}));
+  state.wires=s.wires.filter(w=>w&&allPorts.has(w.a)&&allPorts.has(w.b)&&(w.a!==w.b||!!w.loose)&&exists(w.a.split('.')[0])&&exists(w.b.split('.')[0])).slice(0,80).map(w=>({a:w.a,b:w.b,color:String(w.color).toLowerCase()==='#ed654d'?'#df1724':COLORS.includes(w.color)?w.color:COLORS[0],via:Array.isArray(w.via)?w.via.filter(p=>p&&Number.isFinite(p.x)&&Number.isFinite(p.y)).slice(0,48).map(p=>({x:p.x,y:p.y})):[],manual:w.manual===true,loose:(['a','b'].includes(w.loose?.end)&&Number.isFinite(w.loose?.point?.x)&&Number.isFinite(w.loose?.point?.y))?{end:w.loose.end,point:{x:w.loose.point.x,y:w.loose.point.y}}:null}));
   if(Number.isFinite(s.voltage))state.voltage=limit(s.voltage,3,6);
   if(s.switches)state.switches={s1:!!s.switches.s1,s2:!!s.switches.s2};
-  if(COLORS.includes(s.wireColor))state.wireColor=s.wireColor;
+  if(String(s.wireColor).toLowerCase()==='#ed654d')state.wireColor='#df1724';
+  else if(COLORS.includes(s.wireColor))state.wireColor=s.wireColor;
 
   // Recupera os trajetos manuais guardados antes do alinhamento automático.
   // Mantém fios novos e a posição atual dos componentes.
