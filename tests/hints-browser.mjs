@@ -56,9 +56,9 @@ try{
   await page.locator('#hintBtn').waitFor({state:'visible',timeout:5000});
   await page.locator('#hintBtn').click();
   await page.locator('#wireHintDialog[open]').waitFor({state:'visible'});
-  assert.match(await page.locator('#wireHintWhat').textContent(),/Bateria 9 V.*Regulador LM2596.*OUT\s*\+/,'texto descreve a ligação real '+width);
-  assert.match(await page.locator('#wireHintCorrect').textContent(),/Bateria 9 V.*Regulador LM2596.*IN/,'texto mostra borne correto '+width);
-  assert.doesNotMatch(await page.locator('#wireHintCorrect').textContent(),/ESP32/,'não misturar dica de outro componente '+width);
+  assert.match(await page.locator('#wireHintWhat').textContent(),/Regulador LM2596.*OUT\s*\+/,'mostra exatamente a ponta errada '+width);
+  assert.match(await page.locator('#wireHintCorrect').textContent(),/Regulador LM2596.*IN\s*−/,'mostra a entrada correta do regulador '+width);
+  assert.match(await page.locator('#wireHintKeep').textContent(),/Bateria 9 V/,'mantém a outra ponta no lugar '+width);
   await page.locator('#wireHintClose').click();
   await connect('b1.NEG','lm.OUTP'); // remover fio incorreto
   await connect('b1.NEG','lm.INN'); // corrigir
