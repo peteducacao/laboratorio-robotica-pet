@@ -2007,7 +2007,8 @@ function mobileFingerRoute(g,e){
     // Consolida a curva no local da última ponta antes da mudança de direção.
     const head=mobileRoundPoint(g.fingerHead);
     const last=g.fingerFixed.at(-1);
-    if(last&&(head.x!==last.x||head.y!==last.y))g.fingerFixed.push(head);
+    if(last&&(head.x!==last.x||head.y!==last.y)&&g.fingerFixed.length<44)
+     g.fingerFixed.push(head);
     g.fingerAxis=candidate;
    }
   }
@@ -2021,7 +2022,7 @@ function mobileFingerRoute(g,e){
  // Um segundo trecho curto fecha exatamente na posição do dedo; quando
  // ele vira, a curva anterior fica fixada e o trajeto continua do novo eixo.
  const route=mobileNormalizeRoute([...g.fingerFixed,head,current]);
- if(route.length>48)g.fingerFixed=mobileNormalizeRoute(route.slice(-43));
+ // O limite de curvas é aplicado nos pontos fixados, sem cortar a origem.
  const fixedStart=route[0];
  const tip=route.at(-1);
  if(!fixedStart||!tip)return;
@@ -2030,6 +2031,32 @@ function mobileFingerRoute(g,e){
  previewSnapPort=null;
  pendingAlignment=null;
  requestDraw();
+}
+// Arraste de um jumper já conectado: a bolinha acompanha o dedo e
+// as mudanças reais de direção geram novos pontos em pending.corners.
+function mobileReconnectFinger(g,e){
+ if(e.pointerType!=='touch'||!g?.moved||!reconnectPending)return;
+ const point=mobileRoundPoint(worldXY(e.clientX,e.clientY));
+ if(!g.reconnectFingerLast){
+  g.reconnectFingerLast=mobileRoundPoint(worldXY(g.startX,g.startY));
+  g.reconnectFingerAxis=null;
+  return;
+ }
+ const prev=g.reconnectFingerLast,dx=point.x-prev.x,dy=point.y-prev.y;
+ if(Math.hypot(dx,dy)<7/zoom)return;
+ const axis=Math.abs(dx)>Math.abs(dy)*1.25?'x':
+   Math.abs(dy)>Math.abs(dx)*1.25?'y':null;
+ if(axis&&!g.reconnectFingerAxis)g.reconnectFingerAxis=axis;
+ else if(axis&&axis!==g.reconnectFingerAxis){
+  if(Math.abs(axis==='x'?dx:dy)*zoom>=8 &&
+     reconnectPending.corners.length<40){
+   const last=g.reconnectFingerLast,existing=reconnectPending.corners.at(-1);
+   if(!existing||Math.hypot(existing.x-last.x,existing.y-last.y)>7/zoom)
+    reconnectPending.corners.push({...last});
+   g.reconnectFingerAxis=axis;
+  }
+ }
+ g.reconnectFingerLast=point;
 }
 function mobileFinishFingerRoute(g,targetPort=null,looseTip=null){
  if(!g?.fingerFixed)return;
@@ -2049,7 +2076,7 @@ function mobileFinishFingerRoute(g,targetPort=null,looseTip=null){
   }
  }
  points=mobileNormalizeRoute(points);
- if(points.length>49)points=[points[0],...points.slice(-48)];
+ if(points.length>49)points=points.slice(0,48).concat(points.at(-1));
  state.bends=points.slice(1,-1);
  previewPoint=points.at(-1);
  requestDraw();
@@ -2084,6 +2111,7 @@ function pointerMove(e){
     startDragEdgePan();
    }
   }else if(g.type==='wire-end'||g.type==='reconnect-bend'){
+   if(g.type==='wire-end')mobileReconnectFinger(g,e);
    moveReconnect(e.clientX,e.clientY);
   }else if(g.type==='wire-bend'){
    if(g.moved&&!g.saved){snapshot();g.saved=true;}
