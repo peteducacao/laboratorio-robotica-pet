@@ -5,7 +5,6 @@
  const ROOT='tinkerpet-v2', LIB='tinkerpet-library-v1', ACTIVE='tinkerpet-active-v1', NICK='tinkerpet-nickname-v1';
  const $=id=>document.getElementById(id);
  const nickRegistry=window.TinkerpetNickRegistry;
- let adminNicks=[];
  const typeKinds={esp:'esp',drv:'driver',lm:'buck',b1:'battery',b2:'batteryPack',s1:'switch',s2:'switch',ml:'motor',mr:'motor'};
  const geometry={
   esp:[790,365,'assets/esp32-devkit-v1-30p.svg?v=29'],driver:[250,317,'assets/mx1508-desenhado.svg?v=38'],
@@ -263,39 +262,6 @@
    setTimeout(editNickname,120);
   });
  }
- function showAdminNicks(){
-  const query=$('adminSearch').value.trim().toLocaleLowerCase('pt-BR');
-  const visible=adminNicks.filter(n=>n.toLocaleLowerCase('pt-BR').includes(query));
-  const list=$('adminNickList');list.replaceChildren();
-  for(const [i,nick] of visible.entries()){
-   const li=document.createElement('li'),index=document.createElement('span'),name=document.createElement('span');
-   index.className='admin-index';index.textContent=String(i+1).padStart(2,'0');
-   name.textContent=nick;li.append(index,name);list.append(li);
-  }
-  $('adminEmpty').hidden=visible.length>0;
-  $('adminCount').textContent=String(adminNicks.length);
- }
- function openAdmin(){
-  $('adminPassword').value='';$('adminError').textContent='';
-  $('adminForm').hidden=false;$('adminContent').hidden=true;adminNicks=[];
-  $('adminDialog').showModal();$('adminPassword').focus();
- }
- async function loginAdmin(e){
-  e.preventDefault();const password=$('adminPassword').value;
-  if(!nickRegistry?.enabled){
-   $('adminError').textContent='Registro no GitHub ainda não configurado.';return;
-  }
-  const button=$('adminForm').querySelector('[type=submit]');button.disabled=true;
-  try{
-   const names=await nickRegistry.list(password);
-   adminNicks=Array.isArray(names)?names:[];
-   adminNicks.sort((a,b)=>a.localeCompare(b,'pt-BR',{sensitivity:'base'}));
-   $('adminSearch').value='';$('adminPassword').value='';
-   $('adminForm').hidden=true;$('adminContent').hidden=false;showAdminNicks();
-  }catch(error){
-   $('adminError').textContent=error?.status===401?'Senha incorreta.':'Não foi possível consultar os Nicks. Verifique a conexão.';
-  }finally{button.disabled=false}
- }
  function openGate(){
   if(sessionStorage.getItem('tinkerpet-gabarito-access')==='ok'){
    location.href='gabarito.html?release=20261031-gpio18-mobile-fix-v2';return;
@@ -322,10 +288,6 @@
   $('sortCircuits').addEventListener('change',render);
   $('nickButton').addEventListener('click',editNickname);
   $('deleteNick').addEventListener('click',deleteNickname);
-  $('openAdmin').addEventListener('click',openAdmin);
-  $('adminClose').addEventListener('click',()=>$('adminDialog').close());
-  $('adminForm').addEventListener('submit',loginAdmin);
-  $('adminSearch').addEventListener('input',showAdminNicks);
   $('editForm').addEventListener('submit',e=>{e.preventDefault();const accept=dialogHandler?.($('editInput').value);if(accept!==false)$('editDialog').close()});
   $('cancelEdit').addEventListener('click',()=>$('editDialog').close());
   $('confirmYes').addEventListener('click',()=>{dialogHandler?.();$('confirmDialog').close()});
