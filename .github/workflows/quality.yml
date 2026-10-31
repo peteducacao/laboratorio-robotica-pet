@@ -39,6 +39,8 @@ jobs:
         run: |
           npm install --no-save --ignore-scripts playwright@1.56.1
           npx playwright install --with-deps chromium
+      - name: Conferir polimento da página Meus circuitos
+        run: node tests/projects-polish-browser.mjs
       - name: Verificar ícone de rotação 90 graus no computador
         run: node tests/rotate-icon-browser.mjs
       - name: Verificar que fios não se prolongam atrás das peças movidas
