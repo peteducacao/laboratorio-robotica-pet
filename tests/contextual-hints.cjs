@@ -22,28 +22,44 @@ const wrongMotor={a:'ml.A',b:'drv.IN1'};
 const wrongGPIO={a:'esp.D19',b:'drv.IN4'};
 const lm=hints.getAdvice([lmError],new Set(),false);
 assert.equal(lm.number,1,'erro do LM é primeira etapa');
-assert.match(lm.correct,/lm.OUTP.*esp.VIN/,'dica LM cita a ligação correta');
-assert.doesNotMatch(lm.correct,/drv.OUT/,'erro LM não fala do motor');
+assert.equal(lm.repair,null,'sem verificador não deve inventar reparo');
+assert.equal(lm.correct,null,'sem validar não deve informar pino como certo');
+assert.match(lm.fallback,/gabarito/);
 const motor=hints.getAdvice([wrongMotor],new Set(),true);
 assert.equal(motor.number,2,'motor fica na etapa Ponte H');
-assert.match(motor.correct,/drv.OUT[1-4]/,'dica do motor indica um borne válido da ponte H');
-assert.doesNotMatch(motor.correct,/b1.NEG/,'erro do motor não mostra dica LM');
+assert.equal(motor.repair,null,'erro no motor também exige validação');
 const gpio=hints.getAdvice([wrongGPIO],new Set(),false);
-assert.match(gpio.correct,/esp.D18.*drv.IN4|drv.IN4.*esp.D18/,'GPIO incorreto aponta o sinal esperado');
+assert.equal(gpio.repair,null,'não sugerir GPIO sem avaliar ocupação');
 const errors=[wrongMotor,lmError];
-assert.equal(hints.getAdvice(errors,new Set(),false).category,'lm','na sequência pedagógica, LM vem antes de motor');
-assert.equal(hints.getAdvice(errors,new Set(),false,undefined,0).category,'motor','fio selecionado recebe dica de seu próprio erro');
+assert.equal(hints.getAdvice(errors,new Set(),false).category,'lm','na sequência pedagógica, LM vem antes do motor');
+assert.equal(hints.getAdvice(errors,new Set(),false,undefined,0).category,'motor','fio selecionado usa sua própria dica');
 const mixed=hints.getAdvice([wrongMotor,{a:'lm.OUTP',b:'esp.VIN'}],good([['lm.OUTP','esp.VIN']]),false);
-assert.equal(mixed.category,'motor','uma ligação correta não substitui o erro real');
-const switchError=hints.getAdvice([{a:'s2.LEDG',b:'drv.VCC'}],new Set(),true);
-assert.match(switchError.correct,/s2.(?:IN|OUT)/,'o contato LED− não é usado como comutação');
+assert.equal(mixed.category,'motor','conexão correta não substitui erro real');
 
-// A dica corrige o terminal envolvido no fio real, não uma ligação genérica.
-const batteryMistake=hints.getAdvice([{a:'b1.NEG',b:'lm.OUTP'}],new Set(),false);
-assert.equal(batteryMistake.what,'b1.NEG → lm.OUTP');
-assert.equal(batteryMistake.correct,'b1.NEG → lm.INN');
-assert.equal(lm.correct,'lm.OUTP → esp.VIN');
-assert.equal(hints.getAdvice([{a:'lm.OUTP',b:'esp.GND'}],new Set(),false).correct,'lm.OUTP → esp.VIN');
+// Geração de correção SOMENTE se o validador aprovar o destino.
+function verified(w,from,to){
+ const ports=[w.a,w.b,from,to,'lm.INN','esp.D32','esp.D27','drv.OUT1','drv.OUT2'];
+ return hints.chooseRepair(w,0,false,[...new Set(ports)],(_index,end,next)=>
+  w[end]===from&&next===to);
+}
+assert.deepEqual(verified({a:'b1.NEG',b:'lm.OUTP'},'lm.OUTP','lm.INN'),{
+ end:'b',from:'lm.OUTP',to:'lm.INN',keep:'b1.NEG'
+},'deve mover somente a ponta errada no LM');
+assert.deepEqual(verified({a:'drv.IN3',b:'lm.OUTP'},'lm.OUTP','esp.D32'),{
+ end:'b',from:'lm.OUTP',to:'esp.D32',keep:'drv.IN3'
+},'deve preservar IN3 da ponte H');
+assert.deepEqual(verified({a:'esp.D19',b:'drv.IN4'},'esp.D19','esp.D18')?.from,'esp.D19');
+assert.equal(hints.chooseRepair({a:'lm.OUTP',b:'esp.GND'},0,false,
+ ['esp.D32','lm.INN'],()=>false),null,'sem reparo validado, nada de pino inventado');
+const restored=hints.getAdvice([{a:'b1.NEG',b:'lm.OUTP'}],new Set(),false,undefined,0,[],
+ ()=>({from:'lm.OUTP',to:'lm.INN',keep:'b1.NEG',end:'b'}));
+assert.equal(restored.from,'lm.OUTP');
+assert.equal(restored.to,'lm.INN');
+assert.equal(restored.keep,'b1.NEG');
+const switchError=hints.getAdvice([{a:'s2.LEDG',b:'drv.VCC'}],new Set(),true);
+assert.equal(switchError.category,'switchLed');
+assert.equal(switchError.repair,null,'interruptor precisa de prova para sugerir pino');
+
 const randomized=hints.createDelay(()=>0.6); // sorteio 7
 assert.equal(randomized.target,7);
 for(let n=1;n<=6;n++){
@@ -72,10 +88,11 @@ for(const script of ['app.js','app-mobile.js']){
  assert.match(src,/updateContextualHint\(\)/,script+' atualiza visibilidade do botão');
  assert.match(src,/hintButton\.hidden=!advice/,'botão só aparece após a liberação e com erro');
  assert.match(src,/hintDelay\?\.record\(!correctWire\)/,'erros ao criar fio são contados');
+ assert.match(src,/function validatedHintRepair\(/,'dicas exigem validação da troca real');
  assert.match(src,/hintDelay\?\.record\(!acceptedConnectionSet\(\)/,'reconexões erradas contam');
  assert.doesNotMatch(src,/Experimente ligar: /,'não revelar ligações faltantes em dicas');
 }
 const html=fs.readFileSync(path.join(__dirname,'..','editor.html'),'utf8');
-assert.match(html,/<script src="step-hints\.js\?v=2"><\/script>/);
+assert.match(html,/<script src="step-hints\.js\?v=3"><\/script>/);
 assert.match(html,/id="hintBtn"[^>]*hidden>/,'inicialmente oculto');
 console.log('OK: ligações corrigidas com clareza e sorteio de 2 a 10 tentativas, PC e mobile.');
