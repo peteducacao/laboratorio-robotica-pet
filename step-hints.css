@@ -47,3 +47,6 @@
  .wire-hint-line p{font-size:13px}
  .wire-hint-comparison{gap:10px}
 }
+
+.wire-hint-keep{margin:10px 0 0!important;color:#567383;font-size:12px;line-height:1.5}
+.wire-hint-keep[hidden]{display:none!important}
