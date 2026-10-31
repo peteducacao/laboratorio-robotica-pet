@@ -591,6 +591,14 @@ function renderProgress(){
  badge.textContent=wiringComplete?'✓ Montagem concluída ('+(switched?'com gangorras':'sem gangorras')+')':
   errors?(mistakes().some(w=>[w.a,w.b].some(p=>p.endsWith('.LEDG')))?errors+' fio(s) a revisar · LED− não é saída':errors+' ligação(ões) a revisar'):
   inAssembly?'Continue adicionando componentes':'Faltam '+missing().length+' ligações';
+ const invalid=mistakes(),pending=missing();
+ badge.title=invalid.length
+  ?invalid.map(w=>'Fio incorreto: '+portName(w.a)+' → '+portName(w.b)).join('\n')
+   +(pending.length?'\nFaltam '+pending.length+' ligações corretas.':'')
+  :pending.length?'Faltam '+pending.length+' ligações. Clique no progresso para saber a próxima.':
+   'Todas as ligações estão corretas.';
+ const progressDetails=Q('editorToolbarProgress');
+ if(progressDetails)progressDetails.title=badge.title;
  const missionTitle=Q('missionTitle'),missionText=Q('missionText');
  if(!partsDone){Q('stepNumber').textContent='01';missionTitle.textContent='Sua bancada está vazia';missionText.textContent='Monte a versão direta com 7 peças ou adicione duas gangorras para a versão com chaves (9 peças).';}
  else if(inAssembly){Q('stepNumber').textContent='01';missionTitle.textContent='Monte seu conjunto de peças';missionText.textContent='Modo '+(switched?'com gangorras':'sem gangorras')+': você colocou '+partsDone+' de '+required+' peças.';}
@@ -2440,6 +2448,24 @@ function bind(){
  });
  Q('hintBtn').addEventListener('click',hint);
  Q('saveBtn').addEventListener('click',()=>{persist();message('Seu projeto foi salvo neste navegador.',true);});
+ // Progresso interativo: explica o fio errado, não só o total.
+ const progressDetails=Q('editorToolbarProgress');
+ if(progressDetails){
+  const explain=()=>{
+   const bad=mistakes(),needed=missing();
+   if(bad.length){
+    const w=bad[0];
+    message('Fio incorreto: '+portName(w.a)+' → '+portName(w.b)+'. Remova esse jumper e confira a alimentação. '+(needed.length?'Faltam '+needed.length+' ligações.':''),true);
+   }else if(needed.length){
+    const [from,to]=needed[0];
+    message('Faltam '+needed.length+' ligações. Próxima: '+portName(from)+' → '+portName(to)+'.',true);
+   }else message('Todas as ligações estão corretas!',true);
+  };
+  progressDetails.addEventListener('click',explain);
+  progressDetails.addEventListener('keydown',e=>{
+   if(e.key==='Enter'||e.key===' '){e.preventDefault();explain();}
+  });
+ }
  Q('checkBtn').addEventListener('click',toggleSimulation);
  Q('openTrackBtn').addEventListener('click',()=>{
   if(!simulationRunning||!ready()){message('Conclua a montagem para abrir a pista. A simulação da bancada continua disponível.',true);return;}
