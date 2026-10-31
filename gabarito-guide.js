@@ -130,14 +130,80 @@ $('next').onclick=()=>{
 };
 $('repeat').onclick=()=>{if(full){selectSection('lm');return;}index=0;render();};
 $('all').onclick=()=>{if(full)returnToGuide();else showFull();};
+
+const printPartNames={b1:'Bateria 9 V',b2:'Suporte 6 pilhas AA',s1:'Gangorra 1',s2:'Gangorra 2',lm:'LM2596',esp:'ESP32',drv:'Ponte H',ml:'Motor 1',mr:'Motor 2'};
+function printPortName(port){
+ const [id,pin]=port.split('.');
+ const names={POS:'positivo (+)',NEG:'negativo (−)',INP:'IN+',INN:'IN−',OUTP:'OUT+',OUTN:'OUT−',VCC:'positivo (+)',GND:'GND',GND2:'GND',IN:'contato 1',OUT:'contato 2',A:'terminal +',B:'terminal −'};
+ const pinName=names[pin]||(pin.startsWith('D')?'GPIO '+pin.slice(1):pin);
+ return printPartNames[id]+' · '+pinName;
+}
+// Versão vertical do esquema de energia, projetada para preencher a primeira folha A4.
+function printPowerDiagram(wires){
+ const layout={
+  b1:{x:40,y:82,w:123,h:173},s1:{x:201,y:110,w:116,h:95},
+  lm:{x:378,y:82,w:195,h:124},esp:{x:65,y:320,w:612,h:283}
+ };
+ function get(port){
+  const [id,pin]=port.split('.'),part=layout[id],coord=anchors[id][pin];
+  if(!part||!coord)throw new Error('Terminal inexistente: '+port);
+  return [part.x+part.w*coord[0],part.y+part.h*coord[1]];
+ }
+ const routes={
+  'b1.NEG|lm.INN':(a,b)=>[[171,a[1]],[171,275],[358,275],[358,b[1]]],
+  'b1.POS|lm.INP':(a,b)=>[[a[0],43],[357,43],[357,b[1]]],
+  'b1.POS|s1.IN':(a,b)=>[[a[0],43],[188,43],[188,b[1]]],
+  's1.OUT|lm.INP':(a,b)=>[[343,a[1]],[343,b[1]]],
+  'lm.OUTP|esp.VIN':(a,b)=>[[594,a[1]],[594,285],[b[0],285]],
+  'lm.OUTN|esp.GND':(a,b)=>[[629,a[1]],[629,303],[b[0],303]]
+ };
+ const point=p=>p.map(n=>n.toFixed(1)).join(' ');
+ const lines=wires.map(w=>{
+  const a=get(w.a),b=get(w.b),route=routes[w.a+'|'+w.b];
+  if(!route)throw new Error('Ligação sem trajeto: '+w.a+' → '+w.b);
+  const path=[a,...route(a,b),b].map((p,i)=>(i?'L':'M')+point(p)).join(' ');
+  return '<path d="'+path+'" stroke="white" stroke-width="10" fill="none" stroke-linecap="round" stroke-linejoin="round"/>'+
+   '<path d="'+path+'" stroke="'+w.color+'" stroke-width="5.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>';
+ }).join('');
+ const names={b1:'BATERIA 9 V',s1:'GANGORRA',lm:'REGULADOR LM2596',esp:'ESP32'};
+ const visible=Object.keys(layout).filter(id=>id!=='s1'||wires.some(w=>w.a.startsWith('s1.')||w.b.startsWith('s1.')));
+ const partsSvg=visible.map(id=>{
+  const p=layout[id];
+  return '<image href="'+parts[id].asset+'" x="'+p.x+'" y="'+p.y+'" width="'+p.w+'" height="'+p.h+'" preserveAspectRatio="xMidYMid meet"/>'+
+   '<text x="'+(p.x+p.w/2)+'" y="'+(p.y-15)+'" fill="#234b58" font-family="Arial,sans-serif" font-size="17" font-weight="700" text-anchor="middle">'+names[id]+'</text>';
+ }).join('');
+ const ends=wires.map(w=>[w.a,w.b].map(port=>{
+  const [x,y]=get(port);
+  return '<circle cx="'+x.toFixed(1)+'" cy="'+y.toFixed(1)+'" r="5.3" fill="'+w.color+'" stroke="white" stroke-width="2"/>';
+ }).join('')).join('');
+ return '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 625" role="img" aria-label="Alimentação do ESP32 com componentes ampliados para impressão">'+
+  '<rect width="720" height="625" rx="16" fill="#f7fbfc"/>'+
+  '<rect x="12" y="12" width="696" height="600" rx="12" fill="none" stroke="#dce9ee" stroke-width="2"/>'+
+  '<path d="M34 294H685" fill="none" stroke="#d8e6eb" stroke-width="2" stroke-dasharray="5 10"/>'+
+  lines+partsSvg+ends+'</svg>';
+}
+const printDescriptions={
+ lm:'Fonte de 9 V, regulador LM2596 e alimentação da placa ESP32.',
+ drv:'Alimentação, comandos da ponte H e saídas para os motores.',
+ esp:'Visão geral das ligações de todos os componentes do carrinho.'
+};
+
 $('download').onclick=()=>{
  if(!mode)return;
  const pages=groups.map((g,n)=>{
   const wires=g.id==='esp'?all:all.filter(w=>w.section===g.id);
-  const items=wires.map((w,i)=>'<div>'+(i+1)+'. '+esc(label(w.a))+' → '+esc(label(w.b))+'</div>').join('');
-  return '<section class="sheet" style="--sheet-color:'+g.color+'"><header><img src="assets/logo-pet.svg" alt=""><strong>TinkerPET Studio · Gabaritos</strong></header><h2>'+esc(g.title)+'</h2><p>Montagem '+(mode==='switch'?'com gangorras':'sem gangorras')+' · '+wires.length+' ligações</p>'+drawing(wires,-1,true)+'<div class="print-lines">'+items+'</div><footer>Página '+(n+1)+' de 3 · PET Educação · TinkerPET Studio</footer></section>';
+  const rows=wires.map((w,i)=>'<div class="print-item"><span class="print-step-num">'+String(i+1).padStart(2,'0')+'</span>'+
+   '<span class="print-connection"><strong>'+esc(printPortName(w.a))+'</strong><span class="print-arrow">→</span><strong>'+esc(printPortName(w.b))+'</strong></span></div>').join('');
+  const visual=g.id==='lm'?printPowerDiagram(wires):drawing(wires,-1,true);
+  return '<section class="sheet sheet--'+g.id+'" style="--sheet-color:'+g.color+'">'+
+   '<header class="print-head"><div class="print-brand"><img src="assets/logo-pet.svg" alt="PET Educação"><div><strong>TinkerPET Studio</strong><span>GUIA DE MONTAGEM • PET EDUCAÇÃO</span></div></div>'+
+   '<div class="print-page-meta">ETAPA '+String(n+1).padStart(2,'0')+' / 03</div></header>'+
+   '<div class="print-heading"><div class="print-heading-top"><h2>'+esc(g.title)+'</h2><span class="print-badge">'+wires.length+' ligações</span></div>'+
+   '<p>'+esc(printDescriptions[g.id])+'</p><div class="print-mode">'+(mode==='switch'?'COM GANGORRAS':'SEM GANGORRAS')+'</div></div>'+
+   '<div class="print-figure">'+visual+'</div>'+
+   '<section class="print-connections"><h3>Conexões dos componentes</h3><div class="print-lines">'+rows+'</div></section>'+
+   '<footer class="print-foot"><span>TinkerPET • PET Educação</span><span>Página '+(n+1)+' de 3</span></footer></section>';
  }).join('');
  $('printPages').innerHTML=pages;
  window.print();
-};
-})();
+};})();
