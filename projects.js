@@ -152,7 +152,7 @@
    const sz=side?[340,170]:geometry[p.kind];
    const pos=side?({A:[96,42],B:[96,63]})[name]:pins[p.kind]?.[name];
    if(!pos)return null;
-   let x=p.x+sz[0]*pos[0]/100,y=p.y+sz[1]*pos[1]/100;
+   let x=p.x+sz[0]*(p.flipped?1-pos[0]/100:pos[0]/100),y=p.y+sz[1]*pos[1]/100;
    const angle=((p.rotation||0)%360)*Math.PI/180;
    if(angle){const cx=p.x+sz[0]/2,cy=p.y+sz[1]/2,dx=x-cx,dy=y-cy;
     x=cx+dx*Math.cos(angle)-dy*Math.sin(angle);
@@ -181,6 +181,7 @@
     if(img.complete&&img.naturalWidth){
      ctx.save();ctx.translate(pt.x+w*scale/2,pt.y+h*scale/2);
      ctx.rotate(((p.rotation||0)%360)*Math.PI/180);
+     if(p.flipped)ctx.scale(-1,1);
      ctx.drawImage(img,-w*scale/2,-h*scale/2,w*scale,h*scale);ctx.restore();
     }
    }
