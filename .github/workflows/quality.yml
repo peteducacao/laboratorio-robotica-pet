@@ -41,6 +41,8 @@ jobs:
           npx playwright install --with-deps chromium
       - name: Conferir Como funciona em celular tablet e computador
         run: node tests/how-it-works-browser.mjs
+      - name: Conferir Salvo somente após alterações reais e sem reaparecer no F5
+        run: node tests/saved-status-browser.mjs
       - name: Conferir Créditos e autoria em celular e computador
         run: node tests/credits-browser.mjs
       - name: Conferir dicas em telas de celular e computador
