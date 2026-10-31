@@ -25,33 +25,46 @@ try{
   const errors=[];
   page.on('pageerror',err=>errors.push(err.message));
   await page.addInitScript(()=>{
+   // No teste, o sorteio sempre libera a dica no segundo erro, nunca no primeiro.
+   Math.random=()=>0;
    const mk=(id,kind,x,y)=>({id,kind,x,y,rotation:0,flipped:false});
-   const fixed=sessionStorage.getItem('hint-test-correct')==='yes';
-   const wires=[{a:'lm.OUTP',b:fixed?'esp.VIN':'esp.GND',color:'#ed654d',via:[],manual:false}];
    const project={id:'hint-test',name:'Teste das dicas',createdAt:1,updatedAt:1,
-    circuit:{parts:[mk('lm','buck',100,100),mk('esp','esp',450,100)],wires,voltage:4,switches:{s1:false,s2:false},wireColor:'#ed654d'}};
+    circuit:{
+     parts:[mk('b1','battery',25,70),mk('lm','buck',270,125),mk('esp','esp',600,180)],
+     wires:[],voltage:4,switches:{s1:false,s2:false},wireColor:'#ed654d'
+    }};
    localStorage.setItem('tinkerpet-library-v1',JSON.stringify({version:1,projects:[project]}));
   });
   await page.goto(url,{waitUntil:'domcontentloaded'});
-  await page.locator('#hintBtn').waitFor({state:'visible',timeout:20000});
+  await page.locator('#catalog .catalog-card').first().waitFor({state:'attached',timeout:20000});
+  assert.equal(await page.locator('#hintBtn').isVisible(),false,'nenhum erro, botão oculto '+width);
+  async function connect(a,b){
+   await page.evaluate(([from,to])=>{
+    const tap=id=>{
+     const node=document.querySelector('[data-port="'+id+'"]');
+     if(!node)throw Error('Pino não encontrado: '+id);
+     node.dispatchEvent(new MouseEvent('click',{bubbles:true,cancelable:true}));
+    };
+    tap(from);tap(to);
+   },[a,b]);
+  }
+  await connect('b1.NEG','lm.OUTP'); // primeira ligação errada
+  assert.equal(await page.locator('#hintBtn').isVisible(),false,'não oferecer dica no primeiro erro '+width);
+  await connect('b1.NEG','lm.OUTP'); // remover tentativa anterior
+  assert.equal(await page.locator('#hintBtn').isVisible(),false,'remover fio não é erro novo '+width);
+  await connect('b1.NEG','lm.OUTP'); // segunda tentativa errada
+  await page.locator('#hintBtn').waitFor({state:'visible',timeout:5000});
   await page.locator('#hintBtn').click();
   await page.locator('#wireHintDialog[open]').waitFor({state:'visible'});
-  assert.match(await page.locator('#wireHintText').textContent(),/OUT\+.*VIN/,'LM2596 recebe dica específica '+width);
-  assert.doesNotMatch(await page.locator('#wireHintText').textContent(),/MOTOR A/,'dica não mistura motor '+width);
+  assert.match(await page.locator('#wireHintWhat').textContent(),/Bateria 9 V.*Regulador LM2596.*OUT\+/,'texto descreve a ligação real '+width);
+  assert.match(await page.locator('#wireHintCorrect').textContent(),/Bateria 9 V.*Regulador LM2596.*IN/,'texto mostra borne correto '+width);
+  assert.doesNotMatch(await page.locator('#wireHintCorrect').textContent(),/ESP32/,'não misturar dica de outro componente '+width);
   await page.locator('#wireHintClose').click();
-  await page.evaluate(()=>sessionStorage.setItem('hint-test-correct','yes'));
-  await page.reload({waitUntil:'domcontentloaded'});
-  await page.locator('#catalog .catalog-card').first().waitFor({state:'attached',timeout:20000});
-  const hintState=await page.locator('#hintBtn').evaluate(el=>({
-   hidden:el.hidden,display:getComputedStyle(el).display,
-   body:document.body.className,
-   wires:JSON.parse(localStorage.getItem('tinkerpet-library-v1')).projects[0].circuit.wires,
-   scripts:[...document.scripts].map(s=>s.src).filter(s=>s.includes('hint'))
-  }));
-  console.log('HINT DEBUG',width,JSON.stringify(hintState));
-  assert.equal(await page.locator('#hintBtn').isVisible(),false,'sem erro, dica oculta '+width+': '+JSON.stringify(hintState));
+  await connect('b1.NEG','lm.OUTP'); // remover fio incorreto
+  await connect('b1.NEG','lm.INN'); // corrigir
+  assert.equal(await page.locator('#hintBtn').isVisible(),false,'dica some após corrigir '+width);
   assert.equal(errors.length,0,'sem erros JS '+width+': '+errors.join('; '));
   await page.close();
  }
- console.log('OK: dicas aparecem apenas para fio incorreto; desktop e celular.');
+ console.log('OK: primeiro erro sem dica, sorteio no segundo erro e correção clara no desktop e celular.');
 }finally{if(browser)await browser.close();server.close();}
