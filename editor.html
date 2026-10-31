@@ -11,7 +11,7 @@
 <link rel="stylesheet" href="answer-key.css?v=37">
 <link rel="stylesheet" href="studio-preview.css?v=19">
 <link rel="stylesheet" href="editor-layout.css?v=13">
-<link rel="stylesheet" href="mobile-editor.css?v=2" media="(max-width:700px)">
+<link rel="stylesheet" href="mobile-editor.css?v=3" media="(max-width:700px)">
 <script defer src="app.js?v=77"></script>
 <script defer src="answer-key.js?v=37"></script>
 <script defer src="studio-preview.js?v=1"></script>
@@ -20,7 +20,7 @@
 // Mobile only: the existing desktop application and its event logic stay intact.
 if(window.matchMedia('(max-width:700px)').matches){
  const script=document.createElement('script');
- script.src='mobile-editor.js?v=2';
+ script.src='mobile-editor.js?v=3';
  document.head.appendChild(script);
 }
 </script>
