@@ -179,8 +179,9 @@ window.addEventListener('resize',()=>{
 },{passive:true});
 loadMetadata();
 syncProgress();
-// Desktop abre a biblioteca como no layout aprovado; no celular a bancada
-// nasce livre, sem painel cobri-la ou diminuir a largura disponível.
-if(window.innerWidth>1100&&!body.classList.contains('components-open'))drawer.click();
+// A página de criação sempre inicia com a gaveta recolhida, inclusive no
+// computador e após atualizar (F5). O usuário abre pela seta quando desejar.
+if(library.classList.contains('open'))drawer.click();
+body.classList.remove('components-open');
 setArrow();
 })();
