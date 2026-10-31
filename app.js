@@ -108,7 +108,7 @@ function safeRestore(){
   if(!s||!Array.isArray(s.parts)||!Array.isArray(s.wires))return;
   const names=new Set();
   state.parts=s.parts.filter(p=>p&&byId[p.id]&&!names.has(p.id)&&names.add(p.id)&&Number.isFinite(p.x)&&Number.isFinite(p.y)).map(p=>({id:p.id,kind:byId[p.id].kind,x:p.x,y:p.y,view:byId[p.id].kind==='motor'&&p.view==='side'?'side':'front',rotation:normalizePartRotation(p.rotation),flipped:p.flipped===true}));
-  state.wires=s.wires.filter(w=>w&&allPorts.has(w.a)&&allPorts.has(w.b)&&w.a!==w.b&&exists(w.a.split('.')[0])&&exists(w.b.split('.')[0])).slice(0,80).map(w=>({a:w.a,b:w.b,color:COLORS.includes(w.color)?w.color:COLORS[0],via:Array.isArray(w.via)?w.via.filter(p=>p&&Number.isFinite(p.x)&&Number.isFinite(p.y)).slice(0,48).map(p=>({x:p.x,y:p.y})):[],manual:w.manual===true}));
+  state.wires=s.wires.filter(w=>w&&allPorts.has(w.a)&&allPorts.has(w.b)&&w.a!==w.b&&exists(w.a.split('.')[0])&&exists(w.b.split('.')[0])).slice(0,80).map(w=>({a:w.a,b:w.b,color:COLORS.includes(w.color)?w.color:COLORS[0],via:Array.isArray(w.via)?w.via.filter(p=>p&&Number.isFinite(p.x)&&Number.isFinite(p.y)).slice(0,48).map(p=>({x:p.x,y:p.y})):[],manual:w.manual===true,loose:(['a','b'].includes(w.loose?.end)&&Number.isFinite(w.loose?.point?.x)&&Number.isFinite(w.loose?.point?.y))?{end:w.loose.end,point:{x:w.loose.point.x,y:w.loose.point.y}}:null}));
   if(Number.isFinite(s.voltage))state.voltage=limit(s.voltage,3,6);
   if(s.switches)state.switches={s1:!!s.switches.s1,s2:!!s.switches.s2};
   if(COLORS.includes(s.wireColor))state.wireColor=s.wireColor;
@@ -254,7 +254,7 @@ const MOTOR_WIRING_VARIANTS=(()=>{
  return alternatives;
 })();
 function selectedMotorConnections(){
- const actual=new Set(state.wires.map(w=>electricalKey(w.a,w.b)));
+ const actual=new Set(state.wires.filter(w=>!w.loose).map(w=>electricalKey(w.a,w.b)));
  let best=MOTOR_WIRING_VARIANTS[0],score=-1;
  for(const variant of MOTOR_WIRING_VARIANTS){
   const matches=variant.filter(([a,b])=>actual.has(electricalKey(a,b))).length;
@@ -277,11 +277,12 @@ function acceptedConnectionSet(){
 }
 function countGood(){
  const expected=new Set(expectedConnections().map(([a,b])=>electricalKey(a,b)));
- return new Set(state.wires.filter(w=>expected.has(electricalKey(w.a,w.b))).map(w=>electricalKey(w.a,w.b))).size;
+ return new Set(state.wires.filter(w=>!w.loose&&expected.has(electricalKey(w.a,w.b))).map(w=>electricalKey(w.a,w.b))).size;
 }
-function mistakes(){const allowed=acceptedConnectionSet();return state.wires.filter(w=>!allowed.has(electricalKey(w.a,w.b)));}
-function missing(){const wired=new Set(state.wires.map(w=>electricalKey(w.a,w.b)));return expectedConnections().filter(([a,b])=>!wired.has(electricalKey(a,b)));}
+function mistakes(){const allowed=acceptedConnectionSet();return state.wires.filter(w=>!!w.loose||!allowed.has(electricalKey(w.a,w.b)));}
+function missing(){const wired=new Set(state.wires.filter(w=>!w.loose).map(w=>electricalKey(w.a,w.b)));return expectedConnections().filter(([a,b])=>!wired.has(electricalKey(a,b)));}
 function mistakeExplanation(w){
+ if(w.loose)return 'O jumper tem uma ponta solta. Arraste a bolinha até o pino correto ou remova o fio.';
  if([w.a,w.b].some(p=>p==='s1.LEDG'||p==='s2.LEDG'))
   return 'O terceiro terminal LED− da gangorra é apenas da luz indicadora e não alimenta o ESP32. Use os contatos 1 e 2 para ligar ou desligar a alimentação.';
  return 'Revise o fio '+portName(w.a)+' → '+portName(w.b)+'. A gangorra aceita contatos 1 e 2 invertidos, mas o circuito deve fechar o caminho do positivo.';
@@ -294,7 +295,7 @@ function ready(){
 // Modelo pedagógico: cada circuito acende e funciona somente quando recebe
 // alimentação e sinais por um caminho conectado. Não é SPICE nem execução do ESP32.
 function powerStatus(){
- const has=(a,b)=>state.wires.some(w=>electricalKey(w.a,w.b)===electricalKey(a,b));
+ const has=(a,b)=>state.wires.some(w=>!w.loose&&electricalKey(w.a,w.b)===electricalKey(a,b));
  const switched=assemblyMode()==='switched';
  // A chave comuta apenas o positivo de cada fonte. Todos os GND são comuns.
  const espPositive=switched
@@ -426,7 +427,7 @@ function renderParts(){
   }
   const pins=document.createElement('div');pins.className='part-pins';
   t.pins.forEach(([code,txt])=>{
-   const id=p.id+'.'+code,connected=state.wires.some(w=>w.a===id||w.b===id),wrong=mistakes().some(w=>w.a===id||w.b===id);
+   const id=p.id+'.'+code,connected=state.wires.some(w=>(w.loose?.end!=='a'&&w.a===id)||(w.loose?.end!=='b'&&w.b===id)),wrong=mistakes().some(w=>(w.loose?.end!=='a'&&w.a===id)||(w.loose?.end!=='b'&&w.b===id));
    const at=layout.pins[code]||[50,50];
    const btn=document.createElement('button');btn.type='button';
    btn.className='pin-btn'+(state.startPort===id?' selected':'')+(connected?' connected':'')+(wrong?' invalid':'');
@@ -551,7 +552,7 @@ function inspectorWires(){
  state.wires.forEach((w,i)=>{
   const row=document.createElement('div');row.className='wire-item'+(state.selectedWire===i?' is-selected':'');row.dataset.selectWire=String(i);row.tabIndex=0;row.title='Selecionar jumper para trocar sua cor';
   const dot=document.createElement('span');dot.className='wire-dot';dot.style.background=w.color;
-  const names=document.createElement('div');names.className='wire-names';names.textContent=portName(w.a)+' → '+portName(w.b)+(w.via&&w.via.length?' · '+w.via.length+' curva(s)':'')+(acceptedConnectionSet().has(electricalKey(w.a,w.b))?' · ✓':' · Rever');
+  const names=document.createElement('div');names.className='wire-names';names.textContent=(w.loose?.end==='a'?'Ponta solta':portName(w.a))+' → '+(w.loose?.end==='b'?'Ponta solta':portName(w.b))+(w.via&&w.via.length?' · '+w.via.length+' curva(s)':'')+(!w.loose&&acceptedConnectionSet().has(electricalKey(w.a,w.b))?' · ✓':w.loose?' · Ponta solta':' · Rever');
   const btn=document.createElement('button');btn.type='button';btn.dataset.removeWire=String(i);btn.title='Remover fio';btn.textContent='×';
   row.append(dot,names,btn);body.append(row);
  });
@@ -965,7 +966,8 @@ function pendingWirePoints(){
 // Edita um segmento de um jumper conectado sem alterar os dois bornes.
 // A primeira movimentação converte ligações antigas para a rota manual visível.
 function wirePoints(w){
- const a=getPortPos(w.a),b=getPortPos(w.b);
+ const a=w.loose?.end==='a'?w.loose.point:getPortPos(w.a);
+ const b=w.loose?.end==='b'?w.loose.point:getPortPos(w.b);
  return a&&b?(w.manual?manualWirePoints(a,w.via||[],b):wireRoutePoints(a,w.via||[],b,w.a,w.b)):[];
 }
 // Compatibilidade: alguns jumpers antigos usam o gerador procedural de
@@ -1170,7 +1172,7 @@ function renderWireHandles(){
    const button=document.createElement('button');button.type='button';
    button.className='wire-end-handle';button.dataset.wireEnd=end;
    button.setAttribute('aria-label','Soltar ponta '+(end==='a'?'inicial':'final')+' do fio e conectar a outro pino');
-   button.title='Arraste para outro pino ou clique e escolha o novo contato';
+   button.title='Arraste a bolinha até um pino, ou solte-a em qualquer lugar da bancada';
    layer.append(button);
   }
   layer.dataset.index=selected;
@@ -1178,7 +1180,7 @@ function renderWireHandles(){
  for(const button of layer.children){
   const end=button.dataset.wireEnd;
   const active=reconnectPending&&reconnectPending.index===state.selectedWire&&reconnectPending.end===end;
-  const point=active?reconnectPending.point:getPortPos(w[end]);
+  const point=active?reconnectPending.point:(w.loose?.end===end?w.loose.point:getPortPos(w[end]));
   if(!point){button.hidden=true;continue;}
   button.hidden=false;
   const size=Math.min(160,Math.max(15,24/zoom));
@@ -1197,7 +1199,7 @@ function beginReconnect(e,index,end){
  if(e.cancelable)e.preventDefault();
  e.stopPropagation?.();
  state.selectedWire=index;state.selected=null;state.inspector='wires';state.wireColor=wire.color;
- reconnectPending={index,end,point:getPortPos(wire[end]),snapPort:null,corners:[]};
+ reconnectPending={index,end,point:wire.loose?.end===end?{...wire.loose.point}:getPortPos(wire[end]),snapPort:null,corners:[]};
  gesture={type:'wire-end',pointer:e.pointerId,startX:e.clientX,startY:e.clientY,moved:false};
  renderColors();renderInspector();updateHistoryButtons();requestDraw();
 }
@@ -1220,6 +1222,26 @@ function cancelReconnect(){
  reconnectPending=null;pendingAlignment=null;wireAlignment=null;
  requestDraw();
 }
+// Ao soltar a ponta em uma área livre, finaliza o arraste e guarda a posição.
+function leaveReconnectLoose(clientX,clientY){
+ const pending=reconnectPending;
+ if(!pending)return false;
+ const wire=state.wires[pending.index];if(!wire){cancelReconnect();return false;}
+ const box=Q('viewport').getBoundingClientRect();
+ const inside=clientX>=box.left&&clientX<=box.right&&clientY>=box.top&&clientY<=box.bottom;
+ const point=inside?worldXY(clientX,clientY):pending.point;
+ if(!point)return false;
+ const route=reconnectRoute(pending,point);
+ if(route.length<2)return false;
+ snapshot();
+ wire.loose={end:pending.end,point:{x:Math.round(point.x),y:Math.round(point.y)}};
+ wire.via=route.slice(1,-1);wire.manual=true;
+ state.selectedWire=pending.index;state.selected=null;state.inspector='wires';state.completed=false;
+ reconnectPending=null;pendingAlignment=null;wireAlignment=null;
+ refresh();
+ message('Ponta solta posicionada. Ela fica aqui até você arrastá-la para um pino.',true);
+ return true;
+}
 function finishReconnect(newPort){
  const pending=reconnectPending;
  if(!pending)return false;
@@ -1228,7 +1250,7 @@ function finishReconnect(newPort){
  if(!exists(newPort.split('.')[0])||!getPortPos(newPort)||newPort===fixed){
   message('Escolha outro pino, diferente da ponta que continua conectada.',true);return false;
  }
- if(newPort===wire[pending.end]){
+ if(newPort===wire[pending.end]&&!wire.loose){
   cancelReconnect();message('Ponta mantida no pino original.',true);return true;
  }
  if(state.wires.some((w,i)=>i!==pending.index&&electricalKey(w.a,w.b)===electricalKey(fixed,newPort))){
@@ -1238,7 +1260,7 @@ function finishReconnect(newPort){
  if(route.length<2)return false;
  snapshot();
  wire[pending.end]=newPort;wire.via=route.slice(1,-1);
- wire.manual=true;
+ wire.loose=null;wire.manual=true;
  state.selectedWire=pending.index;state.selected=null;state.inspector='wires';
  state.wireColor=wire.color;state.completed=false;
  reconnectPending=null;pendingAlignment=null;wireAlignment=null;
@@ -1258,7 +1280,7 @@ function drawWires(){
   const d=wirePath(points);
   const line=document.createElementNS(ns,'path');
   line.setAttribute('d',d);
-  line.setAttribute('class','wire-line'+(acceptedConnectionSet().has(electricalKey(w.a,w.b))?'':' wire-error')+(state.selectedWire===i?' wire-selected':''));
+  line.setAttribute('class','wire-line'+(!w.loose&&acceptedConnectionSet().has(electricalKey(w.a,w.b))?'':' wire-error')+(state.selectedWire===i?' wire-selected':''));
   line.setAttribute('stroke',w.color);svg.append(line);
   // O traço termina no furo do pino; nenhum círculo fica sobre o componente.
   // Um alvo por segmento, inclusive para fios retos sem curvas intermediárias.
@@ -1955,7 +1977,7 @@ function pointerMove(e){
   }
   else if(g.type==='pan'){if(g.moved){panX=g.x+dx;panY=g.y+dy;camera();}}
  }else if(reconnectPending){
-  moveReconnect(e.clientX,e.clientY);
+  // Após soltar uma ponta, só outro arraste poderá movimentá-la.
  }else if(state.startPort){
   const r=Q('viewport').getBoundingClientRect();
   if(e.clientX>=r.left&&e.clientX<=r.right&&e.clientY>=r.top&&e.clientY<=r.bottom){
@@ -2021,8 +2043,8 @@ function pointerUp(e){
    const fixed=wire?.[reconnectPending.end==='a'?'b':'a'];
    const destination=fixed?nearestPort(e.clientX,e.clientY,fixed,32):null;
    if(destination){suppressPortClickUntil=Date.now()+380;finishReconnect(destination);}
-   else message('Ponta solta: clique no novo pino para reconectar. Esc cancela.',true);
-  }else message('Ponta selecionada. Clique em outro pino ou arraste a bolinha até ele. Esc cancela.',true);
+   else leaveReconnectLoose(e.clientX,e.clientY);
+  }else cancelReconnect();
   requestDraw();
  }else if(g.type==='catalog'){
   // O painel permanece aberto para arrastar vários componentes seguidos.
