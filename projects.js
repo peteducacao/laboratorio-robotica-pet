@@ -353,7 +353,17 @@
    if(!$('editDialog').open&&!$('creditsDialog').open&&!$('gateDialog').open)editNickname();
   },350);
   else nickRegistry?.register(localStorage.getItem(NICK));
-  window.addEventListener('pageshow',e=>{if(e.persisted){syncEditor();render()}});
+  window.addEventListener('pageshow',e=>{
+   if(!e.persisted)return;
+   // Ao voltar pelo botão do navegador, a página pode vir do cache sem
+   // executar o script de novo. Consome o evento exatamente uma vez.
+   try{
+    const note=JSON.parse(sessionStorage.getItem(SAVED_EVENT)||'null');
+    sessionStorage.removeItem(SAVED_EVENT);
+    if(note?.id&&Date.now()-note.at<15*60*1000)showSavedBadge(note.id);
+   }catch{sessionStorage.removeItem(SAVED_EVENT)}
+   syncEditor();render();
+  });
   // Se outro editor salvar, atualiza a lista, sem copiar o estado global.
   window.addEventListener('storage',e=>{if(e.key===LIB){syncEditor();render();}if(e.key===NICK)render();});
  }
