@@ -643,7 +643,7 @@
 }
 
 
-/* v11 — celebração de montagem: modal leve, bancada desfocada e 3 segundos. */
+/* v11 — celebração de montagem: modal leve, bancada desfocada e 10 segundos. */
 .preview-studio.editor-layout .completion-dialog{
  box-sizing:border-box!important;
  width:min(398px,calc(100vw - 36px))!important;
@@ -713,7 +713,7 @@
 .preview-studio.editor-layout .completion-timer-track{stroke:#e8efec}
 .preview-studio.editor-layout .completion-timer-ring{
  stroke:#159b89;stroke-dasharray:88;stroke-dashoffset:0;
- animation:completion-timer-drain 3s linear forwards;
+ animation:completion-timer-drain 10s linear forwards;
 }
 .preview-studio.editor-layout .completion-seconds{
  position:relative;z-index:1;color:#358475;
