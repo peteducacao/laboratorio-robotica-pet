@@ -242,11 +242,11 @@
     +'<canvas aria-label="Miniatura do circuito"></canvas></button>'
     +(savedBadges.get(p.id)>Date.now()?'<span class="status">✓ Salvo</span>':'')
     +'<button class="more" data-action="menu" aria-label="Opções de '+name+'">⋮</button></div>'
-    +'<h2>'+name+'</h2><div class="meta"><span>▣ '+p.circuit.parts.length+' componentes</span><span>◷ '+date(p.updatedAt)+'</span></div>'
+    +'<h2>'+name+'</h2><div class="meta"><time datetime="'+new Date(p.updatedAt).toISOString()+'">'+date(p.updatedAt)+'</time></div>'
     +'<div class="divider"></div><div class="card-buttons">'
     +'<button class="edit" data-action="edit">'+icon('edit')+' Editar</button>'
     +'<button data-action="duplicate">'+icon('copy')+' Duplicar</button>'
-    +'<button data-action="rename">'+icon('rename')+' Renomear</button>'
+    +'<button data-action="rename">Renomear</button>'
     +'<button data-action="download">'+icon('download')+' Baixar</button>'
     +'<button class="delete" data-action="delete">'+icon('trash')+' Excluir</button></div>';
    grid.append(card);thumb(p,card.querySelector('canvas'));
