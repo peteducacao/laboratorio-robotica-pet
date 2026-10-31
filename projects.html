@@ -8,23 +8,23 @@
 <link rel="icon" href="assets/logo-pet.svg" type="image/svg+xml">
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&family=Manrope:wght@600;700;800&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="projects.css?v=14">
+<link rel="stylesheet" href="projects.css?v=15">
 <script defer src="nick-registry.js?v=1"></script>
-<script defer src="projects.js?v=27"></script>
+<script defer src="projects.js?v=28"></script>
 </head>
 <body>
 <header class="top">
  <a class="brand" href="./" aria-label="Ir para o início do TinkerPET"><span class="symbol"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3v3m8-3v3M5 8H3m18 0h-2M8 17v4m8-4v4M6 7h12v10H6zM9 11l2 2 4-4"/></svg></span><span>TinkerPET <span>Studio</span></span></a>
  <label class="search"><svg viewBox="0 0 24 24" fill="none" stroke-width="2"><circle cx="10" cy="10" r="7"/><path d="m15 15 6 6"/></svg><input id="searchCircuits" type="search" placeholder="Buscar circuito..." aria-label="Buscar circuito"></label>
  <select id="sortCircuits" class="filter" aria-label="Ordenar circuitos"><option value="recent">Mais recentes</option><option value="name">Nome A–Z</option><option value="components">Mais peças</option></select>
- <button id="nickButton" type="button" class="nick" title="Editar meu Nick" aria-label="Editar meu Nick"><span class="nick-avatar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-8 16-8 16 0"/></svg></span><span id="nickText" class="nick-name">Seu Nick</span> ✎</button>
+ <button id="nickButton" type="button" class="nick" title="Editar meu Nick" aria-label="Editar meu Nick"><span class="nick-avatar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-8 16-8 16 0"/></svg></span><span id="nickText" class="nick-name">Seu Nick</span></button>
 </header>
 <div class="shell">
  <aside class="sidebar">
   <nav class="nav" aria-label="Menu principal">
    <a href="./"><svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="m3 11 9-8 9 8v10h-6v-7H9v7H3z"/></svg>Início</a>
    <a class="active" href="projects.html?release=20261031-gpio18-mobile-fix-v2" aria-current="page"><svg viewBox="0 0 24 24" fill="none" stroke-width="2"><circle cx="6" cy="5" r="2"/><circle cx="18" cy="19" r="2"/><path d="M6 7v11h7v-7h5V7"/></svg>Meus circuitos</a>
-   <button type="button" id="openGate"><svg viewBox="0 0 24 24" fill="none" stroke-width="2"><rect x="5" y="10" width="14" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3m-4 5v2"/></svg><span id="gateLabel">Gabarito 🔒</span></button>
+   <button type="button" id="openGate"><svg viewBox="0 0 24 24" fill="none" stroke-width="2"><rect x="5" y="10" width="14" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3m-4 5v2"/></svg><span id="gateLabel">Gabarito</span></button>
    <button type="button" id="openCredits" class="nav-credits" aria-haspopup="dialog" aria-controls="creditsDialog" aria-label="Abrir Créditos do projeto"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="5"/><path d="m8.2 12-1.5 9 5.3-3 5.3 3-1.5-9"/></svg><span>Créditos</span></button>
    <a id="openHow" href="como-funciona.html" aria-label="Conhecer os componentes do carrinho"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><path d="M15 14h6m-3-3v6m-4 4h8"/></svg><span>Como funciona</span></a>
   </nav>
