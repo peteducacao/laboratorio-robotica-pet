@@ -11,7 +11,7 @@ const LIBRARY_KEY='tinkerpet-library-v1';
 // pois esse valor é alterado por outras abas. Peça a escolha segura na lista.
 const EDITOR_PROJECT_ID=IS_PROJECT_EDITOR?new URLSearchParams(window.location.search).get('project'):null;
 if(IS_PROJECT_EDITOR&&!EDITOR_PROJECT_ID){
- window.location.replace('projects.html?release=20261030tabs1');
+ window.location.replace('projects.html?release=20261030wirepark1');
 }
 function activeCircuitFromLibrary(){
  if(!EDITOR_PROJECT_ID)return null;
