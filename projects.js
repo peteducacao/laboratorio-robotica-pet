@@ -167,7 +167,7 @@
   const renderWires=()=>{
    ctx.lineWidth=Math.max(2,8*scale);ctx.lineCap='round';ctx.lineJoin='round';
    for(const wire of wires){
-    const start=getPort(wire.a),end=getPort(wire.b);if(!start||!end)continue;
+    const start=wire.loose?.end==='a'?map(wire.loose.point.x,wire.loose.point.y):getPort(wire.a),end=wire.loose?.end==='b'?map(wire.loose.point.x,wire.loose.point.y):getPort(wire.b);if(!start||!end)continue;
     ctx.beginPath();ctx.moveTo(start.x,start.y);
     for(const b of wire.via||[]){const point=map(b.x,b.y);ctx.lineTo(point.x,point.y)}
     ctx.lineTo(end.x,end.y);ctx.strokeStyle=wire.color||'#ed654d';ctx.stroke();
