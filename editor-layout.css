@@ -434,3 +434,79 @@
  .preview-studio.editor-layout .library,
  .editor-layout .editor-settings{bottom:max(4px,env(safe-area-inset-bottom))!important;}
 }
+
+
+/* v5 — progresso da montagem na barra superior, no lugar de Iniciar simulação.
+   O botão de simulação permanece somente como dependência interna do app.js. */
+.preview-studio.editor-layout #checkBtn[hidden]{
+ display:none!important;visibility:hidden!important;pointer-events:none!important;
+}
+.preview-studio.editor-layout .editor-toolbar-progress{
+ box-sizing:border-box!important;
+ flex:0 1 242px!important;width:242px!important;min-width:178px!important;
+ max-width:100%!important;
+ display:flex!important;flex-direction:column!important;
+ gap:3px!important;margin:0!important;padding:7px 11px!important;
+ border:1px solid #cce9e1!important;border-radius:11px!important;
+ background:#e8f8f4!important;color:#166e68!important;
+ box-shadow:none!important;line-height:1.2!important;
+}
+.preview-studio.editor-layout .editor-toolbar-progress-head{
+ display:flex!important;align-items:baseline!important;justify-content:space-between!important;
+ gap:9px!important;min-width:0!important;
+ font:800 11px/1.15 'DM Sans',sans-serif!important;
+}
+.preview-studio.editor-layout .editor-toolbar-progress-head span{
+ overflow:hidden!important;text-overflow:ellipsis!important;white-space:nowrap!important;
+}
+.preview-studio.editor-layout .editor-toolbar-progress-head strong{
+ flex:none!important;font-weight:800!important;white-space:nowrap!important;
+}
+.preview-studio.editor-layout .editor-toolbar-progress-track{
+ display:block!important;position:relative!important;width:100%!important;height:6px!important;
+ border-radius:99px!important;background:#cce6df!important;overflow:hidden!important;
+}
+.preview-studio.editor-layout #toolbarProgressBar{
+ display:block!important;width:0;height:100%!important;border-radius:inherit!important;
+ background:linear-gradient(90deg,#009d90,#057f78)!important;
+ transition:width .18s ease!important;
+}
+.preview-studio.editor-layout .editor-toolbar-progress-status{
+ display:block!important;width:100%!important;min-width:0!important;
+ font:650 10px/1.15 'DM Sans',sans-serif!important;color:#34796f!important;
+ overflow:hidden!important;text-overflow:ellipsis!important;white-space:nowrap!important;
+}
+.preview-studio.editor-layout .editor-toolbar-progress[data-status="error"]{
+ background:#fff4f1!important;border-color:#f0d6ce!important;
+}
+.preview-studio.editor-layout .editor-toolbar-progress[data-status="error"] .editor-toolbar-progress-status{
+ color:#a34635!important;
+}
+.preview-studio.editor-layout .editor-toolbar-progress[data-status="ok"]{
+ background:#e2f8ed!important;border-color:#a8dcc7!important;
+}
+@media(max-width:920px){
+ .preview-studio.editor-layout .toolbar-right{
+  flex-wrap:wrap!important;align-items:center!important;justify-content:flex-end!important;
+ }
+ .preview-studio.editor-layout .editor-toolbar-progress{
+  flex:1 1 175px!important;min-width:150px!important;width:auto!important;
+ }
+}
+@media(max-width:600px){
+ .preview-studio.editor-layout .editor-toolbar-progress{
+  flex:1 1 150px!important;min-width:140px!important;
+  padding:6px 8px!important;gap:3px!important;
+ }
+ .preview-studio.editor-layout .editor-toolbar-progress-head{font-size:10px!important;}
+ .preview-studio.editor-layout .editor-toolbar-progress-status{font-size:9px!important;}
+}
+@media(max-width:360px){
+ .preview-studio.editor-layout .editor-toolbar-progress{
+  min-width:115px!important;padding:6px 7px!important;
+ }
+ .preview-studio.editor-layout .editor-toolbar-progress-head{gap:4px!important;}
+}
+@media(prefers-reduced-motion:reduce){
+ .preview-studio.editor-layout #toolbarProgressBar{transition:none!important;}
+}
