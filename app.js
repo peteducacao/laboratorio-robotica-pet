@@ -803,29 +803,44 @@ function addPart(kind,x,y){
 // Gira em passos de 90° mantendo o centro visual e os fios nos mesmos pinos.
 function rotatePart(id){
  const p=byPart(id);if(!p)return false;
+ if(selectedParts.size>1){message('Gire um componente por vez.',true);return false;}
  if(reconnectPending)cancelReconnect();
  if(state.startPort)cancelPendingWire();
- const attached=state.wires.filter(w=>(w.loose?.end!=='a'&&w.a.split('.')[0]===id)||(w.loose?.end!=='b'&&w.b.split('.')[0]===id));
- const previous=new Map(attached.map(w=>[w,{a:getPortPos(w.a),b:getPortPos(w.b)}]));
+ const attached=state.wires.filter(w=>(w.loose?.end!=='a'&&w.a.split('.')[0]===id)||
+  (w.loose?.end!=='b'&&w.b.split('.')[0]===id));
+ // Guarda a posição dos DOIS terminais antes da rotação para refazer
+ // a aproximação do fio, não apenas mexer em uma curva antiga.
+ const previous=new Map(attached.map(w=>[w,{
+  a:w.loose?.end==='a'?w.loose.point:getPortPos(w.a),
+  b:w.loose?.end==='b'?w.loose.point:getPortPos(w.b)
+ }]));
  snapshot();
  p.rotation=(normalizePartRotation(p.rotation)+90)%360;
  for(const w of attached){
-  if(!w.manual||!w.via?.length)continue;
-  const old=previous.get(w),via=w.via.map(point=>({...point}));
-  if(w.a.split('.')[0]===id){
-   const before=old.a,after=getPortPos(w.a),first=via[0];
-   if(Math.abs(before.x-first.x)<2)first.x=Math.round(after.x);
-   else if(Math.abs(before.y-first.y)<2)first.y=Math.round(after.y);
+  if(!w.manual)continue;
+  const old=previous.get(w),nowA=w.loose?.end==='a'?w.loose.point:getPortPos(w.a),
+   nowB=w.loose?.end==='b'?w.loose.point:getPortPos(w.b);
+  if(!old?.a||!old.b||!nowA||!nowB)continue;
+  const moveA=w.loose?.end!=='a'&&w.a.split('.')[0]===id;
+  const moveB=w.loose?.end!=='b'&&w.b.split('.')[0]===id;
+  if(moveA&&moveB){
+   // Raro fio com ambos os terminais na peça: gira os pontos junto
+   // da própria peça, preservando a geometria local.
+   const d=partLayout(p),cx=p.x+d.w/2,cy=p.y+d.h/2;
+   w.via=simplifyWireRoute([nowA,...(w.via||[]).map(v=>({
+    x:Math.round(cx-(v.y-cy)),y:Math.round(cy+(v.x-cx))
+   })),nowB]).slice(1,-1);
+  }else if(moveA||moveB){
+   const dx=moveA?nowA.x-old.a.x:nowB.x-old.b.x;
+   const dy=moveA?nowA.y-old.a.y:nowB.y-old.b.y;
+   const via=elasticWireBends(w.via||[],old.a,old.b,moveA,moveB,dx,dy);
+   // Mesmo um jumper que antes era reto precisa ganhar uma curva
+   // quando o terminal gira e muda simultaneamente X e Y.
+   w.via=simplifyWireRoute([nowA,...via,nowB]).slice(1,-1);
   }
-  if(w.b.split('.')[0]===id){
-   const before=old.b,after=getPortPos(w.b),last=via.at(-1);
-   if(Math.abs(before.x-last.x)<2)last.x=Math.round(after.x);
-   else if(Math.abs(before.y-last.y)<2)last.y=Math.round(after.y);
-  }
-  w.via=via;
  }
- 
- state.selected=id;state.selectedWire=null;selectedBend=null;state.inspector='parts';state.completed=false;refresh();
+ state.selected=id;state.selectedWire=null;selectedBend=null;state.inspector='parts';
+ state.completed=false;refresh();
  message(partName(id)+' girado para '+p.rotation+'°. Conexões mantidas.',true);
  return true;
 }
