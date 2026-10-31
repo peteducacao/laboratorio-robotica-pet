@@ -12,10 +12,16 @@ new vm.Script(answerKey);
 new vm.Script(js);
 // O guia com e sem gangorras compartilha as mesmas âncoras do ESP32.
 const guided=fs.readFileSync(path.join(base,'gabarito-guide.js'),'utf8');
+const espArt=fs.readFileSync(path.join(base,'assets/esp32-devkit-v1-30p.svg'),'utf8');
 const physicalD18=espArt.match(/<circle cx="([0-9.]+)" cy="373"[^>]*\/><circle[^>]*\/><text[^>]*>D18<\/text>/);
 assert(physicalD18,'ESP32 possui furo do GPIO18 identificável na arte');
 assert(guided.includes('D18:['+Number(physicalD18[1])+'/930,373/430]'),'gabarito liga IN4 ao furo GPIO18, não ao GPIO19');
 assert(guided.includes("wire('drv.IN4','esp.D18'"),'ambas as modalidades usam D18 no IN4');
+const guideHtml=fs.readFileSync(path.join(base,'gabarito.html'),'utf8');
+assert(guideHtml.includes('id="cancelChooser"')&&guideHtml.includes('choice-close'),'escolha do gabarito permite fechar no X');
+assert(guideHtml.includes('aria-label="Cancelar e voltar para Meus circuitos"'),'X tem descrição acessível');
+assert(guided.includes("e.key==='Escape'&&!$('chooser').hidden"),'Esc fecha apenas o seletor inicial');
+assert(guided.includes("$('cancelChooser').addEventListener('click',exitChooser)"),'X fecha o seletor inicial');
 const projectsHtml=fs.readFileSync(path.join(base,'projects.html'),'utf8');
 const projectsJs=fs.readFileSync(path.join(base,'projects.js'),'utf8');
 assert(projectsHtml.includes('<button type="button" id="openGate"><svg')&&projectsHtml.includes('</svg><span id="gateLabel">'),'Gabaritos preserva seu ícone no menu');
@@ -27,7 +33,6 @@ const edges=vm.runInNewContext(js.match(/const COMMON_CONNECTIONS=\[([\s\S]*?)\]
 const esp=types.find(t=>t.kind==='esp');
 assert.equal(esp.pins.length,30,'ESP32 precisa ter 30 contatos físicos na bancada');
 assert(esp.pins.some(([id,label])=>id==='GND2'&&label==='GND'),'dois GND equivalentes');
-const espArt=fs.readFileSync(path.join(base,'assets/esp32-devkit-v1-30p.svg'),'utf8');
 for(const name of ['VIN','3V3','GND','D27','D26','D32','D18','D13','EN','D23']){
  assert(espArt.includes('>'+name+'</text>'),'nome '+name+' precisa estar impresso na placa');
 }
