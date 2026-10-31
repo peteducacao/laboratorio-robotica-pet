@@ -23,7 +23,7 @@
  display:block;position:absolute;max-width:none;
  width:calc(var(--robot-size)*4.495);height:auto;
  left:calc(var(--robot-size)*-1.725);
- top:calc(var(--robot-size)*-.1875);
+ top:calc(var(--robot-size)*-.0875);
  pointer-events:none;user-select:none;
 }
 @media(max-width:810px){
@@ -34,7 +34,7 @@
  .nav .nav-robot{--robot-size:23px}
 }
 @media(max-width:540px){
- .top .filter{flex:0 0 150px;width:150px;min-width:150px;max-width:150px}
+ .top .filter{flex:0 0 165px;width:165px;min-width:165px;max-width:165px}
  .top .search{flex:1 1 0;min-width:0}
  .nav .nav-robot{--robot-size:20px}
 }
