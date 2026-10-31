@@ -246,7 +246,10 @@
 }
 @media(max-width:810px){
  /* Com quatro itens, menu em duas colunas para não cortar nomes no celular. */
- .sidebar .nav{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px}
+ .sidebar .nav{
+  display:grid;grid-template-columns:repeat(2,minmax(0,1fr));
+  grid-template-rows:repeat(2,max-content);grid-auto-flow:column;gap:6px;
+ }
  .sidebar .nav a,.sidebar .nav button{
   min-width:0;width:100%;justify-content:flex-start;
   padding:11px 12px;font-size:13px;gap:9px;
