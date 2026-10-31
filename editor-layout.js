@@ -134,7 +134,7 @@ function syncProgress(){
  track.setAttribute('aria-valuenow',String(Math.round(progress)));
  track.setAttribute('aria-valuetext',captionText+': '+countText+'. '+statusText);
  shell.dataset.status=badge?.classList.contains('ok')?'ok':badge?.classList.contains('error')?'error':'waiting';
- shell.title=statusText;
+ shell.title=badge?.title||statusText;
 }
 for(const id of ['connectionsCount','validationBadge','progressBar','progressCaption']){
  const node=$(id);if(node&&typeof MutationObserver!=='undefined'){
