@@ -596,7 +596,7 @@ function renderProgress(){
   inAssembly?'Continue adicionando componentes':'Faltam '+missing().length+' ligações';
  const invalid=mistakes(),pending=missing();
  badge.title=invalid.length
-  ?invalid.map(w=>'Fio incorreto: '+portName(w.a)+' → '+portName(w.b)).join('\n')
+  ?invalid.map(w=>w.loose?'Jumper com ponta solta: mova a bolinha até um pino.':'Fio incorreto: '+portName(w.a)+' → '+portName(w.b)).join('\n')
    +(pending.length?'\nFaltam '+pending.length+' ligações corretas.':'')
   :pending.length?'Faltam '+pending.length+' ligações. Clique no progresso para saber a próxima.':
    'Todas as ligações estão corretas.';
@@ -2543,7 +2543,7 @@ function bind(){
    const bad=mistakes(),needed=missing();
    if(bad.length){
     const w=bad[0];
-    message('Fio incorreto: '+portName(w.a)+' → '+portName(w.b)+'. Remova esse jumper e confira a alimentação. '+(needed.length?'Faltam '+needed.length+' ligações.':''),true);
+    message(w.loose?'Jumper com ponta solta: arraste a bolinha até um pino.':('Fio incorreto: '+portName(w.a)+' → '+portName(w.b)+'. Remova esse jumper e confira a alimentação. '+(needed.length?'Faltam '+needed.length+' ligações.':'')),true);
    }else if(needed.length){
     const [from,to]=needed[0];
     message('Faltam '+needed.length+' ligações. Próxima: '+portName(from)+' → '+portName(to)+'.',true);
