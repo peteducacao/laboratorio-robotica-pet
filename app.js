@@ -2428,7 +2428,7 @@ function bind(){
   const del=e.target.closest('[data-remove]');if(del){removePart(del.dataset.remove);return;}
   const toggler=e.target.closest('[data-toggle]');if(toggler){snapshot();state.switches[toggler.dataset.toggle]=!state.switches[toggler.dataset.toggle];refresh();message('Gangorra '+(state.switches[toggler.dataset.toggle]?'ligada':'desligada')+'.');return;}
  });
- Q('partsLayer').addEventListener('input',e=>{if(e.target.id==='voltageInput'){state.voltage=Number(e.target.value);const out=Q('voltageOutput');if(out)out.textContent=state.voltage.toFixed(1).replace('.',',')+' V';renderProgress();persist();updateTrackLock();updateLiveSimulation();}});
+ Q('partsLayer').addEventListener('input',e=>{if(e.target.id==='voltageInput'){state.voltage=Number(e.target.value);const out=Q('voltageOutput');if(out)out.textContent=state.voltage.toFixed(1).replace('.',',')+' V';renderProgress();persist();updateTrackLock();updateLiveSimulation();syncCompletionCelebration();}});
  Q('partsLayer').addEventListener('change',e=>{if(e.target.id==='voltageInput')message('LM2596 ajustado para '+state.voltage.toFixed(1).replace('.',',')+' V.');});
  Q('wireSvg').addEventListener('pointerdown',e=>{
   if(pinch||activeTouches.size>=2||Date.now()<gestureBlockedUntil||spaceHeld||reconnectPending)return;
