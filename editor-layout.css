@@ -183,7 +183,7 @@
 }
 .preview-studio.editor-layout.components-open #drawerHandle{left:var(--ed-left-width)!important}
 .preview-studio.editor-layout #drawerHandle span{display:block!important;font-size:22px!important}
-.preview-studio.editor-layout #drawerHandle.open span{transform:rotate(180deg)}
+.preview-studio.editor-layout #drawerHandle.open span{transform:none!important}
 .preview-studio.editor-layout #sideBackdrop{display:none!important}
 /* Main canvas grows to occupy both closed panels. No dimming or modal overlay. */
 .preview-studio.editor-layout{
