@@ -10,8 +10,8 @@
 <link rel="stylesheet" href="styles.css?v=37">
 <link rel="stylesheet" href="answer-key.css?v=37">
 <link rel="stylesheet" href="studio-preview.css?v=19">
-<link rel="stylesheet" href="editor-layout.css?v=10">
-<script defer src="app.js?v=68"></script>
+<link rel="stylesheet" href="editor-layout.css?v=11">
+<script defer src="app.js?v=69"></script>
 <script defer src="answer-key.js?v=37"></script>
 <script defer src="studio-preview.js?v=1"></script>
 <script defer src="editor-layout.js?v=10"></script>
@@ -162,6 +162,23 @@
     <button id="exportDownloadSvg" type="button" class="export-secondary-btn">Baixar SVG</button>
     <button id="exportConfirmDownload" type="button" class="export-primary-btn">Baixar PNG</button>
   </div></div>
+</dialog>
+<dialog id="completionDialog" class="completion-dialog" aria-labelledby="completionTitle" aria-describedby="completionDescription">
+  <div id="completionConfetti" class="completion-confetti" aria-hidden="true"></div>
+  <div class="completion-contents">
+    <div class="completion-mark" aria-hidden="true"><svg viewBox="0 0 40 40" fill="none"><path d="m10.5 20.5 6.2 6.2 13-14" stroke="currentColor" stroke-width="3.6" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+    <span class="completion-eyebrow">MONTAGEM VALIDADA</span>
+    <h2 id="completionTitle">Circuito concluído!</h2>
+    <p id="completionDescription">Parabéns! Todas as conexões estão corretas. Seu circuito está pronto!</p>
+    <p class="completion-details"><span id="completionConnections">Conexões corretas</span><span aria-hidden="true">·</span><span id="completionMode">Montagem concluída</span></p>
+    <div class="completion-footer">
+      <span class="completion-timer" title="Fechamento automático em 3 segundos" aria-label="Esta mensagem fecha automaticamente após 3 segundos">
+        <svg viewBox="0 0 40 40" aria-hidden="true"><circle class="completion-timer-track" cx="20" cy="20" r="14"/><circle id="completionTimerRing" class="completion-timer-ring" cx="20" cy="20" r="14"/></svg>
+        <span id="completionSeconds" class="completion-seconds" aria-hidden="true">3</span>
+      </span>
+      <button id="completionClose" class="completion-close" type="button">Voltar à bancada <span aria-hidden="true">×</span></button>
+    </div>
+  </div>
 </dialog>
 <div id="wireColorMenu" class="wire-color-menu" role="group" aria-label="Escolha uma cor de fio" hidden></div>
 </body></html>
