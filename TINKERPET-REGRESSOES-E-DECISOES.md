@@ -53,3 +53,13 @@
 - Verificação possível aqui: código, sintaxe, CSS balanceado, condições de largura, scripts/versões presentes e preservação dos SHA do motor do PC.
 - **Pendente de teste real:** visualização no Chrome Android, F5 em aba antiga já aberta e arraste de jumpers com dedos. Não declarar resolvido visualmente sem esses testes.
 - Se circuito antigo continuar com barra antiga após abrir pela lista atualizada, investigar cache específico da aba, publicação real do GitHub Pages e carregamento/erros de `mobile-editor.css`, antes de alterar regras de circuito.
+
+## 30/10/2026 — fios seguindo o dedo: versão móvel separada
+- Pedido: ao criar e arrastar um fio com o dedo, a ponta deve permanecer sob o dedo, mudando de direção em cada virada; as mudanças devem formar curvas ortogonais e persistir ao soltar, reconectar e salvar.
+- **Restrição explícita:** não alterar `app.js` nem o código do PC.
+- Solução: criado `app-mobile.js` como cópia independente do motor atual, adaptando somente `mobileFingerRoute`, `mobileFinishFingerRoute` e `mobileReconnectFinger` para toques. O HTML escolhe o motor móvel em telas até 700px e continua carregando `app.js?v=77` no PC; a lógica desktop permanece intocada.
+- Durante arraste, os vértices são ortogonais e o último ponto corresponde à posição real do dedo. As mudanças de eixo geram pontos fixados. A área sensível das alças móveis passou a ~42px; gesto de iniciar fio no toque passa a responder após ~7px.
+- **Teste realizado:** 7.200 posições simuladas de desenho móvel, sem trecho diagonal nem perda do ponto seguido pelo dedo, e casos de virada horizontal/vertical e atualização de `reconnectPending.corners`.
+- **Limitação a acompanhar:** o teste automatizado foi de lógica, não um ensaio com dedo em Chrome Android. Após publicação, validar toques em circuito antigo e novo e confirmar que soltura, reconexão, edição do fio, salvamento e PNG continuam íntegros.
+- Nova rota da lista móvel: `release=20261030finger-wire-v1`, scripts atualizados em `projects.html` e `editor.html`. Evitar reaproveitar aba antiga com recurso em cache.
+- **Atenção na manutenção:** como existe cópia independente `app-mobile.js`, correções futuras de segurança/negócio no motor PC não são automaticamente incorporadas ao celular; comparar conscientemente os dois e preservar a regra de não alterar PC por um bug móvel.
