@@ -79,45 +79,34 @@
   }
   return best;
  }
- function correctionFor(w,category,steps,expected){
-  // A correção vem das ligações válidas da montagem atual, não do terminal
-  // que o estudante ligou errado. Isso também respeita gangorras e motores
-  // intercambiáveis que o simulador já reconhece.
-  const candidates=(Array.isArray(expected)&&expected.length
-   ?expected.map(([a,b])=>({a,b,section:kind({a,b})==='lm'?'lm':'drv'}))
-   :steps).filter(candidate=>{
-    const ids=[part(candidate.a),part(candidate.b)];
-    if(category==='motor')return ids.includes('ml')||ids.includes('mr');
-    if(category==='gpio')return [candidate.a,candidate.b].some(p=>/^drv\.IN[1-4]$/.test(p));
-    if(category==='ground')return ids.includes('drv')&&ids.includes('esp');
-    if(category==='switchLed'){
-     const switchId=[w.a,w.b].find(p=>/^s[12]\./.test(p));
-     return switchId?ids.includes(part(switchId)):ids.includes('s1')||ids.includes('s2');
-    }
-    if(category==='lm')return ids.includes('b1')||ids.includes('lm')||ids.includes('esp')&&[candidate.a,candidate.b].includes('esp.VIN');
-    if(category==='drive')return ids.includes('b2')||ids.includes('drv')&&
-     [candidate.a,candidate.b].some(p=>p==='drv.VCC'||p==='drv.GND')||
-     ids.includes('s1')||ids.includes('s2');
-    return true;
-   });
-  const options=candidates.length?candidates:steps;
-  let best=null,bestScore=-Infinity;
-  for(const [i,c] of options.entries()){
-   const connected=[w.a,w.b],wanted=[c.a,c.b];
-   const matched=connected.filter(v=>wanted.some(p=>same(v,p)));
-   if(!matched.length)continue;
-   const sameParts=new Set(connected.map(part));
-   const sharedParts=wanted.filter(p=>sameParts.has(part(p))).length;
-   const specificity=matched.reduce((total,p)=>total+(
-    /^(?:esp\.GND2?|drv\.GND)$/.test(p)?0.15:1),0);
-   const score=matched.length*100+sharedParts*10+specificity*3-i*.001;
-   if(score>bestScore){bestScore=score;best=c;}
+ // Só recomenda mover UMA ponta quando a ligação resultante foi confirmada
+ // pelo próprio verificador do editor. A ordem do gabarito desempata opções.
+ function chooseRepair(w,index,switched,allPorts,canApply){
+  if(!w||typeof canApply!=='function'||!Array.isArray(allPorts))return null;
+  const guide=sequence(Boolean(switched));
+  const canon=(a,b)=>[stepKey(a),stepKey(b)].sort().join('|');
+  const guideOrder=new Map(guide.map((p,i)=>[canon(p.a,p.b),i]));
+  const options=[];
+  for(const end of ['b','a']){
+   const fixed=w[end==='a'?'b':'a'],old=w[end];
+   for(const next of allPorts){
+    if(next===old||next===fixed||!canApply(index,end,next))continue;
+    const pair=canon(fixed,next);
+    const rank=guideOrder.get(pair);
+    const score=(part(next)===part(old)?50:0)
+      +(rank!==undefined?30:0)
+      +(end==='b'?12:0)
+      +(rank!==undefined?(guide.length-rank)/100:0);
+    options.push({end,from:old,to:next,keep:fixed,score});
+   }
   }
-  return best||options[0]||null;
+  if(!options.length)return null;
+  options.sort((a,b)=>b.score-a.score||a.to.localeCompare(b.to));
+  const best=options[0];
+  return {end:best.end,from:best.from,to:best.to,keep:best.keep};
  }
- function getAdvice(wires,allowed,switched,portName,selected,expected){
+ function getAdvice(wires,allowed,switched,portName,selected,expected,resolveRepair){
   if(!Array.isArray(wires)||!allowed)return null;
-  // Só ligações completas e realmente inválidas disparam dicas.
   const wrong=wires.map((w,index)=>({w,index})).filter(({w})=>w&&!w.loose&&
    !allowed.has([stepKey(w.a),stepKey(w.b)].sort().join('|')));
   if(!wrong.length)return null;
@@ -128,20 +117,24 @@
   }).sort((a,b)=>a.indexInGuide-b.indexInGuide||a.index-b.index);
   const chosen=ordered.find(item=>item.index===selected)||ordered[0];
   const category=kind(chosen.w);
-  const correction=correctionFor(chosen.w,category,steps,expected);
   const label=p=>typeof portName==='function'?portName(p):p;
+  const repair=typeof resolveRepair==='function'?
+   resolveRepair(chosen.w,chosen.index,Boolean(switched)):null;
   const what=label(chosen.w.a)+' → '+label(chosen.w.b);
-  const correct=correction?label(correction.a)+' → '+label(correction.b):
-   'Confira os terminais deste componente no gabarito.';
-  const section=category==='lm'?'Alimentação · LM2596':
-   category==='motor'?'Ponte H · Motor DC':
-   category==='gpio'?'ESP32 · Ponte H':
-   category==='ground'?'GND comum':
-   category==='switchLed'?'Gangorra · Terminais':
-   'Alimentação · Ponte H';
+  const from=repair?label(repair.from):null;
+  const to=repair?label(repair.to):null;
+  const keep=repair?label(repair.keep):null;
+  const section=category==='lm'?'Bateria e LM2596':
+   category==='motor'?'Motor e Ponte H':
+   category==='gpio'?'ESP32 e Ponte H':
+   category==='ground'?'Ligação do GND':
+   category==='switchLed'?'Ligação da gangorra':
+   'Ponte H e alimentação';
   return {
-   header:section,what,correct,detail:'Correto: '+correct,
-   text:'O que você fez: '+what+'. Correto: '+correct,
+   header:section,what,correct:to,from,to,keep,repair,
+   fallback:'Tire esse fio e confira o próximo passo no gabarito antes de ligar novamente.',
+   detail:repair?'Tire a ponta de '+from+' e coloque em '+to+'.':'Remova este fio e confira o gabarito.',
+   text:repair?'Tire a ponta de '+from+' e coloque em '+to+'.':'Confira a ligação no gabarito.',
    wireIndex:chosen.index,
    number:chosen.step.section==='lm'?1:2,
    step:steps.filter(p=>p.section===chosen.step.section).indexOf(chosen.step)+1,
@@ -170,7 +163,7 @@
    get unlocked(){return unlocked}
   };
  }
- const api={sequence,getAdvice,createDelay};
+ const api={sequence,getAdvice,chooseRepair,createDelay};
  if(typeof window!=='undefined')window.TinkerpetStepHints=api;
  if(typeof module!=='undefined'&&module.exports)module.exports=api;
 })();
