@@ -233,8 +233,33 @@ function requiredParts(){return assemblyMode()==='switched'?9:7;}
 // Chave 2: suporte AA (+) → terminal 1 → terminal 2 → + da MX1508.
 // Negativos: 9 V (-) → LM IN-; AA (-) → MX1508 GND → ESP32 GND.
 // O terceiro contato LEDG não faz parte das ligações exigidas.
-const SWITCH_POSITIVE_ESP=[['b1.POS','s1.IN'],['s1.OUT','lm.INP']];
-const SWITCH_POSITIVE_MOTOR=[['b2.POS','s2.IN'],['s2.OUT','drv.VCC']];
+// Detecta qual gangorra pertence a qual fonte pelas ligações efetuadas.
+// Os dois contatos de comutação são reversíveis, mas LEDG não participa.
+function switchPositiveConnections(from,to,id,reversed){
+ const input=reversed?'OUT':'IN',output=reversed?'IN':'OUT';
+ return [[from,id+'.'+input],[id+'.'+output,to]];
+}
+const SWITCH_WIRING_VARIANTS=(()=>{
+ const variants=[];
+ for(const espId of ['s1','s2']){
+  const motorId=espId==='s1'?'s2':'s1';
+  for(const espReversed of [false,true])for(const motorReversed of [false,true]){
+   const esp=switchPositiveConnections('b1.POS','lm.INP',espId,espReversed);
+   const motor=switchPositiveConnections('b2.POS','drv.VCC',motorId,motorReversed);
+   variants.push({espId,motorId,esp,motor,pairs:[...esp,...motor]});
+  }
+ }
+ return variants;
+})();
+function selectedSwitchConnections(){
+ const actual=new Set(state.wires.filter(w=>!w.loose).map(w=>electricalKey(w.a,w.b)));
+ let best=SWITCH_WIRING_VARIANTS[0],score=-1;
+ for(const variant of SWITCH_WIRING_VARIANTS){
+  const matches=variant.pairs.filter(([a,b])=>actual.has(electricalKey(a,b))).length;
+  if(matches>score){score=matches;best=variant;}
+ }
+ return best;
+}
 // Os dois canais da MX1508 são equivalentes para motores DC.
 // A posição visual de um motor na bancada e a ordem em que foi criado
 // não determinam se ele precisa ficar obrigatoriamente no canal A ou B.
@@ -283,7 +308,8 @@ function selectedControlConnections(){
  });
 }
 function expectedConnections(){
- const baseline=assemblyMode()==='switched'?SWITCHED_CONNECTIONS:DIRECT_CONNECTIONS;
+ const baseline=assemblyMode()==='switched'
+  ?[...COMMON_CONNECTIONS,...selectedSwitchConnections().pairs]:DIRECT_CONNECTIONS;
  return baseline.filter(([a,b])=>!a.startsWith('drv.OUT')&&!CONTROL_INPUTS.some(pin=>b==='drv.'+pin))
   .concat(selectedControlConnections(),selectedMotorConnections());
 }
@@ -302,7 +328,7 @@ function mistakeExplanation(w){
  if(w.loose)return 'O jumper tem uma ponta solta. Arraste a bolinha até o pino correto ou remova o fio.';
  if([w.a,w.b].some(p=>p==='s1.LEDG'||p==='s2.LEDG'))
   return 'O terceiro terminal LED− da gangorra é apenas da luz indicadora e não alimenta o ESP32. Use os contatos 1 e 2 para ligar ou desligar a alimentação.';
- return 'Revise o fio '+portName(w.a)+' → '+portName(w.b)+'. A gangorra aceita contatos 1 e 2 invertidos, mas o circuito deve fechar o caminho do positivo.';
+ return 'Revise o fio '+portName(w.a)+' → '+portName(w.b)+'. Os contatos 1 e 2 da gangorra podem ser invertidos, mas cada chave deve conectar o positivo de apenas uma fonte ao seu módulo.';
 }
 function ready(){
  const switched=assemblyMode()==='switched';
@@ -315,11 +341,14 @@ function powerStatus(){
  const has=(a,b)=>state.wires.some(w=>!w.loose&&electricalKey(w.a,w.b)===electricalKey(a,b));
  const switched=assemblyMode()==='switched';
  // A chave comuta apenas o positivo de cada fonte. Todos os GND são comuns.
+ const switchWiring=selectedSwitchConnections();
  const espPositive=switched
-  ?exists('s1')&&state.switches.s1&&SWITCH_POSITIVE_ESP.every(([a,b])=>has(a,b))
+  ?exists(switchWiring.espId)&&state.switches[switchWiring.espId]&&
+   switchWiring.esp.every(([a,b])=>has(a,b))
   :has('b1.POS','lm.INP');
  const motorPositive=switched
-  ?exists('s2')&&state.switches.s2&&SWITCH_POSITIVE_MOTOR.every(([a,b])=>has(a,b))
+  ?exists(switchWiring.motorId)&&state.switches[switchWiring.motorId]&&
+   switchWiring.motor.every(([a,b])=>has(a,b))
   :has('b2.POS','drv.VCC');
  const buck=exists('b1')&&exists('lm')&&espPositive&&has('b1.NEG','lm.INN');
  const esp=buck&&exists('esp')&&Math.abs(state.voltage-5)<.01
@@ -359,8 +388,9 @@ function updateLiveSimulation(){
   card.classList.toggle('powered',enabled&&!!on);
   if(id==='ml'||id==='mr')card.classList.toggle('running',enabled&&!!on);
   if(id==='s1'||id==='s2'){
-   const source=id==='s1'?live.buck:live.driver;
-   const negative=id==='s1'?'b1.NEG':'b2.NEG';
+   const isEspSwitch=id===selectedSwitchConnections().espId;
+   const source=isEspSwitch?live.buck:live.driver;
+   const negative=isEspSwitch?'b1.NEG':'b2.NEG';
    const indicator=enabled&&source&&state.wires.some(w=>!w.loose&&electricalKey(w.a,w.b)===electricalKey(negative,id+'.LEDG'));
    card.dataset.indicator=indicator?'on':'off';
   }
@@ -399,7 +429,7 @@ function renderParts(){
   if(p.kind==='esp')card.dataset.boardModel='devkit30';
   if(p.kind==='switch'){
     card.dataset.powered=state.switches[p.id]?'on':'off';
-    const battery=p.id==='s1'?'b1':'b2';
+    const battery=p.id===selectedSwitchConnections().espId?'b1':'b2';
     const ledConnected=state.wires.some(w=>!w.loose&&electricalKey(w.a,w.b)===electricalKey(battery+'.NEG',p.id+'.LEDG'));
     card.dataset.indicator=state.switches[p.id]&&ledConnected?'on':'off';
   }
