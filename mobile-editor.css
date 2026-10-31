@@ -1,0 +1,178 @@
+
+/* TinkerPET Studio — MOBILE ONLY.
+ * Mesmos controles, IDs e listeners do desktop. Nunca afeta larguras >700px.
+ * 1. Ações rápidas  2. Progresso  3. Ferramentas de edição e zoom.
+ */
+@media (max-width:700px) {
+  .preview-studio.editor-layout .studio-topbar .toolbar {
+    display:grid!important;
+    grid-template-columns:minmax(0,1fr) repeat(3, minmax(0,49px))!important;
+    grid-template-rows:auto auto auto!important;
+    align-items:center!important;justify-content:stretch!important;
+    gap:8px!important;
+    padding:9px 10px 12px!important;
+    width:100%!important;min-height:0!important;
+    box-sizing:border-box!important;
+  }
+  .preview-studio.editor-layout .studio-topbar .toolbar-right {
+    display:contents!important;
+  }
+  .preview-studio.editor-layout .studio-topbar #editorSettingsButton{
+    grid-column:2!important;grid-row:1!important;
+  }
+  .preview-studio.editor-layout .studio-topbar #hintBtn{
+    grid-column:3!important;grid-row:1!important;
+  }
+  .preview-studio.editor-layout .studio-topbar #downloadBtn{
+    grid-column:4!important;grid-row:1!important;
+  }
+  .preview-studio.editor-layout .studio-topbar :is(#editorSettingsButton,#hintBtn,#downloadBtn){
+    display:grid!important;place-items:center!important;justify-self:stretch!important;
+    box-sizing:border-box!important;
+    width:49px!important;min-width:49px!important;max-width:49px!important;
+    height:49px!important;min-height:49px!important;max-height:49px!important;
+    padding:0!important;margin:0!important;border-radius:12px!important;
+    font-size:22px!important;line-height:1!important;
+  }
+  .preview-studio.editor-layout .studio-topbar #hintBtn span{display:none!important}
+  .preview-studio.editor-layout .studio-topbar :is(#editorSettingsButton,#downloadBtn) svg {
+    display:block!important;width:24px!important;height:24px!important;
+    margin:auto!important;
+  }
+  .preview-studio.editor-layout .studio-topbar #editorToolbarProgress{
+    grid-column:1/-1!important;grid-row:2!important;
+    box-sizing:border-box!important;
+    width:100%!important;min-width:0!important;max-width:none!important;
+    margin:0!important;padding:10px 12px!important;
+    flex:none!important;order:initial!important;
+  }
+  .preview-studio.editor-layout .studio-topbar .editor-toolbar-progress-head{
+    font-size:12px!important;
+  }
+  .preview-studio.editor-layout .studio-topbar .editor-toolbar-progress-status{
+    font-size:11px!important;
+  }
+  .preview-studio.editor-layout .studio-topbar .editor-toolbar-progress-track{
+    height:7px!important;flex:0 0 7px!important;
+  }
+  .preview-studio.editor-layout .studio-topbar .toolbar-left{
+    grid-column:1/-1!important;grid-row:3!important;
+    box-sizing:border-box!important;
+    display:grid!important;
+    grid-template-columns:minmax(0,1fr) auto auto!important;
+    grid-template-rows:auto auto!important;
+    align-items:center!important;justify-content:stretch!important;
+    gap:7px!important;
+    width:100%!important;max-width:none!important;min-width:0!important;
+    flex:none!important;margin:0!important;padding:0!important;
+  }
+  .preview-studio.editor-layout .studio-topbar .toolbar-left .edit-group{
+    grid-column:1/-1!important;grid-row:1!important;
+    display:grid!important;
+    grid-template-columns:repeat(6,minmax(0,1fr))!important;
+    align-items:center!important;justify-items:stretch!important;
+    gap:3px!important;
+    padding:4px!important;margin:0!important;
+    min-width:0!important;width:100%!important;
+    box-sizing:border-box!important;
+    border-radius:12px!important;
+  }
+  .preview-studio.editor-layout .studio-topbar .toolbar-left .edit-group > :is(#copyBtn,#selectionToolBtn,#rotateBtn,#flipBtn,#pasteBtn,#deleteBtn){
+    display:grid!important;place-items:center!important;
+    box-sizing:border-box!important;
+    width:100%!important;min-width:0!important;max-width:none!important;
+    height:49px!important;min-height:49px!important;max-height:49px!important;
+    flex:none!important;margin:0!important;padding:0!important;
+    border-radius:9px!important;
+    gap:0!important;
+  }
+  .preview-studio.editor-layout .studio-topbar .toolbar-left .edit-group > :is(#copyBtn,#selectionToolBtn,#rotateBtn,#flipBtn,#pasteBtn,#deleteBtn) svg{
+    display:block!important;
+    width:24px!important;height:24px!important;
+    min-width:24px!important;max-width:24px!important;
+    margin:auto!important;
+  }
+  .preview-studio.editor-layout .studio-topbar .selection-btn-label{
+    display:none!important;
+  }
+  .preview-studio.editor-layout .studio-topbar .toolbar-left .history-group{
+    grid-column:1!important;grid-row:2!important;
+    display:flex!important;justify-content:flex-start!important;
+    gap:4px!important;margin:0!important;padding:3px!important;
+    width:max-content!important;min-width:0!important;
+  }
+  .preview-studio.editor-layout .studio-topbar .history-group > :is(#undoBtn,#redoBtn){
+    display:grid!important;place-items:center!important;
+    box-sizing:border-box!important;
+    width:49px!important;min-width:49px!important;max-width:49px!important;
+    height:49px!important;min-height:49px!important;max-height:49px!important;
+    padding:0!important;margin:0!important;border-radius:10px!important;
+  }
+  .preview-studio.editor-layout .studio-topbar .history-group svg{
+    width:23px!important;height:23px!important;
+  }
+  .preview-studio.editor-layout .studio-topbar #wireColorButton {
+    grid-column:2!important;grid-row:2!important;
+    box-sizing:border-box!important;
+    display:flex!important;align-items:center!important;justify-content:center!important;
+    width:53px!important;min-width:53px!important;max-width:53px!important;
+    height:49px!important;min-height:49px!important;max-height:49px!important;
+    margin:0!important;padding:3px!important;
+  }
+  .preview-studio.editor-layout .studio-topbar .toolbar-zoom{
+    grid-column:3!important;grid-row:2!important;
+    display:flex!important;align-items:center!important;justify-content:center!important;
+    gap:2px!important;box-sizing:border-box!important;
+    min-width:0!important;width:auto!important;margin:0!important;padding:3px!important;
+  }
+  .preview-studio.editor-layout .studio-topbar .toolbar-zoom > :is(#zoomIn,#zoomOut){
+    display:grid!important;place-items:center!important;
+    flex:0 0 41px!important;
+    width:41px!important;min-width:41px!important;max-width:41px!important;
+    height:43px!important;min-height:43px!important;max-height:43px!important;
+    font-size:20px!important;margin:0!important;padding:0!important;
+  }
+  .preview-studio.editor-layout .studio-topbar .toolbar-zoom #zoomLabel {
+    min-width:37px!important;font-size:11px!important;
+  }
+  .preview-studio.editor-layout .studio-topbar .toolbar-zoom #fitBtn {
+    display:none!important;
+  }
+  .preview-studio.editor-layout .studio-topbar :is(#previewInspectorOpen,#openTrackBtn[hidden]){
+    display:none!important;
+  }
+  /* Arrastar fios no Android não deve entregar o gesto à rolagem do navegador. */
+  .preview-studio.editor-layout #viewport,
+  .preview-studio.editor-layout #partsLayer,
+  .preview-studio.editor-layout #partsLayer [data-port],
+  .preview-studio.editor-layout #wireSvg,
+  .preview-studio.editor-layout #wireSvg [data-wire-index],
+  .preview-studio.editor-layout #wireHandles,
+  .preview-studio.editor-layout #wireHandles .wire-end-handle {
+    touch-action:none!important;
+    -webkit-user-select:none!important;user-select:none!important;
+    -webkit-touch-callout:none!important;
+  }
+}
+@media (max-width:365px) {
+  .preview-studio.editor-layout .studio-topbar .toolbar{
+    grid-template-columns:minmax(0,1fr) repeat(3,47px)!important;
+    padding-inline:7px!important;column-gap:5px!important;
+  }
+  .preview-studio.editor-layout .studio-topbar :is(#editorSettingsButton,#hintBtn,#downloadBtn){
+    width:47px!important;min-width:47px!important;max-width:47px!important;
+  }
+  .preview-studio.editor-layout .studio-topbar .toolbar-left{
+    gap:5px!important;
+  }
+  .preview-studio.editor-layout .studio-topbar .toolbar-left .edit-group > :is(#copyBtn,#selectionToolBtn,#rotateBtn,#flipBtn,#pasteBtn,#deleteBtn){
+    height:46px!important;min-height:46px!important;max-height:46px!important;
+  }
+  .preview-studio.editor-layout .studio-topbar .history-group > :is(#undoBtn,#redoBtn){
+    width:44px!important;min-width:44px!important;max-width:44px!important;
+    height:46px!important;min-height:46px!important;max-height:46px!important;
+  }
+  .preview-studio.editor-layout .studio-topbar .toolbar-zoom > :is(#zoomIn,#zoomOut){
+    flex-basis:38px!important;width:38px!important;min-width:38px!important;max-width:38px!important;
+  }
+}
