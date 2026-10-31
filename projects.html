@@ -8,9 +8,9 @@
 <link rel="icon" href="assets/logo-pet.svg" type="image/svg+xml">
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&family=Manrope:wght@600;700;800&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="projects.css?v=11">
+<link rel="stylesheet" href="projects.css?v=12">
 <script defer src="nick-registry.js?v=1"></script>
-<script defer src="projects.js?v=22"></script>
+<script defer src="projects.js?v=23"></script>
 </head>
 <body>
 <header class="top">
@@ -25,6 +25,7 @@
    <a href="./"><svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="m3 11 9-8 9 8v10h-6v-7H9v7H3z"/></svg>Início</a>
    <a class="active" href="projects.html?release=20261031-gpio18-mobile-fix-v2" aria-current="page"><svg viewBox="0 0 24 24" fill="none" stroke-width="2"><circle cx="6" cy="5" r="2"/><circle cx="18" cy="19" r="2"/><path d="M6 7v11h7v-7h5V7"/></svg>Meus circuitos</a>
    <button type="button" id="openGate"><svg viewBox="0 0 24 24" fill="none" stroke-width="2"><rect x="5" y="10" width="14" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3m-4 5v2"/></svg><span id="gateLabel">Gabarito 🔒</span></button>
+   <button type="button" id="openCredits" class="nav-credits" aria-haspopup="dialog" aria-controls="creditsDialog" aria-label="Abrir Créditos do projeto"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="5"/><path d="m8.2 12-1.5 9 5.3-3 5.3 3-1.5-9"/></svg><span>Créditos</span></button>
   </nav>
   <div class="stats">
    <div class="stat"><svg viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8" fill="none"><path d="M5 3h10l4 4v14H5zM14 3v5h5M8 13h8M8 17h6"/></svg><div><span>Total de circuitos</span><strong id="projectCount">0</strong></div></div>
@@ -44,5 +45,27 @@
 <dialog id="editDialog" class="modal"><form class="modal-body" id="editForm"><h2 id="editTitle">Editar</h2><label for="editInput">Nome</label><input id="editInput" type="text" maxlength="80" required><p class="error" id="editError"></p><div class="modal-actions"><button type="button" id="deleteNick" class="nick-delete" hidden aria-label="Excluir meu Nick" title="Excluir meu Nick"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M8 6V4h8v2m3 0-1 15H6L5 6M10 10v7m4-7v7"/></svg><span>Excluir Nick</span></button><button type="button" id="cancelEdit">Cancelar</button><button type="submit" class="ok" id="editSave">Salvar</button></div></form></dialog>
 <dialog id="confirmDialog" class="modal"><div class="modal-body"><h2 id="confirmTitle">Excluir?</h2><p id="confirmBody"></p><div class="modal-actions"><button type="button" id="confirmNo">Cancelar</button><button class="ok" type="button" id="confirmYes">Confirmar</button></div></div></dialog>
 <dialog id="gateDialog" class="modal" aria-label="Senha do Gabarito"><form class="modal-body gate-card" id="gateForm"><div class="gate-mark"><img src="assets/logo-pet.svg" alt="PET Educação"></div><h2>TinkerPET</h2><label for="gatePassword" style="text-align:left">Senha</label><div class="gate-password-wrap" style="display:flex;align-items:center;gap:8px"><input id="gatePassword" type="password" autocomplete="off" required placeholder="" style="min-width:0;flex:1"><button type="button" id="toggleGatePassword" aria-label="Mostrar senha" aria-pressed="false" title="Mostrar senha" style="width:44px;height:44px;flex-shrink:0;border:1px solid #d6e4e1;border-radius:11px;background:#fff;color:#177e77;display:grid;place-items:center"><svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s3.5-6 10-6 10 6 10 6-3.5 6-10 6S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/></svg></button></div><p class="error" id="gateError" aria-live="polite"></p><div class="modal-actions"><button type="button" id="gateClose">Cancelar</button><button class="ok" type="submit">Entrar</button></div></form></dialog>
+<dialog id="creditsDialog" class="modal credits-dialog" aria-labelledby="creditsTitle" aria-describedby="creditsDescription">
+ <div class="credits-content">
+  <button type="button" id="creditsClose" class="credits-close" aria-label="Fechar créditos" title="Fechar">×</button>
+  <div class="credits-heading">
+   <span class="credits-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="5"/><path d="m8.2 12-1.5 9 5.3-3 5.3 3-1.5-9"/></svg></span>
+   <div><span class="credits-eyebrow">CONHEÇA QUEM ESTÁ POR TRÁS DO PROJETO</span><h2 id="creditsTitle">Créditos</h2></div>
+  </div>
+  <div class="credits-person credits-person-original">
+   <span class="credits-kicker">IDEIA E PROJETO ORIGINAL DO CARRINHO</span>
+   <strong>Gabriel J. Santos</strong>
+   <p id="creditsDescription">O carrinho Wi-Fi com ESP32 utilizado nesta atividade tem como referência o projeto publicado em <em>Fundamentos de Prototipagem e Fabricação Digital</em>.</p>
+   <a class="credits-link" href="https://gabrieljsantos.github.io/Fundamentos-de-Prototipagem-e-Fabrica--o-Digital/conteudos/08-carrinho-wifi-esp32-pet-v1.html" target="_blank" rel="noopener noreferrer">Conhecer o projeto original <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 4h6v6M10 14 20 4"/><path d="M20 13v7H4V4h7"/></svg></a>
+  </div>
+  <div class="credits-person credits-person-developer">
+   <span class="credits-kicker">DESENVOLVIMENTO DO SITE TINKERPET STUDIO</span>
+   <strong>Sérgio R. Santos</strong>
+   <p>Desenvolvimento da plataforma interativa TinkerPET Studio, utilizada para montar e experimentar circuitos de robótica.</p>
+   <a class="credits-link credits-instagram" href="https://www.instagram.com/sergioricz?vrfl=MXV4bTVud2k0MG5kNw==" target="_blank" rel="noopener noreferrer">Instagram · @sergioricz <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 4h6v6M10 14 20 4"/><path d="M20 13v7H4V4h7"/></svg></a>
+  </div>
+  <div class="credits-footer"><span>TinkerPET Studio · PET Educação</span><button id="creditsDone" type="button">Fechar</button></div>
+ </div>
+</dialog>
 <div class="message" id="notice" role="status" hidden></div>
 </body></html>
