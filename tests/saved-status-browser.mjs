@@ -52,12 +52,14 @@ try{
   await page.locator('[data-id="saved-test"] [data-action="rename"]').click();
   await page.locator('#editSave').click();
   assert.equal(await badge.count(),0,'salvar sem alterar nome não aciona selo '+width);
+  const timestampAfterRename=await page.evaluate(()=>
+   JSON.parse(localStorage.getItem('tinkerpet-library-v1')).projects[0].updatedAt);
   await page.locator('[data-id="saved-test"] .card-buttons [data-action="edit"]').click();
   await page.waitForURL('**/editor.html?project=saved-test*');
   await page.locator('#catalog .catalog-card').first().waitFor({state:'attached',timeout:15000});
   assert.equal(await page.locator('#savedIndicator').isVisible(),false,'sem Salvo ao abrir editor '+width);
   const time=await page.evaluate(()=>JSON.parse(localStorage.getItem('tinkerpet-library-v1')).projects[0].updatedAt);
-  assert.equal(time,1234,'abrir editor não deve alterar data '+width);
+  assert.equal(time,timestampAfterRename,'abrir editor não deve alterar data '+width);
   await page.reload({waitUntil:'domcontentloaded'});
   await page.locator('#catalog .catalog-card').first().waitFor({state:'attached',timeout:15000});
   assert.equal(await page.locator('#savedIndicator').isVisible(),false,'sem Salvo ao atualizar editor '+width);
