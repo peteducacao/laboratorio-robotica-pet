@@ -262,45 +262,29 @@ function selectedMotorConnections(){
  }
  return best;
 }
-// No celular, o aluno pode usar QUALQUER GPIO de saída disponível para
-// IN1..IN4. O programa real precisa configurar os mesmos GPIOs escolhidos.
-// GPIO34/35/36/39 são apenas de entrada; alimentação/GND/EN não são sinais.
-// GPIOs de boot 2/5/12/15 funcionam como saída, mas requerem atenção extra
-// à inicialização real do ESP32. RX0/TX0 ficam reservados ao USB/serial.
-const MOBILE_OUTPUT_GPIO=new Set([
- 'D13','D12','D14','D27','D26','D25','D33','D32',
- 'D15','D2','D4','D5','D18','D19','D21','D22','D23','RX2','TX2'
-].map(id=>'esp.'+id));
-const MOBILE_INPUTS=['IN1','IN2','IN3','IN4'];
-const MOBILE_DEFAULT_GPIO=['esp.D27','esp.D26','esp.D32','esp.D18'];
-function mobileControlPort(w,input){
- if(w.loose)return null;
- const target='drv.'+input;
- if(w.a===target&&MOBILE_OUTPUT_GPIO.has(w.b))return w.b;
- if(w.b===target&&MOBILE_OUTPUT_GPIO.has(w.a))return w.a;
- return null;
-}
+// Os quatro sinais da MX1508 podem usar qualquer permutação dos GPIOs
+// 27, 26, 32 e 18, um GPIO exclusivo para cada IN.
+const CONTROL_GPIO=['esp.D27','esp.D26','esp.D32','esp.D18'];
+const CONTROL_INPUTS=['IN1','IN2','IN3','IN4'];
 function selectedControlConnections(){
  const used=new Set();
- return MOBILE_INPUTS.map((input,i)=>{
-  const matching=state.wires.map(w=>mobileControlPort(w,input)).filter(Boolean);
-  // Prefere manter o gabarito original quando há duas ligações no mesmo IN,
-  // mas não permite contar dois GPIOs distintos para uma única entrada.
-  // Priorize um GPIO ainda não usado. Se o IN1 usa D27 e o IN2 usa
-  // D32, não reserve D32 antecipadamente para o IN3 do gabarito.
-  const picked=[...matching].find(p=>!used.has(p));
-  const output=picked||MOBILE_DEFAULT_GPIO[i];
+ return CONTROL_INPUTS.map((input,i)=>{
+  const target='drv.'+input;
+  const matching=state.wires.filter(w=>!w.loose).map(w=>{
+   if(w.a===target&&CONTROL_GPIO.includes(w.b))return w.b;
+   if(w.b===target&&CONTROL_GPIO.includes(w.a))return w.a;
+   return null;
+  }).filter(Boolean);
+  const picked=matching.find(p=>!used.has(p));
   if(picked)used.add(picked);
-  return [output,'drv.'+input];
+  // Faltando conexão, use o primeiro GPIO não reservado como expectativa.
+  // Não reserve pinos para INs ainda não conectados.
+  return [picked||CONTROL_GPIO.find(p=>!used.has(p))||CONTROL_GPIO[i],target];
  });
 }
 function expectedConnections(){
- // Ao inserir gangorras, só o arranjo solicitado é validado. A versão
- // sem gangorras permanece disponível para exercícios com sete peças.
  const baseline=assemblyMode()==='switched'?SWITCHED_CONNECTIONS:DIRECT_CONNECTIONS;
- // Os dois canais de saída são equivalentes: o motor esquerdo/direito
- // pode ocupar A ou B e os polos do motor podem ser invertidos.
- return baseline.filter(([a,b])=>!a.startsWith('drv.OUT')&&!MOBILE_INPUTS.some(pin=>b==='drv.'+pin))
+ return baseline.filter(([a,b])=>!a.startsWith('drv.OUT')&&!CONTROL_INPUTS.some(pin=>b==='drv.'+pin))
   .concat(selectedControlConnections(),selectedMotorConnections());
 }
 function acceptedConnectionSet(){
@@ -318,7 +302,7 @@ function mistakeExplanation(w){
  if(w.loose)return 'O jumper tem uma ponta solta. Arraste a bolinha até o pino correto ou remova o fio.';
  if([w.a,w.b].some(p=>p==='s1.LEDG'||p==='s2.LEDG'))
   return 'O terceiro terminal LED− da gangorra é apenas da luz indicadora e não alimenta o ESP32. Use os contatos 1 e 2 para ligar ou desligar a alimentação.';
- if(MOBILE_INPUTS.some(input=>w.a==='drv.'+input||w.b==='drv.'+input))
+ if(CONTROL_INPUTS.some(input=>w.a==='drv.'+input||w.b==='drv.'+input))
   return 'IN1 a IN4 aceitam GPIOs de saída distintos do ESP32. Não use VIN, GND, EN, GPIO34/35, VP ou VN; evite compartilhar o mesmo GPIO entre entradas.';
  return 'Revise o fio '+portName(w.a)+' → '+portName(w.b)+'. Confira os pinos e as conexões de alimentação.';
 }
