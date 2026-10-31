@@ -72,7 +72,7 @@
   syncEditor();
   localStorage.setItem(ROOT,JSON.stringify(project.circuit));
   localStorage.setItem(ACTIVE,project.id);
-  location.href='editor.html?release=20261030c';
+  location.href='editor.html?release=20261030edgepan1';
  }
  function newCircuit(){
   syncEditor();const now=Date.now();
