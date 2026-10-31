@@ -1084,10 +1084,32 @@ function pendingWirePoints(){
 }
 // Edita um segmento de um jumper conectado sem alterar os dois bornes.
 // A primeira movimentação converte ligações antigas para a rota manual visível.
+// Evita pontas que voltam sobre o mesmo trecho ao mover uma peça ligada.
+// Três pontos na mesma linha descrevem somente UM segmento, inclusive
+// quando uma curva antiga ficou para trás do borne ao arrastar a peça.
+function simplifyWireRoute(points){
+ const route=[];
+ for(const raw of points){
+  if(!raw)continue;
+  const p={x:Math.round(raw.x),y:Math.round(raw.y)};
+  let last=route.at(-1);
+  if(last&&last.x===p.x&&last.y===p.y)continue;
+  while(route.length>=2){
+   const before=route[route.length-2];
+   last=route[route.length-1];
+   if(!((before.x===last.x&&last.x===p.x)||
+        (before.y===last.y&&last.y===p.y)))break;
+   route.pop();
+  }
+  last=route.at(-1);
+  if(!last||last.x!==p.x||last.y!==p.y)route.push(p);
+ }
+ return route;
+}
 function wirePoints(w){
  const a=w.loose?.end==='a'?w.loose.point:getPortPos(w.a);
  const b=w.loose?.end==='b'?w.loose.point:getPortPos(w.b);
- return a&&b?(w.manual?manualWirePoints(a,w.via||[],b):wireRoutePoints(a,w.via||[],b,w.a,w.b)):[];
+ return a&&b?(w.manual?simplifyWireRoute(manualWirePoints(a,w.via||[],b)):wireRoutePoints(a,w.via||[],b,w.a,w.b)):[];
 }
 // Compatibilidade: alguns jumpers antigos usam o gerador procedural de
 // cantos mesmo com "Fios auto OFF". Converte o que já aparece na tela
@@ -1875,7 +1897,7 @@ function elasticWireBends(original,from,to,moveA,moveB,dx,dy){
   }
   fixed.push(next);
  }
- return fixed.slice(1,-1);
+ return simplifyWireRoute(fixed).slice(1,-1);
 }
 function anchoredWireBends(part,dx,dy,anchors){
  for(const item of anchors||[]){
