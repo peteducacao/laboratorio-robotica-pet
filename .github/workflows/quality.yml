@@ -39,6 +39,8 @@ jobs:
         run: |
           npm install --no-save --ignore-scripts playwright@1.56.1
           npx playwright install --with-deps chromium
+      - name: Conferir Créditos e autoria em celular e computador
+        run: node tests/credits-browser.mjs
       - name: Conferir dicas em telas de celular e computador
         run: node tests/hints-browser.mjs
       - name: Testar desfazer, apagar, mover fios e GPIO19
