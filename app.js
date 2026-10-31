@@ -2255,10 +2255,40 @@ function pointerUp(e){
 
 }
 const hintDelay=window.TinkerpetStepHints?.createDelay();
+// Testa a nova conexão sem gravar nem desenhar: o validador real
+// deve aceitar o fio e manter válidos os outros já conectados.
+function validatedHintRepair(wire,index,switched){
+ const solver=window.TinkerpetStepHints;
+ if(!solver?.chooseRepair)return null;
+ const originalAllowed=acceptedConnectionSet();
+ const good=state.wires.filter((w,i)=>i!==index&&!w.loose&&originalAllowed.has(electricalKey(w.a,w.b)));
+ const pins=[...allPorts].filter(p=>exists(p.split('.')[0]));
+ const canApply=(i,end,next)=>{
+  const w=state.wires[i];if(!w||w.loose||!pins.includes(next))return false;
+  const fixed=w[end==='a'?'b':'a'],old=w[end];
+  if(next===fixed||next===old)return false;
+  // Evita duplicar uma ligação ou ocupar um contato que já alimenta
+  // outra entrada. GND admite ramificações de terra.
+  const newKey=electricalKey(fixed,next);
+  if(state.wires.some((other,j)=>j!==i&&!other.loose&&electricalKey(other.a,other.b)===newKey))return false;
+  if(!/\\.GND2?$/.test(next)&&state.wires.some((other,j)=>
+   j!==i&&!other.loose&&(other.a===next||other.b===next)))return false;
+  w[end]=next;
+  let valid=false;
+  try{
+   const allowed=acceptedConnectionSet();
+   valid=allowed.has(electricalKey(w.a,w.b))&&
+    good.every(other=>allowed.has(electricalKey(other.a,other.b)));
+  }finally{w[end]=old;}
+  return valid;
+ };
+ return solver.chooseRepair(wire,index,switched,pins,canApply);
+}
 function contextualWrongAdvice(){
  const advice=window.TinkerpetStepHints?.getAdvice(
   state.wires,acceptedConnectionSet(),assemblyMode()==='switched',
-  portName,state.selectedWire,expectedConnections()
+  portName,state.selectedWire,expectedConnections(),
+  hintDelay?.unlocked?validatedHintRepair:null
  )||null;
  hintDelay?.clearIfResolved(Boolean(advice));
  return hintDelay?.visible(Boolean(advice))?advice:null;
@@ -2280,8 +2310,12 @@ function hint(){
  const dialog=Q('wireHintDialog');
  if(dialog){
   Q('wireHintHeading').textContent=advice.header;
-  Q('wireHintWhat').textContent=advice.what;
-  Q('wireHintCorrect').textContent=advice.correct;
+  Q('wireHintWhat').textContent=advice.from||advice.what;
+  Q('wireHintCorrect').textContent=advice.to||advice.fallback;
+  Q('wireHintWrongLabel').textContent=advice.repair?'Remova a ponta do fio de:':'Esse fio precisa ser refeito:';
+  Q('wireHintRightLabel').textContent=advice.repair?'E coloque em:':'Como corrigir:';
+  Q('wireHintKeep').hidden=!advice.keep;
+  Q('wireHintKeep').textContent=advice.keep?'Deixe a outra ponta em '+advice.keep+'.':'';
   if(!dialog.open)dialog.showModal();
   Q('wireHintClose').focus();
  }else message(advice.text,true);
