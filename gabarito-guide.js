@@ -51,12 +51,14 @@ const remaining=[
  wire('drv.OUT4','ml.A','drv','#986cc0')
 ];
 const anchors={
- b1:{POS:[.94,.20],NEG:[.94,.74]},b2:{POS:[.95,.18],NEG:[.95,.78]},
- s1:{IN:[.19,.94],OUT:[.49,.94]},s2:{IN:[.19,.94],OUT:[.49,.94]},
- lm:{INP:[.06,.22],INN:[.06,.72],OUTP:[.94,.22],OUTN:[.94,.72]},
- esp:{VIN:[.07,.08],GND:[.13,.08],GND2:[.13,.92],D27:[.38,.08],D26:[.43,.08],D32:[.67,.08],D18:[.69,.92]},
- drv:{VCC:[.16,.95],GND:[.30,.95],IN1:[.43,.95],IN2:[.54,.95],IN3:[.67,.95],IN4:[.79,.95],OUT1:[.19,.08],OUT2:[.38,.08],OUT3:[.68,.08],OUT4:[.86,.08]},
- ml:{A:[.13,.76],B:[.13,.83]},mr:{A:[.13,.76],B:[.13,.83]}
+ b1:{POS:[78/255,16/340],NEG:[175/255,21/340]},
+ b2:{POS:[.94,.16],NEG:[.94,.80]},
+ s1:{IN:[111/280,192/225],OUT:[165/280,192/225]},
+ s2:{IN:[111/280,192/225],OUT:[165/280,192/225]},
+ lm:{INP:[53/360,79/225],INN:[53/360,142/225],OUTP:[307/360,79/225],OUTN:[307/360,142/225]},
+ esp:{VIN:[101/930,56/430],GND:[152.5/930,56/430],GND2:[152.5/930,373/430],D27:[358.5/930,56/430],D26:[410/930,56/430],D32:[564.5/930,56/430],D18:[564.5/930,373/430]},
+ drv:{VCC:[73/300,321/380],GND:[104/300,321/380],IN1:[135/300,321/380],IN2:[166/300,321/380],IN3:[197/300,321/380],IN4:[228/300,321/380],OUT1:[183/300,63/380],OUT2:[228/300,63/380],OUT3:[73/300,63/380],OUT4:[118/300,63/380]},
+ ml:{A:[45/300,567/640],B:[45/300,533/640]},mr:{A:[45/300,567/640],B:[45/300,533/640]}
 };
 let mode=null,all=[],section='lm',index=0,full=false;
 function pos(port){const [id,pin]=port.split('.'),p=parts[id],a=anchors[id][pin];return [p.x+p.w*a[0],p.y+p.h*a[1]];}
@@ -68,7 +70,7 @@ function drawing(wires,active=-1,print=false){
  const visible=visibleParts(wires);
  const nodes=Object.entries(parts).filter(([id])=>visible.has(id)).map(([id,p])=>'<image href="'+p.asset+'" x="'+p.x+'" y="'+p.y+'" width="'+p.w+'" height="'+p.h+'" preserveAspectRatio="xMidYMid meet"/><text x="'+(p.x+p.w/2)+'" y="'+(p.y-7)+'" font-size="14" text-anchor="middle" font-weight="700" fill="#315663">'+esc(p.label)+'</text>').join('');
  const lines=wires.map((w,i)=>'<path class="wire '+(active>=0?(i===active?'active':'dim'):'')+'" d="'+path(w,i)+'" stroke="'+w.color+'" stroke-width="4.5" fill="none"/>'+((active===i||print)?[w.a,w.b].map(port=>{const [x,y]=pos(port);return '<circle cx="'+x+'" cy="'+y+'" r="5" fill="'+w.color+'" stroke="#fff" stroke-width="2"/>';}).join(''):'')).join('');
- return '<svg viewBox="0 0 960 605" role="img" aria-label="Esquema de ligação dos componentes">'+nodes+lines+'</svg>';
+ const boxes=[...visible].map(id=>parts[id]);const x=Math.max(0,Math.min(...boxes.map(p=>p.x))-24),y=Math.max(0,Math.min(...boxes.map(p=>p.y))-30),right=Math.min(960,Math.max(...boxes.map(p=>p.x+p.w))+24),bottom=Math.min(605,Math.max(...boxes.map(p=>p.y+p.h))+24);return '<svg viewBox="'+x+' '+y+' '+(right-x)+' '+(bottom-y)+'" role="img" aria-label="Esquema de ligação dos componentes">'+nodes+lines+'</svg>';
 }
 function sequence(){return section==='esp'?all:all.filter(w=>w.section===section);}
 function render(){
