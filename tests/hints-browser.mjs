@@ -45,7 +45,14 @@ try{
   });
   await page.reload({waitUntil:'domcontentloaded'});
   await page.locator('#catalog .catalog-card').first().waitFor({state:'attached',timeout:20000});
-  assert.equal(await page.locator('#hintBtn').isVisible(),false,'sem erro, dica oculta '+width);
+  const hintState=await page.locator('#hintBtn').evaluate(el=>({
+   hidden:el.hidden,display:getComputedStyle(el).display,
+   body:document.body.className,
+   wires:JSON.parse(localStorage.getItem('tinkerpet-library-v1')).projects[0].circuit.wires,
+   scripts:[...document.scripts].map(s=>s.src).filter(s=>s.includes('hint'))
+  }));
+  console.log('HINT DEBUG',width,JSON.stringify(hintState));
+  assert.equal(await page.locator('#hintBtn').isVisible(),false,'sem erro, dica oculta '+width+': '+JSON.stringify(hintState));
   assert.equal(errors.length,0,'sem erros JS '+width+': '+errors.join('; '));
   await page.close();
  }
