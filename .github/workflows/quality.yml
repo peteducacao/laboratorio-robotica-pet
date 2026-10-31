@@ -41,6 +41,8 @@ jobs:
           npx playwright install --with-deps chromium
       - name: Conferir dicas em telas de celular e computador
         run: node tests/hints-browser.mjs
+      - name: Testar desfazer, apagar, mover fios e GPIO19
+        run: node tests/hint-actions-browser.mjs
       - name: Conferir layout em telas de celular e computador
         run: node tests/preview-browser.mjs
       - name: Guardar capturas para revisão de design
