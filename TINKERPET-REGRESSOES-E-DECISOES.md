@@ -73,3 +73,11 @@
 - Testados (lógica): gabaritos 15/15 e 17/17; quatro alternativas distintas; troca de GPIO27 e GPIO26; bloqueio de GPIO35, uso duplicado de um GPIO e GND como controle.
 - **Não alterado:** `app.js` do desktop, CSS e layout originais. Teste visual em Chrome Android continua necessário para confirmar bolinhas e posicionamento final.
 - Nova rota móvel `20261030fine-wire-gpio-v3`, com atualizações de versões dos scripts móveis e da página de projetos. Conferir F5 em circuitos antigos e novos.
+
+## 31/10/2026 — validação de 5 V: Android divergente e parabéns durante arraste
+- Sintoma confirmado no usuário: circuito antigo com 17/17 e LM2596 em **3,5 V** mostrava “Montagem concluída” no Android. No PC, ao arrastar a régua passando brevemente por 5 V, abria o modal de parabéns mesmo sem o usuário ter soltado o controle.
+- Causa: **dois motores JS distintos**. `app.js` já tinha a validação de tensão no selo, mas `app-mobile.js` ainda considerava somente os fios. Ambos chamavam `syncCompletionCelebration()` em cada evento `input` da régua.
+- Correção **nos dois motores**, preservando as demais regras: mostrar estado “Ajustando LM2596” durante arraste; manter etiqueta de conclusão inativa; validar apenas após `change`, `pointerup` ou `pointercancel` e **450 ms** de estabilidade. Cancelar timer ao receber novo `input`. Progresso só fica verde se conexão, 5,0 V e gangorras (quando presentes) estiverem corretos.
+- Testes de lógica executados **em ambos os arquivos, nos modos com e sem gangorras**: 3,5 V (erro), 5,0 V transitório durante arraste (sem mensagem), 5,5 V (erro), 5,0 V após soltar e estabilizar (uma comemoração), 6,0 V (erro), retorno para 5,0 V (nova comemoração), F5 já concluído (não repete), uma ligação ausente e gangorra desligada (não conclui). Os 4 conjuntos de testes passaram.
+- Cache: `editor.html` passou a solicitar `app.js?v=82` no PC e `app-mobile.js?v=8` no celular. `projects.js`, `projects.html`, `index.html` e `mobile-editor.js` usam rota `20261031voltage-settle-v2`; a lista usa `projects.js?v=17`.
+- **Pendente teste visual real em Chrome Android/desktop:** commits e testes unitários não garantem que o GitHub Pages já tenha propagado ou que aba antiga não esteja em cache. Não anunciar teste visual concluído sem executá-lo.
