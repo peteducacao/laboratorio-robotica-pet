@@ -1,5 +1,7 @@
 'use strict';
 (()=>{
+ // Remove aviso antigo de importação, inclusive se o HTML estiver em cache.
+ document.querySelector('.side-note')?.remove();
  const ROOT='tinkerpet-v2', LIB='tinkerpet-library-v1', ACTIVE='tinkerpet-active-v1', NICK='tinkerpet-nickname-v1';
  const $=id=>document.getElementById(id);
  const typeKinds={esp:'esp',drv:'driver',lm:'buck',b1:'battery',b2:'batteryPack',s1:'switch',s2:'switch',ml:'motor',mr:'motor'};
@@ -70,7 +72,7 @@
   syncEditor();
   localStorage.setItem(ROOT,JSON.stringify(project.circuit));
   localStorage.setItem(ACTIVE,project.id);
-  location.href='editor.html';
+  location.href='editor.html?release=20261030c';
  }
  function newCircuit(){
   syncEditor();const now=Date.now();
