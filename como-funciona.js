@@ -79,14 +79,18 @@
   byId('componentHow').open=false;
   panel.hidden=false;
   placePanel();
-  if(matchMedia('(max-width:810px)').matches){
-   requestAnimationFrame(()=>{
-    const bounds=panel.getBoundingClientRect();
-    if(bounds.top>innerHeight-180){
-     panel.scrollIntoView({block:'nearest',behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'instant':'smooth'});
-    }
+  // Ao selecionar qualquer componente, leva a explicação para a área visível
+  // tanto no computador quanto no celular. Considera o cabeçalho fixo.
+  requestAnimationFrame(()=>{
+   if(panel.hidden||selected!==card.dataset.part)return;
+   const header=document.querySelector('.how-top');
+   const stickyHeight=header?.getBoundingClientRect().height||0;
+   const top=Math.max(0,window.scrollY+panel.getBoundingClientRect().top-stickyHeight-14);
+   window.scrollTo({
+    top,
+    behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'instant':'smooth'
    });
-  }
+  });
  }
  for(const card of cards)card.addEventListener('click',()=>open(card));
  byId('componentClose').addEventListener('click',()=>{
