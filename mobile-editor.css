@@ -125,7 +125,7 @@
     gap:2px!important;box-sizing:border-box!important;
     min-width:0!important;width:auto!important;margin:0!important;padding:3px!important;
   }
-  .preview-studio.editor-layout .studio-topbar .toolbar-zoom > :is(#zoomIn,#zoomOut){
+  .preview-studio.editor-layout .studio-topbar .toolbar-zoom > :is(#zoomIn,#zoomOut,#fitBtn){
     display:grid!important;place-items:center!important;
     flex:0 0 41px!important;
     width:41px!important;min-width:41px!important;max-width:41px!important;
@@ -135,8 +135,11 @@
   .preview-studio.editor-layout .studio-topbar .toolbar-zoom #zoomLabel {
     min-width:37px!important;font-size:11px!important;
   }
-  .preview-studio.editor-layout .studio-topbar .toolbar-zoom #fitBtn {
-    display:none!important;
+  .preview-studio.editor-layout .studio-topbar .toolbar-left .toolbar-zoom #fitBtn {
+    display:grid!important;place-items:center!important;
+    width:41px!important;min-width:41px!important;max-width:41px!important;
+    height:43px!important;min-height:43px!important;max-height:43px!important;
+    flex:0 0 41px!important;
   }
   .preview-studio.editor-layout .studio-topbar :is(#previewInspectorOpen,#openTrackBtn[hidden]){
     display:none!important;
@@ -155,6 +158,12 @@
   }
 }
 @media (max-width:365px) {
+  .preview-studio.editor-layout .studio-topbar .toolbar-left {
+    grid-template-rows:auto auto auto!important;
+  }
+  .preview-studio.editor-layout .studio-topbar .toolbar-left .toolbar-zoom {
+    grid-column:1/-1!important;grid-row:3!important;justify-self:center!important;
+  }
   .preview-studio.editor-layout .studio-topbar .toolbar{
     grid-template-columns:minmax(0,1fr) repeat(3,47px)!important;
     padding-inline:7px!important;column-gap:5px!important;
@@ -172,7 +181,7 @@
     width:44px!important;min-width:44px!important;max-width:44px!important;
     height:46px!important;min-height:46px!important;max-height:46px!important;
   }
-  .preview-studio.editor-layout .studio-topbar .toolbar-zoom > :is(#zoomIn,#zoomOut){
+  .preview-studio.editor-layout .studio-topbar .toolbar-zoom > :is(#zoomIn,#zoomOut,#fitBtn){
     flex-basis:38px!important;width:38px!important;min-width:38px!important;max-width:38px!important;
   }
 }
