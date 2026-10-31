@@ -19,8 +19,8 @@
 // independente, com traçado acompanhando as mudanças de direção do dedo.
 // Defer preserva a ordem de inicialização com os scripts subsequentes.
 document.write(window.matchMedia('(max-width:700px)').matches
- ? '<script defer src="app-mobile.js?v=13"><\/script>'
- : '<script defer src="app.js?v=86"><\/script>');
+ ? '<script defer src="app-mobile.js?v=14"><\/script>'
+ : '<script defer src="app.js?v=87"><\/script>');
 </script>
 <script defer src="answer-key.js?v=37"></script>
 <script defer src="studio-preview.js?v=1"></script>
@@ -42,7 +42,7 @@ if(window.matchMedia('(max-width:700px)').matches){
     <span class="header-tag preview-tag">STUDIO</span>
   </div>
   <div class="header-end">
-    <span class="autosave-indicator" id="savedIndicator" aria-live="polite">● Salvo automaticamente</span>
+    <span class="autosave-indicator" id="savedIndicator" aria-live="polite" hidden></span>
     <button id="guideBtn" class="legacy-control" hidden>Ajuda</button>
     <button id="saveBtn" class="legacy-control" hidden>Salvar</button>
   </div>
