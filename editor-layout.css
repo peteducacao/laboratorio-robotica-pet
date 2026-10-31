@@ -547,3 +547,26 @@
   flex-wrap:nowrap!important;gap:7px!important;
  }
 }
+
+/* v7 — componentes livres de molduras de seleção, em PC e celular.
+   Mantém apenas o pequeno indicador ✓ para seleção múltipla. */
+.preview-studio.editor-layout #partsLayer .part,
+.preview-studio.editor-layout #partsLayer .part.selected,
+.preview-studio.editor-layout #partsLayer .part.multi-selected,
+.preview-studio.editor-layout #partsLayer .part.selected.multi-selected {
+ border:0!important;
+ outline:none!important;
+ outline-offset:0!important;
+ box-shadow:none!important;
+}
+.preview-studio.editor-layout #partsLayer .part.selected::before,
+.preview-studio.editor-layout #partsLayer .part.selected::after,
+.preview-studio.editor-layout #partsLayer .part.multi-selected::before,
+.preview-studio.editor-layout #partsLayer .part.multi-selected::after {
+ display:none!important;
+ content:none!important;
+ border:0!important;
+ outline:0!important;
+ box-shadow:none!important;
+ pointer-events:none!important;
+}
