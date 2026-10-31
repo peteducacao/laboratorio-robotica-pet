@@ -345,7 +345,7 @@ function updateLiveSimulation(){
   if(id==='s1'||id==='s2'){
    const source=id==='s1'?live.buck:live.driver;
    const negative=id==='s1'?'b1.NEG':'b2.NEG';
-   const indicator=enabled&&source&&state.wires.some(w=>electricalKey(w.a,w.b)===electricalKey(negative,id+'.LEDG'));
+   const indicator=enabled&&source&&state.wires.some(w=>!w.loose&&electricalKey(w.a,w.b)===electricalKey(negative,id+'.LEDG'));
    card.dataset.indicator=indicator?'on':'off';
   }
  }
@@ -384,7 +384,7 @@ function renderParts(){
   if(p.kind==='switch'){
     card.dataset.powered=state.switches[p.id]?'on':'off';
     const battery=p.id==='s1'?'b1':'b2';
-    const ledConnected=state.wires.some(w=>electricalKey(w.a,w.b)===electricalKey(battery+'.NEG',p.id+'.LEDG'));
+    const ledConnected=state.wires.some(w=>!w.loose&&electricalKey(w.a,w.b)===electricalKey(battery+'.NEG',p.id+'.LEDG'));
     card.dataset.indicator=state.switches[p.id]&&ledConnected?'on':'off';
   }
   card.className='part'+(state.selected===p.id||selectedParts.has(p.id)?' selected':'')+(selectedParts.has(p.id)?' multi-selected':'');
@@ -691,7 +691,7 @@ function rotatePart(id){
  const p=byPart(id);if(!p)return false;
  if(reconnectPending)cancelReconnect();
  if(state.startPort)cancelPendingWire();
- const attached=state.wires.filter(w=>w.a.split('.')[0]===id||w.b.split('.')[0]===id);
+ const attached=state.wires.filter(w=>(w.loose?.end!=='a'&&w.a.split('.')[0]===id)||(w.loose?.end!=='b'&&w.b.split('.')[0]===id));
  const previous=new Map(attached.map(w=>[w,{a:getPortPos(w.a),b:getPortPos(w.b)}]));
  snapshot();
  p.rotation=(normalizePartRotation(p.rotation)+90)%360;
@@ -726,7 +726,7 @@ function flipPart(id){
  const p=byPart(id);if(!p||selectedParts.size>1)return false;
  if(reconnectPending)cancelReconnect();
  if(state.startPort)cancelPendingWire();
- const attached=state.wires.filter(w=>w.a.split('.')[0]===id||w.b.split('.')[0]===id);
+ const attached=state.wires.filter(w=>(w.loose?.end!=='a'&&w.a.split('.')[0]===id)||(w.loose?.end!=='b'&&w.b.split('.')[0]===id));
  const previous=new Map(attached.map(w=>[w,{a:getPortPos(w.a),b:getPortPos(w.b)}]));
  snapshot();
  p.flipped=!p.flipped;
