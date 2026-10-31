@@ -309,3 +309,16 @@
    border-radius:10px!important;
  }
 }
+
+/* Catálogo móvel: rolar com o dedo sobre as próprias peças, sem precisar
+   usar a barra lateral. Arrastar horizontalmente até a bancada segue livre. */
+@media (max-width:700px){
+ .preview-studio.editor-layout #library .catalog,
+ .preview-studio.editor-layout #library .catalog-card,
+ .preview-studio.editor-layout #library .catalog-card *{
+  touch-action:pan-y!important;
+  -webkit-user-select:none!important;
+  user-select:none!important;
+ }
+ .preview-studio.editor-layout #library .catalog-card{-webkit-touch-callout:none!important}
+}
