@@ -52,7 +52,7 @@ try{
   await page.locator('[data-id="saved-test"] [data-action="rename"]').click();
   await page.locator('#editSave').click();
   assert.equal(await badge.count(),0,'salvar sem alterar nome não aciona selo '+width);
-  await page.locator('[data-id="saved-test"] [data-action="edit"]').click();
+  await page.locator('[data-id="saved-test"] .card-buttons [data-action="edit"]').click();
   await page.waitForURL('**/editor.html?project=saved-test*');
   await page.locator('#catalog .catalog-card').first().waitFor({state:'attached',timeout:15000});
   assert.equal(await page.locator('#savedIndicator').isVisible(),false,'sem Salvo ao abrir editor '+width);
@@ -63,7 +63,7 @@ try{
   assert.equal(await page.locator('#savedIndicator').isVisible(),false,'sem Salvo ao atualizar editor '+width);
   await page.goto(origin+'/projects.html',{waitUntil:'domcontentloaded'});
   assert.equal(await badge.count(),0,'abrir e atualizar editor sem mexer não aciona selo '+width);
-  await page.locator('[data-id="saved-test"] [data-action="edit"]').click();
+  await page.locator('[data-id="saved-test"] .card-buttons [data-action="edit"]').click();
   await page.locator('[data-port="b1.NEG"]').first().waitFor({state:'attached',timeout:15000});
   await page.evaluate(()=>{
    for(const pin of ['b1.NEG','lm.INN']){
