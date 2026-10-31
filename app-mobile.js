@@ -2416,7 +2416,10 @@ function hint(){
 function check(){
  const needed=requiredParts();
  if(state.parts.length!==needed){message('O modo '+(assemblyMode()==='switched'?'com':'sem')+' gangorras exige '+needed+' peças. Ainda faltam '+(needed-state.parts.length)+'.',true);return false;}
- if(mistakes().length){message(mistakeExplanation(mistakes()[0]),true);state.inspector='wires';renderInspector();return false;}
+ if(mistakes().length){
+  message('Existem ligações incorretas. Toque em Dicas para corrigir um fio por vez.',true);
+  state.inspector='wires';renderInspector();return false;
+ }
  const m=missing();if(m.length){message('Faltam '+m.length+' ligações para concluir. Monte uma parte de cada vez, seguindo o gabarito.',true);return false;}
  if(Math.abs(state.voltage-5)>.01){message('Ajuste a saída do LM2596 para 5,0 V.',true);return false;}
  if(assemblyMode()==='switched'&&(!state.switches.s1||!state.switches.s2)){message('Ligue as duas gangorras.',true);return false;}
@@ -2858,7 +2861,7 @@ function bind(){
  if(progressDetails){
   const explain=()=>{
    const advice=contextualWrongAdvice();
-   if(advice){hint();return;}
+   if(advice){message('Existe uma ligação incorreta. Use o botão Dicas para receber ajuda específica.',true);return;}
    const loose=state.wires.filter(w=>w.loose).length;
    if(loose){message('Há '+loose+' fio(s) com ponta solta. Termine a ligação antes de verificar se está correta.',true);return;}
    const needed=missing().length;
