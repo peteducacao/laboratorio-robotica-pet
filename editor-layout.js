@@ -115,7 +115,7 @@ function syncProgress(){
  const statusText=badge?.textContent?.trim()||'Aguardando montagem';
  const value=Number.parseFloat(bar?.style?.width||'0');
  const progress=Number.isFinite(value)?Math.min(100,Math.max(0,value)):0;
- $('toolbarProgressLabel').textContent=captionText;
+ // Preserva o título «Conexões» exatamente como no antigo painel.
  $('toolbarProgressCount').textContent=countText;
  $('toolbarProgressStatus').textContent=statusText;
  visibleBar.style.width=progress+'%';
