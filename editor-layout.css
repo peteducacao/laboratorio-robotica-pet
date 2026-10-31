@@ -628,3 +628,16 @@
  .preview-studio.editor-layout .toolbar-group.edit-group #rotateBtn svg,
  .preview-studio.editor-layout .toolbar-group.edit-group #flipBtn svg{width:18px!important;height:18px!important;min-width:18px!important;max-width:18px!important;}
 }
+
+/* Barra de progresso consultável: toque abre detalhes sem ocupar outra linha. */
+.preview-studio.editor-layout #editorToolbarProgress[role="button"]{
+ cursor:pointer!important;
+}
+.preview-studio.editor-layout #editorToolbarProgress[role="button"]:focus-visible{
+ outline:3px solid #0eab94!important;outline-offset:2px!important;
+}
+@media(hover:hover){
+ .preview-studio.editor-layout #editorToolbarProgress[role="button"]:hover{
+  border-color:#8ccfc2!important;
+ }
+}
