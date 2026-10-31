@@ -32,10 +32,10 @@ brand.innerHTML='<span class="editor-brand-icon">'+robot+'</span><span class="ed
 brand.setAttribute('aria-label','Página inicial do TinkerPET');
 const crumbs=document.createElement('nav');
 crumbs.className='editor-crumbs';crumbs.setAttribute('aria-label','Localização da página');
-crumbs.innerHTML='<span class="arrow" aria-hidden="true">›</span><a href="projects.html?release=20261030flip1">Meus circuitos</a><span class="arrow" aria-hidden="true">›</span><strong id="editorCurrentTitle">Circuito em edição</strong>';
+crumbs.innerHTML='<span class="arrow" aria-hidden="true">›</span><a href="projects.html?release=20261030tabs1">Meus circuitos</a><span class="arrow" aria-hidden="true">›</span><strong id="editorCurrentTitle">Circuito em edição</strong>';
 header.querySelector('.header-start').append(crumbs);
 const profile=document.createElement('a');
-profile.className='editor-user';profile.href='projects.html?release=20261030flip1';profile.title='Meus circuitos e meu Nick';
+profile.className='editor-user';profile.href='projects.html?release=20261030tabs1';profile.title='Meus circuitos e meu Nick';
 profile.innerHTML='<span class="editor-user-icon">'+user+'</span><span id="editorNickname"></span>';
 right.append(profile);
 $('editorNickname').textContent=localStorage.getItem('tinkerpet-nickname-v1')||'Meu perfil';
@@ -82,7 +82,8 @@ const LIB='tinkerpet-library-v1',ACTIVE='tinkerpet-active-v1';
 function getCurrent(){
  try{
   const list=JSON.parse(localStorage.getItem(LIB)||'null');
-  const key=localStorage.getItem(ACTIVE);
+  // A URL pertence a esta aba; ACTIVE é apenas compatibilidade antiga.
+  const key=new URLSearchParams(location.search).get('project')||localStorage.getItem(ACTIVE);
   const project=list&&Array.isArray(list.projects)?list.projects.find(p=>p.id===key):null;
   return project?{list,project}:null;
  }catch{return null}
@@ -165,8 +166,8 @@ $('settingsRemoveProject').addEventListener('click',()=>{
  found.list.projects=found.list.projects.filter(p=>p.id!==found.project.id);
  try{
   localStorage.setItem(LIB,JSON.stringify(found.list));
-  localStorage.removeItem(ACTIVE);
-  location.href='projects.html?release=20261030flip1';
+  if(localStorage.getItem(ACTIVE)===found.project.id)localStorage.removeItem(ACTIVE);
+  location.href='projects.html?release=20261030tabs1';
  }catch{status.textContent='Não foi possível excluir este circuito.'}
 });
 // O controle original do simulador continua responsável pela biblioteca.
