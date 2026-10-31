@@ -40,6 +40,19 @@ try{
   assert.equal(await page.locator('.how-intro p').textContent(),'Explore as peças utilizadas no carrinho.');
   const cards=page.locator('.component-card');
   assert.equal(await cards.count(),8,'todos os oito componentes presentes '+width);
+  const measures=await page.evaluate(()=>{
+   const card=document.querySelector('.component-card');
+   const figure=card.querySelector('.component-figure');
+   const grid=document.getElementById('componentsGrid');
+   return {cardHeight:card.getBoundingClientRect().height,
+    figureHeight:figure.getBoundingClientRect().height,
+    gap:parseFloat(getComputedStyle(grid).columnGap),
+    scrollWidth:document.documentElement.scrollWidth};
+  });
+  assert(measures.cardHeight<=190,'cartão compacto '+width+': '+JSON.stringify(measures));
+  assert(measures.figureHeight<=120,'imagem compacta '+width);
+  assert(measures.gap<=13,'espaçamento compacto '+width);
+  assert(measures.scrollWidth<=width+2,'sem barra horizontal '+width);
   assert.equal(await page.locator('#componentPanel').isVisible(),false,'sem painel até selecionar '+width);
   const images=await cards.locator('img').evaluateAll(elements=>Promise.all(elements.map(img=>img.complete ? {src:img.getAttribute('src'),width:img.naturalWidth}:new Promise(resolve=>{img.onload=()=>resolve({src:img.src,width:img.naturalWidth});img.onerror=()=>resolve({src:img.src,width:0});}))));
   assert(images.every(image=>image.width>0),'nenhuma imagem quebrada '+width+': '+JSON.stringify(images));
