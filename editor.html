@@ -12,15 +12,15 @@
 <link rel="stylesheet" href="studio-preview.css?v=19">
 <link rel="stylesheet" href="editor-layout.css?v=13">
 <link rel="stylesheet" href="mobile-editor.css?v=5" media="(max-width:700px)">
-<link rel="stylesheet" href="step-hints.css?v=1">
-<script src="step-hints.js?v=1"></script>
+<link rel="stylesheet" href="step-hints.css?v=2">
+<script src="step-hints.js?v=2"></script>
 <script>
 // No computador permanece o app.js original. Só o celular recebe um motor
 // independente, com traçado acompanhando as mudanças de direção do dedo.
 // Defer preserva a ordem de inicialização com os scripts subsequentes.
 document.write(window.matchMedia('(max-width:700px)').matches
- ? '<script defer src="app-mobile.js?v=11"><\/script>'
- : '<script defer src="app.js?v=84"><\/script>');
+ ? '<script defer src="app-mobile.js?v=12"><\/script>'
+ : '<script defer src="app.js?v=85"><\/script>');
 </script>
 <script defer src="answer-key.js?v=37"></script>
 <script defer src="studio-preview.js?v=1"></script>
@@ -198,12 +198,21 @@ if(window.matchMedia('(max-width:700px)').matches){
     </div>
   </div>
 </dialog>
-<dialog id="wireHintDialog" class="wire-hint-dialog" aria-labelledby="wireHintHeading" aria-describedby="wireHintText">
+<dialog id="wireHintDialog" class="wire-hint-dialog" aria-labelledby="wireHintHeading" aria-describedby="wireHintCorrect">
   <div class="wire-hint-content">
     <span class="wire-hint-symbol" aria-hidden="true">💡</span>
-    <div class="wire-hint-eyebrow">Dica para corrigir o fio</div>
-    <h2 id="wireHintHeading">Etapa da montagem</h2>
-    <p id="wireHintText" class="wire-hint-detail"></p>
+    <div class="wire-hint-eyebrow">Vamos corrigir este fio</div>
+    <h2 id="wireHintHeading">Confira a ligação</h2>
+    <div class="wire-hint-comparison">
+      <div class="wire-hint-line wire-hint-wrong">
+        <strong>O que você fez:</strong>
+        <p id="wireHintWhat"></p>
+      </div>
+      <div class="wire-hint-line wire-hint-right">
+        <strong>Correto:</strong>
+        <p id="wireHintCorrect"></p>
+      </div>
+    </div>
     <button id="wireHintClose" type="button">Entendi</button>
   </div>
 </dialog>
