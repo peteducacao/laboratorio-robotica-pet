@@ -10,6 +10,12 @@ const css=fs.readFileSync(path.join(base,'styles.css'),'utf8');
 const answerKey=fs.readFileSync(path.join(base,'answer-key.js'),'utf8');
 new vm.Script(answerKey);
 new vm.Script(js);
+// O guia com e sem gangorras compartilha as mesmas âncoras do ESP32.
+const guided=fs.readFileSync(path.join(base,'gabarito-guide.js'),'utf8');
+const physicalD18=espArt.match(/<circle cx="([0-9.]+)" cy="373"[^>]*\/><circle[^>]*\/><text[^>]*>D18<\/text>/);
+assert(physicalD18,'ESP32 possui furo do GPIO18 identificável na arte');
+assert(guided.includes('D18:['+Number(physicalD18[1])+'/930,373/430]'),'gabarito liga IN4 ao furo GPIO18, não ao GPIO19');
+assert(guided.includes("wire('drv.IN4','esp.D18'"),'ambas as modalidades usam D18 no IN4');
 const projectsHtml=fs.readFileSync(path.join(base,'projects.html'),'utf8');
 const projectsJs=fs.readFileSync(path.join(base,'projects.js'),'utf8');
 assert(projectsHtml.includes('<button type="button" id="openGate"><svg')&&projectsHtml.includes('</svg><span id="gateLabel">'),'Gabaritos preserva seu ícone no menu');
