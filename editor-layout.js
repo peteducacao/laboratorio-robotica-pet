@@ -40,7 +40,7 @@ gearButton.setAttribute('aria-controls','editorSettings');
 gearButton.title='Configurações do circuito';gearButton.innerHTML=gear;
 toolbarRight.insertBefore(gearButton,$('hintBtn'));
 const hint=$('hintBtn');if(hint)hint.innerHTML='💡 <span>Dicas</span>';
-closeLibrary.textContent='‹';closeLibrary.setAttribute('aria-label','Recolher componentes');
+closeLibrary.innerHTML='<span class="collapse-chevron" aria-hidden="true">‹</span><span class="collapse-label">Recolher</span>';closeLibrary.setAttribute('aria-label','Recolher componentes');
 closeLibrary.title='Recolher componentes';
 $('drawerArrow').textContent='›';
 drawer.title='Abrir ou fechar componentes';
@@ -120,19 +120,17 @@ for(const id of ['connectionsCount','validationBadge','progressBar']){
   new MutationObserver(syncProgress).observe(node,{characterData:true,childList:true,subtree:true,attributes:true,attributeFilter:['style']});
  }
 }
-function refreshViewport(){
- if(window.innerWidth<=920)return; // celular: painéis sobrepostos, sem reescalar bancada
- setTimeout(()=>window.dispatchEvent(new Event('resize')),240);
-}
+// A largura da bancada reage ao CSS e seu ResizeObserver (app.js).
+// Não forçar resize aqui: isso acionava fitCamera() e alterava o zoom do usuário.
 function openSettings(value){
  const yes=!!value;
- if(yes&&window.innerWidth<=920&&body.classList.contains('components-open'))drawer.click();
+ if(yes&&window.innerWidth<=1100&&body.classList.contains('components-open'))drawer.click();
  body.classList.toggle('settings-open',yes);
  settings.hidden=!yes;
  gearButton.setAttribute('aria-expanded',String(yes));
  if(yes){loadMetadata();syncProgress();}
  else{clearTimeout(debounce);if(currentProject)saveMetadata()}
- refreshViewport();
+
 }
 gearButton.addEventListener('click',()=>openSettings(!body.classList.contains('settings-open')));
 $('closeEditorSettings').addEventListener('click',()=>{openSettings(false);gearButton.focus()});
@@ -153,21 +151,27 @@ $('settingsRemoveProject').addEventListener('click',()=>{
 });
 // O controle original do simulador continua responsável pela biblioteca.
 const setArrow=()=>{
- $('drawerArrow').textContent=body.classList.contains('components-open')?'‹':'›';
+ const open=library.classList.contains('open');
+ $('drawerArrow').textContent=open?'‹':'›';
+ drawer.title=open?'Recolher componentes':'Abrir componentes';
+ drawer.setAttribute('aria-expanded',String(open));
+ drawer.setAttribute('aria-label',open?'Recolher componentes':'Abrir componentes');
 };
 if(typeof MutationObserver!=='undefined'){
  new MutationObserver(mutations=>{
   if(mutations.some(m=>m.attributeName==='class')){
    setArrow();
-   if(window.innerWidth<=920&&body.classList.contains('components-open')&&body.classList.contains('settings-open'))openSettings(false);
-   refreshViewport();
+   if(window.innerWidth<=1100&&body.classList.contains('components-open')&&body.classList.contains('settings-open'))openSettings(false);
   }
  }).observe(body,{attributes:true,attributeFilter:['class']});
 }
+window.addEventListener('resize',()=>{
+ if(window.innerWidth<=1100&&body.classList.contains('components-open')&&body.classList.contains('settings-open'))openSettings(false);
+},{passive:true});
 loadMetadata();
 syncProgress();
 // Desktop abre a biblioteca como no layout aprovado; no celular a bancada
 // nasce livre, sem painel cobri-la ou diminuir a largura disponível.
-if(window.innerWidth>920&&!body.classList.contains('components-open'))drawer.click();
+if(window.innerWidth>1100&&!body.classList.contains('components-open'))drawer.click();
 setArrow();
 })();
