@@ -1,0 +1,33 @@
+/* TinkerPET mobile enhancements — desktop runtime is not modified. */
+(()=>{
+ 'use strict';
+ const onlyMobile=window.matchMedia('(max-width:700px)');
+ const initialize=()=>{
+  if(!onlyMobile.matches)return;
+  const viewport=document.getElementById('viewport');
+  if(!viewport)return;
+  // Preserve the same pointer-drag gestures as desktop even when a finger
+  // crosses a pin, wire segment or board on Android. Never synthesize clicks
+  // or build a separate wire-routing algorithm.
+  const movableSelector='[data-port], .wire-end-handle, #wireSvg [data-wire-index]';
+  viewport.addEventListener('pointerdown',e=>{
+   if(!onlyMobile.matches||e.pointerType!=='touch')return;
+   const target=e.target.closest?.(movableSelector);
+   if(!target)return;
+   try{target.setPointerCapture(e.pointerId)}catch{/* Browser may capture implicitly. */}
+  },{capture:true,passive:true});
+  // When app.js dispatches the actual PNG anchor click, the export has been
+  // initiated. Close the preview then; keep it open on generation failures.
+  document.addEventListener('click',e=>{
+   if(!onlyMobile.matches)return;
+   const link=e.target.closest?.('a[download]');
+   if(!link||!String(link.download||'').toLowerCase().endsWith('.png'))return;
+   const dialog=document.getElementById('exportPreviewDialog');
+   if(!dialog?.open)return;
+   window.setTimeout(()=>{if(dialog.open)dialog.close();},0);
+  },true);
+ };
+ if(document.readyState==='loading')
+  document.addEventListener('DOMContentLoaded',initialize,{once:true});
+ else initialize();
+})();
