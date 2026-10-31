@@ -75,6 +75,16 @@ try{
     assert(scroll.top<scroll.viewport-90,'clicar rola para tornar a explicação visível '+width+': '+JSON.stringify(scroll));
     if(scroll.maxScroll>10)
      assert(scroll.scrollY>2,'clicar move página automaticamente quando cabe rolar '+width+': '+JSON.stringify(scroll));
+    if(width>810){
+     const frame=await page.evaluate(()=>{
+      const rect=selector=>document.querySelector(selector).getBoundingClientRect();
+      return {card:rect('[data-part="esp"]'),panel:rect('#componentPanel'),
+       header:rect('.how-top')};
+     });
+     assert(frame.card.top>=frame.header.bottom-5,'mostrar a figura acima da explicação no computador '+width);
+     assert(frame.card.bottom<=frame.panel.top+5,'o cartão deve aparecer inteiro antes do painel '+width);
+     assert(frame.panel.top<scroll.viewport-90,'texto do painel deve aparecer também '+width);
+    }
    }
    assert.equal(await card.getAttribute('aria-expanded'),'true','cartão selecionado '+name);
    assert.equal(await page.locator('#componentName').textContent(),name);
