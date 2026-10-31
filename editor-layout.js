@@ -6,9 +6,15 @@ const body=document.body;
 body.classList.add('editor-layout');
 // Remoção defensiva de dicas visuais antigas em HTML ainda armazenado no navegador.
 document.getElementById('canvasHint')?.remove();
-document.querySelector('.toolbar-right #checkBtn')?.remove();
-// A simulação depende de #checkBtn no app.js, portanto não o remover
-// sem preservar o botão de compatibilidade oculto no HTML atualizado.
+const legacySimulationBtn=document.querySelector('.toolbar-right #checkBtn');
+if(legacySimulationBtn){
+ legacySimulationBtn.hidden=true;
+ legacySimulationBtn.style.setProperty('display','none','important');
+ legacySimulationBtn.setAttribute('aria-hidden','true');
+ legacySimulationBtn.tabIndex=-1;
+ document.body.appendChild(legacySimulationBtn);
+}
+// app.js continua encontrando o controle, mas ele nunca ocupa a barra.
 const header=document.querySelector('.app-header');
 const brand=header?.querySelector('.brand');
 const right=header?.querySelector('.header-end');
