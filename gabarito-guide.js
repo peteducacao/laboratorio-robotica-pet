@@ -116,7 +116,7 @@ $('prev').onclick=()=>{
  render();
 };
 $('next').onclick=()=>{
- if(full){location.href='projects.html';return;}
+ if(full){location.href='projects.html?release=20261031gabarito-icon-v1';return;}
  if(index<sequence().length-1){index++;render();return;}
  if(section==='lm'){selectSection('drv');return;}
  if(section==='drv')showFull();
