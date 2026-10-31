@@ -10,11 +10,11 @@
 <link rel="stylesheet" href="styles.css?v=36">
 <link rel="stylesheet" href="answer-key.css?v=37">
 <link rel="stylesheet" href="studio-preview.css?v=19">
-<link rel="stylesheet" href="editor-layout.css?v=6">
-<script defer src="app.js?v=62"></script>
+<link rel="stylesheet" href="editor-layout.css?v=7">
+<script defer src="app.js?v=63"></script>
 <script defer src="answer-key.js?v=37"></script>
 <script defer src="studio-preview.js?v=1"></script>
-<script defer src="editor-layout.js?v=5"></script>
+<script defer src="editor-layout.js?v=6"></script>
 </head>
 <body class="preview-studio studio-main">
 <header class="app-header">
@@ -58,7 +58,6 @@
           <div id="toolbarProgressTrack" class="editor-toolbar-progress-track" role="progressbar" aria-label="Progresso da montagem" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><div id="toolbarProgressBar"></div></div>
           <span id="toolbarProgressStatus" class="editor-toolbar-progress-status">Aguardando montagem</span>
         </div>
-        <button id="checkBtn" class="simulation-toggle" type="button" hidden aria-hidden="true" tabindex="-1" aria-pressed="false"><span class="sim-icon" id="simIcon">▶</span> <span id="simLabel">Iniciar simulação</span></button>
       </div>
       <div class="toolbar-zoom toolbar-group" aria-label="Navegação da bancada">
         <button class="control-btn zoom-btn" id="zoomOut" aria-label="Diminuir zoom">−</button>
@@ -144,6 +143,10 @@
     <div class="inspector-tabs"><button id="inspectorPartsTab" class="active" type="button">Propriedades</button><button id="inspectorWiresTab" type="button">Fios <span id="wiresBadge">0</span></button></div>
     <div id="inspectorBody" class="inspector-body"><div class="inspect-empty"><span>⌁</span><h3>Escolha uma peça</h3><p>Ao selecionar um componente, você verá seus pinos e sua função.</p></div></div>
   </aside>
+</div>
+<!-- Compatibilidade com a lógica elétrica: botão completamente fora da barra e oculto. -->
+<div hidden style="display:none!important" aria-hidden="true">
+  <button id="checkBtn" hidden type="button" style="display:none!important" tabindex="-1" aria-pressed="false"><span id="simIcon"></span><span id="simLabel"></span></button>
 </div>
 <div id="toast" class="toast" role="status" aria-live="polite"></div>
 <div id="dragGhost" class="drag-ghost" hidden></div>
