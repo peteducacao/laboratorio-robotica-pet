@@ -31,3 +31,19 @@
  .wire-hint-content h2{font-size:17px}
  .wire-hint-content p.wire-hint-detail{font-size:13px;line-height:1.65}
 }
+
+/* Comparação curta, legível no celular e no computador. */
+.wire-hint-comparison{display:grid;gap:12px}
+.wire-hint-line{padding:15px 16px;border-radius:13px;border:1px solid #e2ecea;background:#f8fbfa}
+.wire-hint-line strong{display:block;margin-bottom:7px;font-size:13px;font-weight:800;color:#2d5865}
+.wire-hint-line p{margin:0;font-size:14px;line-height:1.5;color:#29485b;overflow-wrap:anywhere}
+.wire-hint-wrong{border-color:#f3dfd8;background:#fff9f6}
+.wire-hint-wrong strong{color:#a65041}
+.wire-hint-right{border-color:#cceade;background:#f3fbf7}
+.wire-hint-right strong{color:#008475}
+@media(max-width:700px){
+ .wire-hint-line{padding:13px 14px}
+ .wire-hint-line strong{font-size:12px}
+ .wire-hint-line p{font-size:13px}
+ .wire-hint-comparison{gap:10px}
+}
