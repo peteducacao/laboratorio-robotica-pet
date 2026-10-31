@@ -1196,6 +1196,7 @@ function renderWireHandles(){
 function beginReconnect(e,index,end){
  if(e.button!==undefined&&e.button!==0)return;
  const wire=state.wires[index];if(!wire||state.startPort||!['a','b'].includes(end))return;
+ if(wire.loose&&wire.loose.end!==end){message('Reconecte primeiro a ponta solta deste jumper.',true);return;}
  if(e.cancelable)e.preventDefault();
  e.stopPropagation?.();
  state.selectedWire=index;state.selected=null;state.inspector='wires';state.wireColor=wire.color;
