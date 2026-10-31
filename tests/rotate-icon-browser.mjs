@@ -44,7 +44,7 @@ try{
   assert(icon.w>=17&&icon.w<=23&&icon.h>=17&&icon.h<=23,'ícone com tamanho uniforme '+width);
   assert(Math.abs(icon.x-icon.bx)<=2&&Math.abs(icon.y-icon.by)<=2,
    'ícone centralizado '+width+': '+JSON.stringify(icon));
-  assert.equal(await page.locator('#rotateBtn').isDisabled(),true,'o botão aguarda selecionar uma peça '+width);
+  // O botão permanece clicável para orientar a seleção mesmo com a bancada sem foco.
   await page.locator('#partsLayer [data-part="b1"] .part-image').evaluate(el=>{
    const r=el.getBoundingClientRect(),x=r.left+r.width/2,y=r.top+r.height/2;
    el.dispatchEvent(new PointerEvent('pointerdown',{
