@@ -38,3 +38,69 @@
  .top .search{flex:1 1 0;min-width:0}
  .nav .nav-robot{--robot-size:20px}
 }
+
+
+/* v4: cabeçalho em duas linhas em telas pequenas.
+   A busca e a ordenação possuem suas próprias colunas: nenhum
+   elemento concorre por largura nem fica cortado. */
+@media(max-width:810px){
+ .top{
+  display:grid;
+  grid-template-columns:minmax(0,1fr) 170px;
+  grid-template-areas:"brand nick" "search sort";
+  align-items:center;
+  height:auto;
+  min-height:72px;
+  gap:10px 12px;
+  padding:12px 15px;
+ }
+ .top .brand{grid-area:brand;min-width:0;width:auto;margin:0}
+ .top .nick{
+  grid-area:nick;justify-self:end;
+  max-width:100%;min-width:0;
+  margin:0;padding:0;border-left:0;
+ }
+ .top .search{
+  grid-area:search;
+  min-width:0;width:100%;flex:none;margin:0;
+ }
+ .top .filter{
+  grid-area:sort;
+  width:100%;min-width:0;max-width:none;
+  flex:none;
+  padding-left:12px;padding-right:32px;
+  background-position:right 10px center;
+ }
+}
+@media(max-width:540px){
+ .top{
+  grid-template-columns:minmax(0,1fr) 165px;
+  grid-template-areas:"brand nick" "search sort";
+  gap:10px 9px;
+  padding:11px 13px;
+ }
+ .top .brand{font-size:17px}
+ .top .brand .symbol{width:36px;height:36px}
+ .top .nick{max-width:122px}
+ .top .nick-avatar{width:34px;height:34px}
+ .top .nick-name{max-width:66px}
+ .top .filter{
+  width:100%;min-width:0;max-width:none;flex:none;
+  font-size:14px;
+  padding-left:11px;padding-right:30px;
+  background-size:14px 14px;background-position:right 8px center;
+ }
+ .top .search{
+  width:100%;min-width:0;flex:none;order:initial;
+  flex-basis:auto;
+ }
+ .top .search input{min-width:0;padding-left:33px;padding-right:8px;font-size:13px}
+ .top .search svg{left:10px;width:16px;height:16px}
+}
+@media(max-width:350px){
+ .top{grid-template-columns:minmax(0,1fr) 158px}
+ .top .brand{font-size:15px;gap:8px}
+ .top .brand .symbol{width:33px;height:33px}
+ .top .nick-name{max-width:48px}
+ .top .filter{font-size:13px;padding-left:10px;padding-right:27px}
+}
