@@ -1970,7 +1970,7 @@ function pointerMove(e){
    if(g.moved)moveWireSegment(g,e.clientX,e.clientY);
   }else if(g.type==='wire'){
    if(g.moved){
-    if(!state.startPort){snapshot();state.startPort=g.port;state.bends=[];wireTipActive=true;updateHistoryButtons();}
+    if(!state.startPort){snapshot();g.startedNew=true;state.startPort=g.port;state.bends=[];wireTipActive=true;updateHistoryButtons();}
     setPendingPreview(e,g.port);
    }
   }else if(g.type==='bend'){
@@ -2084,7 +2084,7 @@ function pointerUp(e){
      if(e.clientX>=box.left&&e.clientX<=box.right&&e.clientY>=box.top&&e.clientY<=box.bottom && state.startPort){
        const position=worldXY(e.clientX,e.clientY);
        const origin=state.startPort;
-       snapshot();
+       if(!g.startedNew)snapshot();
        state.wires.push({
         a:origin,b:origin,color:state.wireColor,
         via:state.bends.map(p=>({...p})),manual:true,
