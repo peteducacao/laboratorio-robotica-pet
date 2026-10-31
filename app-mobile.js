@@ -1948,7 +1948,10 @@ function partDown(e){
 function paletteDown(e){
  if(e.button!==undefined&&e.button!==0)return;
  const el=e.target.closest('.catalog-card');if(!el||el.disabled)return;
- e.preventDefault();
+ // No celular, o navegador deve poder rolar o catálogo a partir de
+ // qualquer cartão (não somente pela barra de rolagem).
+ // Clique/toque curto e arrasto horizontal para a bancada continuam ativos.
+ if(e.pointerType!=='touch')e.preventDefault();
  gesture={type:'catalog',pointer:e.pointerId,kind:el.dataset.kind,startX:e.clientX,startY:e.clientY,moved:false};
 }
 function captureBendNearComponents(e){
@@ -2176,6 +2179,11 @@ function pointerMove(e){
   const g=gesture,dx=e.clientX-g.startX,dy=e.clientY-g.startY;
   if(Math.hypot(dx,dy)>(g.type==='wire'&&e.pointerType==='touch'?7:g.type==='wire'?12:g.type==='wire-end'&&e.pointerType==='touch'?5:g.type==='pan'?9:6))g.moved=true;
   if(g.type==='catalog'){
+   if(e.pointerType==='touch'&&Math.abs(dy)>9&&Math.abs(dy)>Math.abs(dx)*1.2){
+    // Deslizar para cima/baixo é rolagem, nunca arraste de peça.
+    gesture=null;Q('dragGhost').hidden=true;
+    Q('viewport').classList.remove('component-drop-ready');return;
+   }
    if(g.moved){
     const ghost=Q('dragGhost');
     if(ghost.dataset.kind!==g.kind||!ghost.firstElementChild){
