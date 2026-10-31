@@ -606,8 +606,14 @@ function renderProgress(){
  Q('connectionsCount').textContent=inAssembly?partsDone+'/'+required:total+'/'+expected.length;
  Q('progressCaption').textContent=inAssembly?'Componentes':'Conexões corretas';
  const wiringComplete=!inAssembly&&!errors&&missing().length===0;
- const badge=Q('validationBadge');badge.className='validation-badge'+(wiringComplete?' ok':errors?' error':'');
- badge.textContent=wiringComplete?'✓ Montagem concluída ('+(switched?'com gangorras':'sem gangorras')+')':
+ const voltageValid=Math.abs(state.voltage-5)<.01;
+ const switchesValid=!switched||(state.switches.s1&&state.switches.s2);
+ const fullyValid=wiringComplete&&voltageValid&&switchesValid;
+ const badge=Q('validationBadge');
+ badge.className='validation-badge'+(fullyValid?' ok':errors||wiringComplete&&!voltageValid?' error':'');
+ badge.textContent=fullyValid?'✓ Montagem concluída ('+(switched?'com gangorras':'sem gangorras')+')':
+  wiringComplete&&!voltageValid?'⚠ Ajuste o LM2596 para 5,0 V (atual: '+state.voltage.toFixed(1).replace('.',',')+' V)':
+  wiringComplete&&!switchesValid?'Ative as duas gangorras para concluir':
   errors?(mistakes().some(w=>[w.a,w.b].some(p=>p.endsWith('.LEDG')))?errors+' fio(s) a revisar · LED− não é saída':errors+' ligação(ões) a revisar'):
   inAssembly?'Continue adicionando componentes':'Faltam '+missing().length+' ligações';
  const invalid=mistakes(),pending=missing();
@@ -615,7 +621,7 @@ function renderProgress(){
   ?invalid.map(w=>w.loose?'Jumper com ponta solta: mova a bolinha até um pino.':'Fio incorreto: '+portName(w.a)+' → '+portName(w.b)).join('\n')
    +(pending.length?'\nFaltam '+pending.length+' ligações corretas.':'')
   :pending.length?'Faltam '+pending.length+' ligações. Clique no progresso para saber a próxima.':
-   'Todas as ligações estão corretas.';
+   (!voltageValid?'Ajuste o LM2596 para 5,0 V. Valor atual: '+state.voltage.toFixed(1)+' V.':!switchesValid?'Ative as duas gangorras.':'Todas as ligações e a tensão estão corretas.');
  const progressDetails=Q('editorToolbarProgress');
  if(progressDetails)progressDetails.title=badge.title;
  const missionTitle=Q('missionTitle'),missionText=Q('missionText');
