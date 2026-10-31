@@ -43,3 +43,13 @@
 - Manter PC inalterado. Corrigir apenas `mobile-editor.css`, `mobile-editor.js` se necessário, e carregamento/versionamento dos arquivos no HTML/lista.
 - Validação exigida: comparar os dois tipos de circuito, sem excluir ou migrar dados do usuário.
 
+
+## 30/10/2026 — correção aplicada à distribuição móvel e cache
+- **Mudança feita somente na camada móvel:** `mobile-editor.css?v=3` organiza a primeira linha em três ações igualmente distribuídas, agora com nomes “Ajustes”, “Dicas” e “Baixar”; o progresso permanece na segunda linha, com menos padding, altura de trilha de 5 px e texto menor; edição e zoom continuam abaixo.
+- `mobile-editor.js?v=3` atualiza os links de retorno para a lista na navegação móvel, sem trocar os listeners nem o roteador de fios do PC.
+- `projects.js?v=11` define `release=20261030mobile-ui-v3` **apenas para telas de até 700 px**, preservando a URL de desktop, para que abrir circuitos antigos e novos carregue o mesmo HTML atualizado.
+- `index.html` e `projects.html` receberam somente o ajuste de link/versionamento para a nova lista; nenhum circuito salvo foi apagado, migrado ou sobrescrito.
+- **Não foram modificados:** `app.js`, `editor-layout.js`, `editor-layout.css`, `styles.css`, o motor de conexões nem o sistema de salvamento.
+- Verificação possível aqui: código, sintaxe, CSS balanceado, condições de largura, scripts/versões presentes e preservação dos SHA do motor do PC.
+- **Pendente de teste real:** visualização no Chrome Android, F5 em aba antiga já aberta e arraste de jumpers com dedos. Não declarar resolvido visualmente sem esses testes.
+- Se circuito antigo continuar com barra antiga após abrir pela lista atualizada, investigar cache específico da aba, publicação real do GitHub Pages e carregamento/erros de `mobile-editor.css`, antes de alterar regras de circuito.
