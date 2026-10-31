@@ -1314,9 +1314,14 @@ function drawWires(){
    const from=points[seg],to=points[seg+1];
    const dx=to.x-from.x,dy=to.y-from.y,length=Math.hypot(dx,dy);
    if(length<8)continue;
-   // Área clicável ao longo de 100% do fio, inclusive perto dos pinos
-   // e nas pontas. Os botões de terminais ficam acima do SVG.
-   const u=from,v=to;
+   // Área clicável contínua de todos os trechos do fio, inclusive curtos.
+   // Reserva somente o centro de cada borne para não bloquear a conexão
+   // de novos fios (o SVG fica sobre os componentes no empilhamento).
+   const safeGap=Math.min(length*.16,16/zoom);
+   const fromGap=seg===0?safeGap:0;
+   const toGap=seg===points.length-2?safeGap:0;
+   const u={x:from.x+dx*fromGap/length,y:from.y+dy*fromGap/length};
+   const v={x:to.x-dx*toGap/length,y:to.y-dy*toGap/length};
    const hit=document.createElementNS(ns,'path');
    hit.setAttribute('d',wirePath([u,v]));
    hit.setAttribute('class','wire-target');
