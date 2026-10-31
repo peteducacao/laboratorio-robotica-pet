@@ -77,13 +77,14 @@ function render(){
  $('stageTitle').textContent=groups.find(g=>g.id===section).title;
  $('stageTag').textContent=full?'Montagem completa':'Ligação '+(index+1)+' de '+seq.length;
  $('mainTitle').textContent='Gabarito '+(mode==='switch'?'com gangorras':'sem gangorras');
- $('viewer').innerHTML=drawing(full?all:seq,full?-1:index);
+ $('viewer').innerHTML=full?drawing(all,-1):drawing(seq.slice(0,index+1),index);
  $('instruction').textContent=full?'Todas as conexões reunidas':label(current.a)+' → '+label(current.b);
  $('description').textContent=full?'Explore o circuito completo ou volte às etapas para acompanhar cada fio.':'A ligação destacada indica os dois terminais. As conexões anteriores permanecem discretas para orientar a montagem.';
  $('count').textContent=full?all.length+' ligações':'Passo '+(index+1)+' / '+seq.length;
  $('bar').style.width=(full?100:(index+1)/seq.length*100)+'%';
  $('prev').disabled=full||index===0;
- $('next').disabled=full||index===seq.length-1;
+ $('next').disabled=full||section==='esp'&&index===seq.length-1;
+ $('next').textContent=(!full&&index===seq.length-1)?(section==='esp'?'Concluir ✓':'Avançar →'):'Próximo →';
  $('stepList').innerHTML=seq.map((w,i)=>'<li class="'+(full?'done':i===index?'current':i<index?'done':'')+'">'+(i+1)+'. '+esc(label(w.a))+' → '+esc(label(w.b))+'</li>').join('');
  $('all').textContent=full?'Voltar ao passo a passo':'Ver circuito completo';
  $('tabs').innerHTML=groups.map(g=>'<button data-section="'+g.id+'" class="'+(section===g.id?'selected':'')+'">'+g.title+'</button>').join('');
