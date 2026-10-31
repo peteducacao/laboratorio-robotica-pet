@@ -283,3 +283,26 @@
  }
  .sidebar .nav a,.sidebar .nav button{min-height:42px}
 }
+
+/* Busca de circuitos compacta: só o campo Buscar circuito, sem afetar
+   a navegação, o seletor de ordenação nem a pesquisa. */
+.top .search{
+ width:226px;max-width:226px;min-width:0;flex:0 1 226px;
+}
+.top .search input{
+ height:40px;min-height:40px;padding:0 11px 0 35px;
+ border-radius:10px;font-size:12.5px;line-height:1.2;
+}
+.top .search svg{width:16px;height:16px;left:11px}
+@media(max-width:810px){
+ .top .search{
+  grid-area:search;
+  width:min(100%,220px);max-width:220px;
+  min-width:0;justify-self:end;flex:none;margin:0;
+ }
+ .top .search input{height:42px;min-height:42px;padding-left:33px;font-size:12.5px}
+ .top .search svg{left:10px;width:15px;height:15px}
+}
+@media(max-width:540px){
+ .top .search{width:100%;max-width:220px;min-width:0;justify-self:end;flex:none}
+}
