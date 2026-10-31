@@ -12,15 +12,15 @@
 <link rel="stylesheet" href="studio-preview.css?v=19">
 <link rel="stylesheet" href="editor-layout.css?v=13">
 <link rel="stylesheet" href="mobile-editor.css?v=5" media="(max-width:700px)">
-<link rel="stylesheet" href="step-hints.css?v=2">
-<script src="step-hints.js?v=2"></script>
+<link rel="stylesheet" href="step-hints.css?v=3">
+<script src="step-hints.js?v=3"></script>
 <script>
 // No computador permanece o app.js original. Só o celular recebe um motor
 // independente, com traçado acompanhando as mudanças de direção do dedo.
 // Defer preserva a ordem de inicialização com os scripts subsequentes.
 document.write(window.matchMedia('(max-width:700px)').matches
- ? '<script defer src="app-mobile.js?v=12"><\/script>'
- : '<script defer src="app.js?v=85"><\/script>');
+ ? '<script defer src="app-mobile.js?v=13"><\/script>'
+ : '<script defer src="app.js?v=86"><\/script>');
 </script>
 <script defer src="answer-key.js?v=37"></script>
 <script defer src="studio-preview.js?v=1"></script>
@@ -202,17 +202,18 @@ if(window.matchMedia('(max-width:700px)').matches){
   <div class="wire-hint-content">
     <span class="wire-hint-symbol" aria-hidden="true">💡</span>
     <div class="wire-hint-eyebrow">Vamos corrigir este fio</div>
-    <h2 id="wireHintHeading">Confira a ligação</h2>
+    <h2 id="wireHintHeading">Vamos consertar esse fio!</h2>
     <div class="wire-hint-comparison">
       <div class="wire-hint-line wire-hint-wrong">
-        <strong>O que você fez:</strong>
+        <strong id="wireHintWrongLabel">Remova a ponta do fio de:</strong>
         <p id="wireHintWhat"></p>
       </div>
       <div class="wire-hint-line wire-hint-right">
-        <strong>Correto:</strong>
+        <strong id="wireHintRightLabel">E coloque em:</strong>
         <p id="wireHintCorrect"></p>
       </div>
     </div>
+    <p id="wireHintKeep" class="wire-hint-keep" hidden></p>
     <button id="wireHintClose" type="button">Entendi</button>
   </div>
 </dialog>
