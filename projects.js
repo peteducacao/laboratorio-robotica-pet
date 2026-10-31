@@ -262,6 +262,13 @@
    setTimeout(editNickname,120);
   });
  }
+ function openCredits(){
+  const dialog=$('creditsDialog');
+  if(dialog&&!dialog.open){dialog.showModal();$('creditsClose').focus();}
+ }
+ function closeCredits(){
+  if($('creditsDialog').open)$('creditsDialog').close();
+ }
  function openGate(){
   if(sessionStorage.getItem('tinkerpet-gabarito-access')==='ok'){
    location.href='gabarito.html?release=20261031-gpio18-mobile-fix-v2';return;
@@ -293,6 +300,13 @@
   $('confirmYes').addEventListener('click',()=>{dialogHandler?.();$('confirmDialog').close()});
   $('confirmNo').addEventListener('click',()=>$('confirmDialog').close());
   $('openGate').addEventListener('click',openGate);
+  $('openCredits').addEventListener('click',openCredits);
+  $('creditsClose').addEventListener('click',closeCredits);
+  $('creditsDone').addEventListener('click',closeCredits);
+  $('creditsDialog').addEventListener('click',e=>{
+   // Clicar fora da janela também pode fechar, sem afetar o menu.
+   if(e.target===$('creditsDialog'))closeCredits();
+  });
   $('toggleGatePassword').addEventListener('click',()=>{
    const field=$('gatePassword'),button=$('toggleGatePassword');
    const show=field.type==='password';
@@ -312,7 +326,9 @@
    $('gateLabel').textContent='Gabaritos';
    location.href='gabarito.html?release=20261031-gpio18-mobile-fix-v2';
   });
-  if(!localStorage.getItem(NICK))setTimeout(()=>{if(!$('editDialog').open)editNickname()},350);
+  if(!localStorage.getItem(NICK))setTimeout(()=>{
+   if(!$('editDialog').open&&!$('creditsDialog').open)editNickname();
+  },350);
   else nickRegistry?.register(localStorage.getItem(NICK));
   window.addEventListener('pageshow',e=>{if(e.persisted){syncEditor();render()}});
   // Se outro editor salvar, atualiza a lista, sem copiar o estado global.
