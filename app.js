@@ -4,7 +4,33 @@
 // its original key and nothing in the preview can overwrite its circuit.
 // A aparência Studio também está na página principal: não trocar o progresso salvo.
 const IS_VISUAL_PREVIEW=/(?:^|\/)studio-preview\.html$/.test(window.location.pathname);
+const IS_PROJECT_EDITOR=/(?:^|\/)editor\.html$/.test(window.location.pathname);
 const STORAGE_KEY=IS_VISUAL_PREVIEW?'tinkerpet-studio-preview-v1':'tinkerpet-v2';
+const LIBRARY_KEY='tinkerpet-library-v1';
+const EDITOR_PROJECT_ID=(()=>{
+ if(!IS_PROJECT_EDITOR)return null;
+ const params=new URLSearchParams(window.location.search);
+ const specified=params.get('project');
+ if(specified)return specified; // Uma aba nunca segue as mudanças de outra.
+ // Compatibilidade com favoritos antigos sem parâmetro: fixa a identidade
+ // na URL uma única vez, antes de carregar ou salvar qualquer componente.
+ try{
+  const legacy=localStorage.getItem('tinkerpet-active-v1');
+  const lib=JSON.parse(localStorage.getItem(LIBRARY_KEY)||'null');
+  if(legacy&&Array.isArray(lib?.projects)&&lib.projects.some(p=>p.id===legacy)){
+   params.set('project',legacy);
+   history.replaceState(history.state,'',location.pathname+'?'+params.toString()+location.hash);
+   return legacy;
+  }
+ }catch(error){console.warn('Não foi possível identificar o circuito antigo',error)}
+ return null;
+})();
+function activeCircuitFromLibrary(){
+ if(!EDITOR_PROJECT_ID)return null;
+ const lib=JSON.parse(localStorage.getItem(LIBRARY_KEY)||'null');
+ const project=Array.isArray(lib?.projects)?lib.projects.find(p=>p.id===EDITOR_PROJECT_ID):null;
+ return project?.circuit||null;
+}
 const ROOT='https://raw.githubusercontent.com/gabrieljsantos/Fundamentos-de-Prototipagem-e-Fabrica--o-Digital/main/assets/images/componentes/';
 const TYPES=[
  {kind:'esp',name:'ESP32 DevKit V1',img:'assets/esp32-devkit-v1-30p.svg?v=29',ids:['esp'],pins:[["VIN","VIN"],["GND","GND"],["D13","D13"],["D12","D12"],["D14","D14"],["D27","D27"],["D26","D26"],["D25","D25"],["D33","D33"],["D32","D32"],["D35","D35"],["D34","D34"],["VN","VN"],["VP","VP"],["EN","EN"],["3V3","3V3"],["GND2","GND"],["D15","D15"],["D2","D2"],["D4","D4"],["RX2","RX2"],["TX2","TX2"],["D5","D5"],["D18","D18"],["D19","D19"],["D21","D21"],["RX0","RX0"],["TX0","TX0"],["D22","D22"],["D23","D23"]],info:'Placa de 30 pinos com USB à esquerda e nomes em cada contato. Os dois GND são equivalentes.',tip:'Neste carrinho: VIN recebe 5 V, GND comum, D27→IN1, D26→IN2, D32→IN3 e D18→IN4.'},
@@ -88,7 +114,9 @@ function safeRestore(){
    const current=localStorage.getItem('tinkerpet-v2');
    if(current)localStorage.setItem(STORAGE_KEY,current);
   }
-  const s=JSON.parse(localStorage.getItem(STORAGE_KEY)||'null');
+  // Cada aba de editor lê exclusivamente o circuito apontado por sua URL.
+  // O antigo tinkerpet-v2 era global e causava a troca de circuitos no F5.
+  const s=IS_PROJECT_EDITOR?activeCircuitFromLibrary():JSON.parse(localStorage.getItem(STORAGE_KEY)||'null');
   if(!s||!Array.isArray(s.parts)||!Array.isArray(s.wires))return;
   const names=new Set();
   state.parts=s.parts.filter(p=>p&&byId[p.id]&&!names.has(p.id)&&names.add(p.id)&&Number.isFinite(p.x)&&Number.isFinite(p.y)).map(p=>({id:p.id,kind:byId[p.id].kind,x:p.x,y:p.y,view:byId[p.id].kind==='motor'&&p.view==='side'?'side':'front',rotation:normalizePartRotation(p.rotation),flipped:p.flipped===true}));
@@ -121,7 +149,21 @@ function safeRestore(){
  }catch(err){console.warn('Progresso indisponível',err);}
 }
 function persist(){
- try{localStorage.setItem(STORAGE_KEY,JSON.stringify({parts:state.parts,wires:state.wires,voltage:state.voltage,switches:state.switches,wireColor:state.wireColor}));Q('savedIndicator').textContent='● Salvo automaticamente';}catch(e){Q('savedIndicator').textContent='● Não salvo';}
+ const circuit={parts:state.parts,wires:state.wires,voltage:state.voltage,switches:state.switches,wireColor:state.wireColor};
+ try{
+  if(IS_PROJECT_EDITOR){
+   // Nunca grava no circuito global: lê a biblioteca mais recente para
+   // preservar os outros projetos e os metadados alterados em outras abas.
+   if(!EDITOR_PROJECT_ID){Q('savedIndicator').textContent='● Abra um circuito em Meus circuitos';return;}
+   const lib=JSON.parse(localStorage.getItem(LIBRARY_KEY)||'null');
+   const project=Array.isArray(lib?.projects)?lib.projects.find(p=>p.id===EDITOR_PROJECT_ID):null;
+   if(!project){Q('savedIndicator').textContent='● Circuito não encontrado';return;}
+   project.circuit=JSON.parse(JSON.stringify(circuit));
+   project.updatedAt=Date.now();
+   localStorage.setItem(LIBRARY_KEY,JSON.stringify(lib));
+  }else localStorage.setItem(STORAGE_KEY,JSON.stringify(circuit));
+  Q('savedIndicator').textContent='● Salvo automaticamente';
+ }catch(e){console.warn('Não foi possível salvar este circuito',e);Q('savedIndicator').textContent='● Não salvo';}
 }
 // Cada curva e cada origem de jumper entram na linha do tempo de ações.
 function historyState(){return JSON.stringify({
