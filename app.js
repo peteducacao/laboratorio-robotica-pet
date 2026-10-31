@@ -1779,9 +1779,9 @@ function beginGroupMove(e,id){
  if(e.cancelable)e.preventDefault();
  const parts=[...selectedParts].map(key=>byPart(key)).filter(Boolean).map(p=>({id:p.id,x:p.x,y:p.y}));
  const wires=state.wires.map((w,i)=>{
-  const moveA=selectedParts.has(w.a.split('.')[0]),moveB=selectedParts.has(w.b.split('.')[0]);
+  const moveA=w.loose?.end!=='a'&&selectedParts.has(w.a.split('.')[0]),moveB=w.loose?.end!=='b'&&selectedParts.has(w.b.split('.')[0]);
   if(!moveA&&!moveB)return null;
-  return {i,moveA,moveB,via:(w.via||[]).map(v=>({...v})),start:getPortPos(w.a),end:getPortPos(w.b)};
+  return {i,moveA,moveB,via:(w.via||[]).map(v=>({...v})),start:w.loose?.end==='a'?w.loose.point:getPortPos(w.a),end:w.loose?.end==='b'?w.loose.point:getPortPos(w.b)};
  }).filter(Boolean);
  state.selected=id;state.selectedWire=null;state.inspector='parts';selectedBend=null;
  partDragAlignment=null;
@@ -1816,8 +1816,8 @@ function partDown(e){
  gesture={type:'move',pointer:e.pointerId,partId:p.id,startX:e.clientX,startY:e.clientY,partX:p.x,partY:p.y,
   panStartX:panX,panStartY:panY,lastClientX:e.clientX,lastClientY:e.clientY,
   anchors:state.wires.map((w,i)=>({
-   i,a:w.a.split('.')[0]===p.id,b:w.b.split('.')[0]===p.id,
-   via:(w.via||[]).map(point=>({...point})),start:getPortPos(w.a),end:getPortPos(w.b)
+   i,a:w.loose?.end!=='a'&&w.a.split('.')[0]===p.id,b:w.loose?.end!=='b'&&w.b.split('.')[0]===p.id,
+   via:(w.via||[]).map(point=>({...point})),start:w.loose?.end==='a'?w.loose.point:getPortPos(w.a),end:w.loose?.end==='b'?w.loose.point:getPortPos(w.b)
   })).filter(item=>item.a||item.b),moved:false};
 }
 function paletteDown(e){
