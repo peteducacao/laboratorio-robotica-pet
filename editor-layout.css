@@ -774,3 +774,27 @@
 
 /* Salvo: mesmo com estilos do cabeçalho, o atributo hidden deve prevalecer. */
 .editor-layout #savedIndicator[hidden]{display:none!important}
+
+/* Ícone de giro estável: símbolo preenchido, sem caminhos SVG quebrados
+   e exatamente centrado no botão. O clique continua ligado ao app.js. */
+.preview-studio.editor-layout .toolbar-group.edit-group #rotateBtn .rotate-icon{
+ display:block!important;
+ position:static!important;
+ width:22px!important;height:22px!important;
+ min-width:22px!important;max-width:22px!important;
+ min-height:22px!important;max-height:22px!important;
+ padding:0!important;margin:0!important;
+ stroke:none!important;fill:currentColor!important;
+ transform:none!important;flex:none!important;
+ overflow:visible!important;
+}
+.preview-studio.editor-layout .toolbar-group.edit-group #rotateBtn .rotate-icon path{
+ stroke:none!important;fill:currentColor!important;
+}
+@media(max-width:600px){
+ .preview-studio.editor-layout .toolbar-group.edit-group #rotateBtn .rotate-icon{
+  width:20px!important;height:20px!important;
+  min-width:20px!important;max-width:20px!important;
+  min-height:20px!important;max-height:20px!important;
+ }
+}
