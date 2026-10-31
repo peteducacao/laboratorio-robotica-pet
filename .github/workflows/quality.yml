@@ -16,6 +16,8 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '22'
+      - name: Testar dicas contextuais de montagem
+        run: node tests/contextual-hints.cjs
       - name: Testar bancada e validações
         run: node tests/smoke.cjs
       - name: Conferir nova interface sem alterar o simulador
