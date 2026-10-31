@@ -59,20 +59,17 @@
   syncEditor();
  }
  function syncEditor(){
-  const currentId=localStorage.getItem(ACTIVE),project=lib.projects.find(p=>p.id===currentId);
-  if(!project)return;
-  const live=parse(localStorage.getItem(ROOT));
-  if(!valid(live))return;
-  const circuit=sanitize(live);
-  if(JSON.stringify(circuit)!==JSON.stringify(project.circuit)){
-   project.circuit=circuit;project.updatedAt=Date.now();save();
-  }
+  // O editor agora salva diretamente no próprio projeto da biblioteca.
+  // Nunca copiar o rascunho global (ROOT) para ACTIVE: outra aba poderia
+  // estar trabalhando em um circuito diferente e sobrescrever este.
+  const fresh=parse(localStorage.getItem(LIB));
+  if(fresh&&Array.isArray(fresh.projects))lib=fresh;
  }
  function goEditor(project){
   syncEditor();
-  localStorage.setItem(ROOT,JSON.stringify(project.circuit));
-  localStorage.setItem(ACTIVE,project.id);
-  location.href='editor.html?release=20261030flip1';
+  if(!lib.projects.some(p=>p.id===project.id)){toast('Circuito não encontrado. Atualize a lista.');return;}
+  // Identidade fixa nesta URL. F5 e abrir outra aba não mudam o projeto.
+  location.href='editor.html?project='+encodeURIComponent(project.id)+'&release=20261030tabs1';
  }
  function newCircuit(){
   syncEditor();const now=Date.now();
@@ -81,25 +78,33 @@
  }
  function duplicate(project){
   syncEditor();
+  project=lib.projects.find(p=>p.id===project.id);
+  if(!project){toast('Circuito não encontrado.');return;}
   const copy={id:id(),name:project.name+' (cópia)',createdAt:Date.now(),updatedAt:Date.now(),circuit:clone(project.circuit)};
   lib.projects.unshift(copy);if(save()){render();toast('Cópia criada. O original foi preservado.')}
  }
  function rename(project){
   openEdit('Renomear circuito',project.name,'Salvar',value=>{
    const name=value.trim().slice(0,80);if(!name)return false;
-   project.name=name;project.updatedAt=Date.now();if(save()){render();return true}return false;
+   syncEditor();
+   const current=lib.projects.find(p=>p.id===project.id);
+   if(!current){toast('Circuito não encontrado.');return false;}
+   current.name=name;current.updatedAt=Date.now();if(save()){render();return true}return false;
   });
  }
  function remove(project){
   openConfirm('Excluir circuito','Excluir “'+project.name+'”? Esta ação não pode ser desfeita.',()=>{
-   const after=lib.projects.filter(p=>p.id!==project.id);
-   lib.projects=after;
+   syncEditor();
+   lib.projects=lib.projects.filter(p=>p.id!==project.id);
    if(localStorage.getItem(ACTIVE)===project.id)localStorage.removeItem(ACTIVE);
    if(save()){render();toast('Circuito excluído.')}
   });
  }
  function download(project){
-  syncEditor();const pack={app:'TinkerPET Studio',version:1,name:project.name,exportedAt:new Date().toISOString(),circuit:clone(project.circuit)};
+  syncEditor();
+  project=lib.projects.find(p=>p.id===project.id);
+  if(!project){toast('Circuito não encontrado.');return;}
+  const pack={app:'TinkerPET Studio',version:1,name:project.name,exportedAt:new Date().toISOString(),circuit:clone(project.circuit)};
   const blob=new Blob([JSON.stringify(pack,null,2)],{type:'application/json;charset=utf-8'});
   const url=URL.createObjectURL(blob),link=document.createElement('a');
   link.href=url;link.download=(project.name.normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^\w\- ]+/g,'').trim().replace(/\s+/g,'-')||'circuito')+'.tinkerpet.json';
@@ -279,6 +284,8 @@
   });
   if(!localStorage.getItem(NICK))setTimeout(()=>{if(!$('editDialog').open)editNickname()},350);
   window.addEventListener('pageshow',e=>{if(e.persisted){syncEditor();render()}});
+  // Se outro editor salvar, atualiza a lista, sem copiar o estado global.
+  window.addEventListener('storage',e=>{if(e.key===LIB){syncEditor();render();}});
  }
  init();attach();render();
 })();
