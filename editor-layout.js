@@ -32,10 +32,10 @@ brand.innerHTML='<span class="editor-brand-icon">'+robot+'</span><span class="ed
 brand.setAttribute('aria-label','Página inicial do TinkerPET');
 const crumbs=document.createElement('nav');
 crumbs.className='editor-crumbs';crumbs.setAttribute('aria-label','Localização da página');
-crumbs.innerHTML='<span class="arrow" aria-hidden="true">›</span><a href="projects.html?release=20261030edgepan1">Meus circuitos</a><span class="arrow" aria-hidden="true">›</span><strong id="editorCurrentTitle">Circuito em edição</strong>';
+crumbs.innerHTML='<span class="arrow" aria-hidden="true">›</span><a href="projects.html?release=20261030flip1">Meus circuitos</a><span class="arrow" aria-hidden="true">›</span><strong id="editorCurrentTitle">Circuito em edição</strong>';
 header.querySelector('.header-start').append(crumbs);
 const profile=document.createElement('a');
-profile.className='editor-user';profile.href='projects.html?release=20261030edgepan1';profile.title='Meus circuitos e meu Nick';
+profile.className='editor-user';profile.href='projects.html?release=20261030flip1';profile.title='Meus circuitos e meu Nick';
 profile.innerHTML='<span class="editor-user-icon">'+user+'</span><span id="editorNickname"></span>';
 right.append(profile);
 $('editorNickname').textContent=localStorage.getItem('tinkerpet-nickname-v1')||'Meu perfil';
@@ -166,7 +166,7 @@ $('settingsRemoveProject').addEventListener('click',()=>{
  try{
   localStorage.setItem(LIB,JSON.stringify(found.list));
   localStorage.removeItem(ACTIVE);
-  location.href='projects.html?release=20261030edgepan1';
+  location.href='projects.html?release=20261030flip1';
  }catch{status.textContent='Não foi possível excluir este circuito.'}
 });
 // O controle original do simulador continua responsável pela biblioteca.
