@@ -19,11 +19,27 @@ const groups=[
  {id:'esp',title:'ESP32 · Circuito completo',color:'#26343d',parts:Object.keys(parts)}
 ];
 const wire=(a,b,section,color)=>({a,b,section,color});
-const common=[
+// Ordem pedagógica: fonte de energia -> interruptor (quando houver) -> módulo -> controlador.
+// Não ordenar alfabeticamente nem pela posição dos componentes.
+const direct=[
  wire('b1.NEG','lm.INN','lm','#263f4a'),
+ wire('b1.POS','lm.INP','lm','#e96550'),
  wire('lm.OUTP','esp.VIN','lm','#e96550'),
  wire('lm.OUTN','esp.GND','lm','#263f4a'),
  wire('b2.NEG','drv.GND','drv','#263f4a'),
+ wire('b2.POS','drv.VCC','drv','#e96550')
+];
+const switched=[
+ wire('b1.NEG','lm.INN','lm','#263f4a'),
+ wire('b1.POS','s1.IN','lm','#e96550'),
+ wire('s1.OUT','lm.INP','lm','#e96550'),
+ wire('lm.OUTP','esp.VIN','lm','#e96550'),
+ wire('lm.OUTN','esp.GND','lm','#263f4a'),
+ wire('b2.NEG','drv.GND','drv','#263f4a'),
+ wire('b2.POS','s2.IN','drv','#e96550'),
+ wire('s2.OUT','drv.VCC','drv','#e96550')
+];
+const remaining=[
  wire('drv.GND','esp.GND2','drv','#263f4a'),
  wire('drv.IN1','esp.D27','drv','#9468bd'),
  wire('drv.IN2','esp.D26','drv','#9468bd'),
@@ -34,8 +50,6 @@ const common=[
  wire('drv.OUT3','ml.B','drv','#986cc0'),
  wire('drv.OUT4','ml.A','drv','#986cc0')
 ];
-const direct=[wire('b1.POS','lm.INP','lm','#e96550'),wire('b2.POS','drv.VCC','drv','#e96550')];
-const switched=[wire('b1.POS','s1.IN','lm','#e96550'),wire('s1.OUT','lm.INP','lm','#e96550'),wire('b2.POS','s2.IN','drv','#e96550'),wire('s2.OUT','drv.VCC','drv','#e96550')];
 const anchors={
  b1:{POS:[.94,.20],NEG:[.94,.74]},b2:{POS:[.95,.18],NEG:[.95,.78]},
  s1:{IN:[.19,.94],OUT:[.49,.94]},s2:{IN:[.19,.94],OUT:[.49,.94]},
@@ -75,7 +89,7 @@ function render(){
  $('tabs').innerHTML=groups.map(g=>'<button data-section="'+g.id+'" class="'+(section===g.id?'selected':'')+'">'+g.title+'</button>').join('');
  $('download').disabled=false;
 }
-function selectMode(m){mode=m;all=[...common,...(m==='switch'?switched:direct)].sort((a,b)=>(a.section==='lm'?0:1)-(b.section==='lm'?0:1));$('chooser').hidden=true;section='lm';index=0;full=false;render();}
+function selectMode(m){mode=m;all=[...(m==='switch'?switched:direct),...remaining];$('chooser').hidden=true;section='lm';index=0;full=false;render();}
 $('chooser').addEventListener('click',e=>{const b=e.target.closest('[data-mode]');if(b)selectMode(b.dataset.mode);});
 $('tabs').addEventListener('click',e=>{const b=e.target.closest('[data-section]');if(b){section=b.dataset.section;index=0;full=false;render();}});
 $('prev').onclick=()=>{index=Math.max(0,index-1);render();};
