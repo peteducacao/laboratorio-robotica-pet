@@ -224,6 +224,8 @@
     +'<button data-action="download">'+icon('download')+' Baixar</button>'
     +'<button class="delete" data-action="delete">'+icon('trash')+' Excluir</button></div>';
    grid.append(card);thumb(p,card.querySelector('canvas'));
+   const badge=card.querySelector('.status');
+   setTimeout(()=>badge?.remove(),3000);
   }
   $('projectCount').textContent=lib.projects.length;
   const latest=projects[0];$('lastCircuit').textContent=latest?latest.name:'Nenhum circuito';
