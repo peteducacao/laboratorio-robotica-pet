@@ -107,6 +107,13 @@ function selectMode(m){
  mode=m;all=[...(m==='switch'?switched:direct),...remaining];
  $('chooser').hidden=true;section='lm';index=0;full=false;lastGuideSection='lm';lastGuideIndex=0;render();
 }
+// Fechar o seletor volta à lista de circuitos, sem deixar a tela de gabarito vazia.
+function exitChooser(){location.href='projects.html?release=20261031gabarito-icon-v1';}
+$('cancelChooser').addEventListener('click',exitChooser);
+document.addEventListener('keydown',e=>{
+ if(e.key==='Escape'&&!$('chooser').hidden){e.preventDefault();exitChooser();}
+});
+$('cancelChooser').focus({preventScroll:true});
 $('chooser').addEventListener('click',e=>{const b=e.target.closest('[data-mode]');if(b)selectMode(b.dataset.mode);});
 $('tabs').addEventListener('click',e=>{const b=e.target.closest('[data-section]');if(b)selectSection(b.dataset.section);});
 $('prev').onclick=()=>{
