@@ -61,6 +61,21 @@ try{
    const card=page.locator('[data-part="'+id+'"]');
    await card.click();
    assert.equal(await page.locator('#componentPanel').isVisible(),true,'painel visível '+name+' '+width);
+   if(id==='esp'){
+    await page.waitForTimeout(650);
+    const scroll=await page.evaluate(()=>{
+     const header=document.querySelector('.how-top').getBoundingClientRect();
+     const box=document.getElementById('componentPanel').getBoundingClientRect();
+     return {
+      scrollY:window.scrollY,
+      maxScroll:Math.max(0,document.documentElement.scrollHeight-innerHeight),
+      top:box.top,header:header.height,viewport:innerHeight
+     };
+    });
+    assert(scroll.top<scroll.viewport-90,'clicar rola para tornar a explicação visível '+width+': '+JSON.stringify(scroll));
+    if(scroll.maxScroll>10)
+     assert(scroll.scrollY>2,'clicar move página automaticamente quando cabe rolar '+width+': '+JSON.stringify(scroll));
+   }
    assert.equal(await card.getAttribute('aria-expanded'),'true','cartão selecionado '+name);
    assert.equal(await page.locator('#componentName').textContent(),name);
    assert.equal(await page.locator('#componentWhat').evaluate(x=>x.open),false,'pergunta começa recolhida '+name);
