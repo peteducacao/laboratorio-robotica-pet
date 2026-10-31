@@ -12,7 +12,14 @@
 <link rel="stylesheet" href="studio-preview.css?v=19">
 <link rel="stylesheet" href="editor-layout.css?v=13">
 <link rel="stylesheet" href="mobile-editor.css?v=3" media="(max-width:700px)">
-<script defer src="app.js?v=77"></script>
+<script>
+// No computador permanece o app.js original. Só o celular recebe um motor
+// independente, com traçado acompanhando as mudanças de direção do dedo.
+// Defer preserva a ordem de inicialização com os scripts subsequentes.
+document.write(window.matchMedia('(max-width:700px)').matches
+ ? '<script defer src="app-mobile.js?v=2"><\/script>'
+ : '<script defer src="app.js?v=77"><\/script>');
+</script>
 <script defer src="answer-key.js?v=37"></script>
 <script defer src="studio-preview.js?v=1"></script>
 <script defer src="editor-layout.js?v=11"></script>
