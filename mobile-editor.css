@@ -185,3 +185,84 @@
     flex-basis:38px!important;width:38px!important;min-width:38px!important;max-width:38px!important;
   }
 }
+
+/* V3 — barra equilibrada e compacta. Somente celular, sem modificar o PC.
+   A linha superior é um trio de ações com ícones E nomes, sem vazio à esquerda. */
+@media (max-width:700px){
+ .preview-studio.editor-layout .studio-topbar .toolbar {
+  grid-template-columns:repeat(3,minmax(0,1fr))!important;
+  grid-template-rows:auto auto auto!important;
+  column-gap:7px!important;row-gap:6px!important;
+  padding:7px 9px 9px!important;
+ }
+ .preview-studio.editor-layout .studio-topbar #editorSettingsButton {
+  grid-column:1!important;grid-row:1!important;
+ }
+ .preview-studio.editor-layout .studio-topbar #hintBtn {
+  grid-column:2!important;grid-row:1!important;
+ }
+ .preview-studio.editor-layout .studio-topbar #downloadBtn {
+  grid-column:3!important;grid-row:1!important;
+ }
+ .preview-studio.editor-layout .studio-topbar :is(#editorSettingsButton,#hintBtn,#downloadBtn) {
+  display:flex!important;align-items:center!important;justify-content:center!important;
+  flex-direction:row!important;gap:5px!important;
+  width:100%!important;min-width:0!important;max-width:100%!important;
+  height:43px!important;min-height:43px!important;max-height:43px!important;
+  padding:0 5px!important;margin:0!important;
+  border-radius:11px!important;box-sizing:border-box!important;
+  text-align:center!important;white-space:nowrap!important;
+  font:750 11px/1 'DM Sans',sans-serif!important;
+ }
+ .preview-studio.editor-layout .studio-topbar #editorSettingsButton::after{
+  content:"Ajustes";font:750 11px/1 'DM Sans',sans-serif;
+ }
+ .preview-studio.editor-layout .studio-topbar #downloadBtn::after{
+  content:"Baixar";font:750 11px/1 'DM Sans',sans-serif;
+ }
+ .preview-studio.editor-layout .studio-topbar #hintBtn{
+  font-size:19px!important;
+ }
+ .preview-studio.editor-layout .studio-topbar #hintBtn span{
+  display:inline!important;
+  font:750 11px/1 'DM Sans',sans-serif!important;
+ }
+ .preview-studio.editor-layout .studio-topbar :is(#editorSettingsButton,#downloadBtn) svg{
+  width:21px!important;height:21px!important;min-width:21px!important;
+  flex:none!important;margin:0!important;
+ }
+ .preview-studio.editor-layout .studio-topbar #editorToolbarProgress{
+  grid-column:1/-1!important;grid-row:2!important;
+  min-height:0!important;max-height:none!important;
+  padding:6px 10px!important;gap:2px!important;
+  border-radius:10px!important;
+ }
+ .preview-studio.editor-layout .studio-topbar .editor-toolbar-progress-head{
+  font-size:11px!important;line-height:1.1!important;gap:6px!important;
+ }
+ .preview-studio.editor-layout .studio-topbar .editor-toolbar-progress-track{
+  height:5px!important;flex:0 0 5px!important;
+ }
+ .preview-studio.editor-layout .studio-topbar .editor-toolbar-progress-status{
+  font-size:9.5px!important;line-height:1.15!important;
+ }
+ .preview-studio.editor-layout .studio-topbar .toolbar-left{
+  grid-column:1/-1!important;grid-row:3!important;
+  gap:6px!important;
+ }
+}
+@media (max-width:365px){
+ .preview-studio.editor-layout .studio-topbar .toolbar{
+  grid-template-columns:repeat(3,minmax(0,1fr))!important;
+  padding-inline:7px!important;column-gap:5px!important;
+ }
+ .preview-studio.editor-layout .studio-topbar :is(#editorSettingsButton,#hintBtn,#downloadBtn){
+  width:100%!important;min-width:0!important;max-width:none!important;
+  padding:0 3px!important;gap:4px!important;
+  font-size:10px!important;
+ }
+ .preview-studio.editor-layout .studio-topbar :is(#editorSettingsButton,#downloadBtn)::after,
+ .preview-studio.editor-layout .studio-topbar #hintBtn span{
+  font-size:10px!important;
+ }
+}
