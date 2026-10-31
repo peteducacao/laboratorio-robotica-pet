@@ -7,10 +7,47 @@ header{background:#fff;border-bottom:1px solid #d9e9e5;padding:13px clamp(14px,4
  .viewer.complete{overflow-x:auto;overflow-y:hidden;-webkit-overflow-scrolling:touch;touch-action:pan-x}
  .viewer.complete svg{width:820px;min-width:820px;max-height:none}
 }
-@page{size:A4 portrait;margin:10mm}@media print{body{background:white}header,.intro,.workspace,.sections,.choice-overlay,.pdf-note{display:none!important}.print-only{display:block!important}.sheet{height:274mm;page-break-after:always;border:3mm solid var(--sheet-color);padding:9mm;display:flex;flex-direction:column;gap:5mm;overflow:hidden}.sheet:last-child{page-break-after:auto}.sheet header{display:flex!important;border:0;padding:0;gap:8px}.sheet header img{width:14mm}.sheet h2{font-size:20pt;margin:3mm 0}.sheet p{font-size:11pt}.sheet svg{width:100%;height:auto;max-height:135mm}.sheet footer{margin-top:auto;font-size:9pt;color:#637781}.sheet .print-lines{font-size:8.5pt;line-height:1.3}}
+@page{size:A4 portrait;margin:9mm 10mm}
+@media print{
+ html,body{margin:0!important;padding:0!important;background:#fff!important;color:#173747!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+ body>header,body>main,.choice-overlay{display:none!important}
+ .print-only{display:block!important}
+ .sheet{box-sizing:border-box;display:flex;flex-direction:column;gap:2.6mm;width:100%;height:246mm;padding:6.5mm 6.5mm 5mm;margin:0;border:.35mm solid #dce8eb;border-top:1.5mm solid var(--sheet-color);border-radius:0;overflow:hidden;page-break-inside:avoid;break-inside:avoid;page-break-after:always;break-after:page;background:white}
+ .sheet:last-child{page-break-after:auto;break-after:auto}
+ .sheet .print-head{display:flex!important;align-items:center;justify-content:space-between;gap:4mm;padding:0 0 2.5mm;margin:0;border:0;border-bottom:.35mm solid #dce8eb;background:#fff}
+ .print-brand{display:flex;align-items:center;gap:2.5mm}
+ .print-brand img{width:10mm;height:10mm;object-fit:contain}
+ .print-brand div{display:flex;flex-direction:column;gap:.7mm}
+ .print-brand strong{font-family:Arial,sans-serif;font-size:11pt;line-height:1.05;color:#153e50}
+ .print-brand span{font-family:Arial,sans-serif;font-size:7pt;letter-spacing:.07em;color:#5c8291}
+ .print-page-meta{font-family:Arial,sans-serif;font-size:8.5pt;font-weight:700;color:var(--sheet-color);white-space:nowrap}
+ .print-heading{display:flex;flex-direction:column;gap:1mm}
+ .print-heading-top{display:flex;justify-content:space-between;align-items:center;gap:3mm}
+ .sheet h2{font-family:Arial,sans-serif;font-size:19pt;line-height:1.1;letter-spacing:-.4pt;color:#173747;margin:0;font-weight:750}
+ .print-badge{flex:none;border-radius:9mm;background:#e6f2f0;color:#13695f;font-size:8pt;font-weight:700;padding:1.5mm 2.7mm}
+ .sheet .print-heading p{margin:0;font-size:9pt;line-height:1.25;color:#587383}
+ .print-mode{font-size:7.5pt;letter-spacing:.11em;font-weight:800;color:var(--sheet-color)}
+ .print-figure{display:flex;align-items:center;justify-content:center;margin:0;min-height:0;flex:0 0 auto}
+ .sheet svg{display:block;width:100%;height:auto;max-height:100mm;object-fit:contain}
+ .sheet--lm .print-figure svg{width:92%;max-height:140mm}
+ .sheet--drv .print-figure svg{max-height:96mm}
+ .sheet--esp .print-figure svg{max-height:101mm}
+ .print-connections{display:flex;flex-direction:column;gap:2mm;min-height:0}
+ .print-connections h3{font-family:Arial,sans-serif;font-size:10.5pt;line-height:1.1;padding:0 0 1.5mm;border-bottom:.3mm solid #dce8eb;margin:0;color:#284d5a}
+ .print-lines{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:1.5mm 3mm;align-content:start}
+ .sheet--lm .print-lines{grid-template-columns:1fr;gap:1.65mm}
+ .print-item{box-sizing:border-box;display:flex;align-items:flex-start;gap:2mm;min-width:0;padding:1.3mm 1.7mm;border:.25mm solid #e7eff1;border-left:.75mm solid var(--sheet-color);background:#f8fbfc;border-radius:1.3mm;break-inside:avoid}
+ .print-step-num{flex:none;display:block;min-width:5.2mm;color:var(--sheet-color);font-size:9pt;font-weight:800;line-height:1.3}
+ .print-connection{min-width:0;display:block;font-size:8.8pt;line-height:1.2;overflow-wrap:anywhere}
+ .print-connection strong{font-weight:650}
+ .print-arrow{padding:0 1.4mm;color:#278e83;font-weight:800}
+ .sheet--lm .print-item{padding:1.7mm 2mm}
+ .sheet--lm .print-connection{font-size:10.2pt;line-height:1.3}
+ .sheet .print-foot{display:flex;justify-content:space-between;align-items:center;flex:0 0 auto;margin-top:auto;padding:2.8mm 0 0;border-top:.35mm solid #dce8eb;color:#637e88;font-family:Arial,sans-serif;font-size:8pt;line-height:1.1}
+}
 </style></head><body>
 <header><img src="assets/logo-pet.svg" alt="Logo TinkerPET"><strong>TinkerPET Studio · Gabaritos</strong><span style="flex:1"></span><a href="projects.html?release=20261031gabarito-icon-v1">← Meus circuitos</a></header>
 <main><div class="intro"><div><span class="muted">MONTAGEM GUIADA</span><h1 id="mainTitle">Gabarito interativo</h1><span class="muted">Acompanhe cada ligação, uma de cada vez.</span></div><button id="download" class="btn primary" disabled>↓ Baixar PDF A4</button></div>
 <div class="sections" id="tabs"></div>
 <div class="workspace"><section class="panel"><div class="stage-head"><h2 id="stageTitle">Escolha um circuito</h2><span class="tag" id="stageTag">Passo a passo</span></div><div class="viewer" id="viewer" aria-label="Animação das ligações"></div><div class="progress"><div id="bar" style="width:0"></div></div><div class="controls"><span class="counter" id="count"></span><button class="btn" id="prev">← Anterior</button><button class="btn primary" id="next">Próximo →</button><button class="btn" id="repeat">↻ Repetir</button></div></section><aside class="panel"><span class="muted" style="font-size:12px;font-weight:750">SIGA A LIGAÇÃO DESTACADA</span><h2 id="instruction">Cada fio será apresentado separadamente.</h2><p class="muted" id="description">Os fios anteriores ficam discretos para facilitar a identificação.</p><ol class="step-list" id="stepList"></ol><button class="btn" id="all" style="width:100%">Ver circuito completo</button></aside></div><p class="pdf-note">Para salvar o PDF, use “Baixar PDF A4” e escolha “Salvar como PDF” na impressão do navegador. A apostila inclui todas as ligações.</p></main>
-<div class="choice-overlay" id="chooser" role="dialog" aria-modal="true" aria-labelledby="choiceTitle"><div class="choice-card"><button type="button" id="cancelChooser" class="choice-close" aria-label="Cancelar e voltar para Meus circuitos" title="Cancelar e voltar (Esc)">×</button><img src="assets/logo-pet.svg" alt=""><h2 id="choiceTitle">Qual gabarito deseja visualizar?</h2><p class="muted">Escolha a montagem para acompanhar as conexões.</p><div class="choices"><button data-mode="switch">Com gangorras<small>17 ligações · 9 componentes</small></button><button data-mode="direct">Sem gangorras<small>15 ligações · 7 componentes</small></button></div></div></div><div id="printPages" class="print-only"></div><script src="gabarito-guide.js?v=9" defer></script></body></html>
+<div class="choice-overlay" id="chooser" role="dialog" aria-modal="true" aria-labelledby="choiceTitle"><div class="choice-card"><button type="button" id="cancelChooser" class="choice-close" aria-label="Cancelar e voltar para Meus circuitos" title="Cancelar e voltar (Esc)">×</button><img src="assets/logo-pet.svg" alt=""><h2 id="choiceTitle">Qual gabarito deseja visualizar?</h2><p class="muted">Escolha a montagem para acompanhar as conexões.</p><div class="choices"><button data-mode="switch">Com gangorras<small>17 ligações · 9 componentes</small></button><button data-mode="direct">Sem gangorras<small>15 ligações · 7 componentes</small></button></div></div></div><div id="printPages" class="print-only"></div><script src="gabarito-guide.js?v=10" defer></script></body></html>
