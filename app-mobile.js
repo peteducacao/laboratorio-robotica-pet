@@ -286,9 +286,9 @@ function selectedControlConnections(){
   const matching=state.wires.map(w=>mobileControlPort(w,input)).filter(Boolean);
   // Prefere manter o gabarito original quando há duas ligações no mesmo IN,
   // mas não permite contar dois GPIOs distintos para uma única entrada.
-  const picked=[MOBILE_DEFAULT_GPIO[i],...matching]
-   .filter((p,j,list)=>matching.includes(p)&&list.indexOf(p)===j)
-   .find(p=>!used.has(p));
+  // Priorize um GPIO ainda não usado. Se o IN1 usa D27 e o IN2 usa
+  // D32, não reserve D32 antecipadamente para o IN3 do gabarito.
+  const picked=[...matching].find(p=>!used.has(p));
   const output=picked||MOBILE_DEFAULT_GPIO[i];
   if(picked)used.add(picked);
   return [output,'drv.'+input];
