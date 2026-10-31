@@ -14,7 +14,10 @@
    if(!onlyMobile.matches||e.pointerType!=='touch')return;
    const target=e.target.closest?.(movableSelector);
    if(!target)return;
-   try{target.setPointerCapture(e.pointerId)}catch{/* Browser may capture implicitly. */}
+   // A própria rota SVG é redesenhada em cada movimento.
+   // Capture no viewport estável (e não no path descartado) para que o
+   // Android não cancele a movimentação no meio do arraste.
+   try{viewport.setPointerCapture(e.pointerId)}catch{/* Captura implícita permanece. */}
   },{capture:true,passive:true});
   // When app.js dispatches the actual PNG anchor click, the export has been
   // initiated. Close the preview then; keep it open on generation failures.
