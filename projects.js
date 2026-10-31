@@ -37,6 +37,27 @@
   out.selected=null;out.startPort=null;out.selectedWire=null;out.bends=[];out.completed=false;
   return out;
  };
+ // Aviso transitório: nunca reaparece por atualizar a página ou refazer a lista.
+ // O editor sinaliza somente alterações efetivamente gravadas.
+ const SAVED_EVENT='tinkerpet-recent-saved-v1',savedBadges=new Map();
+ function showSavedBadge(projectId){
+  if(!projectId)return;
+  const until=Date.now()+3000;
+  savedBadges.set(projectId,until);
+  setTimeout(()=>{
+   if(savedBadges.get(projectId)!==until)return;
+   savedBadges.delete(projectId);
+   for(const card of $('projectsGrid').querySelectorAll('.card')){
+    if(card.dataset.id===projectId)card.querySelector('.status')?.remove();
+   }
+  },3020);
+ }
+ let pendingSaveNotice=null;
+ try{
+  const notice=JSON.parse(sessionStorage.getItem(SAVED_EVENT)||'null');
+  if(notice?.id&&Date.now()-notice.at<15*60*1000)pendingSaveNotice=notice.id;
+  sessionStorage.removeItem(SAVED_EVENT);
+ }catch{sessionStorage.removeItem(SAVED_EVENT)}
  let lib=null;
  function toast(message){const node=$('notice');if(!node)return;node.textContent=message;node.hidden=false;clearTimeout(toast.timer);toast.timer=setTimeout(()=>{node.hidden=true},4100);}
  function save(){
@@ -75,14 +96,16 @@
  function newCircuit(){
   syncEditor();const now=Date.now();
   const project={id:id(),name:'Novo circuito',createdAt:now,updatedAt:now,circuit:blank()};
-  lib.projects.unshift(project);if(!save())return;goEditor(project);
+  lib.projects.unshift(project);if(!save())return;
+  sessionStorage.setItem(SAVED_EVENT,JSON.stringify({id:project.id,at:Date.now()}));
+  goEditor(project);
  }
  function duplicate(project){
   syncEditor();
   project=lib.projects.find(p=>p.id===project.id);
   if(!project){toast('Circuito não encontrado.');return;}
   const copy={id:id(),name:project.name+' (cópia)',createdAt:Date.now(),updatedAt:Date.now(),circuit:clone(project.circuit)};
-  lib.projects.unshift(copy);if(save()){render();toast('Cópia criada. O original foi preservado.')}
+  lib.projects.unshift(copy);if(save()){showSavedBadge(copy.id);render();toast('Cópia criada. O original foi preservado.')}
  }
  function rename(project){
   openEdit('Renomear circuito',project.name,'Salvar',value=>{
@@ -90,7 +113,8 @@
    syncEditor();
    const current=lib.projects.find(p=>p.id===project.id);
    if(!current){toast('Circuito não encontrado.');return false;}
-   current.name=name;current.updatedAt=Date.now();if(save()){render();return true}return false;
+   if(current.name===name)return true;
+   current.name=name;current.updatedAt=Date.now();if(save()){showSavedBadge(current.id);render();return true}return false;
   });
  }
  function remove(project){
@@ -124,7 +148,7 @@
    const name=String(payload?.name||file.name.replace(/\.(tinkerpet\.)?json$/i,'')||'Circuito importado').slice(0,80);
    const project={id:id(),name,createdAt:Date.now(),updatedAt:Date.now(),circuit};
    lib.projects.unshift(project);
-   if(save()){render();toast('Circuito importado! Clique em Editar para continuar.')}
+   if(save()){showSavedBadge(project.id);render();toast('Circuito importado! Clique em Editar para continuar.')}
   }catch(err){toast('Falha ao importar: '+err.message)}
   finally{$('importFile').value=''}
  }
@@ -216,7 +240,8 @@
    const name=safeText(p.name);card.innerHTML='<div class="card-art">'
     +'<button type="button" class="card-photo" data-action="edit" aria-label="Editar circuito: '+name+'" title="Abrir circuito para editar">'
     +'<canvas aria-label="Miniatura do circuito"></canvas></button>'
-    +'<span class="status">✓ Salvo</span><button class="more" data-action="menu" aria-label="Opções de '+name+'">⋮</button></div>'
+    +(savedBadges.get(p.id)>Date.now()?'<span class="status">✓ Salvo</span>':'')
+    +'<button class="more" data-action="menu" aria-label="Opções de '+name+'">⋮</button></div>'
     +'<h2>'+name+'</h2><div class="meta"><span>▣ '+p.circuit.parts.length+' componentes</span><span>◷ '+date(p.updatedAt)+'</span></div>'
     +'<div class="divider"></div><div class="card-buttons">'
     +'<button class="edit" data-action="edit">'+icon('edit')+' Editar</button>'
@@ -225,8 +250,6 @@
     +'<button data-action="download">'+icon('download')+' Baixar</button>'
     +'<button class="delete" data-action="delete">'+icon('trash')+' Excluir</button></div>';
    grid.append(card);thumb(p,card.querySelector('canvas'));
-   const badge=card.querySelector('.status');
-   setTimeout(()=>badge?.remove(),3000);
   }
   $('projectCount').textContent=lib.projects.length;
   const latest=projects[0];$('lastCircuit').textContent=latest?latest.name:'Nenhum circuito';
@@ -334,7 +357,9 @@
   // Se outro editor salvar, atualiza a lista, sem copiar o estado global.
   window.addEventListener('storage',e=>{if(e.key===LIB){syncEditor();render();}if(e.key===NICK)render();});
  }
- init();attach();render();
+ init();attach();
+ if(pendingSaveNotice)showSavedBadge(pendingSaveNotice);
+ render();
  if(sessionStorage.getItem('tinkerpet-gabarito-access')==='ok')$('gateLabel').textContent='Gabaritos';
  // Ao voltar da página de componentes, abre a seção pedida sem
  // transformar Créditos ou Gabarito em páginas públicas alternativas.
