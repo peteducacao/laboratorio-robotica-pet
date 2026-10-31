@@ -43,6 +43,8 @@ jobs:
         run: node tests/hints-browser.mjs
       - name: Testar desfazer, apagar, mover fios e GPIO19
         run: node tests/hint-actions-browser.mjs
+      - name: Conferir nove casos reais de dicas e portas ocupadas
+        run: node tests/hints-repair-browser.mjs
       - name: Conferir layout em telas de celular e computador
         run: node tests/preview-browser.mjs
       - name: Guardar capturas para revisão de design
