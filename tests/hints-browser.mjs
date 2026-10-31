@@ -26,7 +26,8 @@ try{
   page.on('pageerror',err=>errors.push(err.message));
   await page.addInitScript(()=>{
    const mk=(id,kind,x,y)=>({id,kind,x,y,rotation:0,flipped:false});
-   const wires=[{a:'lm.OUTP',b:'esp.GND',color:'#ed654d',via:[],manual:false}];
+   const fixed=sessionStorage.getItem('hint-test-correct')==='yes';
+   const wires=[{a:'lm.OUTP',b:fixed?'esp.VIN':'esp.GND',color:'#ed654d',via:[],manual:false}];
    const project={id:'hint-test',name:'Teste das dicas',createdAt:1,updatedAt:1,
     circuit:{parts:[mk('lm','buck',100,100),mk('esp','esp',450,100)],wires,voltage:4,switches:{s1:false,s2:false},wireColor:'#ed654d'}};
    localStorage.setItem('tinkerpet-library-v1',JSON.stringify({version:1,projects:[project]}));
@@ -38,11 +39,7 @@ try{
   assert.match(await page.locator('#wireHintText').textContent(),/OUT\+.*VIN/,'LM2596 recebe dica específica '+width);
   assert.doesNotMatch(await page.locator('#wireHintText').textContent(),/MOTOR A/,'dica não mistura motor '+width);
   await page.locator('#wireHintClose').click();
-  await page.evaluate(()=>{
-   const db=JSON.parse(localStorage.getItem('tinkerpet-library-v1'));
-   db.projects[0].circuit.wires=[{a:'lm.OUTP',b:'esp.VIN',color:'#ed654d',via:[],manual:false}];
-   localStorage.setItem('tinkerpet-library-v1',JSON.stringify(db));
-  });
+  await page.evaluate(()=>sessionStorage.setItem('hint-test-correct','yes'));
   await page.reload({waitUntil:'domcontentloaded'});
   await page.locator('#catalog .catalog-card').first().waitFor({state:'attached',timeout:20000});
   const hintState=await page.locator('#hintBtn').evaluate(el=>({
