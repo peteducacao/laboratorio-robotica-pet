@@ -136,22 +136,44 @@ function safeRestore(){
   enforceManualMode();
  }catch(err){console.warn('Progresso indisponível',err);}
 }
+// Salvo só aparece depois de uma mudança real e desaparece sozinho.
+let savedIndicatorTimer=null;
+function savedIndicator(message,temporary=false){
+ const indicator=Q('savedIndicator');if(!indicator)return;
+ clearTimeout(savedIndicatorTimer);
+ indicator.textContent=message;
+ indicator.hidden=!message;
+ if(temporary)savedIndicatorTimer=setTimeout(()=>{
+  indicator.hidden=true;indicator.textContent='';
+ },3000);
+}
 function persist(){
  const circuit={parts:state.parts,wires:state.wires,voltage:state.voltage,switches:state.switches,wireColor:state.wireColor};
  try{
   if(IS_PROJECT_EDITOR){
-   // Nunca grava no circuito global: lê a biblioteca mais recente para
-   // preservar os outros projetos e os metadados alterados em outras abas.
-   if(!EDITOR_PROJECT_ID){Q('savedIndicator').textContent='● Abra um circuito em Meus circuitos';return;}
+   // O editor carrega e redesenha o circuito ao entrar ou atualizar.
+   // Nenhuma dessas ações deve mudar a data de edição nem acionar "Salvo".
+   if(!EDITOR_PROJECT_ID){savedIndicator('● Abra um circuito em Meus circuitos');return;}
    const lib=JSON.parse(localStorage.getItem(LIBRARY_KEY)||'null');
    const project=Array.isArray(lib?.projects)?lib.projects.find(p=>p.id===EDITOR_PROJECT_ID):null;
-   if(!project){Q('savedIndicator').textContent='● Circuito não encontrado';return;}
+   if(!project){savedIndicator('● Circuito não encontrado');return;}
+   const previous=project.circuit||{};
+   const lastCircuit={
+    parts:previous.parts||[],wires:previous.wires||[],voltage:previous.voltage??4,
+    switches:previous.switches||{s1:false,s2:false},wireColor:previous.wireColor||'#ed654d'
+   };
+   if(JSON.stringify(circuit)===JSON.stringify(lastCircuit))return;
    project.circuit=JSON.parse(JSON.stringify(circuit));
    project.updatedAt=Date.now();
    localStorage.setItem(LIBRARY_KEY,JSON.stringify(lib));
-  }else localStorage.setItem(STORAGE_KEY,JSON.stringify(circuit));
-  Q('savedIndicator').textContent='● Salvo automaticamente';
- }catch(e){console.warn('Não foi possível salvar este circuito',e);Q('savedIndicator').textContent='● Não salvo';}
+   // A lista mostra o selo somente quando este usuário voltar ao projeto.
+   try{sessionStorage.setItem('tinkerpet-recent-saved-v1',
+    JSON.stringify({id:EDITOR_PROJECT_ID,at:Date.now()}));}catch{}
+  }else{
+   localStorage.setItem(STORAGE_KEY,JSON.stringify(circuit));
+  }
+  savedIndicator('● Salvo automaticamente',true);
+ }catch(e){console.warn('Não foi possível salvar este circuito',e);savedIndicator('● Não salvo');}
 }
 // Cada curva e cada origem de jumper entram na linha do tempo de ações.
 function historyState(){return JSON.stringify({
