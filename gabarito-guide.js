@@ -96,8 +96,8 @@ function render(){
  $('count').textContent=full?all.length+' ligações':'Passo '+(index+1)+' / '+seq.length;
  $('bar').style.width=(full?100:(index+1)/seq.length*100)+'%';
  $('prev').disabled=!full&&section==='lm'&&index===0;
- $('next').disabled=full;
- $('next').textContent=full?'Concluído ✓':(index===seq.length-1?'Avançar →':'Próximo →');
+ $('next').disabled=false;
+ $('next').textContent=full?'Concluir ✓':(index===seq.length-1?'Avançar →':'Próximo →');
  $('stepList').innerHTML=full?all.map((w,i)=>'<li class="done">'+(i+1)+'. '+esc(label(w.a))+' → '+esc(label(w.b))+'</li>').join(''):seq.map((w,i)=>'<li class="'+(i===index?'current':i<index?'done':'')+'">'+(i+1)+'. '+esc(label(w.a))+' → '+esc(label(w.b))+'</li>').join('');
  $('all').textContent=full?'Voltar ao passo a passo':'Ver circuito completo';
  $('tabs').innerHTML=groups.map(g=>'<button data-section="'+g.id+'" class="'+(section===g.id?'selected':'')+'">'+g.title+'</button>').join('');
@@ -116,7 +116,7 @@ $('prev').onclick=()=>{
  render();
 };
 $('next').onclick=()=>{
- if(full)return;
+ if(full){location.href='projects.html';return;}
  if(index<sequence().length-1){index++;render();return;}
  if(section==='lm'){selectSection('drv');return;}
  if(section==='drv')showFull();
