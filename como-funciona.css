@@ -146,3 +146,27 @@
 @media(prefers-reduced-motion:reduce){
  .component-card,.component-chevron,.component-panel{animation:none!important;transition:none!important}
 }
+
+/* Aplicação prática sempre visível — não traz as posições dos terminais. */
+.component-in-our-car{
+ display:flex;align-items:flex-start;gap:13px;
+ margin-top:17px;padding:16px 18px;border-radius:14px;
+ border:1px solid #b9e4d8;background:linear-gradient(135deg,#e9f8f1,#f4fbf8);
+}
+.car-callout-badge{
+ display:grid;place-items:center;width:39px;height:39px;flex:0 0 39px;
+ border-radius:12px;background:#fff;color:#0d8478;box-shadow:0 3px 8px #0b816b12;
+}
+.car-callout-badge svg{width:23px;height:23px}
+.component-in-our-car h3{
+ font:800 14px/1.5 'Manrope','DM Sans',sans-serif;
+ color:#08776c;margin:0 0 5px;
+}
+.component-in-our-car p{font-size:13.5px;line-height:1.7;color:#365b64;margin:0;max-width:80ch}
+@media(max-width:600px){
+ .component-in-our-car{gap:10px;margin-top:13px;padding:13px 12px}
+ .car-callout-badge{width:34px;height:34px;flex-basis:34px;border-radius:10px}
+ .car-callout-badge svg{width:21px;height:21px}
+ .component-in-our-car h3{font-size:13px}
+ .component-in-our-car p{font-size:12.5px;line-height:1.65}
+}
