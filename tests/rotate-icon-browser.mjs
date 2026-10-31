@@ -39,8 +39,8 @@ try{
     by:button.top+button.height/2
    };
   });
-  assert.equal(icon.paths[0],'M21 11a9 9 0 1 1-3.3-7.7','seta sem deformações '+width);
-  assert.equal(icon.paths[1],'M21 3v6h-6','ponta da seta bem formada '+width);
+  assert.equal(icon.paths.length,1,'ícone de rotação preenchido, sem caminhos soltos '+width);
+  assert.equal(icon.paths[0],'M17.65 6.35A7.95 7.95 0 0 0 12 4a8 8 0 1 0 7.93 9h-2.02A6 6 0 1 1 12 6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35Z','seta circular estável '+width);
   assert(icon.w>=17&&icon.w<=23&&icon.h>=17&&icon.h<=23,'ícone com tamanho uniforme '+width);
   assert(Math.abs(icon.x-icon.bx)<=2&&Math.abs(icon.y-icon.by)<=2,
    'ícone centralizado '+width+': '+JSON.stringify(icon));
