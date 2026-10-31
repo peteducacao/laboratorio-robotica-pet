@@ -129,3 +129,15 @@ body{overflow:hidden;background:#091e39;font-family:'DM Sans',Arial,sans-serif}
 .welcome.mobile-clean::before{display:none!important}
 .welcome.mobile-clean .welcome-backdrop{display:block}
 .welcome.mobile-clean .welcome-art{visibility:hidden}
+
+/* v13 — A bancada de fundo continua no canvas, mas o primeiro plano
+   usa o próprio SVG original. O canvas não rasteriza mais o texto,
+   nem a pasta, nem a seta "Meus circuitos" no celular. */
+@media(max-width:900px), (max-aspect-ratio:4/5){
+ .welcome.mobile-clean .welcome-art{
+  visibility:visible!important;
+  -webkit-mask-image:linear-gradient(to bottom,transparent 0%,#000 6%,#000 94%,transparent 100%)!important;
+  mask-image:linear-gradient(to bottom,transparent 0%,#000 6%,#000 94%,transparent 100%)!important;
+  image-rendering:auto!important;
+ }
+}
