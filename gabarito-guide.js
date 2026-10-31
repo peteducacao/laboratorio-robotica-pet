@@ -64,7 +64,17 @@ let mode=null,all=[],section='lm',index=0,full=false,lastGuideSection='lm',lastG
 function pos(port){const [id,pin]=port.split('.'),p=parts[id],a=anchors[id][pin];return [p.x+p.w*a[0],p.y+p.h*a[1]];}
 function esc(v){return String(v).replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;');}
 function label(port){const [id,pin]=port.split('.');return parts[id].label+' · '+pin.replace('OUTP','OUT+').replace('OUTN','OUT−').replace('INP','IN+').replace('INN','IN−').replace('POS','+').replace('NEG','−');}
-function path(w,i){const [x1,y1]=pos(w.a),[x2,y2]=pos(w.b),bend=(x1+x2)/2+(i%3-1)*12;return 'M'+x1+' '+y1+' H'+bend+' V'+y2+' H'+x2;}
+function path(w,i){
+ const [x1,y1]=pos(w.a),[x2,y2]=pos(w.b),bend=(x1+x2)/2+(i%3-1)*12;
+ // Em vez de atravessar a fileira de pinos na horizontal, o fio chega
+ // perpendicularmente ao furo correto. Isso evita confundir D18 com D19.
+ if(w.b.startsWith('esp.')){
+  const bottom=w.b==='esp.D18'||w.b==='esp.GND2';
+  const outside=bottom?parts.esp.y+parts.esp.h+18+(i%3)*6:parts.esp.y-18-(i%3)*6;
+  return 'M'+x1+' '+y1+' H'+bend+' V'+outside+' H'+x2+' V'+y2;
+ }
+ return 'M'+x1+' '+y1+' H'+bend+' V'+y2+' H'+x2;
+}
 function visibleParts(wires){const set=new Set();wires.forEach(w=>{set.add(w.a.split('.')[0]);set.add(w.b.split('.')[0]);});return set;}
 function drawing(wires,active=-1,print=false){
  const visible=visibleParts(wires);
