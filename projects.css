@@ -104,3 +104,33 @@
  .top .nick-name{max-width:48px}
  .top .filter{font-size:13px;padding-left:10px;padding-right:27px}
 }
+
+
+/* v5 — topo sempre comporta o título e o Nick sem invadir a ordenação. */
+@media(max-width:810px){
+ .top{grid-template-areas:"brand brand" "search sort"}
+ .top .brand{
+  grid-area:brand;
+  width:100%;min-width:0;
+  padding-right:155px;
+  font-size:19px;
+  gap:10px;
+ }
+ .top .brand .symbol{flex:0 0 auto}
+ .top .nick{
+  grid-area:brand;
+  justify-self:end;
+  align-self:center;
+  z-index:1;
+ }
+}
+@media(max-width:540px){
+ .top .brand{font-size:16px;padding-right:128px;gap:8px}
+ .top .nick{max-width:118px}
+}
+@media(max-width:350px){
+ .top .brand{font-size:15px;padding-right:72px;gap:7px}
+ .top .brand > span:last-child > span{display:none}
+ .top .nick{max-width:60px;gap:5px}
+ .top .nick-name{display:none}
+}
