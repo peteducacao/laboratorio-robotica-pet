@@ -1133,24 +1133,41 @@ function wireRoute(start,via,end,startPort,endPort){
 
 /* Reconectar uma ponta como no Tinkercad: duas bolinhas aparecem quando
    um fio é selecionado. A origem oposta e a cor nunca se perdem. */
+// Move uma extremidade sem reaproveitar o cotovelo antigo do terminal.
+// Preserva as curvas do restante do jumper e recria só a aproximação final.
 function reconnectRoute(pending,position){
- const w=state.wires[pending.index],all=w&&wirePoints(w);if(!all||all.length<2||!position)return [];
- const fixed=pending.end==='b'?all.slice(0,-1):all.slice(1).reverse();
- const path=fixed.map(p=>({x:Math.round(p.x),y:Math.round(p.y)}));
- const append=pt=>{
-  const prev=path.at(-1),p={x:Math.round(pt.x),y:Math.round(pt.y)};
-  if(!prev||Math.hypot(p.x-prev.x,p.y-prev.y)<2)return;
-  if(Math.abs(p.x-prev.x)>1&&Math.abs(p.y-prev.y)>1){
-   const before=path.at(-2),horizontal=before&&Math.abs(before.y-prev.y)<2;
-   const elbow=horizontal?{x:p.x,y:prev.y}:{x:prev.x,y:p.y};
-   if(Math.hypot(elbow.x-prev.x,elbow.y-prev.y)>1)path.push(elbow);
-  }
-  path.push(p);
+ const w=state.wires[pending.index],all=pending.base|| (w&&wirePoints(w));
+ if(!all||all.length<2||!position)return [];
+ const round=point=>({x:Math.round(point.x),y:Math.round(point.y)});
+ const fixed=pending.end==='b'?all.slice(0,-1).map(round):all.slice(1).reverse().map(round);
+ // O último cotovelo pertencia ao pino que foi desplugado. Ele não pode
+ // continuar como uma sobra à direita/esquerda do novo caminho.
+ if(fixed.length>1)fixed.pop();
+ const path=fixed;
+ const append=raw=>{
+  const point=round(raw),last=path.at(-1),previous=path.at(-2);
+  if(last&&point.x===last.x&&point.y===last.y)return;
+  if(previous&&last&&(
+   (previous.x===last.x&&last.x===point.x)||
+   (previous.y===last.y&&last.y===point.y)
+  ))path[path.length-1]=point;
+  else path.push(point);
  };
- for(const corner of pending.corners||[])append(corner);
- append(position);
- const clean=[];for(const p of path){const last=clean.at(-1);if(!last||last.x!==p.x||last.y!==p.y)clean.push(p);}
- return pending.end==='b'?clean:clean.reverse();
+ const addOrthogonal=raw=>{
+  const target=round(raw),last=path.at(-1);
+  if(!last)return append(target);
+  if(last.x!==target.x&&last.y!==target.y){
+   const previous=path.at(-2);
+   const horizontal=previous?Math.abs(previous.y-last.y)<2:
+    Math.abs(target.x-last.x)>=Math.abs(target.y-last.y);
+   // Continua na direção da última curva, sem alongar o antigo terminal.
+   append(horizontal?{x:target.x,y:last.y}:{x:last.x,y:target.y});
+  }
+  append(target);
+ };
+ for(const corner of pending.corners||[])addOrthogonal(corner);
+ addOrthogonal(position);
+ return pending.end==='b'?path:path.reverse();
 }
 function addReconnectCorner(x,y){
  if(!reconnectPending)return false;
@@ -1200,7 +1217,7 @@ function beginReconnect(e,index,end){
  if(e.cancelable)e.preventDefault();
  e.stopPropagation?.();
  state.selectedWire=index;state.selected=null;state.inspector='wires';state.wireColor=wire.color;
- reconnectPending={index,end,point:wire.loose?.end===end?{...wire.loose.point}:getPortPos(wire[end]),snapPort:null,corners:[]};
+ reconnectPending={index,end,point:wire.loose?.end===end?{...wire.loose.point}:getPortPos(wire[end]),snapPort:null,corners:[],base:wirePoints(wire).map(p=>({...p}))};
  gesture={type:'wire-end',pointer:e.pointerId,startX:e.clientX,startY:e.clientY,moved:false};
  renderColors();renderInspector();updateHistoryButtons();requestDraw();
 }
@@ -1213,8 +1230,9 @@ function moveReconnect(clientX,clientY){
  const pin=nearestPort(clientX,clientY,fixed,32);
  reconnectPending.snapPort=pin;
  reconnectPending.point=pin?getPortPos(pin):worldXY(clientX,clientY);
- const points=wirePoints(wire);
- const anchor=reconnectPending.corners.at(-1)||(reconnectPending.end==='b'?points.at(-2):points[1]);
+ const base=reconnectPending.base||wirePoints(wire);
+ const near=reconnectPending.end==='b'?base.at(-3):base[2];
+ const anchor=reconnectPending.corners.at(-1)||near||getPortPos(wire[reconnectPending.end==='b'?'a':'b']);
  pendingAlignment=visualPendingAlignment(clientX,clientY,anchor);
  requestDraw();
 }
@@ -1269,6 +1287,7 @@ function finishReconnect(newPort){
  message('✓ Ponta reconectada em '+portName(newPort)+'. O outro terminal e a cor foram preservados.',true);
  return true;
 }
+function eagerWireTouchTarget(){return window.matchMedia?.('(pointer:coarse)')?.matches===true;}
 function drawWires(){
  drawPending=false;
  Q('viewport').classList.toggle('is-wiring',!!(state.startPort||reconnectPending));
@@ -1290,16 +1309,15 @@ function drawWires(){
    const from=points[seg],to=points[seg+1];
    const dx=to.x-from.x,dy=to.y-from.y,length=Math.hypot(dx,dy);
    if(length<8)continue;
-   const trimStart=seg===0?Math.min(length*.22,24/zoom):0;
-   const trimEnd=seg===points.length-2?Math.min(length*.22,24/zoom):0;
-   const u={x:from.x+dx*trimStart/length,y:from.y+dy*trimStart/length};
-   const v={x:to.x-dx*trimEnd/length,y:to.y-dy*trimEnd/length};
+   // Área clicável ao longo de 100% do fio, inclusive perto dos pinos
+   // e nas pontas. Os botões de terminais ficam acima do SVG.
+   const u=from,v=to;
    const hit=document.createElementNS(ns,'path');
    hit.setAttribute('d',wirePath([u,v]));
    hit.setAttribute('class','wire-target');
    hit.setAttribute('stroke','transparent');
    hit.setAttribute('fill','none');
-   hit.style.setProperty('--hit-width',Math.min(90,Math.max(22,20/zoom))+'px');
+   hit.style.setProperty('--hit-width',Math.min(100,Math.max(25, (eagerWireTouchTarget()?30:24)/zoom))+'px');
    hit.setAttribute('stroke-linecap','butt');
    hit.dataset.wireIndex=String(i);
    hit.dataset.wireSegment=String(seg);
