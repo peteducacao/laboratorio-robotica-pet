@@ -204,7 +204,9 @@
   }
   for(const p of filtered){
    const card=document.createElement('article');card.className='card';card.dataset.id=p.id;
-   const name=safeText(p.name);card.innerHTML='<div class="card-art"><canvas aria-label="Miniatura do circuito"></canvas>'
+   const name=safeText(p.name);card.innerHTML='<div class="card-art">'
+    +'<button type="button" class="card-photo" data-action="edit" aria-label="Editar circuito: '+name+'" title="Abrir circuito para editar">'
+    +'<canvas aria-label="Miniatura do circuito"></canvas></button>'
     +'<span class="status">✓ Salvo</span><button class="more" data-action="menu" aria-label="Opções de '+name+'">⋮</button></div>'
     +'<h2>'+name+'</h2><div class="meta"><span>▣ '+p.circuit.parts.length+' componentes</span><span>◷ '+date(p.updatedAt)+'</span></div>'
     +'<div class="divider"></div><div class="card-buttons">'
