@@ -771,3 +771,6 @@
  .preview-studio.editor-layout .completion-confetti-piece{animation:none!important;opacity:0!important}
  .preview-studio.editor-layout .completion-close{transition:none!important}
 }
+
+/* Salvo: mesmo com estilos do cabeçalho, o atributo hidden deve prevalecer. */
+.editor-layout #savedIndicator[hidden]{display:none!important}
