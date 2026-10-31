@@ -295,7 +295,7 @@
     $('gatePassword').value='';$('gateError').textContent='Senha incorreta.';$('gatePassword').focus();return;
    }
    sessionStorage.setItem('tinkerpet-gabarito-access','ok');
-   $('openGate').innerHTML='Gabaritos';
+   $('gateLabel').textContent='Gabaritos';
    location.href='gabarito.html';
   });
   if(!localStorage.getItem(NICK))setTimeout(()=>{if(!$('editDialog').open)editNickname()},350);
@@ -304,5 +304,5 @@
   window.addEventListener('storage',e=>{if(e.key===LIB){syncEditor();render();}});
  }
  init();attach();render();
- if(sessionStorage.getItem('tinkerpet-gabarito-access')==='ok')$('openGate').innerHTML='Gabaritos';
+ if(sessionStorage.getItem('tinkerpet-gabarito-access')==='ok')$('gateLabel').textContent='Gabaritos';
 })();
