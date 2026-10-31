@@ -63,3 +63,13 @@
 - **Limitação a acompanhar:** o teste automatizado foi de lógica, não um ensaio com dedo em Chrome Android. Após publicação, validar toques em circuito antigo e novo e confirmar que soltura, reconexão, edição do fio, salvamento e PNG continuam íntegros.
 - Nova rota da lista móvel: `release=20261030finger-wire-v1`, scripts atualizados em `projects.html` e `editor.html`. Evitar reaproveitar aba antiga com recurso em cache.
 - **Atenção na manutenção:** como existe cópia independente `app-mobile.js`, correções futuras de segurança/negócio no motor PC não são automaticamente incorporadas ao celular; comparar conscientemente os dois e preservar a regra de não alterar PC por um bug móvel.
+
+## 30/10/2026 — bolinhas enormes e IN1–IN4 com GPIOs alternativos (celular)
+- Evidência: screenshot mostra bolinhas ciano sobrepostas cobrindo pinos da MX1508; editor móvel anterior usava `42/zoom` para alças visíveis. O dedo não conseguia selecionar e alinhar o jumper com precisão.
+- **Corrigido só no celular**: aro visível de 12 px e área de toque de 26 px, em `app-mobile.js` e `mobile-editor.css`; alças continuam sob o dedo, seleção por segmento de fio reduzida a 20 px e toast de instrução extensa removido ao selecionar um fio.
+- Erro relatado: conectar IN1–IN4 da MX1508 a GPIOs diferentes dos quatro do gabarito era considerado inválido no celular, ainda que os GPIOs tivessem capacidade de saída.
+- **Corrigido só no celular:** `selectedControlConnections()` infere o GPIO ligado a cada IN; `expectedConnections()`, `countGood()`, `mistakes()`, `missing()` e `powerStatus()` passam a reconhecer as escolhas, preservando 15 ligações no circuito direto e 17 no com gangorras.
+- Cada entrada precisa usar um GPIO diferente, com capacidade de saída. GPIO34/35 e VP/VN são de entrada, não adequados; VIN/GND/3V3/EN e UART0 também não são substitutos. GPIOs de strapping (2/5/12/15) podem funcionar, mas exigem cuidados no boot. O firmware real deverá configurar os quatro GPIOs efetivamente usados.
+- Testados (lógica): gabaritos 15/15 e 17/17; quatro alternativas distintas; troca de GPIO27 e GPIO26; bloqueio de GPIO35, uso duplicado de um GPIO e GND como controle.
+- **Não alterado:** `app.js` do desktop, CSS e layout originais. Teste visual em Chrome Android continua necessário para confirmar bolinhas e posicionamento final.
+- Nova rota móvel `20261030fine-wire-gpio-v3`, com atualizações de versões dos scripts móveis e da página de projetos. Conferir F5 em circuitos antigos e novos.
