@@ -4,6 +4,8 @@
  document.querySelector('.side-note')?.remove();
  const ROOT='tinkerpet-v2', LIB='tinkerpet-library-v1', ACTIVE='tinkerpet-active-v1', NICK='tinkerpet-nickname-v1';
  const $=id=>document.getElementById(id);
+ const nickRegistry=window.TinkerpetNickRegistry;
+ let adminNicks=[];
  const typeKinds={esp:'esp',drv:'driver',lm:'buck',b1:'battery',b2:'batteryPack',s1:'switch',s2:'switch',ml:'motor',mr:'motor'};
  const geometry={
   esp:[790,365,'assets/esp32-devkit-v1-30p.svg?v=29'],driver:[250,317,'assets/mx1508-desenhado.svg?v=38'],
@@ -237,7 +239,7 @@
  let dialogHandler=null;
  function openEdit(title,current,action,onConfirm){
   $('editTitle').textContent=title;$('editInput').value=current;$('editSave').textContent=action;$('editError').textContent='';
-  dialogHandler=onConfirm;$('editDialog').showModal();$('editInput').focus();$('editInput').select();
+  dialogHandler=onConfirm;$('deleteNick').hidden=true;$('editDialog').showModal();$('editInput').focus();$('editInput').select();
  }
  function openConfirm(title,body,onConfirm){
   $('confirmTitle').textContent=title;$('confirmBody').textContent=body;dialogHandler=onConfirm;
@@ -246,8 +248,53 @@
  function editNickname(){
   openEdit(localStorage.getItem(NICK)?'Alterar Nick':'Escolher meu Nick',localStorage.getItem(NICK)||'','Salvar',v=>{
    const name=v.trim().slice(0,24);if(!name){$('editError').textContent='Informe seu Nick.';return false}
-   localStorage.setItem(NICK,name);render();return true;
+   localStorage.setItem(NICK,name);render();
+   // Registro silencioso no GitHub; falhas de rede não bloqueiam o estudante.
+   nickRegistry?.register(name);
+   return true;
   });
+  $('deleteNick').hidden=!localStorage.getItem(NICK);
+ }
+ function deleteNickname(){
+  if(!localStorage.getItem(NICK))return;
+  $('editDialog').close();
+  openConfirm('Excluir meu Nick','Remover seu Nick deste navegador? Seus circuitos permanecerão salvos. O registro histórico no GitHub não será apagado.',()=>{
+   localStorage.removeItem(NICK);render();toast('Nick removido. Você já pode escolher outro.');
+   setTimeout(editNickname,120);
+  });
+ }
+ function showAdminNicks(){
+  const query=$('adminSearch').value.trim().toLocaleLowerCase('pt-BR');
+  const visible=adminNicks.filter(n=>n.toLocaleLowerCase('pt-BR').includes(query));
+  const list=$('adminNickList');list.replaceChildren();
+  for(const [i,nick] of visible.entries()){
+   const li=document.createElement('li'),index=document.createElement('span'),name=document.createElement('span');
+   index.className='admin-index';index.textContent=String(i+1).padStart(2,'0');
+   name.textContent=nick;li.append(index,name);list.append(li);
+  }
+  $('adminEmpty').hidden=visible.length>0;
+  $('adminCount').textContent=String(adminNicks.length);
+ }
+ function openAdmin(){
+  $('adminPassword').value='';$('adminError').textContent='';
+  $('adminForm').hidden=false;$('adminContent').hidden=true;adminNicks=[];
+  $('adminDialog').showModal();$('adminPassword').focus();
+ }
+ async function loginAdmin(e){
+  e.preventDefault();const password=$('adminPassword').value;
+  if(!nickRegistry?.enabled){
+   $('adminError').textContent='Registro no GitHub ainda não configurado.';return;
+  }
+  const button=$('adminForm').querySelector('[type=submit]');button.disabled=true;
+  try{
+   const names=await nickRegistry.list(password);
+   adminNicks=Array.isArray(names)?names:[];
+   adminNicks.sort((a,b)=>a.localeCompare(b,'pt-BR',{sensitivity:'base'}));
+   $('adminSearch').value='';$('adminPassword').value='';
+   $('adminForm').hidden=true;$('adminContent').hidden=false;showAdminNicks();
+  }catch(error){
+   $('adminError').textContent=error?.status===401?'Senha incorreta.':'Não foi possível consultar os Nicks. Verifique a conexão.';
+  }finally{button.disabled=false}
  }
  function openGate(){
   if(sessionStorage.getItem('tinkerpet-gabarito-access')==='ok'){
@@ -274,6 +321,11 @@
   $('searchCircuits').addEventListener('input',render);
   $('sortCircuits').addEventListener('change',render);
   $('nickButton').addEventListener('click',editNickname);
+  $('deleteNick').addEventListener('click',deleteNickname);
+  $('openAdmin').addEventListener('click',openAdmin);
+  $('adminClose').addEventListener('click',()=>$('adminDialog').close());
+  $('adminForm').addEventListener('submit',loginAdmin);
+  $('adminSearch').addEventListener('input',showAdminNicks);
   $('editForm').addEventListener('submit',e=>{e.preventDefault();const accept=dialogHandler?.($('editInput').value);if(accept!==false)$('editDialog').close()});
   $('cancelEdit').addEventListener('click',()=>$('editDialog').close());
   $('confirmYes').addEventListener('click',()=>{dialogHandler?.();$('confirmDialog').close()});
@@ -299,9 +351,10 @@
    location.href='gabarito.html?release=20261031-gpio18-mobile-fix-v2';
   });
   if(!localStorage.getItem(NICK))setTimeout(()=>{if(!$('editDialog').open)editNickname()},350);
+  else nickRegistry?.register(localStorage.getItem(NICK));
   window.addEventListener('pageshow',e=>{if(e.persisted){syncEditor();render()}});
   // Se outro editor salvar, atualiza a lista, sem copiar o estado global.
-  window.addEventListener('storage',e=>{if(e.key===LIB){syncEditor();render();}});
+  window.addEventListener('storage',e=>{if(e.key===LIB){syncEditor();render();}if(e.key===NICK)render();});
  }
  init();attach();render();
  if(sessionStorage.getItem('tinkerpet-gabarito-access')==='ok')$('gateLabel').textContent='Gabaritos';
