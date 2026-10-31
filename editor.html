@@ -11,13 +11,13 @@
 <link rel="stylesheet" href="answer-key.css?v=37">
 <link rel="stylesheet" href="studio-preview.css?v=19">
 <link rel="stylesheet" href="editor-layout.css?v=13">
-<link rel="stylesheet" href="mobile-editor.css?v=4" media="(max-width:700px)">
+<link rel="stylesheet" href="mobile-editor.css?v=5" media="(max-width:700px)">
 <script>
 // No computador permanece o app.js original. Só o celular recebe um motor
 // independente, com traçado acompanhando as mudanças de direção do dedo.
 // Defer preserva a ordem de inicialização com os scripts subsequentes.
 document.write(window.matchMedia('(max-width:700px)').matches
- ? '<script defer src="app-mobile.js?v=9"><\/script>'
+ ? '<script defer src="app-mobile.js?v=10"><\/script>'
  : '<script defer src="app.js?v=83"><\/script>');
 </script>
 <script defer src="answer-key.js?v=37"></script>
