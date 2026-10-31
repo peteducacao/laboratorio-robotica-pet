@@ -6,6 +6,14 @@
   if(!onlyMobile.matches)return;
   const viewport=document.getElementById('viewport');
   if(!viewport)return;
+  // O SVG original tinha um canto reto parecido com ponteiro de relógio.
+  // No celular, usar uma seta circular com ponta claramente desenhada.
+  // Preserva o botão, o mesmo ID e seu listener de rotação do app-mobile.js.
+  const rotateBtn=document.getElementById('rotateBtn');
+  if(rotateBtn){
+   rotateBtn.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19.8 9a8.5 8.5 0 1 0 .6 6.5"/><path d="m15 4 5 4.7-6.2 2.1"/></svg>';
+   rotateBtn.style.touchAction='manipulation';
+  }
   // Todos os circuitos (antigos ou novos) usam a versão móvel atual.
   // Links do breadcrumb são criados pelo editor-layout.js após o carregamento.
   document.querySelectorAll('a[href*="projects.html"]').forEach(link=>{
