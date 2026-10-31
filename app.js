@@ -251,7 +251,23 @@ const SWITCH_WIRING_VARIANTS=(()=>{
  }
  return variants;
 })();
+// Uma gangorra só ganha a função de LM2596 ou de ponte H pelas
+// conexões que o aluno efetivamente fez. Até lá, TODAS as atribuições
+// ainda possíveis devem ser tratadas como válidas. Não fixar s1/s2
+// antecipadamente, nem supor uma ordem para adicionar fios.
+function switchWiringCandidates(){
+ const placed=state.wires.filter(w=>!w.loose&&
+  [w.a,w.b].some(p=>p.startsWith('s1.')||p.startsWith('s2.')));
+ return SWITCH_WIRING_VARIANTS.filter(variant=>{
+  const allowed=new Set(variant.pairs.map(([a,b])=>electricalKey(a,b)));
+  return placed.every(w=>allowed.has(electricalKey(w.a,w.b)));
+ });
+}
 function selectedSwitchConnections(){
+ const compatible=switchWiringCandidates();
+ if(compatible.length)return compatible[0];
+ // Quando já há uma ligação contraditória, mantém a melhor hipótese
+ // apenas para indicar o que falta, sem aceitar o conflito como correto.
  const actual=new Set(state.wires.filter(w=>!w.loose).map(w=>electricalKey(w.a,w.b)));
  let best=SWITCH_WIRING_VARIANTS[0],score=-1;
  for(const variant of SWITCH_WIRING_VARIANTS){
@@ -314,9 +330,16 @@ function expectedConnections(){
   .concat(selectedControlConnections(),selectedMotorConnections());
 }
 function acceptedConnectionSet(){
- // Nada de aceitar outras posições de chave ou fios de LED que não
- // aparecem no esquema escolhido.
- return new Set(expectedConnections().map(([a,b])=>electricalKey(a,b)));
+ const allowed=new Set(expectedConnections().map(([a,b])=>electricalKey(a,b)));
+ if(assemblyMode()==='switched'){
+  // Enquanto as duas gangorras ainda estão sendo ligadas, não mostrar
+  // erro por escolher a segunda como chave do LM2596 (ou vice-versa).
+  // Nunca incluir ligações impossíveis se não houver hipótese compatível.
+  for(const variant of switchWiringCandidates()){
+   for(const [a,b] of variant.pairs)allowed.add(electricalKey(a,b));
+  }
+ }
+ return allowed;
 }
 function countGood(){
  const expected=new Set(expectedConnections().map(([a,b])=>electricalKey(a,b)));
