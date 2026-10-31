@@ -991,7 +991,7 @@ function makeWireFullyManual(w){
 }
 function enforceManualMode(){for(const w of state.wires)makeWireFullyManual(w);}
 function segmentAt(clientX,clientY){
- const p=worldXY(clientX,clientY),tolerance=Math.min(90,Math.max(15,17/zoom));
+ const p=worldXY(clientX,clientY),tolerance=Math.min(90,Math.max(10,12/zoom));
  let best={index:-1,segment:-1,dist:tolerance*tolerance};
  state.wires.forEach((w,i)=>{
   const pts=wirePoints(w);
@@ -1006,7 +1006,7 @@ function segmentAt(clientX,clientY){
 }
 // Puxar uma curva ajusta só o vértice escolhido, não o segmento inteiro.
 function bendAt(clientX,clientY){
- const cursor=worldXY(clientX,clientY),radius=Math.min(110,Math.max(17,17/zoom));
+ const cursor=worldXY(clientX,clientY),radius=Math.min(110,Math.max(10,11/zoom));
  let best={index:-1,vertex:-1,dist:radius*radius};
  state.wires.forEach((wire,i)=>{
   const points=wirePoints(wire);
@@ -1212,15 +1212,18 @@ function renderWireHandles(){
   const point=active?reconnectPending.point:(w.loose?.end===end?w.loose.point:getPortPos(w[end]));
   if(!point){button.hidden=true;continue;}
   button.hidden=false;
-  // Alça de jumper maior no toque, mantendo a geometria dos pinos intacta.
-  const size=Math.min(520,Math.max(35,42/zoom));
+  // Área de toque compacta (26px de tela), com aro visual menor (12px).
+  // O tamanho anterior de 42px cobria bornes adjacentes no celular.
+  const size=26/zoom;
+  button.style.setProperty('--mobile-ring-size',(12/zoom)+'px');
+  button.style.setProperty('--mobile-ring-border',(2/zoom)+'px');
   // Depois de soltar a bolinha, ela deixa o pino de destino clicável.
   button.classList.toggle('awaiting-target',!!active&&(!gesture||gesture.type!=='wire-end'));
   button.style.left=point.x+'px';button.style.top=point.y+'px';
   button.style.width=size+'px';button.style.height=size+'px';
-  button.style.borderWidth=Math.max(1,2.5/zoom)+'px';
+  button.style.borderWidth='0px';
   button.classList.toggle('reconnecting',!!active);
-  button.style.setProperty('--handle-shadow-size',Math.max(1,3/zoom)+'px');
+  button.style.setProperty('--handle-shadow-size','0px');
  }
 }
 function beginReconnect(e,index,end){
@@ -1335,7 +1338,7 @@ function drawWires(){
    hit.setAttribute('class','wire-target');
    hit.setAttribute('stroke','transparent');
    hit.setAttribute('fill','none');
-   hit.style.setProperty('--hit-width',Math.min(100,Math.max(25, (eagerWireTouchTarget()?30:24)/zoom))+'px');
+   hit.style.setProperty('--hit-width',Math.min(100,Math.max(18, (eagerWireTouchTarget()?20:24)/zoom))+'px');
    hit.setAttribute('stroke-linecap','butt');
    hit.dataset.wireIndex=String(i);
    hit.dataset.wireSegment=String(seg);
@@ -1351,7 +1354,7 @@ function drawWires(){
    if(before&&after&&(
     (Math.abs(before.x-p.x)<2&&Math.abs(after.x-p.x)<2)||
     (Math.abs(before.y-p.y)<2&&Math.abs(after.y-p.y)<2)))continue;
-   const hitSize=Math.min(130,Math.max(32,29/zoom));
+   const hitSize=Math.min(130,Math.max(22,20/zoom));
    const hit=document.createElementNS(ns,'rect');
    hit.setAttribute('x',String(p.x-hitSize/2));hit.setAttribute('y',String(p.y-hitSize/2));
    hit.setAttribute('width',String(hitSize));hit.setAttribute('height',String(hitSize));
@@ -1622,7 +1625,8 @@ function selectWire(i){
  state.selectedWire=i;state.selected=null;state.inspector='wires';
  state.wireColor=state.wires[i].color; // O seletor exibe a cor do fio clicado.
  renderParts();renderColors();renderInspector();updateHistoryButtons();requestDraw();
- message('Fio selecionado. Arraste uma bolinha da ponta para trocar seu pino, ou arraste um trecho para ajustar a curva.',true);
+ // A instrução extensa como toast escondia a própria montagem no Android.
+ message('Fio selecionado. Toque e arraste o trecho ou a ponta para ajustar.',false);
 }
 function centerPart(kind){
  const v=Q('viewport').getBoundingClientRect();
@@ -1690,7 +1694,7 @@ function beginWireDrag(e,index,segment){
  // novos cotovelos. Nesses casos só selecionar o fio, sem modificar sua rota.
  if(!movableWireSegment(original,segment)){
   selectWire(index);
-  message('Arraste o trecho entre dois cotovelos para movê-lo sem criar pontos. Nas pontas, use as bolinhas azuis.',true);
+  message('Para ajustar a saída do fio, mova a bolinha da ponta.',false);
   return true;
  }
  if(e.cancelable!==false)e.preventDefault();
