@@ -6,6 +6,16 @@
   if(!onlyMobile.matches)return;
   const viewport=document.getElementById('viewport');
   if(!viewport)return;
+  // Todos os circuitos (antigos ou novos) usam a versão móvel atual.
+  // Links do breadcrumb são criados pelo editor-layout.js após o carregamento.
+  document.querySelectorAll('a[href*="projects.html"]').forEach(link=>{
+   try{
+    const url=new URL(link.href,location.href);
+    if(url.origin!==location.origin)return;
+    url.searchParams.set('release','20261030mobile-ui-v3');
+    link.href=url.pathname+url.search+url.hash;
+   }catch{/* Manter o link original se o navegador rejeitar a URL. */}
+  });
   // Preserve the same pointer-drag gestures as desktop even when a finger
   // crosses a pin, wire segment or board on Android. Never synthesize clicks
   // or build a separate wire-routing algorithm.
