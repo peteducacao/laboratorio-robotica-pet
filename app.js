@@ -108,7 +108,7 @@ function safeRestore(){
   if(!s||!Array.isArray(s.parts)||!Array.isArray(s.wires))return;
   const names=new Set();
   state.parts=s.parts.filter(p=>p&&byId[p.id]&&!names.has(p.id)&&names.add(p.id)&&Number.isFinite(p.x)&&Number.isFinite(p.y)).map(p=>({id:p.id,kind:byId[p.id].kind,x:p.x,y:p.y,view:byId[p.id].kind==='motor'&&p.view==='side'?'side':'front',rotation:normalizePartRotation(p.rotation),flipped:p.flipped===true}));
-  state.wires=s.wires.filter(w=>w&&allPorts.has(w.a)&&allPorts.has(w.b)&&w.a!==w.b&&exists(w.a.split('.')[0])&&exists(w.b.split('.')[0])).slice(0,80).map(w=>({a:w.a,b:w.b,color:COLORS.includes(w.color)?w.color:COLORS[0],via:Array.isArray(w.via)?w.via.filter(p=>p&&Number.isFinite(p.x)&&Number.isFinite(p.y)).slice(0,48).map(p=>({x:p.x,y:p.y})):[],manual:w.manual===true,loose:(['a','b'].includes(w.loose?.end)&&Number.isFinite(w.loose?.point?.x)&&Number.isFinite(w.loose?.point?.y))?{end:w.loose.end,point:{x:w.loose.point.x,y:w.loose.point.y}}:null}));
+  state.wires=s.wires.filter(w=>w&&allPorts.has(w.a)&&allPorts.has(w.b)&&(w.a!==w.b||!!w.loose)&&exists(w.a.split('.')[0])&&exists(w.b.split('.')[0])).slice(0,80).map(w=>({a:w.a,b:w.b,color:COLORS.includes(w.color)?w.color:COLORS[0],via:Array.isArray(w.via)?w.via.filter(p=>p&&Number.isFinite(p.x)&&Number.isFinite(p.y)).slice(0,48).map(p=>({x:p.x,y:p.y})):[],manual:w.manual===true,loose:(['a','b'].includes(w.loose?.end)&&Number.isFinite(w.loose?.point?.x)&&Number.isFinite(w.loose?.point?.y))?{end:w.loose.end,point:{x:w.loose.point.x,y:w.loose.point.y}}:null}));
   if(Number.isFinite(s.voltage))state.voltage=limit(s.voltage,3,6);
   if(s.switches)state.switches={s1:!!s.switches.s1,s2:!!s.switches.s2};
   if(COLORS.includes(s.wireColor))state.wireColor=s.wireColor;
@@ -2078,11 +2078,23 @@ function pointerUp(e){
    if(!state.startPort)connect(first);
    if(destination){connect(destination);
    }else{
-     // Arrastar a ponta e soltar NÃO equivale a um clique de curva.
-     // A conexão continua pendente, acompanhando o cursor, sem criar nós.
+     // Um jumper novo também deve parar ao soltar o mouse ou o dedo
+     // em um ponto vazio; só um NOVO arraste volta a mover sua bolinha.
      const box=Q('viewport').getBoundingClientRect();
-     if(e.clientX>=box.left&&e.clientX<=box.right&&e.clientY>=box.top&&e.clientY<=box.bottom){
-       if(state.startPort){wireTipActive=true;setPendingPreview(e);}
+     if(e.clientX>=box.left&&e.clientX<=box.right&&e.clientY>=box.top&&e.clientY<=box.bottom && state.startPort){
+       const position=worldXY(e.clientX,e.clientY);
+       const origin=state.startPort;
+       snapshot();
+       state.wires.push({
+        a:origin,b:origin,color:state.wireColor,
+        via:state.bends.map(p=>({...p})),manual:true,
+        loose:{end:'b',point:{x:Math.round(position.x),y:Math.round(position.y)}}
+       });
+       state.startPort=null;state.bends=[];wireTipActive=false;
+       previewPoint=null;previewSnapPort=null;pendingAlignment=null;
+       state.selectedWire=state.wires.length-1;state.selected=null;state.inspector='wires';
+       state.completed=false;refresh();
+       message('Ponta solta fixada na bancada. Arraste a bolinha para conectar a um pino.',true);
      }else{previewPoint=null;requestDraw();}
    }
   }
