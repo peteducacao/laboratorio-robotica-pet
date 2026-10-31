@@ -570,3 +570,61 @@
  box-shadow:none!important;
  pointer-events:none!important;
 }
+
+
+/* v9 — edição compacta, rotação e inversão perfeitamente centralizadas. */
+.preview-studio.editor-layout .toolbar-left{
+ gap:5px!important;
+}
+.preview-studio.editor-layout .toolbar-group.edit-group{
+ gap:1px!important;
+ padding:3px 4px!important;
+ justify-content:flex-start!important;
+ flex-wrap:nowrap!important;
+}
+.preview-studio.editor-layout .toolbar-group.edit-group .control-btn:not(#selectionToolBtn){
+ flex:0 0 36px!important;
+ width:36px!important;min-width:36px!important;max-width:36px!important;
+ height:36px!important;min-height:36px!important;max-height:36px!important;
+ display:inline-grid!important;place-items:center!important;
+ margin:0!important;padding:0!important;
+ line-height:1!important;
+}
+.preview-studio.editor-layout .toolbar-group.edit-group #selectionToolBtn{
+ flex:0 0 auto!important;
+ height:36px!important;min-height:36px!important;
+ padding:0 8px!important;gap:5px!important;
+ margin:0!important;
+}
+.preview-studio.editor-layout .toolbar-group.edit-group #rotateBtn,
+.preview-studio.editor-layout .toolbar-group.edit-group #flipBtn{
+ position:relative!important;
+ display:inline-grid!important;place-items:center!important;
+ text-align:center!important;vertical-align:middle!important;
+}
+.preview-studio.editor-layout .toolbar-group.edit-group #rotateBtn svg,
+.preview-studio.editor-layout .toolbar-group.edit-group #flipBtn svg{
+ display:block!important;position:static!important;
+ width:20px!important;height:20px!important;
+ min-width:20px!important;max-width:20px!important;
+ margin:0!important;padding:0!important;
+ transform:none!important;transform-origin:center center!important;
+ overflow:visible!important;flex:none!important;
+}
+.preview-studio.editor-layout .toolbar-group.edit-group #rotateBtn svg path,
+.preview-studio.editor-layout .toolbar-group.edit-group #flipBtn svg path{
+ vector-effect:non-scaling-stroke;
+}
+@media(max-width:600px){
+ .preview-studio.editor-layout .toolbar-left{gap:4px!important;}
+ .preview-studio.editor-layout .toolbar-group.edit-group{gap:1px!important;padding:2px!important;}
+ .preview-studio.editor-layout .toolbar-group.edit-group .control-btn:not(#selectionToolBtn){
+  flex-basis:31px!important;width:31px!important;min-width:31px!important;
+  max-width:31px!important;height:33px!important;min-height:33px!important;max-height:33px!important;
+ }
+ .preview-studio.editor-layout .toolbar-group.edit-group #selectionToolBtn{
+  height:33px!important;min-height:33px!important;padding:0 5px!important;gap:3px!important;
+ }
+ .preview-studio.editor-layout .toolbar-group.edit-group #rotateBtn svg,
+ .preview-studio.editor-layout .toolbar-group.edit-group #flipBtn svg{width:18px!important;height:18px!important;min-width:18px!important;max-width:18px!important;}
+}
