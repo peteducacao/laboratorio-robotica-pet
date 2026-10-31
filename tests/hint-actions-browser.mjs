@@ -45,11 +45,14 @@ try{
     el.dispatchEvent(new MouseEvent('click',{bubbles:true,cancelable:true}));
    }
   },[a,b]);
-  const selectWire=index=>page.evaluate(index=>{
-   const path=document.querySelector('#wireSvg [data-wire-index="'+index+'"]');
-   if(!path)throw Error('Fio ausente no SVG: '+index);
-   path.dispatchEvent(new MouseEvent('click',{bubbles:true,cancelable:true}));
-  },index);
+  const selectWire=async index=>{
+   await page.locator('#wireSvg [data-wire-index="'+index+'"]').first().waitFor({state:'attached',timeout:6000});
+   return page.evaluate(index=>{
+    const path=document.querySelector('#wireSvg [data-wire-index="'+index+'"]');
+    if(!path)throw Error('Fio ausente no SVG: '+index);
+    path.dispatchEvent(new MouseEvent('click',{bubbles:true,cancelable:true}));
+   },index);
+  };
   const button=id=>page.locator('#'+id).evaluate(el=>el.click());
   assert.equal(await visible(),false,'a bancada começa sem dica '+width);
 
