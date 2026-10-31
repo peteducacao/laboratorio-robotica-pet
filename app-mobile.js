@@ -654,6 +654,7 @@ function demoMotor(id){
  setTimeout(()=>el.classList.remove('demo-running'),3500);
 }
 function renderProgress(){
+ updateContextualHint();
  const total=countGood(),errors=mistakes().length,expected=expectedConnections();
  const required=requiredParts(),partsDone=state.parts.length,switched=assemblyMode()==='switched';
  const inAssembly=partsDone<required;
@@ -684,7 +685,7 @@ function renderProgress(){
  const missionTitle=Q('missionTitle'),missionText=Q('missionText');
  if(!partsDone){Q('stepNumber').textContent='01';missionTitle.textContent='Sua bancada está vazia';missionText.textContent='Monte a versão direta com 7 peças ou adicione duas gangorras para a versão com chaves (9 peças).';}
  else if(inAssembly){Q('stepNumber').textContent='01';missionTitle.textContent='Monte seu conjunto de peças';missionText.textContent='Modo '+(switched?'com gangorras':'sem gangorras')+': você colocou '+partsDone+' de '+required+' peças.';}
- else if(missing().length||errors){Q('stepNumber').textContent='02';missionTitle.textContent='Conecte os terminais';missionText.textContent=total+' das '+expected.length+' ligações corretas no modo '+(switched?'com gangorras':'direto')+'. Suporte (−) → GND da ponte H → GND do ESP32. As gangorras interrompem apenas os positivos.';}
+ else if(missing().length||errors){Q('stepNumber').textContent='02';missionTitle.textContent='Conecte os terminais';missionText.textContent=total+' das '+expected.length+' ligações corretas. Monte por etapas: alimentação do LM2596, Ponte H e motores, depois confira o ESP32.';}
  else if(Math.abs(state.voltage-5)>.01||(switched&&(!state.switches.s1||!state.switches.s2))){Q('stepNumber').textContent='03';missionTitle.textContent='Ligações concluídas! Ative a alimentação';missionText.textContent='Ajuste a saída do LM2596 para 5,0 V'+(switched?' e ligue as duas gangorras.':'.');}
  else {Q('stepNumber').textContent='04';missionTitle.textContent='Circuito completo!';missionText.textContent='Parabéns! Montagem '+(switched?'com':'sem')+' gangorras validada. Inicie a simulação e abra a pista.';}
 }
@@ -2385,26 +2386,38 @@ function pointerUp(e){
  }
 
 }
+function contextualWrongAdvice(){
+ return window.TinkerpetStepHints?.getAdvice(
+  state.wires,acceptedConnectionSet(),assemblyMode()==='switched',portName,state.selectedWire
+ )||null;
+}
+function updateContextualHint(){
+ const hintButton=Q('hintBtn'),advice=contextualWrongAdvice();
+ if(!hintButton)return;
+ hintButton.hidden=!advice;
+ hintButton.disabled=!advice;
+ hintButton.title=advice?'Ver ajuda para a conexão incorreta':'Dicas disponíveis somente quando houver ligação incorreta';
+ hintButton.setAttribute('aria-label',advice?'Ver dica para corrigir ligação incorreta':'Nenhuma ligação incorreta');
+ document.body.classList.toggle('tinkerpet-has-wiring-error',!!advice);
+ const dialog=Q('wireHintDialog');
+ if(dialog?.open&&!advice)dialog.close();
+}
 function hint(){
- const needed=requiredParts();
- if(state.parts.length<needed){
-  const next=TYPES.find(t=>t.ids.some(id=>!exists(id))&&(assemblyMode()==='switched'||t.kind!=='switch'));
-  if(next)message('Pegue no catálogo: '+next.name+'. Faltam '+(needed-state.parts.length)+' peça(s).',true);
-  return;
- }
- const wrong=mistakes()[0];if(wrong){message(mistakeExplanation(wrong),true);return;}
- const miss=missing()[0];if(miss){message('Experimente ligar: '+portName(miss[0])+' → '+portName(miss[1])+'.',true);return;}
- if(Math.abs(state.voltage-5)>.01){message('Ajuste a saída do LM2596 para 5,0 V.',true);return;}
- if(assemblyMode()==='switched'&&(!state.switches.s1||!state.switches.s2)){
-  message('Ligue as duas gangorras (cada uma controla só sua própria fonte).',true);return;
- }
- message('Circuito '+(assemblyMode()==='switched'?'com':'sem')+' gangorras completo! Pode iniciar a simulação.',true);
+ const advice=contextualWrongAdvice();
+ if(!advice)return;
+ const dialog=Q('wireHintDialog');
+ if(dialog){
+  Q('wireHintHeading').textContent=advice.header;
+  Q('wireHintText').textContent=advice.detail;
+  if(!dialog.open)dialog.showModal();
+  Q('wireHintClose').focus();
+ }else message(advice.text,true);
 }
 function check(){
  const needed=requiredParts();
  if(state.parts.length!==needed){message('O modo '+(assemblyMode()==='switched'?'com':'sem')+' gangorras exige '+needed+' peças. Ainda faltam '+(needed-state.parts.length)+'.',true);return false;}
  if(mistakes().length){message(mistakeExplanation(mistakes()[0]),true);state.inspector='wires';renderInspector();return false;}
- const m=missing();if(m.length){message('Faltam '+m.length+' ligações. Dica: '+portName(m[0][0])+' → '+portName(m[0][1])+'.',true);return false;}
+ const m=missing();if(m.length){message('Faltam '+m.length+' ligações para concluir. Monte uma parte de cada vez, seguindo o gabarito.',true);return false;}
  if(Math.abs(state.voltage-5)>.01){message('Ajuste a saída do LM2596 para 5,0 V.',true);return false;}
  if(assemblyMode()==='switched'&&(!state.switches.s1||!state.switches.s2)){message('Ligue as duas gangorras.',true);return false;}
  return true;
@@ -2837,19 +2850,20 @@ function bind(){
   if(e.target===Q('exportPreviewDialog'))Q('exportPreviewDialog').close();
  });
  Q('hintBtn').addEventListener('click',hint);
+ Q('wireHintClose')?.addEventListener('click',()=>Q('wireHintDialog').close());
+ Q('wireHintDialog')?.addEventListener('click',e=>{if(e.target===Q('wireHintDialog'))Q('wireHintDialog').close()});
  Q('saveBtn').addEventListener('click',()=>{persist();message('Seu projeto foi salvo neste navegador.',true);});
  // Progresso interativo: explica o fio errado, não só o total.
  const progressDetails=Q('editorToolbarProgress');
  if(progressDetails){
   const explain=()=>{
-   const bad=mistakes(),needed=missing();
-   if(bad.length){
-    const w=bad[0];
-    message(w.loose?'Jumper com ponta solta: arraste a bolinha até um pino.':('Fio incorreto: '+portName(w.a)+' → '+portName(w.b)+'. Remova esse jumper e confira a alimentação. '+(needed.length?'Faltam '+needed.length+' ligações.':'')),true);
-   }else if(needed.length){
-    const [from,to]=needed[0];
-    message('Faltam '+needed.length+' ligações. Próxima: '+portName(from)+' → '+portName(to)+'.',true);
-   }else message('Todas as ligações estão corretas!',true);
+   const advice=contextualWrongAdvice();
+   if(advice){hint();return;}
+   const loose=state.wires.filter(w=>w.loose).length;
+   if(loose){message('Há '+loose+' fio(s) com ponta solta. Termine a ligação antes de verificar se está correta.',true);return;}
+   const needed=missing().length;
+   if(needed)message('Faltam '+needed+' ligações. Continue por etapas; a dica aparece apenas se alguma conexão estiver incorreta.',true);
+   else message('Todas as ligações estão corretas!',true);
   };
   progressDetails.addEventListener('click',explain);
   progressDetails.addEventListener('keydown',e=>{
