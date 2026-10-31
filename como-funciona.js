@@ -85,7 +85,11 @@
    if(panel.hidden||selected!==card.dataset.part)return;
    const header=document.querySelector('.how-top');
    const stickyHeight=header?.getBoundingClientRect().height||0;
-   const top=Math.max(0,window.scrollY+panel.getBoundingClientRect().top-stickyHeight-14);
+   // No computador, mantenha a imagem do cartão visível acima do painel.
+   // No celular, preserve exatamente a rolagem que já funcionava.
+   const desktop=matchMedia('(min-width:811px)').matches;
+   const revealCard=desktop?card.getBoundingClientRect().height+18:0;
+   const top=Math.max(0,window.scrollY+panel.getBoundingClientRect().top-stickyHeight-14-revealCard);
    window.scrollTo({
     top,
     behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'instant':'smooth'
