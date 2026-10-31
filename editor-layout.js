@@ -57,10 +57,6 @@ settings.innerHTML=
  '<label for="editorCircuitDescription">Descrição (opcional)</label>'+
  '<textarea id="editorCircuitDescription" maxlength="500" placeholder="Descreva seu circuito..."></textarea>'+
  '<p class="editor-field-status" id="editorFieldStatus" aria-live="polite"></p>'+
- '<div class="settings-progress"><div class="settings-progress-heading">'+
- '<span>Conexões</span><span id="settingsCount">0/0</span></div>'+
- '<div class="settings-progress-track"><div id="settingsProgressBar"></div></div>'+
- '<div id="settingsValidation">Monte e conecte os componentes.</div></div>'+
  '<div class="settings-actions">'+
  '<button type="button" id="settingsPartDetails">Propriedades do componente selecionado</button>'+
  '<button type="button" class="remove-project" id="settingsRemoveProject">Excluir circuito</button>'+
@@ -109,13 +105,26 @@ for(const el of [nameField,descriptionField]){
  el.addEventListener('input',()=>{clearTimeout(debounce);debounce=setTimeout(saveMetadata,550)});
  el.addEventListener('change',()=>{clearTimeout(debounce);saveMetadata()});
 }
+// Barra superior acompanha o mesmo progresso real gerado pelo app.js.
 function syncProgress(){
- const original=$('connectionsCount'),badge=$('validationBadge'),bar=$('progressBar');
- $('settingsCount').textContent=original?.textContent?.trim()||'0/0';
- $('settingsValidation').textContent=badge?.textContent?.trim()||'Aguardando montagem';
- const w=bar?.style?.width||'0%';$('settingsProgressBar').style.width=w;
+ const count=$('connectionsCount'),badge=$('validationBadge'),bar=$('progressBar'),caption=$('progressCaption');
+ const shell=$('editorToolbarProgress'),visibleBar=$('toolbarProgressBar'),track=$('toolbarProgressTrack');
+ if(!shell||!visibleBar||!track)return;
+ const captionText=caption?.textContent?.trim()||'Conexões';
+ const countText=count?.textContent?.trim()||'0 / 0';
+ const statusText=badge?.textContent?.trim()||'Aguardando montagem';
+ const value=Number.parseFloat(bar?.style?.width||'0');
+ const progress=Number.isFinite(value)?Math.min(100,Math.max(0,value)):0;
+ $('toolbarProgressLabel').textContent=captionText;
+ $('toolbarProgressCount').textContent=countText;
+ $('toolbarProgressStatus').textContent=statusText;
+ visibleBar.style.width=progress+'%';
+ track.setAttribute('aria-valuenow',String(Math.round(progress)));
+ track.setAttribute('aria-valuetext',captionText+': '+countText+'. '+statusText);
+ shell.dataset.status=badge?.classList.contains('ok')?'ok':badge?.classList.contains('error')?'error':'waiting';
+ shell.title=statusText;
 }
-for(const id of ['connectionsCount','validationBadge','progressBar']){
+for(const id of ['connectionsCount','validationBadge','progressBar','progressCaption']){
  const node=$(id);if(node&&typeof MutationObserver!=='undefined'){
   new MutationObserver(syncProgress).observe(node,{characterData:true,childList:true,subtree:true,attributes:true,attributeFilter:['style']});
  }
