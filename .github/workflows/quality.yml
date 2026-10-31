@@ -39,6 +39,8 @@ jobs:
         run: |
           npm install --no-save --ignore-scripts playwright@1.56.1
           npx playwright install --with-deps chromium
+      - name: Conferir vermelho vivo e aviso Salvo no F5
+        run: node tests/red-wire-browser.mjs
       - name: Conferir Como funciona em celular tablet e computador
         run: node tests/how-it-works-browser.mjs
       - name: Conferir Salvo somente após alterações reais e sem reaparecer no F5
