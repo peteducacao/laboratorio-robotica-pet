@@ -7,24 +7,12 @@ const IS_VISUAL_PREVIEW=/(?:^|\/)studio-preview\.html$/.test(window.location.pat
 const IS_PROJECT_EDITOR=/(?:^|\/)editor\.html$/.test(window.location.pathname);
 const STORAGE_KEY=IS_VISUAL_PREVIEW?'tinkerpet-studio-preview-v1':'tinkerpet-v2';
 const LIBRARY_KEY='tinkerpet-library-v1';
-const EDITOR_PROJECT_ID=(()=>{
- if(!IS_PROJECT_EDITOR)return null;
- const params=new URLSearchParams(window.location.search);
- const specified=params.get('project');
- if(specified)return specified; // Uma aba nunca segue as mudanças de outra.
- // Compatibilidade com favoritos antigos sem parâmetro: fixa a identidade
- // na URL uma única vez, antes de carregar ou salvar qualquer componente.
- try{
-  const legacy=localStorage.getItem('tinkerpet-active-v1');
-  const lib=JSON.parse(localStorage.getItem(LIBRARY_KEY)||'null');
-  if(legacy&&Array.isArray(lib?.projects)&&lib.projects.some(p=>p.id===legacy)){
-   params.set('project',legacy);
-   history.replaceState(history.state,'',location.pathname+'?'+params.toString()+location.hash);
-   return legacy;
-  }
- }catch(error){console.warn('Não foi possível identificar o circuito antigo',error)}
- return null;
-})();
+// Um editor sem ID não deve adivinhar o circuito pelo ACTIVE global,
+// pois esse valor é alterado por outras abas. Peça a escolha segura na lista.
+const EDITOR_PROJECT_ID=IS_PROJECT_EDITOR?new URLSearchParams(window.location.search).get('project'):null;
+if(IS_PROJECT_EDITOR&&!EDITOR_PROJECT_ID){
+ window.location.replace('projects.html?release=20261030tabs1');
+}
 function activeCircuitFromLibrary(){
  if(!EDITOR_PROJECT_ID)return null;
  const lib=JSON.parse(localStorage.getItem(LIBRARY_KEY)||'null');
