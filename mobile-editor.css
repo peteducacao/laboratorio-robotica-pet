@@ -266,3 +266,46 @@
   font-size:10px!important;
  }
 }
+
+/* V4 — alças discretas e ajustes finos dos jumpers no Android.
+   O alvo de toque é transparente; só o pequeno aro central fica visível. */
+@media (max-width:700px){
+ .preview-studio.editor-layout #wireHandles .wire-end-handle,
+ .preview-studio.editor-layout #wireHandles .wire-end-handle:not(:disabled),
+ .preview-studio.editor-layout #wireHandles .wire-end-handle.reconnecting{
+   box-sizing:border-box!important;
+   border:0!important;background:transparent!important;
+   box-shadow:none!important;outline:0!important;
+   padding:0!important;overflow:visible!important;
+   opacity:1!important;
+   touch-action:none!important;
+ }
+ .preview-studio.editor-layout #wireHandles .wire-end-handle::after{
+   content:""!important;
+   position:absolute!important;left:50%!important;top:50%!important;
+   width:var(--mobile-ring-size,12px)!important;
+   height:var(--mobile-ring-size,12px)!important;
+   box-sizing:border-box!important;
+   border:var(--mobile-ring-border,2px) solid #0788a9!important;
+   border-radius:50%!important;
+   background:#f3fdff!important;
+   box-shadow:0 0 0 1px #fff!important;
+   transform:translate(-50%,-50%)!important;
+   pointer-events:none!important;
+ }
+ .preview-studio.editor-layout #wireHandles .wire-end-handle.reconnecting::after{
+   border-color:#ce741e!important;background:#ffefcf!important;
+ }
+ .preview-studio.editor-layout #wireHandles .wire-end-handle.awaiting-target{
+   pointer-events:none!important;
+ }
+ .preview-studio.editor-layout #wireSvg .wire-bend-mark{
+   stroke-width:1.5!important;
+ }
+ .preview-studio.editor-layout #toast{
+   font-size:11px!important;line-height:1.35!important;
+   max-width:min(78vw,255px)!important;
+   padding:8px 11px!important;
+   border-radius:10px!important;
+ }
+}
