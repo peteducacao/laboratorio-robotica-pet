@@ -54,6 +54,9 @@ try{
    assert.equal(await page.locator('#componentHow').evaluate(x=>x.open),false,'funcionamento começa recolhido '+name);
    assert.equal(await page.locator('#componentWhatText').textContent().then(x=>x.length>50),true,'definição '+name);
    assert.equal(await page.locator('#componentHowText').textContent().then(x=>x.length>50),true,'funcionamento '+name);
+   assert.equal(await page.locator('.component-in-our-car h3').textContent(),'No nosso carrinho','destaque prático '+name);
+   assert.equal(await page.locator('#componentInCarText').isVisible(),true,'exemplo do carrinho sempre visível '+name);
+   assert.equal(await page.locator('#componentInCarText').textContent().then(x=>x.length>35),true,'exemplo prático sem gabarito '+name);
    await page.locator('#componentWhat summary').click();
    assert.equal(await page.locator('#componentWhat').evaluate(x=>x.open),true,'abre O que é? '+name);
    await page.locator('#componentHow summary').click();
