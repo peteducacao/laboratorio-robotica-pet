@@ -253,7 +253,7 @@
   if(sessionStorage.getItem('tinkerpet-gabarito-access')==='ok'){
    location.href='gabarito.html';return;
   }
-  $('gatePassword').value='';$('gateError').textContent='';$('gateDialog').showModal();$('gatePassword').focus();
+  $('gatePassword').value='';$('gatePassword').type='password';$('toggleGatePassword').setAttribute('aria-pressed','false');$('toggleGatePassword').setAttribute('aria-label','Mostrar senha');$('toggleGatePassword').style.background='#fff';$('gateError').textContent='';$('gateDialog').showModal();$('gatePassword').focus();
  }
  function attach(){
   $('projectsGrid').addEventListener('click',e=>{
@@ -279,6 +279,16 @@
   $('confirmYes').addEventListener('click',()=>{dialogHandler?.();$('confirmDialog').close()});
   $('confirmNo').addEventListener('click',()=>$('confirmDialog').close());
   $('openGate').addEventListener('click',openGate);
+  $('toggleGatePassword').addEventListener('click',()=>{
+   const field=$('gatePassword'),button=$('toggleGatePassword');
+   const show=field.type==='password';
+   field.type=show?'text':'password';
+   button.setAttribute('aria-pressed',String(show));
+   button.setAttribute('aria-label',show?'Ocultar senha':'Mostrar senha');
+   button.title=show?'Ocultar senha':'Mostrar senha';
+   button.style.background=show?'#e2f5f0':'#fff';
+   field.focus();
+  });
   $('gateClose').addEventListener('click',()=>$('gateDialog').close());
   $('gateForm').addEventListener('submit',e=>{
    e.preventDefault();if($('gatePassword').value!=='peteduca'){
