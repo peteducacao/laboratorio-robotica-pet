@@ -196,27 +196,7 @@
 .card-art .more{z-index:3}
 
 
-/* Área Admin: somente a nova entrada e seu painel; demais estilos preservados. */
-.nav #openAdmin svg{stroke:currentColor}
-.admin-modal{max-width:min(530px,calc(100vw - 28px))}
-.admin-body{padding:25px}
-.admin-heading{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:21px}
-.admin-heading-title{display:flex;align-items:center;gap:11px;min-width:0}
-.admin-heading .admin-shield{display:grid;place-items:center;font-size:24px;width:43px;height:43px;border-radius:13px;background:#e5f6f1}
-.admin-heading h2{font-size:20px;line-height:1.2;margin:0}
-.admin-close{border:1px solid #d6e4e1;background:white;border-radius:10px;color:#345366;width:40px;height:40px;font-size:26px;line-height:1;flex:none}
-.admin-caption{font-size:14px;color:#657f90;margin:0 0 21px}
-.admin-enter{margin-top:13px;width:100%;height:46px;background:#008f83;color:white;border:0;border-radius:11px;font-weight:800}
-.admin-count{border-radius:13px;background:#eaf7f4;padding:17px 20px;display:flex;justify-content:space-between;gap:10px;align-items:center;color:#126f68;margin-bottom:19px}
-.admin-count span{font-size:14px;font-weight:650}
-.admin-count strong{font-size:32px;font-weight:800;line-height:1}
-.admin-search-label{margin-bottom:7px}
-.admin-nicks{margin:15px 0 0;padding:0;list-style:none;max-height:min(350px,45dvh);overflow-y:auto;border:1px solid #e6eeec;border-radius:11px}
-.admin-nicks li{display:grid;grid-template-columns:44px minmax(0,1fr);gap:9px;align-items:center;min-height:44px;padding:8px 14px;border-bottom:1px solid #edf1f1;color:#18344d;overflow-wrap:anywhere}
-.admin-nicks li:last-child{border-bottom:0}
-.admin-nicks .admin-index{font-size:12px;color:#8092a1;text-align:center}
-.admin-empty{text-align:center;font-size:14px;color:#73879a;padding:18px}
+/* Exclusão de Nick no diálogo de edição (mantida). */
 .modal .modal-actions .nick-delete{margin-right:auto;display:flex;align-items:center;gap:5px;color:#cc4050;border-color:#f2d6da;background:#fff7f7}
 .modal .modal-actions .nick-delete svg{width:16px;height:16px;flex:none}
-@media(max-width:810px){.nav{flex-wrap:wrap}.nav #openAdmin{flex:1 0 100%;justify-content:center;text-align:center}}
-@media(max-width:400px){.admin-body{padding:18px}.admin-heading h2{font-size:18px}.modal .modal-actions .nick-delete{padding:10px;font-size:12px}.modal .modal-actions .nick-delete svg{width:15px}}
+@media(max-width:400px){.modal .modal-actions .nick-delete{padding:10px;font-size:12px}.modal .modal-actions .nick-delete svg{width:15px}}
