@@ -21,7 +21,7 @@
  };
  const clone=obj=>JSON.parse(JSON.stringify(obj));
  const id=()=>typeof crypto!=='undefined'&&crypto.randomUUID?crypto.randomUUID():'tp-'+Date.now()+'-'+Math.random().toString(36).slice(2);
- const blank=()=>({parts:[],wires:[],voltage:4,switches:{s1:false,s2:false},wireColor:'#ed654d'});
+ const blank=()=>({parts:[],wires:[],voltage:4,switches:{s1:false,s2:false},wireColor:'#df1724'});
  const valid=c=>c&&Array.isArray(c.parts)&&Array.isArray(c.wires)&&c.parts.length<=80&&c.wires.length<=600;
  const parse=s=>{try{return JSON.parse(s)}catch{return null}};
  const usable=c=>valid(c)&&c.parts.some(p=>p&&typeKinds[p.id]===p.kind);
@@ -195,7 +195,7 @@
     const start=wire.loose?.end==='a'?map(wire.loose.point.x,wire.loose.point.y):getPort(wire.a),end=wire.loose?.end==='b'?map(wire.loose.point.x,wire.loose.point.y):getPort(wire.b);if(!start||!end)continue;
     ctx.beginPath();ctx.moveTo(start.x,start.y);
     for(const b of wire.via||[]){const point=map(b.x,b.y);ctx.lineTo(point.x,point.y)}
-    ctx.lineTo(end.x,end.y);ctx.strokeStyle=wire.color||'#ed654d';ctx.stroke();
+    ctx.lineTo(end.x,end.y);ctx.strokeStyle=String(wire.color).toLowerCase()==='#ed654d'?'#df1724':wire.color||'#df1724';ctx.stroke();
    }
   };
   let loaded=0;const sprites=parts.map(p=>{
