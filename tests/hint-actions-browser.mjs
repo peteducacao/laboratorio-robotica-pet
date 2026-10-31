@@ -100,6 +100,8 @@ try{
 
   // O D18 é válido; adicioná-lo não deve liberar a dica.
   await tap(['esp.D18','drv.IN4']);
+  await page.waitForFunction(()=>document.querySelectorAll('#wireSvg .wire-error').length===0,
+   {timeout:6000}).catch(()=>{});
   assert.equal(await page.locator('#wireSvg .wire-error').count(),0,'D18→IN4 é correto '+width);
   assert.equal(await visible(),false,'conexão correta não aumenta tentativas '+width);
 
