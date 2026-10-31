@@ -1158,7 +1158,11 @@ function reconnectRoute(pending,position){
   if(!last)return append(target);
   if(last.x!==target.x&&last.y!==target.y){
    const previous=path.at(-2);
+   const oldTip=pending.end==='b'?all.at(-1):all[0];
+   const oldApproach=pending.end==='b'?all.at(-2):all[1];
+   const wasVertical=oldTip&&oldApproach&&Math.abs(oldTip.x-oldApproach.x)<2;
    const horizontal=previous?Math.abs(previous.y-last.y)<2:
+    wasVertical?true:oldTip&&oldApproach&&Math.abs(oldTip.y-oldApproach.y)<2?false:
     Math.abs(target.x-last.x)>=Math.abs(target.y-last.y);
    // Continua na direção da última curva, sem alongar o antigo terminal.
    append(horizontal?{x:target.x,y:last.y}:{x:last.x,y:target.y});
