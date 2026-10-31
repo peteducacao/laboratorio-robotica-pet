@@ -69,7 +69,7 @@
   syncEditor();
   if(!lib.projects.some(p=>p.id===project.id)){toast('Circuito não encontrado. Atualize a lista.');return;}
   // Identidade fixa nesta URL. F5 e abrir outra aba não mudam o projeto.
-  location.href='editor.html?project='+encodeURIComponent(project.id)+'&release=20261031voltage-settle-v2';
+  location.href='editor.html?project='+encodeURIComponent(project.id)+'&release=20261031switches-dynamic-v3';
  }
  function newCircuit(){
   syncEditor();const now=Date.now();
