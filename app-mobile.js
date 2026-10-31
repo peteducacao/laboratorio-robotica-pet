@@ -262,13 +262,46 @@ function selectedMotorConnections(){
  }
  return best;
 }
+// No celular, o aluno pode usar QUALQUER GPIO de saída disponível para
+// IN1..IN4. O programa real precisa configurar os mesmos GPIOs escolhidos.
+// GPIO34/35/36/39 são apenas de entrada; alimentação/GND/EN não são sinais.
+// GPIOs de boot 2/5/12/15 funcionam como saída, mas requerem atenção extra
+// à inicialização real do ESP32. RX0/TX0 ficam reservados ao USB/serial.
+const MOBILE_OUTPUT_GPIO=new Set([
+ 'D13','D12','D14','D27','D26','D25','D33','D32',
+ 'D15','D2','D4','D5','D18','D19','D21','D22','D23','RX2','TX2'
+].map(id=>'esp.'+id));
+const MOBILE_INPUTS=['IN1','IN2','IN3','IN4'];
+const MOBILE_DEFAULT_GPIO=['esp.D27','esp.D26','esp.D32','esp.D18'];
+function mobileControlPort(w,input){
+ if(w.loose)return null;
+ const target='drv.'+input;
+ if(w.a===target&&MOBILE_OUTPUT_GPIO.has(w.b))return w.b;
+ if(w.b===target&&MOBILE_OUTPUT_GPIO.has(w.a))return w.a;
+ return null;
+}
+function selectedControlConnections(){
+ const used=new Set();
+ return MOBILE_INPUTS.map((input,i)=>{
+  const matching=state.wires.map(w=>mobileControlPort(w,input)).filter(Boolean);
+  // Prefere manter o gabarito original quando há duas ligações no mesmo IN,
+  // mas não permite contar dois GPIOs distintos para uma única entrada.
+  const picked=[MOBILE_DEFAULT_GPIO[i],...matching]
+   .filter((p,j,list)=>matching.includes(p)&&list.indexOf(p)===j)
+   .find(p=>!used.has(p));
+  const output=picked||MOBILE_DEFAULT_GPIO[i];
+  if(picked)used.add(picked);
+  return [output,'drv.'+input];
+ });
+}
 function expectedConnections(){
  // Ao inserir gangorras, só o arranjo solicitado é validado. A versão
  // sem gangorras permanece disponível para exercícios com sete peças.
  const baseline=assemblyMode()==='switched'?SWITCHED_CONNECTIONS:DIRECT_CONNECTIONS;
  // Os dois canais de saída são equivalentes: o motor esquerdo/direito
  // pode ocupar A ou B e os polos do motor podem ser invertidos.
- return baseline.filter(([a])=>!a.startsWith('drv.OUT')).concat(selectedMotorConnections());
+ return baseline.filter(([a,b])=>!a.startsWith('drv.OUT')&&!MOBILE_INPUTS.some(pin=>b==='drv.'+pin))
+  .concat(selectedControlConnections(),selectedMotorConnections());
 }
 function acceptedConnectionSet(){
  // Nada de aceitar outras posições de chave ou fios de LED que não
@@ -285,7 +318,9 @@ function mistakeExplanation(w){
  if(w.loose)return 'O jumper tem uma ponta solta. Arraste a bolinha até o pino correto ou remova o fio.';
  if([w.a,w.b].some(p=>p==='s1.LEDG'||p==='s2.LEDG'))
   return 'O terceiro terminal LED− da gangorra é apenas da luz indicadora e não alimenta o ESP32. Use os contatos 1 e 2 para ligar ou desligar a alimentação.';
- return 'Revise o fio '+portName(w.a)+' → '+portName(w.b)+'. A gangorra aceita contatos 1 e 2 invertidos, mas o circuito deve fechar o caminho do positivo.';
+ if(MOBILE_INPUTS.some(input=>w.a==='drv.'+input||w.b==='drv.'+input))
+  return 'IN1 a IN4 aceitam GPIOs de saída distintos do ESP32. Não use VIN, GND, EN, GPIO34/35, VP ou VN; evite compartilhar o mesmo GPIO entre entradas.';
+ return 'Revise o fio '+portName(w.a)+' → '+portName(w.b)+'. Confira os pinos e as conexões de alimentação.';
 }
 function ready(){
  const switched=assemblyMode()==='switched';
@@ -314,9 +349,9 @@ function powerStatus(){
   const edges=assigned.filter(([,port])=>port.startsWith(id+'.'));
   if(edges.length!==2||!edges.every(([a,b])=>has(a,b)))return false;
   const channel=edges[0][0].startsWith('drv.OUT1')||edges[0][0].startsWith('drv.OUT2')?'A':'B';
-  const control=channel==='A'
-   ?has('esp.D27','drv.IN1')&&has('esp.D26','drv.IN2')
-   :has('esp.D32','drv.IN3')&&has('esp.D18','drv.IN4');
+  const controls=selectedControlConnections();
+  const control=(channel==='A'?controls.slice(0,2):controls.slice(2))
+   .every(([a,b])=>has(a,b));
   return driver&&common&&exists(id)&&control;
  };
  return {buck,esp,driver,common,motors:{ml:motorOn('ml'),mr:motorOn('mr')}};
