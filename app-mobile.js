@@ -954,7 +954,9 @@ function connect(id){
  if(index>=0){state.wires.splice(index,1);message('Ligação existente removida.');}
  else{
   state.wires.push({a:first,b:id,color:state.wireColor,via,manual:true});
-  message(acceptedConnectionSet().has(electricalKey(first,id))?'✓ Fio sólido conectado com '+via.length+' curva(s).':'Fio criado, mas os terminais precisam ser revisados.',!acceptedConnectionSet().has(electricalKey(first,id)));
+  const correctWire=acceptedConnectionSet().has(electricalKey(first,id));
+  hintDelay?.record(!correctWire);
+  message(correctWire?'✓ Fio sólido conectado com '+via.length+' curva(s).':'Fio criado, mas os terminais precisam ser revisados.',!correctWire);
  }
  state.completed=false;refresh();
 }
@@ -1384,6 +1386,7 @@ function finishReconnect(newPort){
  state.selectedWire=pending.index;state.selected=null;state.inspector='wires';
  state.wireColor=wire.color;state.completed=false;
  reconnectPending=null;pendingAlignment=null;wireAlignment=null;
+ hintDelay?.record(!acceptedConnectionSet().has(electricalKey(wire.a,wire.b)));
  refresh();
  message('✓ Ponta reconectada em '+portName(newPort)+'. O outro terminal e a cor foram preservados.',true);
  return true;
@@ -2386,10 +2389,14 @@ function pointerUp(e){
  }
 
 }
+const hintDelay=window.TinkerpetStepHints?.createDelay();
 function contextualWrongAdvice(){
- return window.TinkerpetStepHints?.getAdvice(
-  state.wires,acceptedConnectionSet(),assemblyMode()==='switched',portName,state.selectedWire
+ const advice=window.TinkerpetStepHints?.getAdvice(
+  state.wires,acceptedConnectionSet(),assemblyMode()==='switched',
+  portName,state.selectedWire,expectedConnections()
  )||null;
+ hintDelay?.clearIfResolved(Boolean(advice));
+ return hintDelay?.visible(Boolean(advice))?advice:null;
 }
 function updateContextualHint(){
  const hintButton=Q('hintBtn'),advice=contextualWrongAdvice();
@@ -2408,7 +2415,8 @@ function hint(){
  const dialog=Q('wireHintDialog');
  if(dialog){
   Q('wireHintHeading').textContent=advice.header;
-  Q('wireHintText').textContent=advice.detail;
+  Q('wireHintWhat').textContent=advice.what;
+  Q('wireHintCorrect').textContent=advice.correct;
   if(!dialog.open)dialog.showModal();
   Q('wireHintClose').focus();
  }else message(advice.text,true);
@@ -2417,7 +2425,7 @@ function check(){
  const needed=requiredParts();
  if(state.parts.length!==needed){message('O modo '+(assemblyMode()==='switched'?'com':'sem')+' gangorras exige '+needed+' peças. Ainda faltam '+(needed-state.parts.length)+'.',true);return false;}
  if(mistakes().length){
-  message('Existem ligações incorretas. Toque em Dicas para corrigir um fio por vez.',true);
+  message(contextualWrongAdvice()?'Há uma ligação incorreta. Use Dicas para conferir a correção.':'Há ligações incorretas. Confira os terminais e tente novamente.',true);
   state.inspector='wires';renderInspector();return false;
  }
  const m=missing();if(m.length){message('Faltam '+m.length+' ligações para concluir. Monte uma parte de cada vez, seguindo o gabarito.',true);return false;}
