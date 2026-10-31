@@ -1,0 +1,33 @@
+/* Dicas pedagógicas contextuais: só aparecem quando um fio ligado está errado.
+   O restante do layout do simulador não é alterado. */
+.preview-studio.editor-layout #hintBtn[hidden]{display:none!important}
+.wire-hint-dialog{
+ width:min(480px,calc(100vw - 26px));max-width:calc(100vw - 26px);
+ padding:0;border:1px solid #d9ebe7;border-radius:19px;
+ color:#1c394f;background:#fff;
+ box-shadow:0 25px 70px #102d3c50;
+ font-family:'DM Sans',Arial,sans-serif;
+}
+.wire-hint-dialog::backdrop{background:#133d5266;backdrop-filter:blur(4px)}
+.wire-hint-content{padding:25px 26px 22px}
+.wire-hint-symbol{display:grid;place-items:center;width:46px;height:46px;
+ border-radius:14px;background:#e7f6ef;font-size:23px;margin-bottom:14px}
+.wire-hint-eyebrow{margin:0 0 7px;font-size:11px;letter-spacing:.09em;
+ text-transform:uppercase;color:#078678;font-weight:800}
+.wire-hint-content h2{font-size:19px;line-height:1.42;margin:0 0 15px;color:#183b52}
+.wire-hint-content p.wire-hint-detail{font-size:14px;line-height:1.7;margin:0;color:#506b7a;overflow-wrap:anywhere}
+.wire-hint-content button{display:block;margin:22px 0 0 auto;min-width:114px;
+ padding:11px 17px;border:0;border-radius:11px;background:#008d80;
+ color:#fff;font:750 14px 'DM Sans',Arial,sans-serif;cursor:pointer}
+@media(max-width:700px){
+ /* Sem fio errado, o cabeçalho usa duas colunas: Ajustes e Baixar. */
+ .preview-studio.editor-layout:not(.tinkerpet-has-wiring-error) .studio-topbar .toolbar{
+  grid-template-columns:repeat(2,minmax(0,1fr))!important;
+ }
+ .preview-studio.editor-layout:not(.tinkerpet-has-wiring-error) .studio-topbar #downloadBtn{
+  grid-column:2!important;grid-row:1!important;
+ }
+ .wire-hint-content{padding:22px 19px 19px}
+ .wire-hint-content h2{font-size:17px}
+ .wire-hint-content p.wire-hint-detail{font-size:13px;line-height:1.65}
+}
