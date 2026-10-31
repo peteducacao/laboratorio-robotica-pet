@@ -643,16 +643,18 @@
 }
 
 
-/* v11 — celebração de montagem: modal leve, bancada desfocada e 10 segundos. */
+/* v13 — celebração em toda a área desfocada, mantendo o cartão compacto. */
 .preview-studio.editor-layout .completion-dialog{
  box-sizing:border-box!important;
- width:min(398px,calc(100vw - 36px))!important;
- max-width:398px!important;max-height:calc(100dvh - 34px)!important;
- margin:auto!important;padding:0!important;
- border:1px solid #e2ebe8!important;border-radius:19px!important;
- background:#fff!important;color:#1b3843!important;
- box-shadow:0 20px 80px #102d3852!important;
- overflow:hidden!important;
+ position:fixed!important;inset:0!important;
+ width:100vw!important;height:100dvh!important;
+ max-width:none!important;max-height:none!important;
+ margin:0!important;padding:0!important;
+ border:0!important;border-radius:0!important;
+ background:transparent!important;color:#1b3843!important;
+ box-shadow:none!important;overflow:hidden!important;
+ display:grid!important;place-items:center!important;
+ isolation:isolate!important;
 }
 .preview-studio.editor-layout .completion-dialog:not([open]){display:none!important}
 .preview-studio.editor-layout .completion-dialog::backdrop{
@@ -661,8 +663,13 @@
  backdrop-filter:blur(7px)!important;
 }
 .preview-studio.editor-layout .completion-contents{
- position:relative;z-index:2;
+ box-sizing:border-box!important;position:relative;z-index:2;
+ width:min(398px,calc(100vw - 36px))!important;
+ max-height:calc(100dvh - 32px)!important;
+ overflow-y:auto;overscroll-behavior:contain;
  padding:26px 29px 22px;
+ border:1px solid #e2ebe8;border-radius:19px;
+ background:#fff;box-shadow:0 20px 80px #102d3852;
  display:flex;flex-direction:column;align-items:center;
  text-align:center;
 }
@@ -735,20 +742,23 @@
  outline:3px solid #1eae98;outline-offset:3px;
 }
 .preview-studio.editor-layout .completion-confetti{
- position:absolute;z-index:1;inset:0;pointer-events:none;overflow:hidden;
+ position:absolute!important;z-index:1!important;inset:0!important;
+ width:100%!important;height:100%!important;
+ pointer-events:none!important;overflow:hidden!important;
 }
 .preview-studio.editor-layout .completion-confetti-piece{
- position:absolute;left:var(--x);top:-15%;
- width:6px;height:10px;border-radius:2px;
- background:var(--c);
- opacity:0;
- animation:completion-confetti-fall 2.6s var(--d) ease-out forwards;
+ position:absolute;left:var(--x);top:-18px;
+ width:var(--w,6px);height:var(--h,10px);
+ border-radius:var(--round,2px);
+ background:var(--c);opacity:0;
+ pointer-events:none;will-change:transform;
+ animation:completion-confetti-fall var(--duration,6s) var(--delay,0s) linear infinite;
 }
 @keyframes completion-confetti-fall{
  0%{opacity:0;transform:translate3d(0,-10px,0) rotate(0deg)}
- 12%{opacity:.85}
- 90%{opacity:.55}
- 100%{opacity:0;transform:translate3d(var(--side),390px,0) rotate(var(--turn))}
+ 9%{opacity:.88}
+ 88%{opacity:.8}
+ 100%{opacity:0;transform:translate3d(var(--side),calc(100dvh + 60px),0) rotate(var(--turn))}
 }
 @keyframes completion-timer-drain{
  from{stroke-dashoffset:0}to{stroke-dashoffset:88}
