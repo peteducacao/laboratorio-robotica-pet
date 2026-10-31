@@ -59,7 +59,7 @@
  let mobileLastSize='';
  function renderMobileScene(width,height,scale,left,top){
   if(!art.complete||!art.naturalWidth)return false;
-  const dpr=Math.min(window.devicePixelRatio||1,1.35);
+  const dpr=Math.min(window.devicePixelRatio||1,2);
   const targetW=Math.round(width*dpr),targetH=Math.round(height*dpr);
   const key=targetW+':'+targetH+':'+scale.toFixed(5)+':'+top.toFixed(1);
   if(mobileLastSize===key&&backdrop.width===targetW&&backdrop.height===targetH)return true;
@@ -131,8 +131,13 @@
   // Mobile tem um enquadramento independente. O desktop abaixo não muda.
   if(mobile&&!shortLandscape){
    // Ajuste para tablets deitados sem cortar o botão.
-   const mobileScale=Math.min(scale,(height-38)/770);
-   const top=Math.max(10,Math.min(height*.19,146,height-733*mobileScale));
+   // A imagem é menor no celular; o centro do bloco fica no meio útil
+   // da tela. Nenhuma ampliação/distorsão das letras ou do botão.
+   const mobileScale=Math.min(scale*.84,(height-38)/770);
+   const top=Math.max(0,Math.min(
+    height*.50-550*mobileScale,
+    height-754*mobileScale-18
+   ));
    const left=(width-W*mobileScale)/2;
    Object.assign(art.style,{
     left:left+'px',top:top+'px',width:W*mobileScale+'px',height:H*mobileScale+'px'
