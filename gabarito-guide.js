@@ -118,7 +118,7 @@ function selectMode(m){
  $('chooser').hidden=true;section='lm';index=0;full=false;lastGuideSection='lm';lastGuideIndex=0;render();
 }
 // Fechar o seletor volta à lista de circuitos, sem deixar a tela de gabarito vazia.
-function exitChooser(){location.href='projects.html?release=20261031gabarito-icon-v1';}
+function exitChooser(){location.href='projects.html?release=20261031-gpio18-mobile-fix-v2';}
 $('cancelChooser').addEventListener('click',exitChooser);
 document.addEventListener('keydown',e=>{
  if(e.key==='Escape'&&!$('chooser').hidden){e.preventDefault();exitChooser();}
@@ -133,7 +133,7 @@ $('prev').onclick=()=>{
  render();
 };
 $('next').onclick=()=>{
- if(full){location.href='projects.html?release=20261031gabarito-icon-v1';return;}
+ if(full){location.href='projects.html?release=20261031-gpio18-mobile-fix-v2';return;}
  if(index<sequence().length-1){index++;render();return;}
  if(section==='lm'){selectSection('drv');return;}
  if(section==='drv')showFull();
