@@ -613,6 +613,7 @@ function renderProgress(){
 // completo. A primeira renderização após F5 estabelece o estado inicial e
 // nunca abre a mensagem. Toda edição posterior pode rearmar a celebração.
 let completionKnown=false,completionWasValid=false;
+const COMPLETION_DURATION_MS=10000;
 let completionCloseTimer=0,completionCountTimer=0,completionLastFocus=null;
 function dismissCompletionCelebration(){
  const dialog=Q('completionDialog');
@@ -649,17 +650,17 @@ function showCompletionCelebration(){
  const ring=Q('completionTimerRing');
  if(ring){ring.style.animation='none';void ring.getBoundingClientRect();ring.style.animation='';}
  const count=Q('completionSeconds');
- if(count)count.textContent='3';
+ if(count)count.textContent=String(COMPLETION_DURATION_MS/1000);
  completionLastFocus=document.activeElement;
  try{dialog.showModal()}catch{return;}
  Q('completionClose')?.focus({preventScroll:true});
- const end=performance.now()+3000;
+ const end=performance.now()+COMPLETION_DURATION_MS;
  clearTimeout(completionCloseTimer);clearInterval(completionCountTimer);
  completionCountTimer=setInterval(()=>{
   if(!dialog.open){clearInterval(completionCountTimer);return;}
   if(count)count.textContent=String(Math.max(0,Math.ceil((end-performance.now())/1000)));
  },100);
- completionCloseTimer=setTimeout(dismissCompletionCelebration,3000);
+ completionCloseTimer=setTimeout(dismissCompletionCelebration,COMPLETION_DURATION_MS);
 }
 function syncCompletionCelebration(){
  // A exigência de 5 V e todas as ligações certas faz parte de ready().
