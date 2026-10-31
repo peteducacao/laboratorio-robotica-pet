@@ -1614,7 +1614,8 @@ function beginGroupMove(e,id){
  }).filter(Boolean);
  state.selected=id;state.selectedWire=null;state.inspector='parts';selectedBend=null;
  partDragAlignment=null;
- gesture={type:'group-move',pointer:e.pointerId,startX:e.clientX,startY:e.clientY,parts,wires,main:id,moved:false,saved:false};
+ gesture={type:'group-move',pointer:e.pointerId,startX:e.clientX,startY:e.clientY,parts,wires,main:id,
+  panStartX:panX,panStartY:panY,lastClientX:e.clientX,lastClientY:e.clientY,moved:false,saved:false};
  renderParts();renderInspector();
  return true;
 }
@@ -1642,6 +1643,7 @@ function partDown(e){
  state.selected=p.id;state.selectedWire=null;selectedBend=null;state.inspector='parts';
  partDragAlignment=null;renderInspector();renderParts();
  gesture={type:'move',pointer:e.pointerId,partId:p.id,startX:e.clientX,startY:e.clientY,partX:p.x,partY:p.y,
+  panStartX:panX,panStartY:panY,lastClientX:e.clientX,lastClientY:e.clientY,
   anchors:state.wires.map((w,i)=>({
    i,a:w.a.split('.')[0]===p.id,b:w.b.split('.')[0]===p.id,
    via:(w.via||[]).map(point=>({...point})),start:getPortPos(w.a),end:getPortPos(w.b)
@@ -1695,6 +1697,68 @@ function viewportDown(e){
  gesture={type:state.startPort?'bend':'pan',pointer:e.pointerId,startX:e.clientX,startY:e.clientY,x:panX,y:panY,moved:false};
 }
 let suppressPortClickUntil=0;
+// Pan automático junto às bordas ao mover peças com mouse ou toque.
+// O componente segue sob o ponteiro mesmo se a câmera avançar sem pointermove.
+let dragEdgePanFrame=0,dragEdgePanLastTime=0;
+function stopDragEdgePan(){
+ if(dragEdgePanFrame)cancelAnimationFrame(dragEdgePanFrame);
+ dragEdgePanFrame=0;dragEdgePanLastTime=0;
+}
+function applyDraggedPosition(g,clientX,clientY){
+ if(!g.moved)return;
+ // Sem compensar pan, o componente escaparia do cursor na borda.
+ const dx=(clientX-g.startX-(panX-g.panStartX))/zoom;
+ const dy=(clientY-g.startY-(panY-g.panStartY))/zoom;
+ if(g.type==='group-move'){
+  translateGroup(g,dx,dy);
+  partDragAlignment=componentDragGuides(g.main,selectedParts);
+  for(const item of g.parts){
+   const p=byPart(item.id);
+   const el=Q('partsLayer').querySelector('[data-part="'+item.id+'"]');
+   if(p&&el){el.style.left=p.x+'px';el.style.top=p.y+'px';}
+  }
+ }else if(g.type==='move'){
+  const p=byPart(g.partId);if(!p)return;
+  p.x=Math.round(g.partX+dx);p.y=Math.round(g.partY+dy);
+  anchoredWireBends(p,p.x-g.partX,p.y-g.partY,g.anchors);
+  partDragAlignment=componentDragGuides(p.id);
+  const el=Q('partsLayer').querySelector('[data-part="'+p.id+'"]');
+  if(el){el.style.left=p.x+'px';el.style.top=p.y+'px';}
+  highlightDropZone(removeZoneAt(clientX,clientY));
+ }
+ requestDraw();
+}
+function dragEdgeSpeed(pos,low,high,zone){
+ if(pos<low-65||pos>high+65)return 0;
+ const nearStart=pos<low+zone?(low+zone-pos)/zone:0;
+ const nearEnd=pos>high-zone?(pos-(high-zone))/zone:0;
+ const amount=nearEnd-nearStart;
+ return Math.sign(amount)*Math.min(1.65,Math.abs(amount))*15;
+}
+function dragEdgePanTick(now){
+ dragEdgePanFrame=0;
+ const g=gesture;
+ if(!g||!g.moved||(g.type!=='move'&&g.type!=='group-move')||pinch||activeTouches.size>=2){
+  dragEdgePanLastTime=0;return;
+ }
+ const r=Q('viewport').getBoundingClientRect();
+ const zoneX=Math.min(85,Math.max(36,r.width*.14));
+ const zoneY=Math.min(85,Math.max(36,r.height*.14));
+ const vx=dragEdgeSpeed(g.lastClientX,r.left,r.right,zoneX);
+ const vy=dragEdgeSpeed(g.lastClientY,r.top,r.bottom,zoneY);
+ const dt=dragEdgePanLastTime?Math.min(36,Math.max(0,now-dragEdgePanLastTime)):16;
+ dragEdgePanLastTime=now;
+ if(vx||vy){
+  // Na borda superior, a câmera desloca o conteúdo para baixo e revela o alto.
+  panX-=vx*dt/16;panY-=vy*dt/16;
+  camera();
+  applyDraggedPosition(g,g.lastClientX,g.lastClientY);
+ }
+ dragEdgePanFrame=requestAnimationFrame(dragEdgePanTick);
+}
+function startDragEdgePan(){
+ if(!dragEdgePanFrame)dragEdgePanFrame=requestAnimationFrame(dragEdgePanTick);
+}
 function pointerMove(e){
  if(trackingTouchMove(e)||pinch)return;
  if(gesture&&e.pointerId===gesture.pointer){
@@ -1717,30 +1781,12 @@ function pointerMove(e){
     ghost.style.left=e.clientX+'px';ghost.style.top=e.clientY+'px';
     Q('viewport').classList.toggle('component-drop-ready',validDrop);
    }
-  }else if(g.type==='group-move'){
-   if(g.moved&&!g.saved){snapshot();g.saved=true;}
+  }else if(g.type==='group-move'||g.type==='move'){
+   g.lastClientX=e.clientX;g.lastClientY=e.clientY;
    if(g.moved){
-    translateGroup(g,dx/zoom,dy/zoom);
-    partDragAlignment=componentDragGuides(g.main,selectedParts);
-    for(const item of g.parts){
-     const part=byPart(item.id);
-     const node=[...Q('partsLayer').querySelectorAll('.part')].find(el=>el.dataset.part===item.id);
-     if(part&&node){node.style.left=part.x+'px';node.style.top=part.y+'px';}
-    }
-    requestDraw();
-   }
-  }else if(g.type==='move'){
-   const p=byPart(g.partId);if(!p)return;
-   if(g.moved&&!g.saved){snapshot();g.saved=true;}
-   if(g.moved){
-    p.x=Math.round(g.partX+dx/zoom);
-    p.y=Math.round(g.partY+dy/zoom);
-    anchoredWireBends(p,p.x-g.partX,p.y-g.partY,g.anchors);
-    partDragAlignment=componentDragGuides(p.id);
-    const el=[...Q('partsLayer').querySelectorAll('.part')].find(node=>node.dataset.part===p.id);
-    if(el){el.style.left=p.x+'px';el.style.top=p.y+'px';}
-    highlightDropZone(removeZoneAt(e.clientX,e.clientY));
-    requestDraw();
+    if(!g.saved){snapshot();g.saved=true;}
+    applyDraggedPosition(g,e.clientX,e.clientY);
+    startDragEdgePan();
    }
   }else if(g.type==='wire-end'||g.type==='reconnect-bend'){
    moveReconnect(e.clientX,e.clientY);
@@ -1796,6 +1842,7 @@ function handleDoubleTap(e,g){
  return true;
 }
 function pointerUp(e){
+ if(gesture?.pointer===e.pointerId)stopDragEdgePan();
  if(e.type==='pointercancel'&&gesture?.pointer===e.pointerId){
   if(gesture.type==='wire-end')cancelReconnect();
   gesture=null;Q('dragGhost').hidden=true;Q('viewport').classList.remove('component-drop-ready');
@@ -2383,7 +2430,7 @@ function bind(){
   if(e.key===' '){spaceHeld=false;Q('viewport').classList.remove('pan-space');}
   if(binds[e.key])keys[binds[e.key]]=false;
  });
- window.addEventListener('blur',()=>{spaceHeld=false;Q('viewport').classList.remove('pan-space');Object.keys(keys).forEach(k=>keys[k]=false);});
+ window.addEventListener('blur',()=>{stopDragEdgePan();spaceHeld=false;Q('viewport').classList.remove('pan-space');Object.keys(keys).forEach(k=>keys[k]=false);});
  document.querySelectorAll('[data-drive]').forEach(btn=>{
   const dir=btn.dataset.drive;
   btn.addEventListener('pointerdown',e=>{
