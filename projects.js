@@ -69,7 +69,7 @@
   syncEditor();
   if(!lib.projects.some(p=>p.id===project.id)){toast('Circuito não encontrado. Atualize a lista.');return;}
   // Identidade fixa nesta URL. F5 e abrir outra aba não mudam o projeto.
-  location.href='editor.html?project='+encodeURIComponent(project.id)+'&release='+(window.matchMedia('(max-width:700px)').matches?'20261030finger-wire-v1':'20261030wirepark1');
+  location.href='editor.html?project='+encodeURIComponent(project.id)+'&release='+(window.matchMedia('(max-width:700px)').matches?'20261030fine-wire-v2':'20261030wirepark1');
  }
  function newCircuit(){
   syncEditor();const now=Date.now();
