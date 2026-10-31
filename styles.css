@@ -1395,3 +1395,24 @@
  border-color:#8dc0d1!important;
  background:#edf9fc!important;
 }
+
+
+/* TinkerPET: espelhar componente sem espelhar nomes dos terminais.
+   O corpo é invertido pelo app.js; estes controles seguem legíveis. */
+body.preview-studio #partsLayer .part[data-flipped="true"] .pin-btn{
+ transform:translate(-50%,-50%) scaleX(-1)!important;
+}
+body.preview-studio #partsLayer .part[data-kind="buck"][data-flipped="true"] .part-voltage{
+ transform:scaleX(-1)!important;
+}
+body.preview-studio #partsLayer .part[data-kind="switch"][data-flipped="true"] .part-switch{
+ direction:ltr;
+}
+body.preview-studio .flip-component-btn[aria-pressed="true"]:not(:disabled){
+ background:#e1f5f0!important;
+ color:#00776c!important;
+ border-color:#8ecfc2!important;
+}
+body.preview-studio .flip-component-btn svg{
+ width:20px;height:20px;display:block;pointer-events:none;
+}
