@@ -1212,7 +1212,8 @@ function renderWireHandles(){
   const point=active?reconnectPending.point:(w.loose?.end===end?w.loose.point:getPortPos(w[end]));
   if(!point){button.hidden=true;continue;}
   button.hidden=false;
-  const size=Math.min(160,Math.max(15,24/zoom));
+  // Alça de jumper maior no toque, mantendo a geometria dos pinos intacta.
+  const size=Math.min(520,Math.max(35,42/zoom));
   // Depois de soltar a bolinha, ela deixa o pino de destino clicável.
   button.classList.toggle('awaiting-target',!!active&&(!gesture||gesture.type!=='wire-end'));
   button.style.left=point.x+'px';button.style.top=point.y+'px';
@@ -2085,7 +2086,7 @@ function pointerMove(e){
  if(trackingTouchMove(e)||pinch)return;
  if(gesture&&e.pointerId===gesture.pointer){
   const g=gesture,dx=e.clientX-g.startX,dy=e.clientY-g.startY;
-  if(Math.hypot(dx,dy)>(g.type==='wire'?12:g.type==='pan'?9:6))g.moved=true;
+  if(Math.hypot(dx,dy)>(g.type==='wire'&&e.pointerType==='touch'?7:g.type==='wire'?12:g.type==='wire-end'&&e.pointerType==='touch'?5:g.type==='pan'?9:6))g.moved=true;
   if(g.type==='catalog'){
    if(g.moved){
     const ghost=Q('dragGhost');
