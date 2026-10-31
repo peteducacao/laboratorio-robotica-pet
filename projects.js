@@ -251,7 +251,7 @@
  }
  function openGate(){
   if(sessionStorage.getItem('tinkerpet-gabarito-access')==='ok'){
-   location.href='gabarito.html';return;
+   location.href='gabarito.html?release=20261031-gpio18-mobile-fix-v2';return;
   }
   $('gatePassword').value='';$('gatePassword').type='password';$('toggleGatePassword').setAttribute('aria-pressed','false');$('toggleGatePassword').setAttribute('aria-label','Mostrar senha');$('toggleGatePassword').style.background='#fff';$('gateError').textContent='';$('gateDialog').showModal();$('gatePassword').focus();
  }
@@ -296,7 +296,7 @@
    }
    sessionStorage.setItem('tinkerpet-gabarito-access','ok');
    $('gateLabel').textContent='Gabaritos';
-   location.href='gabarito.html';
+   location.href='gabarito.html?release=20261031-gpio18-mobile-fix-v2';
   });
   if(!localStorage.getItem(NICK))setTimeout(()=>{if(!$('editDialog').open)editNickname()},350);
   window.addEventListener('pageshow',e=>{if(e.persisted){syncEditor();render()}});
