@@ -200,3 +200,68 @@
 .modal .modal-actions .nick-delete{margin-right:auto;display:flex;align-items:center;gap:5px;color:#cc4050;border-color:#f2d6da;background:#fff7f7}
 .modal .modal-actions .nick-delete svg{width:16px;height:16px;flex:none}
 @media(max-width:400px){.modal .modal-actions .nick-delete{padding:10px;font-size:12px}.modal .modal-actions .nick-delete svg{width:15px}}
+
+/* Créditos — duas autorias claras, sem misturar o carrinho com o site. */
+.nav #openCredits:hover{background:#edf7f4;color:#007b70}
+.credits-dialog{
+ width:min(590px,calc(100vw - 28px));max-width:calc(100vw - 28px);
+ max-height:min(820px,calc(100dvh - 32px));overflow-y:auto;
+ border-radius:22px;border:1px solid #dce9e5;
+}
+.credits-content{position:relative;padding:27px;display:grid;gap:16px}
+.credits-close{
+ position:absolute;right:15px;top:15px;display:grid;place-items:center;
+ width:36px;height:36px;border:1px solid #dde9e6;border-radius:50%;
+ font-size:23px;line-height:1;color:#496477;background:#fff;
+}
+.credits-close:hover{background:#f1f7f6}
+.credits-heading{display:flex;align-items:center;gap:14px;padding:4px 45px 7px 0}
+.credits-icon{
+ flex:0 0 55px;height:55px;display:grid;place-items:center;
+ border-radius:17px;background:linear-gradient(140deg,#dcf8ee,#dceff7);color:#087c71;
+}
+.credits-icon svg{width:29px;height:29px}
+.credits-eyebrow,.credits-kicker{display:block;font-size:10px;font-weight:800;line-height:1.5;letter-spacing:.07em;color:#167d73}
+.credits-heading h2{font:800 26px/1.15 'Manrope',sans-serif;letter-spacing:-.7px;margin:5px 0 0}
+.credits-person{padding:19px 20px 18px;border-radius:16px;border:1px solid #e1ebec;background:#fff}
+.credits-person-original{background:linear-gradient(135deg,#f2faf8 0%,#fff 72%);border-color:#d3eae5}
+.credits-person-developer{background:linear-gradient(135deg,#f5f8ff 0%,#fff 72%);border-color:#dce6f2}
+.credits-person strong{display:block;font:800 clamp(19px,4vw,23px)/1.35 'Manrope',sans-serif;letter-spacing:-.6px;color:#153c50;margin:7px 0 9px}
+.credits-person p{margin:0 0 17px;font-size:13px;line-height:1.65;color:#526a7a}
+.credits-person em{font-style:normal;font-weight:650}
+.credits-link{
+ display:inline-flex;align-items:center;justify-content:center;gap:9px;
+ max-width:100%;min-height:42px;padding:10px 15px;border-radius:11px;
+ background:#057e75;color:#fff;font-size:13px;font-weight:800;
+ text-align:center;line-height:1.35;
+}
+.credits-link:hover{filter:brightness(.92)}
+.credits-link svg{width:16px;height:16px;flex:none}
+.credits-instagram{background:#255478}
+.credits-footer{display:flex;align-items:center;justify-content:space-between;gap:14px;padding-top:3px}
+.credits-footer span{font-size:11px;color:#8596a0}
+.credits-footer button{
+ background:#fff;border:1px solid #cddedb;color:#2c5360;
+ border-radius:11px;padding:10px 16px;font-weight:750;font-size:13px;
+}
+@media(max-width:810px){
+ /* Com quatro itens, menu em duas colunas para não cortar nomes no celular. */
+ .sidebar .nav{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px}
+ .sidebar .nav a,.sidebar .nav button{
+  min-width:0;width:100%;justify-content:flex-start;
+  padding:11px 12px;font-size:13px;gap:9px;
+ }
+}
+@media(max-width:540px){
+ .sidebar .nav a,.sidebar .nav button{font-size:12px;padding:10px 9px;gap:7px}
+ .sidebar .nav svg{width:18px;height:18px}
+ .credits-content{padding:22px 16px 18px;gap:13px}
+ .credits-heading{gap:11px}
+ .credits-heading h2{font-size:23px}
+ .credits-icon{flex-basis:46px;height:46px;border-radius:13px}
+ .credits-icon svg{width:25px;height:25px}
+ .credits-person{padding:16px}
+ .credits-person p{font-size:12.5px;margin-bottom:14px}
+ .credits-link{width:100%;font-size:12px;padding:10px}
+ .credits-footer{align-items:center}
+}
