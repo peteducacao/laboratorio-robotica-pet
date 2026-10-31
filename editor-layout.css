@@ -510,3 +510,40 @@
 @media(prefers-reduced-motion:reduce){
  .preview-studio.editor-layout #toolbarProgressBar{transition:none!important;}
 }
+
+
+/* v6 — conteúdo da barra de conexões precisamente centralizado. */
+.preview-studio.editor-layout .editor-toolbar-progress{
+ align-self:center!important;align-items:stretch!important;
+ justify-content:center!important;text-align:center!important;
+}
+.preview-studio.editor-layout .editor-toolbar-progress-head{
+ display:flex!important;align-items:center!important;justify-content:center!important;
+ gap:8px!important;width:100%!important;text-align:center!important;
+ line-height:1.15!important;
+}
+.preview-studio.editor-layout .editor-toolbar-progress-head span,
+.preview-studio.editor-layout .editor-toolbar-progress-head strong{
+ flex:0 0 auto!important;text-align:center!important;
+}
+.preview-studio.editor-layout .editor-toolbar-progress-track{
+ box-sizing:border-box!important;margin:0 auto!important;width:100%!important;
+ flex:0 0 6px!important;
+}
+.preview-studio.editor-layout .editor-toolbar-progress-status{
+ display:block!important;margin:0 auto!important;text-align:center!important;
+}
+@media(max-width:600px){
+ .preview-studio.editor-layout .editor-toolbar-progress{
+  flex:1 1 100%!important;width:100%!important;max-width:100%!important;
+  min-width:0!important;order:10!important;
+  margin-inline:auto!important;
+ }
+ .preview-studio.editor-layout .toolbar-right{
+  width:100%!important;max-width:100%!important;
+  justify-content:flex-end!important;align-content:center!important;
+ }
+ .preview-studio.editor-layout .editor-toolbar-progress-head{
+  flex-wrap:nowrap!important;gap:7px!important;
+ }
+}
