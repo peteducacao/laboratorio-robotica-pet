@@ -173,3 +173,24 @@
   font-size:13px;
  }
 }
+
+
+/* v8 — a própria miniatura abre o circuito existente no editor.
+   Funciona com toque e clique, sem capturar o botão de opções. */
+.card-art .card-photo{
+ display:block;width:100%;height:100%;
+ padding:0;margin:0;border:0;border-radius:inherit;
+ background:transparent;cursor:pointer;
+ touch-action:manipulation;
+ -webkit-tap-highlight-color:rgba(0,140,126,.12);
+}
+.card-art .card-photo:hover{filter:brightness(.985)}
+.card-art .card-photo:focus-visible{
+ outline:3px solid #009c8d;outline-offset:-3px;
+}
+.card-art .card-photo canvas{
+ display:block;width:100%;height:100%;
+ pointer-events:none;
+}
+.card-art .status{pointer-events:none}
+.card-art .more{z-index:3}
