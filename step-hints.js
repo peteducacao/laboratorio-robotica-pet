@@ -84,13 +84,18 @@
  function chooseRepair(w,index,switched,allPorts,canApply){
   if(!w||typeof canApply!=='function'||!Array.isArray(allPorts))return null;
   const guide=sequence(Boolean(switched));
+  const originalKind=kind(w);
   const canon=(a,b)=>[stepKey(a),stepKey(b)].sort().join('|');
   const guideOrder=new Map(guide.map((p,i)=>[canon(p.a,p.b),i]));
   const options=[];
   for(const end of ['b','a']){
    const fixed=w[end==='a'?'b':'a'],old=w[end];
    for(const next of allPorts){
-    if(next===old||next===fixed||!canApply(index,end,next))continue;
+    if(next===old||next===fixed)continue;
+    // Não transformar um erro de motor numa nova ligação de GPIO, por exemplo.
+    // Quando a finalidade do fio for incerta, preferir o gabarito.
+    if(originalKind!=='switchLed'&&kind({a:fixed,b:next})!==originalKind)continue;
+    if(!canApply(index,end,next))continue;
     const pair=canon(fixed,next);
     const rank=guideOrder.get(pair);
     const score=(part(next)===part(old)?50:0)
