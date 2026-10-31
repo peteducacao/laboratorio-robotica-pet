@@ -134,3 +134,42 @@
  .top .nick{max-width:60px;gap:5px}
  .top .nick-name{display:none}
 }
+
+/* v6 — seletor compacto: texto e seta próximos no desktop e no celular.
+   A coluna do grid acompanha exatamente a largura do controle. */
+.top #sortCircuits.filter{
+ flex:0 0 150px;
+ width:150px;min-width:150px;max-width:150px;
+ padding:0 33px 0 12px;
+ background-size:15px 15px;
+ background-position:right 10px center;
+ font-size:16px;
+}
+@media(max-width:810px){
+ .top{grid-template-columns:minmax(0,1fr) 145px}
+ .top #sortCircuits.filter{
+  flex:none;width:145px;min-width:145px;max-width:145px;
+  padding:0 29px 0 11px;
+  background-size:14px 14px;
+  background-position:right 8px center;
+  font-size:15px;
+ }
+}
+@media(max-width:540px){
+ .top{grid-template-columns:minmax(0,1fr) 136px}
+ .top #sortCircuits.filter{
+  flex:none;width:136px;min-width:136px;max-width:136px;
+  padding:0 26px 0 10px;
+  background-size:13px 13px;
+  background-position:right 7px center;
+  font-size:14px;
+ }
+}
+@media(max-width:350px){
+ .top{grid-template-columns:minmax(0,1fr) 129px}
+ .top #sortCircuits.filter{
+  flex:none;width:129px;min-width:129px;max-width:129px;
+  padding:0 25px 0 9px;
+  font-size:13px;
+ }
+}
