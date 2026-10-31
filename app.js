@@ -91,7 +91,7 @@ function safeRestore(){
   const s=JSON.parse(localStorage.getItem(STORAGE_KEY)||'null');
   if(!s||!Array.isArray(s.parts)||!Array.isArray(s.wires))return;
   const names=new Set();
-  state.parts=s.parts.filter(p=>p&&byId[p.id]&&!names.has(p.id)&&names.add(p.id)&&Number.isFinite(p.x)&&Number.isFinite(p.y)).map(p=>({id:p.id,kind:byId[p.id].kind,x:p.x,y:p.y,view:byId[p.id].kind==='motor'&&p.view==='side'?'side':'front',rotation:normalizePartRotation(p.rotation)}));
+  state.parts=s.parts.filter(p=>p&&byId[p.id]&&!names.has(p.id)&&names.add(p.id)&&Number.isFinite(p.x)&&Number.isFinite(p.y)).map(p=>({id:p.id,kind:byId[p.id].kind,x:p.x,y:p.y,view:byId[p.id].kind==='motor'&&p.view==='side'?'side':'front',rotation:normalizePartRotation(p.rotation),flipped:p.flipped===true}));
   state.wires=s.wires.filter(w=>w&&allPorts.has(w.a)&&allPorts.has(w.b)&&w.a!==w.b&&exists(w.a.split('.')[0])&&exists(w.b.split('.')[0])).slice(0,80).map(w=>({a:w.a,b:w.b,color:COLORS.includes(w.color)?w.color:COLORS[0],via:Array.isArray(w.via)?w.via.filter(p=>p&&Number.isFinite(p.x)&&Number.isFinite(p.y)).slice(0,48).map(p=>({x:p.x,y:p.y})):[],manual:w.manual===true}));
   if(Number.isFinite(s.voltage))state.voltage=limit(s.voltage,3,6);
   if(s.switches)state.switches={s1:!!s.switches.s1,s2:!!s.switches.s2};
@@ -130,8 +130,14 @@ function historyState(){return JSON.stringify({
 });}
 function updateHistoryButtons(){
  const undoBtn=Q('undoBtn'),redoBtn=Q('redoBtn'),delBtn=Q('deleteBtn');
- const rotateBtn=Q('rotateBtn'),p=byPart(state.selected);
+ const rotateBtn=Q('rotateBtn'),flipBtn=Q('flipBtn'),p=byPart(state.selected);
  if(rotateBtn){rotateBtn.disabled=!p||selectedParts.size>1;rotateBtn.title=selectedParts.size>1?'Girar: selecione uma peça por vez':p?'Girar '+partName(p.id)+' 90° (R)':'Selecione um componente para girar 90°';rotateBtn.setAttribute('aria-label',rotateBtn.title);}
+ if(flipBtn){
+  flipBtn.disabled=!p||selectedParts.size>1;
+  flipBtn.title=selectedParts.size>1?'Inverter: selecione uma peça por vez':p?'Inverter esquerda/direita de '+partName(p.id)+' (I)':'Selecione um componente para inverter esquerda e direita';
+  flipBtn.setAttribute('aria-label',flipBtn.title);
+  flipBtn.setAttribute('aria-pressed',String(!!p?.flipped));
+ }
  updateMultiSelectionTool();
  if(undoBtn)undoBtn.disabled=history.length===0;
  if(redoBtn)redoBtn.disabled=future.length===0;
@@ -356,9 +362,9 @@ function renderParts(){
    badge.title=partName(p.id)+' selecionado';badge.setAttribute('aria-hidden','true');card.append(badge);
   }
   card.style.setProperty('--part-w',layout.w+'px');card.style.setProperty('--part-h',layout.h+'px');
-  card.style.transform='rotate('+normalizePartRotation(p.rotation)+'deg)';
+  card.style.transform='rotate('+normalizePartRotation(p.rotation)+'deg) scaleX('+(p.flipped?'-1':'1')+')';
   card.style.transformOrigin='50% 50%';
-  card.dataset.rotation=String(normalizePartRotation(p.rotation));
+  card.dataset.rotation=String(normalizePartRotation(p.rotation));card.dataset.flipped=String(!!p.flipped);
   card.style.zIndex=selectedParts.has(p.id)?'6':state.selected===p.id?'5':'3';
   const head=document.createElement('div');head.className='part-head';
   card.setAttribute('aria-label',partName(p.id));
@@ -495,6 +501,9 @@ function inspectorPart(p){
  const rotate=document.createElement('button');rotate.type='button';rotate.className='inspect-action';
  rotate.dataset.rotatePart=p.id;rotate.textContent='↻ Girar 90° · '+normalizePartRotation(p.rotation)+'°';
  rotate.setAttribute('aria-label','Girar '+partName(p.id)+' 90 graus');actions.append(rotate);
+ const flip=document.createElement('button');flip.type='button';flip.className='inspect-action';
+ flip.dataset.flipPart=p.id;flip.textContent='↔ Inverter esquerda/direita'+(p.flipped?' · invertido':'');
+ flip.setAttribute('aria-label','Inverter esquerda e direita de '+partName(p.id));actions.append(flip);
  if(p.kind==='motor'){
   const change=document.createElement('button');change.type='button';change.className='inspect-action';change.dataset.motorView=p.id;change.textContent=p.view==='side'?'↻ Ver vista frontal':'↻ Ver vista lateral';actions.append(change);
   const demo=document.createElement('button');demo.type='button';demo.className='inspect-action';demo.dataset.demoMotor=p.id;
@@ -567,7 +576,7 @@ function addPart(kind,x,y){
  const id=t.ids.find(id=>!exists(id));if(!id){message('Você já colocou todas as peças deste tipo.',true);return false;}
  snapshot();
  selectedParts.clear();selectedParts.add(id);
- state.parts.push({id,kind,x:Math.round(x),y:Math.round(y),view:'front',rotation:0});
+ state.parts.push({id,kind,x:Math.round(x),y:Math.round(y),view:'front',rotation:0,flipped:false});
  state.selected=id;state.selectedWire=null;selectedBend=null;state.inspector='parts';state.completed=false;state.startPort=null;refresh();
  message(partName(id)+' adicionado. Arraste pela imagem; toque nos contatos para ligar os fios.',true);
  return true;
@@ -605,6 +614,41 @@ function rotateSelectedPart(){
  const p=byPart(state.selected);
  if(!p){message('Selecione um componente para girar.',true);return false;}
  return rotatePart(p.id);
+}
+// Espelha a peça visualmente na horizontal local, sem trocar os nomes dos pinos
+// nem apagar conexões já criadas. Reverte com outro clique ou Ctrl+Z.
+function flipPart(id){
+ const p=byPart(id);if(!p||selectedParts.size>1)return false;
+ if(reconnectPending)cancelReconnect();
+ if(state.startPort)cancelPendingWire();
+ const attached=state.wires.filter(w=>w.a.split('.')[0]===id||w.b.split('.')[0]===id);
+ const previous=new Map(attached.map(w=>[w,{a:getPortPos(w.a),b:getPortPos(w.b)}]));
+ snapshot();
+ p.flipped=!p.flipped;
+ for(const w of attached){
+  if(!w.manual||!w.via?.length)continue;
+  const old=previous.get(w),via=w.via.map(point=>({...point}));
+  if(w.a.split('.')[0]===id&&old.a){
+   const after=getPortPos(w.a),first=via[0];
+   if(Math.abs(old.a.x-first.x)<2)first.x=Math.round(after.x);
+   else if(Math.abs(old.a.y-first.y)<2)first.y=Math.round(after.y);
+  }
+  if(w.b.split('.')[0]===id&&old.b){
+   const after=getPortPos(w.b),last=via.at(-1);
+   if(Math.abs(old.b.x-last.x)<2)last.x=Math.round(after.x);
+   else if(Math.abs(old.b.y-last.y)<2)last.y=Math.round(after.y);
+  }
+  w.via=via;
+ }
+ state.selected=id;state.selectedWire=null;selectedBend=null;state.inspector='parts';
+ state.completed=false;refresh();
+ message(partName(id)+(p.flipped?' invertido para o outro lado.':' voltou ao lado original.')+' Ligações preservadas.',true);
+ return true;
+}
+function flipSelectedPart(){
+ const p=byPart(state.selected);
+ if(!p||selectedParts.size>1){message('Selecione uma peça por vez para inverter.',true);return false;}
+ return flipPart(p.id);
 }
 function removePart(id,skipSnapshot=false){
  if(!exists(id))return;
@@ -764,7 +808,7 @@ function getPortPos(id){
  const [partId,pinId]=id.split('.');
  const p=byPart(partId);if(!p)return null;
  const d=partLayout(p),pin=d.pins[pinId];if(!pin)return null;
- const offset=rotateVector({x:d.w*(pin[0]/100-.5),y:d.h*(pin[1]/100-.5)},p.rotation);
+ const offset=rotateVector({x:(p.flipped?-1:1)*d.w*(pin[0]/100-.5),y:d.h*(pin[1]/100-.5)},p.rotation);
  return {x:p.x+d.w/2+offset.x,y:p.y+d.h/2+offset.y};
 }
 // Desempata os dois terminais do motor pelas coordenadas reais, mesmo
@@ -792,6 +836,7 @@ function portDirection(id){
  else if(p.kind==='battery')d={x:0,y:-1};
  else if(p.kind==='switch')d={x:0,y:1};
  else if(p.kind==='motor')d=p.view==='side'?{x:1,y:0}:{x:-1,y:0};
+ if(p.flipped)d.x=-d.x;
  return rotateVector(d,p.rotation);
 }
 // Caminho manual: cada ponto do desenho é uma escolha explícita do usuário.
@@ -2084,7 +2129,7 @@ function exportRotatedBounds(rect,part){
   {x:rect.x,y:rect.y},{x:rect.x+rect.w,y:rect.y},
   {x:rect.x+rect.w,y:rect.y+rect.h},{x:rect.x,y:rect.y+rect.h}
  ].map(p=>{
-  const rotated=rotateVector({x:p.x-cx,y:p.y-cy},part.rotation);
+  const rotated=rotateVector({x:(part.flipped?-1:1)*(p.x-cx),y:p.y-cy},part.rotation);
   return {x:cx+rotated.x,y:cy+rotated.y};
  });
  return {minX:Math.min(...corners.map(p=>p.x)),minY:Math.min(...corners.map(p=>p.y)),
@@ -2127,7 +2172,10 @@ async function buildWorkspaceExport(){
   const angle=normalizePartRotation(p.rotation);
   const d=partLayout(p),centerX=p.x+d.w/2,centerY=p.y+d.h/2;
   const fit=getComputedStyle(img).objectFit==='fill'?'none':'xMidYMid meet';
-  parts.push('<g'+(angle?' transform="rotate('+angle+' '+centerX+' '+centerY+')"':'')+'>'
+  const transformation=p.flipped
+   ?'translate('+centerX+' '+centerY+') rotate('+angle+') scale(-1 1) translate('+-centerX+' '+-centerY+')'
+   :angle?'rotate('+angle+' '+centerX+' '+centerY+')':'';
+  parts.push('<g'+(transformation?' transform="'+transformation+'"':'')+'>'
    +'<image href="'+exportEsc(href)+'" x="'+image.x+'" y="'+image.y+'" width="'+image.w
    +'" height="'+image.h+'" preserveAspectRatio="'+fit+'"/></g>');
  }
@@ -2308,7 +2356,7 @@ function bind(){
    if(selectedBend?.index===i&&target.classList?.contains('wire-bend-mark'))return;
    selectWire(i);
  });
- Q('inspectorBody').addEventListener('click',e=>{const rotate=e.target.closest('[data-rotate-part]');if(rotate){rotatePart(rotate.dataset.rotatePart);return;}const view=e.target.closest('[data-motor-view]');if(view){toggleMotorView(view.dataset.motorView);return;}const demo=e.target.closest('[data-demo-motor]');if(demo){demoMotor(demo.dataset.demoMotor);return;}const del=e.target.closest('[data-remove]');if(del)removePart(del.dataset.remove);const w=e.target.closest('[data-remove-wire]');if(w){removeWire(Number(w.dataset.removeWire));return;}const row=e.target.closest('[data-select-wire]');if(row)selectWire(Number(row.dataset.selectWire));});
+ Q('inspectorBody').addEventListener('click',e=>{const rotate=e.target.closest('[data-rotate-part]');if(rotate){rotatePart(rotate.dataset.rotatePart);return;}const flip=e.target.closest('[data-flip-part]');if(flip){flipPart(flip.dataset.flipPart);return;}const view=e.target.closest('[data-motor-view]');if(view){toggleMotorView(view.dataset.motorView);return;}const demo=e.target.closest('[data-demo-motor]');if(demo){demoMotor(demo.dataset.demoMotor);return;}const del=e.target.closest('[data-remove]');if(del)removePart(del.dataset.remove);const w=e.target.closest('[data-remove-wire]');if(w){removeWire(Number(w.dataset.removeWire));return;}const row=e.target.closest('[data-select-wire]');if(row)selectWire(Number(row.dataset.selectWire));});
  Q('inspectorPartsTab').addEventListener('click',()=>{state.inspector='parts';renderInspector();});
  Q('inspectorWiresTab').addEventListener('click',()=>{state.inspector='wires';renderInspector();});
  Q('colorPalette').addEventListener('click',e=>{
@@ -2328,6 +2376,13 @@ function bind(){
  Q('redoBtn').addEventListener('click',redo);
  Q('copyBtn').addEventListener('click',copySelection);
  Q('rotateBtn').addEventListener('click',rotateSelectedPart);
+ const flipButton=document.createElement('button');
+ flipButton.id='flipBtn';flipButton.className='control-btn flip-component-btn';flipButton.type='button';
+ flipButton.disabled=true;flipButton.title='Selecione um componente para inverter esquerda e direita';
+ flipButton.setAttribute('aria-label',flipButton.title);flipButton.setAttribute('aria-pressed','false');
+ flipButton.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v18" stroke-dasharray="2 3"/><path d="m9 7-5 5 5 5M15 7l5 5-5 5"/><path d="M4 12h16"/></svg>';
+ Q('rotateBtn').after(flipButton);
+ flipButton.addEventListener('click',flipSelectedPart);
  Q('selectionToolBtn').addEventListener('click',()=>{
   if(!selectionToolActive){if(state.startPort)cancelPendingWire();if(reconnectPending)cancelReconnect();}
   selectionToolActive=!selectionToolActive;updateMultiSelectionTool();
@@ -2415,6 +2470,9 @@ function bind(){
   }
   if((e.key==='r'||e.key==='R')&&!e.ctrlKey&&!e.metaKey&&!e.altKey&&!e.target.closest('input,textarea,select,[contenteditable]')&&byPart(state.selected)){
    e.preventDefault();rotateSelectedPart();return;
+  }
+  if((e.key==='i'||e.key==='I')&&!e.ctrlKey&&!e.metaKey&&!e.altKey&&!e.target.closest('input,textarea,select,[contenteditable]')&&byPart(state.selected)){
+   e.preventDefault();flipSelectedPart();return;
   }
   if(['Delete','Backspace'].includes(e.key)&&!e.target.closest('input,textarea,select')){
     if(selectedBend){e.preventDefault();removeSelectedBend();return;}
