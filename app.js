@@ -262,13 +262,30 @@ function selectedMotorConnections(){
  }
  return best;
 }
+// Os quatro sinais da MX1508 podem usar qualquer permutação dos GPIOs
+// 27, 26, 32 e 18, um GPIO exclusivo para cada IN.
+const CONTROL_GPIO=['esp.D27','esp.D26','esp.D32','esp.D18'];
+const CONTROL_INPUTS=['IN1','IN2','IN3','IN4'];
+function selectedControlConnections(){
+ const used=new Set();
+ return CONTROL_INPUTS.map((input,i)=>{
+  const target='drv.'+input;
+  const matching=state.wires.filter(w=>!w.loose).map(w=>{
+   if(w.a===target&&CONTROL_GPIO.includes(w.b))return w.b;
+   if(w.b===target&&CONTROL_GPIO.includes(w.a))return w.a;
+   return null;
+  }).filter(Boolean);
+  const picked=matching.find(p=>!used.has(p));
+  if(picked)used.add(picked);
+  // Faltando conexão, use o primeiro GPIO não reservado como expectativa.
+  // Não reserve pinos para INs ainda não conectados.
+  return [picked||CONTROL_GPIO.find(p=>!used.has(p))||CONTROL_GPIO[i],target];
+ });
+}
 function expectedConnections(){
- // Ao inserir gangorras, só o arranjo solicitado é validado. A versão
- // sem gangorras permanece disponível para exercícios com sete peças.
  const baseline=assemblyMode()==='switched'?SWITCHED_CONNECTIONS:DIRECT_CONNECTIONS;
- // Os dois canais de saída são equivalentes: o motor esquerdo/direito
- // pode ocupar A ou B e os polos do motor podem ser invertidos.
- return baseline.filter(([a])=>!a.startsWith('drv.OUT')).concat(selectedMotorConnections());
+ return baseline.filter(([a,b])=>!a.startsWith('drv.OUT')&&!CONTROL_INPUTS.some(pin=>b==='drv.'+pin))
+  .concat(selectedControlConnections(),selectedMotorConnections());
 }
 function acceptedConnectionSet(){
  // Nada de aceitar outras posições de chave ou fios de LED que não
@@ -314,9 +331,8 @@ function powerStatus(){
   const edges=assigned.filter(([,port])=>port.startsWith(id+'.'));
   if(edges.length!==2||!edges.every(([a,b])=>has(a,b)))return false;
   const channel=edges[0][0].startsWith('drv.OUT1')||edges[0][0].startsWith('drv.OUT2')?'A':'B';
-  const control=channel==='A'
-   ?has('esp.D27','drv.IN1')&&has('esp.D26','drv.IN2')
-   :has('esp.D32','drv.IN3')&&has('esp.D18','drv.IN4');
+  const controls=selectedControlConnections();
+  const control=(channel==='A'?controls.slice(0,2):controls.slice(2)).every(([a,b])=>has(a,b));
   return driver&&common&&exists(id)&&control;
  };
  return {buck,esp,driver,common,motors:{ml:motorOn('ml'),mr:motorOn('mr')}};
