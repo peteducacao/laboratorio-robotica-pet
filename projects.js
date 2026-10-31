@@ -327,7 +327,7 @@
    location.href='gabarito.html?release=20261031-gpio18-mobile-fix-v2';
   });
   if(!localStorage.getItem(NICK))setTimeout(()=>{
-   if(!$('editDialog').open&&!$('creditsDialog').open)editNickname();
+   if(!$('editDialog').open&&!$('creditsDialog').open&&!$('gateDialog').open)editNickname();
   },350);
   else nickRegistry?.register(localStorage.getItem(NICK));
   window.addEventListener('pageshow',e=>{if(e.persisted){syncEditor();render()}});
@@ -336,4 +336,8 @@
  }
  init();attach();render();
  if(sessionStorage.getItem('tinkerpet-gabarito-access')==='ok')$('gateLabel').textContent='Gabaritos';
+ // Ao voltar da página de componentes, abre a seção pedida sem
+ // transformar Créditos ou Gabarito em páginas públicas alternativas.
+ if(location.hash==='#creditos')openCredits();
+ if(location.hash==='#abrir-gabarito')openGate();
 })();
