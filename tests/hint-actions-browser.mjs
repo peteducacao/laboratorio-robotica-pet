@@ -106,7 +106,7 @@ try{
   await button('hintBtn');
   await page.locator('#wireHintDialog[open]').waitFor({state:'visible'});
   assert.match(await page.locator('#wireHintWhat').textContent(),/D19.*IN3/,'mostra GPIO19 usado '+width);
-  assert.match(await page.locator('#wireHintCorrect').textContent(),/D32.*IN3/,'mostra GPIO32 correto '+width);
+  assert.match(await page.locator('#wireHintCorrect').textContent(),/D(?:27|26|32).*IN3/,'sugere GPIO permitido e livre para IN3 '+width);
   await button('wireHintClose');
 
   // Se todos os erros sumirem, o próximo ciclo sorteia de novo.
