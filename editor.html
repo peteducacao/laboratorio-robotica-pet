@@ -10,11 +10,11 @@
 <link rel="stylesheet" href="styles.css?v=36">
 <link rel="stylesheet" href="answer-key.css?v=37">
 <link rel="stylesheet" href="studio-preview.css?v=19">
-<link rel="stylesheet" href="editor-layout.css?v=4">
+<link rel="stylesheet" href="editor-layout.css?v=5">
 <script defer src="app.js?v=62"></script>
 <script defer src="answer-key.js?v=37"></script>
 <script defer src="studio-preview.js?v=1"></script>
-<script defer src="editor-layout.js?v=2"></script>
+<script defer src="editor-layout.js?v=3"></script>
 </head>
 <body class="preview-studio studio-main">
 <header class="app-header">
@@ -53,7 +53,12 @@
         <button id="hintBtn" class="control-btn hint-btn" type="button" title="Mostrar dica">💡 <span>Dica</span></button>
         <button id="downloadBtn" class="control-btn download-btn" type="button" aria-label="Prévia e download da montagem" title="Ver prévia antes de baixar a montagem"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12m-5-5 5 5 5-5M4 17v3h16v-3"/></svg></button>
         <button id="openTrackBtn" class="control-btn track-entry-btn" type="button" hidden aria-hidden="true" tabindex="-1"></button>
-        <button id="checkBtn" class="simulation-toggle" type="button" aria-pressed="false"><span class="sim-icon" id="simIcon">▶</span> <span id="simLabel">Iniciar simulação</span></button>
+        <div id="editorToolbarProgress" class="editor-toolbar-progress" role="group" aria-label="Progresso da montagem">
+          <div class="editor-toolbar-progress-head"><span id="toolbarProgressLabel">Conexões</span><strong id="toolbarProgressCount">0 / 0</strong></div>
+          <div id="toolbarProgressTrack" class="editor-toolbar-progress-track" role="progressbar" aria-label="Progresso da montagem" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><div id="toolbarProgressBar"></div></div>
+          <span id="toolbarProgressStatus" class="editor-toolbar-progress-status">Aguardando montagem</span>
+        </div>
+        <button id="checkBtn" class="simulation-toggle" type="button" hidden aria-hidden="true" tabindex="-1" aria-pressed="false"><span class="sim-icon" id="simIcon">▶</span> <span id="simLabel">Iniciar simulação</span></button>
       </div>
       <div class="toolbar-zoom toolbar-group" aria-label="Navegação da bancada">
         <button class="control-btn zoom-btn" id="zoomOut" aria-label="Diminuir zoom">−</button>
