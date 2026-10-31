@@ -12,7 +12,7 @@
    try{
     const url=new URL(link.href,location.href);
     if(url.origin!==location.origin)return;
-    url.searchParams.set('release','20261030finger-wire-v1');
+    url.searchParams.set('release','20261030fine-wire-gpio-v3');
     link.href=url.pathname+url.search+url.hash;
    }catch{/* Manter o link original se o navegador rejeitar a URL. */}
   });
