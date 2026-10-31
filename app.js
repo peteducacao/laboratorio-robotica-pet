@@ -137,7 +137,7 @@ function safeRestore(){
  }catch(err){console.warn('Progresso indisponível',err);}
 }
 // Salvo só aparece depois de uma mudança real e desaparece sozinho.
-let savedIndicatorTimer=null;
+let savedIndicatorTimer=null,initialCircuitSnapshot=null;
 function savedIndicator(message,temporary=false){
  const indicator=Q('savedIndicator');if(!indicator)return;
  clearTimeout(savedIndicatorTimer);
@@ -157,15 +157,16 @@ function persist(){
    const lib=JSON.parse(localStorage.getItem(LIBRARY_KEY)||'null');
    const project=Array.isArray(lib?.projects)?lib.projects.find(p=>p.id===EDITOR_PROJECT_ID):null;
    if(!project){savedIndicator('● Circuito não encontrado');return;}
-   const previous=project.circuit||{};
-   const lastCircuit={
-    parts:previous.parts||[],wires:previous.wires||[],voltage:previous.voltage??4,
-    switches:previous.switches||{s1:false,s2:false},wireColor:previous.wireColor||'#ed654d'
-   };
-   if(JSON.stringify(circuit)===JSON.stringify(lastCircuit))return;
-   project.circuit=JSON.parse(JSON.stringify(circuit));
+   // O primeiro desenho abre/normaliza a montagem, mas não foi uma edição.
+   // Comparar o estado em memória também ignora diferenças de ordem dos campos
+   // nos arquivos de versões anteriores sem falsificar a data da última edição.
+   const currentSnapshot=JSON.stringify(circuit);
+   if(initialCircuitSnapshot===null){initialCircuitSnapshot=currentSnapshot;return;}
+   if(currentSnapshot===initialCircuitSnapshot)return;
+   project.circuit=JSON.parse(currentSnapshot);
    project.updatedAt=Date.now();
    localStorage.setItem(LIBRARY_KEY,JSON.stringify(lib));
+   initialCircuitSnapshot=currentSnapshot;
    // A lista mostra o selo somente quando este usuário voltar ao projeto.
    try{sessionStorage.setItem('tinkerpet-recent-saved-v1',
     JSON.stringify({id:EDITOR_PROJECT_ID,at:Date.now()}));}catch{}
