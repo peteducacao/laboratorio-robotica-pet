@@ -306,3 +306,50 @@
 @media(max-width:540px){
  .top .search{width:100%;max-width:220px;min-width:0;justify-self:end;flex:none}
 }
+
+/* Header final — campos realmente compactos, alinhados na mesma linha. */
+.top:not(.how-top) .search{
+ box-sizing:border-box;
+ width:160px;min-width:0;max-width:160px;flex:0 0 160px;
+ margin-left:auto;
+}
+.top:not(.how-top) .search input{
+ box-sizing:border-box;
+ width:100%;height:39px;min-height:39px;
+ padding:0 9px 0 32px;
+ font-size:12px;line-height:1;
+ border-radius:10px;
+}
+.top:not(.how-top) .search svg{width:15px;height:15px;left:10px}
+.top:not(.how-top) #sortCircuits.filter{
+ box-sizing:border-box;
+ height:39px;min-height:39px;
+ flex:0 0 158px;width:158px;min-width:158px;max-width:158px;
+ padding:0 24px;
+ font-family:'DM Sans',Arial,sans-serif;font-size:13px;font-weight:600;
+ line-height:1.1;text-align:center;text-align-last:center;
+ border-radius:10px;background-position:right 10px center;
+ background-size:14px 14px;
+}
+.card .meta{margin:0 4px 14px;gap:0;align-items:center}
+.card .meta time{font-size:12px;line-height:1.5;font-weight:600;color:#778b99;white-space:nowrap}
+@media(max-width:810px){
+ .top:not(.how-top) .search{
+  grid-area:search;justify-self:start;
+  width:min(100%,160px);max-width:160px;min-width:0;
+  margin:0;flex:none;
+ }
+ .top:not(.how-top) #sortCircuits.filter{
+  grid-area:sort;justify-self:end;
+  width:100%;min-width:0;max-width:100%;flex:none;
+  height:39px;min-height:39px;
+  padding:0 22px;
+  font-size:12.5px;
+  background-position:right 8px center;background-size:13px 13px;
+ }
+}
+@media(max-width:540px){
+ .top:not(.how-top) .search{width:min(100%,154px);max-width:154px}
+ .top:not(.how-top) .search input{font-size:12px;padding-left:30px}
+ .top:not(.how-top) #sortCircuits.filter{font-size:12px;padding:0 20px}
+}
