@@ -39,6 +39,15 @@ try{
     scrollWidth:document.documentElement.scrollWidth};
   });
   assert(layout.scrollWidth<=width+2,'Menu sem barra horizontal '+width+': '+JSON.stringify(layout));
+  const searchSize=await page.locator('#searchCircuits').evaluate(el=>{
+   const rect=el.getBoundingClientRect();
+   return {width:rect.width,height:rect.height};
+  });
+  assert(searchSize.width<=227,'Buscar circuito precisa ser mais estreito '+width+': '+JSON.stringify(searchSize));
+  assert(searchSize.height<=43,'Buscar circuito precisa ser mais baixo '+width+': '+JSON.stringify(searchSize));
+  await page.locator('#searchCircuits').fill('carrinho');
+  assert.equal(await page.locator('#searchCircuits').inputValue(),'carrinho','campo de busca continua funcional '+width);
+  await page.locator('#searchCircuits').fill('');
   assert(layout.credits.top>=layout.gate.top,'Créditos não aparece acima do Gabarito '+width);
   if(width>810)assert(layout.credits.top>=layout.gate.bottom-1,'Créditos abaixo no desktop '+width);
   if(width<=810)assert(layout.credits.top>=layout.gate.bottom-1,'Créditos abaixo no mobile '+width);
