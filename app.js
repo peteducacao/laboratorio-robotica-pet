@@ -307,7 +307,7 @@ function mistakeExplanation(w){
 function ready(){
  const switched=assemblyMode()==='switched';
  return state.parts.length===requiredParts()&&missing().length===0&&mistakes().length===0&&
- Math.abs(state.voltage-5)<.01&&(!switched||(state.switches.s1&&state.switches.s2));
+ Math.abs(state.voltage-5)<.01&&!voltageAdjusting&&(!switched||(state.switches.s1&&state.switches.s2));
 }
 // Modelo pedagógico: cada circuito acende e funciona somente quando recebe
 // alimentação e sinais por um caminho conectado. Não é SPICE nem execução do ESP32.
@@ -608,10 +608,11 @@ function renderProgress(){
  const wiringComplete=!inAssembly&&!errors&&missing().length===0;
  const voltageValid=Math.abs(state.voltage-5)<.01;
  const switchesValid=!switched||(state.switches.s1&&state.switches.s2);
- const fullyValid=wiringComplete&&voltageValid&&switchesValid;
+ const fullyValid=wiringComplete&&voltageValid&&switchesValid&&!voltageAdjusting;
  const badge=Q('validationBadge');
  badge.className='validation-badge'+(fullyValid?' ok':errors||wiringComplete&&!voltageValid?' error':'');
  badge.textContent=fullyValid?'✓ Montagem concluída ('+(switched?'com gangorras':'sem gangorras')+')':
+  wiringComplete&&voltageAdjusting?'Ajustando LM2596… solte para conferir os 5,0 V':
   wiringComplete&&!voltageValid?'⚠ Ajuste o LM2596 para 5,0 V (atual: '+state.voltage.toFixed(1).replace('.',',')+' V)':
   wiringComplete&&!switchesValid?'Ative as duas gangorras para concluir':
   errors?(mistakes().some(w=>[w.a,w.b].some(p=>p.endsWith('.LEDG')))?errors+' fio(s) a revisar · LED− não é saída':errors+' ligação(ões) a revisar'):
@@ -621,7 +622,7 @@ function renderProgress(){
   ?invalid.map(w=>w.loose?'Jumper com ponta solta: mova a bolinha até um pino.':'Fio incorreto: '+portName(w.a)+' → '+portName(w.b)).join('\n')
    +(pending.length?'\nFaltam '+pending.length+' ligações corretas.':'')
   :pending.length?'Faltam '+pending.length+' ligações. Clique no progresso para saber a próxima.':
-   (!voltageValid?'Ajuste o LM2596 para 5,0 V. Valor atual: '+state.voltage.toFixed(1)+' V.':!switchesValid?'Ative as duas gangorras.':'Todas as ligações e a tensão estão corretas.');
+   (voltageAdjusting?'Solte a regulagem do LM2596 e aguarde a verificação dos 5,0 V.':!voltageValid?'Ajuste o LM2596 para 5,0 V. Valor atual: '+state.voltage.toFixed(1)+' V.':!switchesValid?'Ative as duas gangorras.':'Todas as ligações e a tensão estão corretas.');
  const progressDetails=Q('editorToolbarProgress');
  if(progressDetails)progressDetails.title=badge.title;
  const missionTitle=Q('missionTitle'),missionText=Q('missionText');
@@ -634,6 +635,9 @@ function renderProgress(){
 // Celebra somente quando uma edição transforma um circuito incompleto em
 // completo. A primeira renderização após F5 estabelece o estado inicial e
 // nunca abre a mensagem. Toda edição posterior pode rearmar a celebração.
+// Os 5,0 V só são confirmados depois de soltar o controle e estabilizar.
+let voltageAdjusting=false,voltageSettleTimer=0;
+const VOLTAGE_SETTLE_MS=450;
 let completionKnown=false,completionWasValid=false;
 const COMPLETION_DURATION_MS=10000;
 let completionCloseTimer=0,completionCountTimer=0,completionLastFocus=null;
@@ -692,6 +696,8 @@ function showCompletionCelebration(){
  completionCloseTimer=setTimeout(dismissCompletionCelebration,COMPLETION_DURATION_MS);
 }
 function syncCompletionCelebration(){
+ // Nunca celebrar enquanto o dedo/mouse ainda está ajustando a tensão.
+ if(voltageAdjusting)return;
  // A exigência de 5 V e todas as ligações certas faz parte de ready().
  const correct=ready();
  if(!completionKnown){
@@ -2520,8 +2526,46 @@ function bind(){
   const del=e.target.closest('[data-remove]');if(del){removePart(del.dataset.remove);return;}
   const toggler=e.target.closest('[data-toggle]');if(toggler){snapshot();state.switches[toggler.dataset.toggle]=!state.switches[toggler.dataset.toggle];refresh();message('Gangorra '+(state.switches[toggler.dataset.toggle]?'ligada':'desligada')+'.');return;}
  });
- Q('partsLayer').addEventListener('input',e=>{if(e.target.id==='voltageInput'){state.voltage=Number(e.target.value);const out=Q('voltageOutput');if(out)out.textContent=state.voltage.toFixed(1).replace('.',',')+' V';renderProgress();persist();updateTrackLock();updateLiveSimulation();syncCompletionCelebration();}});
- Q('partsLayer').addEventListener('change',e=>{if(e.target.id==='voltageInput')message('LM2596 ajustado para '+state.voltage.toFixed(1).replace('.',',')+' V.');});
+ // Validação do LM2596: entrada acompanha o controle, mas a conclusão
+ // e os confetes só são liberados após soltar e estabilizar por 450 ms.
+ function settleVoltageAfterRelease(){
+  if(!voltageAdjusting)return;
+  clearTimeout(voltageSettleTimer);
+  voltageSettleTimer=setTimeout(()=>{
+   voltageSettleTimer=0;
+   voltageAdjusting=false;
+   renderProgress();
+   updateTrackLock();
+   updateLiveSimulation();
+   syncCompletionCelebration();
+  },VOLTAGE_SETTLE_MS);
+ }
+ Q('partsLayer').addEventListener('input',e=>{
+  if(e.target.id!=='voltageInput')return;
+  clearTimeout(voltageSettleTimer);voltageSettleTimer=0;
+  voltageAdjusting=true;
+  state.voltage=Number(e.target.value);
+  if(Math.abs(state.voltage-5)>.01)completionWasValid=false;
+  const out=Q('voltageOutput');
+  if(out)out.textContent=state.voltage.toFixed(1).replace('.',',')+' V';
+  renderProgress();persist();updateTrackLock();updateLiveSimulation();
+ });
+ Q('partsLayer').addEventListener('change',e=>{
+  if(e.target.id!=='voltageInput')return;
+  state.voltage=Number(e.target.value);
+  // Change acontece na liberação do range; pointerup cobre o gesto sem change.
+  settleVoltageAfterRelease();
+  message('LM2596 ajustado para '+state.voltage.toFixed(1).replace('.',',')+' V.');
+ });
+ Q('partsLayer').addEventListener('pointerup',e=>{
+  if(e.target.id==='voltageInput')settleVoltageAfterRelease();
+ });
+ Q('partsLayer').addEventListener('pointercancel',e=>{
+  if(e.target.id==='voltageInput')settleVoltageAfterRelease();
+ });
+ Q('partsLayer').addEventListener('focusout',e=>{
+  if(e.target.id==='voltageInput')settleVoltageAfterRelease();
+ });
  Q('wireSvg').addEventListener('pointerdown',e=>{
   if(pinch||activeTouches.size>=2||Date.now()<gestureBlockedUntil||spaceHeld||reconnectPending)return;
   if(e.button!==undefined&&e.button!==0)return;
