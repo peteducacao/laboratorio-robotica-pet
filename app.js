@@ -2271,7 +2271,7 @@ function validatedHintRepair(wire,index,switched){
   // outra entrada. GND admite ramificações de terra.
   const newKey=electricalKey(fixed,next);
   if(state.wires.some((other,j)=>j!==i&&!other.loose&&electricalKey(other.a,other.b)===newKey))return false;
-  if(!/\\.GND2?$/.test(next)&&state.wires.some((other,j)=>
+  if(!/\.GND2?$/.test(next)&&state.wires.some((other,j)=>
    j!==i&&!other.loose&&(other.a===next||other.b===next)))return false;
   w[end]=next;
   let valid=false;
