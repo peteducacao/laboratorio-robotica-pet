@@ -57,6 +57,7 @@
    <label class="backup-choice"><input type="radio" name="restoreMode" value="merge" checked><span><strong>Adicionar aos meus circuitos</strong><small>Não apaga nem substitui os projetos atuais.</small></span></label>
    <label class="backup-choice"><input type="radio" name="restoreMode" value="replace"><span><strong>Substituir a biblioteca</strong><small>Exclui os circuitos atuais e coloca os do arquivo no lugar.</small></span></label>
    <p class="backup-warning" id="backupReplaceWarning" hidden>ATENÇÃO: os circuitos atuais serão substituídos. Baixe um backup deles antes de continuar.</p>
+   <label class="backup-consent" id="backupReplaceConsent" hidden><input id="confirmReplaceLibrary" type="checkbox"> Confirmo que quero substituir todos os circuitos atuais.</label>
    <p class="error" id="backupError" role="alert"></p>
    <div class="backup-confirm"><button type="button" id="cancelRestore" class="btn">Cancelar</button><button type="button" id="confirmRestore" class="btn primary">Restaurar circuitos</button></div>
   </div>
