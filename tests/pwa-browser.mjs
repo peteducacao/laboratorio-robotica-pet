@@ -41,7 +41,9 @@ try{
   },fixture);
   await page.reload({waitUntil:'domcontentloaded'});
   await page.waitForFunction(()=>Boolean(navigator.serviceWorker.controller),null,{timeout:25000});
-  await page.waitForFunction(()=>localStorage.getItem('tinkerpet-pwa-installed-revision-v1')==='a'.repeat(40),null,{timeout:12000});
+  // O navegador comum não registra revisões do app nem mostra alertas.
+  assert.equal(await page.evaluate(()=>localStorage.getItem('tinkerpet-pwa-installed-revision-v1')),null,
+   'visita comum não configura atualizações do aplicativo');
   assert.equal(await page.locator('#pwaUpdateButton').getAttribute('hidden'),'','atualização oculta na versão atual');
   await page.locator('#toggleLibraryInfo').click();
   assert.equal(await page.locator('#pwaInstallButton').count(),1,'Instalar no menu Informações');
@@ -72,6 +74,23 @@ try{
   await page.waitForFunction(()=>Boolean(navigator.serviceWorker.controller));
   remoteSha='b'.repeat(40);
   await page.evaluate(()=>window.dispatchEvent(new Event('online')));
+  await page.waitForTimeout(950);
+  assert.equal(await page.locator('#pwaUpdateButton').getAttribute('hidden'),'',
+   'sem app instalado: update sempre oculto mesmo com nova versão');
+  await page.locator('#toggleLibraryInfo').click();
+  assert.equal(await page.locator('#pwaUpdateButton').isVisible(),false,
+   'sem app instalado: update continua oculto dentro de Informações');
+  // Na próxima abertura simulamos o modo standalone do aplicativo instalado.
+  // O site comum permanece testado acima sem essa simulação.
+  await page.evaluate(()=>localStorage.setItem('tinkerpet-pwa-installed-revision-v1','a'.repeat(40)));
+  await page.addInitScript(()=>{
+   const nativeMatchMedia=window.matchMedia.bind(window);
+   window.matchMedia=query=>query==='(display-mode: standalone)'
+    ? {matches:true,media:query,onchange:null,
+       addListener(){},removeListener(){},addEventListener(){},removeEventListener(){}}
+    : nativeMatchMedia(query);
+  });
+  await page.reload({waitUntil:'domcontentloaded'});
   await page.waitForFunction(()=>!document.getElementById('pwaUpdateButton').hidden,null,{timeout:12000});
   assert.equal(await page.locator('#pwaUpdateButton').isVisible(),false,'atualização aparece somente dentro de Informações fechado');
   await page.locator('#toggleLibraryInfo').click();
@@ -83,7 +102,7 @@ try{
   assert.deepEqual(await page.evaluate(()=>JSON.parse(localStorage.getItem('tinkerpet-library-v1'))),fixture,'atualização preserva a biblioteca');
   assert.equal(await page.evaluate(async()=>await caches.has('tinkerpet-offline-shell-'+'b'.repeat(40))),true,'novo cache instalado');
   assert.deepEqual(errors,[],'sem erros de script '+width+': '+errors.join('; '));
-  console.log('OK PWA '+width+'px: instalação, offline, atualização oculta e dados preservados');
+  console.log('OK PWA '+width+'px: visitante sem avisos, app com atualização, offline e biblioteca preservada');
   await context.close();
  }
 }finally{

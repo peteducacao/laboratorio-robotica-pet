@@ -15,16 +15,20 @@
  }
  function setInstallState(){install.hidden=installed();if(installed())try{localStorage.setItem('tinkerpet-local-installed-v1','1')}catch{}}
  function setUpdateState(show){
-  update.hidden=!show;
+  // No navegador comum o aviso nunca aparece, mesmo com service worker ativo.
+  update.hidden=!show||!installed();
   if(!show){pendingRevision='';update.disabled=false;$('pwaUpdateDescription').textContent='Nova versão pronta';}
  }
  function revealWaiting(){
+  if(!installed()){setUpdateState(false);return;}
   if(registration?.waiting&&navigator.serviceWorker.controller){
    update.hidden=false;
    $('pwaUpdateDescription').textContent='Toque para instalar a nova versão';
   }
  }
  async function checkForUpdates(force=false){
+  // Atualizações são gerenciadas no app instalado, não no site convencional.
+  if(!installed()){setUpdateState(false);return;}
   if(!navigator.onLine||!registration||!navigator.serviceWorker.controller)return;
   const now=Date.now();
   if(!force&&now-lastCheck<15*60*1000)return;
@@ -75,6 +79,7 @@
   });
  }
  async function applyUpdate(){
+  if(!installed())return;
   if(updating||!navigator.onLine)return;
   updating=true;update.disabled=true;
   $('pwaUpdateDescription').textContent='Baixando arquivos...';status('');
