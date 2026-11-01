@@ -1,0 +1,79 @@
+/* Botão do guia e apresentação independente das páginas de projetos. */
+.how-intro{display:flex;align-items:center;justify-content:space-between;gap:18px;flex-wrap:wrap}
+.start-presentation{display:inline-flex;align-items:center;justify-content:center;gap:10px;flex:none;min-height:43px;padding:11px 17px;border:1px solid #07897c;border-radius:11px;background:linear-gradient(125deg,#079d8d,#017669);color:white;font-size:13px;font-weight:800;box-shadow:0 5px 16px #07897c23}
+.start-presentation:hover{filter:brightness(.96);transform:translateY(-1px)}
+.start-presentation svg{width:19px;height:19px}
+/* full viewport while preserving the source page behind the dialog */
+.presentation-dialog{border:0;padding:0;margin:0;max-width:none;max-height:none;width:100vw;height:100dvh;background:#f8fcfa;color:#193b4b;overflow:auto}
+.presentation-dialog::backdrop{background:#0c303a9c;backdrop-filter:blur(8px)}
+.presentation-layout{min-height:100%;display:flex;flex-direction:column}
+.presentation-header{min-height:77px;display:flex;align-items:center;justify-content:space-between;padding:16px clamp(18px,3.7vw,64px);gap:20px;background:white;border-bottom:1px solid #e1ede9}
+.presentation-brand{display:flex;align-items:center;gap:10px}
+.presentation-brand img{width:34px;height:34px}
+.presentation-brand strong{font:800 17px Manrope,sans-serif;white-space:nowrap}
+.presentation-brand strong span{color:#0ba58f}
+.presentation-brand i{font-style:normal;margin-left:14px;border-left:1px solid #cce1db;padding-left:14px;font-size:11px;font-weight:700;color:#79929a}
+.presentation-actions{display:flex;gap:10px}
+.presentation-actions button,.slide-controls button{display:flex;align-items:center;gap:8px;justify-content:center;padding:11px 15px;border-radius:11px;font-size:12px;font-weight:800;white-space:nowrap}
+.presentation-ghost{border:1px solid #d4e4df;background:white;color:#3e696b}
+.presentation-close{border:1px solid #efddd9;background:#fff7f5;color:#bb5f59}
+.presentation-next{color:white;border:1px solid #008c7d;background:#008c7d}
+.presentation-actions svg,.slide-controls svg{width:17px;height:17px}
+.presentation-stage{display:grid;grid-template-columns:minmax(0,1.07fr) minmax(0,1fr);gap:clamp(18px,4vw,66px);align-items:center;width:min(1440px,calc(100% - 8vw));margin:auto;flex:1;padding:34px 0}
+.stage-visual{position:relative;isolation:isolate;min-height:470px;display:grid;place-items:center;background:radial-gradient(circle at center,#ebfaf4 0%,#f4f9fa 63%,#f5faf8 100%);border:1px solid #dbebe6;border-radius:25px;overflow:hidden}
+.stage-decoration{position:absolute;width:70%;max-width:410px;aspect-ratio:1;border-radius:50%;border:2px dashed #b8e0d5;opacity:.6}
+.stage-visual img{position:relative;width:83%;height:390px;object-fit:contain;filter:drop-shadow(0 15px 16px #2144592b)}
+.stage-copy{min-width:0;padding:4px 0}
+.stage-overline{font-size:11px;font-weight:800;letter-spacing:.11em;color:#0b9183;display:flex;justify-content:space-between;gap:15px;border-bottom:1px solid #dce9e5;padding-bottom:16px}
+.stage-overline span{color:#78969a;letter-spacing:0}
+.stage-copy h2{font:800 clamp(35px,4.4vw,64px)/1.1 Manrope,sans-serif;letter-spacing:-2px;color:#17414c;margin:18px 0 22px}
+.stage-section{margin:16px 0 22px}
+.stage-section h3,.stage-car h3{font:800 15px/1.4 Manrope,sans-serif;color:#0b6b64;margin:0 0 6px}
+.stage-section p,.stage-car p{font-size:clamp(13px,1.3vw,17px);line-height:1.72;color:#567581;margin:0}
+.stage-car{padding:19px 20px;border-radius:15px;background:#e5f7f0;border:1px solid #bce7da;margin-top:19px}
+.stage-car h3{color:#07887b}
+.presentation-bottom{min-height:91px;border-top:1px solid #deebe6;background:white;display:flex;align-items:center;justify-content:space-between;padding:16px clamp(18px,3.7vw,64px);gap:16px}
+.progress-dots{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.progress-dots button{border:0;padding:0;width:10px;height:10px;background:#d6e7e3;border-radius:20px;transition:width .2s,background .2s}
+.progress-dots button.is-current{background:#078b7f;width:27px}
+.slide-controls{display:flex;gap:10px}
+
+.presentation-dialog{max-width:100vw;max-height:100dvh;width:100vw;height:100dvh;position:fixed;inset:0}
+.presentation-dialog:fullscreen{width:100vw;height:100dvh;max-width:none;max-height:none;overflow:auto}
+.presentation-dialog *{box-sizing:border-box}
+.presentation-dialog button{font:inherit;cursor:pointer}
+.presentation-dialog button:disabled{opacity:.4;cursor:default}
+.presentation-dialog button:focus-visible{outline:3px solid #13a893;outline-offset:3px}
+.presentation-dialog svg{display:block;width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
+.presentation-dialog .progress-dots button{padding:0;width:10px;height:10px;background:#d6e7e3;border:0;border-radius:100px}
+.presentation-dialog .progress-dots button.is-current{width:27px;background:#078b7f}
+@media(max-width:860px){
+ .presentation-stage{width:calc(100% - 46px);gap:22px}
+ .stage-visual{min-height:340px}
+ .stage-visual img{height:280px}
+ .presentation-brand small{display:none}
+}
+@media(max-width:700px){
+ .how-intro{align-items:stretch}
+ .start-presentation{width:100%;min-height:44px}
+ .presentation-header{padding:11px 14px;min-height:64px;gap:9px}
+ .presentation-brand{gap:7px}
+ .presentation-brand img{width:29px;height:29px}
+ .presentation-brand strong{font-size:13px}
+ .presentation-actions{gap:5px}
+ .presentation-actions button{padding:9px;font-size:11px}
+ .presentation-actions .presentation-ghost span,.presentation-close span{display:none}
+ .presentation-stage{grid-template-columns:1fr;width:calc(100% - 28px);padding:13px 0;gap:12px}
+ .stage-visual{min-height:200px;max-height:280px}
+ .stage-visual img{height:210px}
+ .stage-copy h2{font-size:31px;letter-spacing:-1px;margin:12px 0 15px}
+ .stage-section{margin:11px 0}
+ .stage-section h3,.stage-car h3{font-size:14px}
+ .stage-section p,.stage-car p{font-size:13px;line-height:1.58}
+ .stage-car{padding:12px 14px;margin:12px 0}
+ .presentation-bottom{padding:13px;min-height:70px;flex-wrap:wrap}
+ .progress-dots{margin:auto}
+ .slide-controls{width:100%}
+ .slide-controls button{flex:1}
+}
+@media(prefers-reduced-motion:reduce){.start-presentation{transition:none!important}}
