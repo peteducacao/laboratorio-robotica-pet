@@ -43,11 +43,20 @@ try{
    assert.equal(metrics.energy,mobile?'none':'block','Traços ausentes no mobile e preservados no desktop');
    assert.ok(metrics.glow.includes('buttonGlow'),'Brilho externo preservado');
    assert.equal(metrics.href.startsWith('projects.html'),true,'CTA continua levando à biblioteca');
-   // Em janela de aplicativo, também esconde o traço mesmo em PC.
+   // Simula o display-mode do aplicativo desktop antes de carregar o site:
+   // a classe instalada é definida pelo mesmo código usado na versão real.
    if(!mobile){
-     const cdp=await context.newCDPSession(page);
-     await cdp.send('Emulation.setEmulatedMedia',{media:'screen',features:[{name:'display-mode',value:'standalone'}]});
-     assert.equal(await page.locator('.cta-energy').evaluate(el=>getComputedStyle(el).display),'none','Aplicativo desktop sem traço deslocado');
+     const app=await context.newPage();
+     await app.addInitScript(()=>{
+       const original=window.matchMedia.bind(window);
+       window.matchMedia=query=>query==='(display-mode: standalone)'
+         ? {matches:true,media:query,addListener(){},removeListener(){},addEventListener(){},removeEventListener(){}}
+         : original(query);
+     });
+     await app.goto(base+'/index.html',{waitUntil:'domcontentloaded'});
+     assert.equal(await app.locator('.welcome').evaluate(el=>el.classList.contains('installed-pwa')),true,'O app reconhece o modo instalado');
+     assert.equal(await app.locator('.cta-energy').evaluate(el=>getComputedStyle(el).display),'none','Aplicativo desktop sem traço deslocado');
+     await app.close();
    }
    await page.locator('#enterProjects').click();
    await page.waitForURL(/projects\.html/);
