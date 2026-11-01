@@ -25,7 +25,6 @@
  };
  let baseline=signature(),changedElsewhere=false,locked=false,reloading=false,hiddenChange=false;
  const seen=read(LAST,sessionStorage);
- const docStart=performance.now();
  const markCurrent=()=>{
   baseline=signature();
   write(LAST,baseline,sessionStorage);
@@ -34,7 +33,7 @@
   if(locked||!eligible())return;
   locked=true;
   // O aviso é independente dos estilos e diálogos do simulador.
-  const cover=document.createElement('div');
+  const cover=document.createElement('dialog');
   cover.id='tinkerpet-local-sync-cover';
   cover.setAttribute('role','alertdialog');
   cover.setAttribute('aria-modal','true');
@@ -44,6 +43,8 @@
    '<p>Encontramos alterações feitas no TinkerPET deste dispositivo. Carregando a versão mais recente para você continuar com segurança.</p></div>';
   document.documentElement.classList.add('tinkerpet-local-sync-locked');
   (document.body||document.documentElement).append(cover);
+  cover.addEventListener('cancel',event=>event.preventDefault());
+  try{cover.showModal();}catch{cover.setAttribute('open','');}
   cover.focus?.();
   // Marca a revisão ANTES de atualizar, evitando um ciclo infinito.
   markCurrent();
