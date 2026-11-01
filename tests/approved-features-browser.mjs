@@ -110,12 +110,41 @@ try{
   const modal=page.locator('#presentationDialog');
   assert.equal(await modal.evaluate(el=>el.open),true,'apresentação abre '+width);
   assert.equal(await page.locator('#slideDots button').count(),8,'oito componentes '+width);
-  await page.locator('#slideNext').click();
-  assert.equal(await page.locator('#slideTitle').textContent(),'LM2596');
-  await page.keyboard.press('ArrowRight');
-  assert.equal(await page.locator('#slideTitle').textContent(),'Ponte H MX1508');
-  await page.locator('#slidePrev').click();
-  assert.equal(await page.locator('#slideTitle').textContent(),'LM2596');
+  if(width===390){
+   assert.equal(await page.locator('#slideNext').isVisible(),false,'sem botão Próximo cortado no celular');
+   assert.equal(await page.locator('#slidePrev').isVisible(),false,'sem botão Anterior cortado no celular');
+   const rect=await page.locator('.presentation-stage').boundingBox();
+   const y=Math.min(260,rect.y+70);
+   const left=rect.x+rect.width*.25,right=rect.x+rect.width*.75;
+   await page.touchscreen.tap(right,y);
+   await page.waitForFunction(()=>document.getElementById('slideTitle').textContent==='LM2596');
+   await page.keyboard.press('ArrowRight');
+   assert.equal(await page.locator('#slideTitle').textContent(),'Ponte H MX1508');
+   await page.touchscreen.tap(left,y);
+   await page.waitForFunction(()=>document.getElementById('slideTitle').textContent==='LM2596');
+   // O arraste horizontal muda o slide; arrastar para a direita volta.
+   await page.locator('.presentation-stage').evaluate((stage,{left,right,y})=>{
+    stage.dispatchEvent(new PointerEvent('pointerdown',{bubbles:true,pointerId:7,pointerType:'touch',isPrimary:true,clientX:right,clientY:y}));
+    stage.dispatchEvent(new PointerEvent('pointerup',{bubbles:true,pointerId:7,pointerType:'touch',isPrimary:true,clientX:left,clientY:y}));
+   },{left,right,y});
+   assert.equal(await page.locator('#slideTitle').textContent(),'Ponte H MX1508','arrastar à esquerda avança');
+   await page.locator('.presentation-stage').evaluate((stage,{left,right,y})=>{
+    stage.dispatchEvent(new PointerEvent('pointerdown',{bubbles:true,pointerId:8,pointerType:'touch',isPrimary:true,clientX:left,clientY:y}));
+    stage.dispatchEvent(new PointerEvent('pointerup',{bubbles:true,pointerId:8,pointerType:'touch',isPrimary:true,clientX:right,clientY:y}));
+   },{left,right,y});
+   assert.equal(await page.locator('#slideTitle').textContent(),'LM2596','arrastar à direita volta');
+   await page.touchscreen.tap(right,y);
+   await page.touchscreen.tap(right,y);
+   await page.waitForFunction(()=>!document.getElementById('presentationDialog').open);
+   await page.locator('#startPresentation').click();
+  }else{
+   await page.locator('#slideNext').click();
+   assert.equal(await page.locator('#slideTitle').textContent(),'LM2596');
+   await page.keyboard.press('ArrowRight');
+   assert.equal(await page.locator('#slideTitle').textContent(),'Ponte H MX1508');
+   await page.locator('#slidePrev').click();
+   assert.equal(await page.locator('#slideTitle').textContent(),'LM2596');
+  }
   if(width===1366){
    await page.locator('#presentationFullscreen').click();
    await page.waitForFunction(()=>{
