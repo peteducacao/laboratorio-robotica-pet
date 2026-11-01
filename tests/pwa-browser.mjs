@@ -41,7 +41,9 @@ try{
   },fixture);
   await page.reload({waitUntil:'domcontentloaded'});
   await page.waitForFunction(()=>Boolean(navigator.serviceWorker.controller),null,{timeout:25000});
-  await page.waitForFunction(()=>localStorage.getItem('tinkerpet-pwa-installed-revision-v1')==='a'.repeat(40),null,{timeout:12000});
+  // O navegador comum não registra revisões do app nem mostra alertas.
+  assert.equal(await page.evaluate(()=>localStorage.getItem('tinkerpet-pwa-installed-revision-v1')),null,
+   'visita comum não configura atualizações do aplicativo');
   assert.equal(await page.locator('#pwaUpdateButton').getAttribute('hidden'),'','atualização oculta na versão atual');
   await page.locator('#toggleLibraryInfo').click();
   assert.equal(await page.locator('#pwaInstallButton').count(),1,'Instalar no menu Informações');
@@ -80,6 +82,7 @@ try{
    'sem app instalado: update continua oculto dentro de Informações');
   // Na próxima abertura simulamos o modo standalone do aplicativo instalado.
   // O site comum permanece testado acima sem essa simulação.
+  await page.evaluate(()=>localStorage.setItem('tinkerpet-pwa-installed-revision-v1','a'.repeat(40)));
   await page.addInitScript(()=>{
    const nativeMatchMedia=window.matchMedia.bind(window);
    window.matchMedia=query=>query==='(display-mode: standalone)'
