@@ -152,6 +152,121 @@
   }catch(err){toast('Falha ao importar: '+err.message)}
   finally{$('importFile').value=''}
  }
+ // Backup integral: separado da importação de apenas um circuito.
+ // O restauro só grava depois de validar o ARQUIVO TODO e de receber
+ // confirmação explícita quando o usuário escolhe substituir.
+ let pendingBackup=null;
+ const backupFormat='tinkerpet-library-backup',backupVersion=1;
+ function closeBackup(){
+  if($('backupDialog').open)$('backupDialog').close();
+  pendingBackup=null;$('backupReview').hidden=true;
+  $('restoreFile').value='';$('backupError').textContent='';
+  $('confirmReplaceLibrary').checked=false;
+ }
+ function showBackup(){
+  pendingBackup=null;$('backupReview').hidden=true;
+  $('backupError').textContent='';$('restoreFile').value='';
+  $('confirmReplaceLibrary').checked=false;
+  $('backupDialog').showModal();
+  $('backupClose').focus();
+ }
+ function downloadBlob(body,name){
+  const file=new Blob([body],{type:'application/json;charset=utf-8'});
+  const url=URL.createObjectURL(file),link=document.createElement('a');
+  link.href=url;link.download=name;document.body.append(link);link.click();
+  link.remove();setTimeout(()=>URL.revokeObjectURL(url),1000);
+ }
+ function downloadLibraryBackup(){
+  syncEditor();
+  if(!lib.projects.length){toast('Não há circuitos para incluir no backup.');return;}
+  const pack={app:'TinkerPET Studio',format:backupFormat,version:backupVersion,
+   exportedAt:new Date().toISOString(),projects:clone(lib.projects)};
+  const name='tinkerpet-backup-'+new Date().toISOString().slice(0,10)+'.json';
+  downloadBlob(JSON.stringify(pack,null,2),name);
+  toast('Backup de '+lib.projects.length+' circuito(s) baixado.');
+ }
+ function validateBackup(payload){
+  if(payload?.format!==backupFormat||payload?.version!==backupVersion||!Array.isArray(payload.projects))
+   throw Error('Arquivo incompatível. Escolha um backup completo do TinkerPET.');
+  if(!payload.projects.length)throw Error('O backup selecionado não contém circuitos.');
+  if(payload.projects.length>300)throw Error('Este backup contém circuitos demais.');
+  const seen=new Set();
+  return payload.projects.map((raw,i)=>{
+   if(!raw||typeof raw!=='object'||typeof raw.id!=='string'||!raw.id.trim()||
+    raw.id.length>110||seen.has(raw.id)||typeof raw.name!=='string'||!raw.name.trim()||
+    raw.name.length>80||!Number.isFinite(raw.createdAt)||!Number.isFinite(raw.updatedAt)||
+    !valid(raw.circuit)||raw.circuit.parts.length>9)throw Error('Circuito '+(i+1)+' inválido no arquivo.');
+   seen.add(raw.id);
+   const normalized=sanitize(raw.circuit);
+   if(normalized.parts.length!==raw.circuit.parts.length||
+      normalized.wires.length!==raw.circuit.wires.length)
+    throw Error('Circuito '+(i+1)+' possui peças ou fios inválidos.');
+   return {id:raw.id,name:raw.name,createdAt:raw.createdAt,
+    updatedAt:raw.updatedAt,circuit:clone(raw.circuit)};
+  });
+ }
+ async function readBackup(file){
+  if(!file)return;
+  pendingBackup=null;$('backupReview').hidden=true;
+  $('backupError').textContent='';
+  try{
+   if(file.size>12*1024*1024)throw Error('Arquivo muito grande (limite de 12 MB).');
+   const projects=validateBackup(parse(await file.text()));
+   pendingBackup=projects;
+   $('backupReviewCount').textContent=projects.length+' circuito(s) no backup. Escolha como restaurar.';
+   $('backupReview').hidden=false;
+   document.querySelector('input[name="restoreMode"][value="merge"]').checked=true;
+   $('backupReplaceWarning').hidden=true;
+   $('backupReplaceConsent').hidden=true;
+   $('confirmReplaceLibrary').checked=false;
+   $('confirmRestore').textContent='Adicionar circuitos';
+  }catch(err){
+   $('backupReview').hidden=false;
+   $('backupError').textContent=err.message||'Arquivo inválido.';
+   $('backupReviewCount').textContent='Não foi possível abrir o backup.';
+   $('confirmRestore').disabled=true;
+  }finally{$('restoreFile').value='';}
+  if(pendingBackup)$('confirmRestore').disabled=false;
+ }
+ function updateRestoreMode(){
+  const replace=document.querySelector('input[name="restoreMode"]:checked')?.value==='replace';
+  $('backupReplaceWarning').hidden=!replace;
+  $('backupReplaceConsent').hidden=!replace;
+  $('confirmReplaceLibrary').checked=false;
+  $('confirmRestore').textContent=replace?'Substituir circuitos':'Adicionar circuitos';
+ }
+ function restoreLibrary(){
+  if(!pendingBackup||!pendingBackup.length)return;
+  const replace=document.querySelector('input[name="restoreMode"]:checked')?.value==='replace';
+  if(replace&&!$('confirmReplaceLibrary').checked){
+   $('backupError').textContent='Marque a confirmação para substituir seus circuitos.';
+   return;
+  }
+  syncEditor();
+  const existing=lib.projects.slice();
+  let imported;
+  if(replace)imported=clone(pendingBackup);
+  else{
+   imported=pendingBackup.map(p=>({
+    ...clone(p),id:id(),name:p.name,
+    // A importação cria um novo circuito, mas mantém a data original no backup.
+    createdAt:p.createdAt,updatedAt:p.updatedAt
+   }));
+  }
+  const combined=replace?imported:[...imported,...existing];
+  try{
+   // A escrita única evita apagar dados caso falte espaço no navegador.
+   localStorage.setItem(LIB,JSON.stringify({version:1,projects:combined}));
+  }catch(err){
+   $('backupError').textContent='Não foi possível salvar. Libere espaço no navegador e tente novamente.';
+   return;
+  }
+  lib={version:1,projects:combined};
+  if(replace)localStorage.removeItem(ACTIVE);
+  closeBackup();
+  render();
+  toast((replace?'Biblioteca substituída: ':'Circuitos adicionados: ')+imported.length+'.');
+ }
  const memorySize=()=>{try{return new Blob([localStorage.getItem(LIB)||'']).size}catch{return 0}};
  const date=ts=>new Date(ts).toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'});
  const icon=(name)=>{
@@ -221,8 +336,7 @@
  }
  function render(){
   const grid=$('projectsGrid'),projects=lib.projects.slice(),query=$('searchCircuits').value.trim().toLocaleLowerCase('pt-BR'),sort=$('sortCircuits').value;
-  projects.sort(sort==='name'?(a,b)=>a.name.localeCompare(b.name,'pt-BR'):sort==='components'?
-   (a,b)=>b.circuit.parts.length-a.circuit.parts.length:(a,b)=>b.updatedAt-a.updatedAt);
+  projects.sort(sort==='name'?(a,b)=>a.name.localeCompare(b.name,'pt-BR'):(a,b)=>b.updatedAt-a.updatedAt);
   const filtered=projects.filter(p=>p.name.toLocaleLowerCase('pt-BR').includes(query));
   grid.replaceChildren();
   if(!query){
@@ -311,9 +425,28 @@
    else if(action==='delete')remove(p);
    else if(action==='menu')rename(p);
   });
-  $('newCircuit').addEventListener('click',newCircuit);
+  // Criar um circuito fica exclusivamente no cartão da grade.
   $('importCircuit').addEventListener('click',()=>$('importFile').click());
   $('importFile').addEventListener('change',e=>importCircuit(e.target.files[0]));
+  $('backupCircuits').addEventListener('click',showBackup);
+  $('backupClose').addEventListener('click',closeBackup);
+  $('downloadBackup').addEventListener('click',downloadLibraryBackup);
+  $('chooseRestore').addEventListener('click',()=>$('restoreFile').click());
+  $('restoreFile').addEventListener('change',e=>readBackup(e.target.files[0]));
+  $('cancelRestore').addEventListener('click',()=>{$('backupReview').hidden=true;pendingBackup=null;$('backupError').textContent='';});
+  $('confirmRestore').addEventListener('click',restoreLibrary);
+  document.querySelectorAll('input[name="restoreMode"]').forEach(input=>
+   input.addEventListener('change',updateRestoreMode));
+  $('confirmReplaceLibrary').addEventListener('change',()=>$('backupError').textContent='');
+  $('backupDialog').addEventListener('close',()=>{
+   pendingBackup=null;$('backupReview').hidden=true;$('restoreFile').value='';
+  });
+  $('toggleLibraryInfo').addEventListener('click',()=>{
+   const button=$('toggleLibraryInfo'),stats=$('libraryStats');
+   const expanded=button.getAttribute('aria-expanded')==='true';
+   button.setAttribute('aria-expanded',String(!expanded));
+   stats.hidden=expanded;
+  });
   $('searchCircuits').addEventListener('input',render);
   $('sortCircuits').addEventListener('change',render);
   $('nickButton').addEventListener('click',editNickname);
