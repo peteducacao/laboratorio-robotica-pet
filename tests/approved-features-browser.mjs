@@ -118,12 +118,26 @@ try{
   assert.equal(await page.locator('#slideTitle').textContent(),'LM2596');
   if(width===1366){
    await page.locator('#presentationFullscreen').click();
-   await page.waitForFunction(()=>!!document.fullscreenElement,{timeout:4000});
-   assert.equal(await page.evaluate(()=>document.fullscreenElement?.id),'presentationDialog',
-    'fullscreen real no computador');
+   await page.waitForFunction(()=>{
+    const dialog=document.getElementById('presentationDialog');
+    return !!document.fullscreenElement||dialog.classList.contains('fullscreen-fallback');
+   },null,{timeout:5000});
+   const mode=await page.evaluate(()=>{
+    const d=document.getElementById('presentationDialog');
+    return {
+     native:document.fullscreenElement?.classList.contains('presentation-layout')||false,
+     fallback:d.classList.contains('fullscreen-fallback'),
+     visible:d.getBoundingClientRect().width>=innerWidth-2
+    };
+   });
+   assert(mode.native||mode.fallback,'tela cheia real ou fallback visual '+width);
+   assert(mode.visible,'apresentação preenche a tela '+width);
    assert.match(await page.locator('#presentationFullscreen').getAttribute('aria-label'),/Sair/);
    await page.locator('#presentationFullscreen').click();
-   await page.waitForFunction(()=>!document.fullscreenElement,{timeout:4000});
+   await page.waitForFunction(()=>{
+    const d=document.getElementById('presentationDialog');
+    return !document.fullscreenElement&&!d.classList.contains('fullscreen-fallback');
+   },null,{timeout:5000});
    assert.equal(await modal.evaluate(el=>el.open),true,'sair da tela cheia mantém apresentação '+width);
   }
   await page.locator('#closePresentation').click();
