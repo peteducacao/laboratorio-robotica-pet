@@ -4,6 +4,8 @@ on:
     branches: [feature/same-device-local-refresh-and-icon-20261101]
   pull_request:
   workflow_dispatch:
+permissions:
+  contents: write
 jobs:
   browser:
     runs-on: ubuntu-latest
@@ -24,3 +26,16 @@ jobs:
         run: node tests/local-sync-browser.mjs
       - name: Regressão do PWA
         run: node tests/pwa-browser.mjs
+
+      - name: Gerar ícones oficiais a partir do robô TinkerPET
+        if: github.event_name == 'push' && github.ref == 'refs/heads/feature/same-device-local-refresh-and-icon-20261101'
+        run: |
+          python -m pip install --quiet Pillow
+          python scripts/build-pwa-icons.py
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add assets/tinkerpet-app-192.png assets/tinkerpet-app-512.png
+          if ! git diff --cached --quiet; then
+            git commit -m "Atualiza ícones do aplicativo com o mascote TinkerPET"
+            git push origin HEAD:feature/same-device-local-refresh-and-icon-20261101
+          fi
