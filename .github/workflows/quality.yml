@@ -41,6 +41,8 @@ jobs:
           npx playwright install --with-deps chromium
       - name: Testar backup completo e apresentação em computadores e celulares
         run: node tests/approved-features-browser.mjs
+      - name: Verificar instalação e funcionamento offline do TinkerPET
+        run: node tests/pwa-browser.mjs
       - name: Conferir polimento da página Meus circuitos
         run: node tests/projects-polish-browser.mjs
       - name: Verificar ícone de rotação 90 graus no computador
