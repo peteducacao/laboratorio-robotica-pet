@@ -146,6 +146,7 @@ body{overflow:hidden;background:#091e39;font-family:'DM Sans',Arial,sans-serif}
    alguns renderizadores deslocam os traços SVG animados sobre o texto
    impresso na arte. A arte aprovada já inclui o contorno luminoso do
    botão; conservamos o brilho pulsante externo, sem traços sobre a escrita. */
-@media (max-width:900px), (display-mode:standalone){
+@media (max-width:900px){
  .main-action .cta-energy{display:none!important}
 }
+.welcome.installed-pwa .main-action .cta-energy{display:none!important}
