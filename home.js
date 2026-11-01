@@ -1,10 +1,6 @@
 'use strict';(()=>{
  const W=1798,H=875,CX=W/2,CY=H/2;
  const scene=document.querySelector('.welcome'),art=document.getElementById('welcomeArt');
- // O aplicativo instalado usa um efeito estável sobre a arte da abertura.
- if(window.matchMedia('(display-mode: standalone)').matches||navigator.standalone===true){
-  scene.classList.add('installed-pwa');
- }
  const backdrop=document.getElementById('welcomeBackdrop');
  const button=document.getElementById('enterProjects');
  const blink=document.getElementById('robotBlink');
