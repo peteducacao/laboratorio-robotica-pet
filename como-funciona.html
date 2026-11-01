@@ -9,8 +9,9 @@
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&family=Manrope:wght@600;700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="projects.css?v=15">
-<link rel="stylesheet" href="como-funciona.css?v=3">
-<script src="como-funciona.js?v=4" defer></script>
+<link rel="stylesheet" href="como-funciona.css?v=4">
+<script src="como-funciona.js?v=5" defer></script>
+<script src="presentation-mode.js?v=1" defer></script>
 </head>
 <body class="how-body">
 <header class="top how-top"><a class="brand" href="./" aria-label="Ir para o início do TinkerPET"><span class="symbol"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 3v3m8-3v3M5 8H3m18 0h-2M8 17v4m8-4v4M6 7h12v10H6zM9 11l2 2 4-4"/></svg></span><span>TinkerPET <span>Studio</span></span></a><a class="how-back" href="projects.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 18-6-6 6-6"/></svg>Meus circuitos</a></header>
@@ -23,7 +24,7 @@
 <a class="active" id="openHow" href="como-funciona.html" aria-current="page"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><path d="M15 14h6m-3-3v6m-4 4h8"/></svg>Como funciona</a>
 </nav></aside>
 <main class="main how-main">
-<div class="how-intro"><div><h1>Como funciona</h1><p>Explore as peças utilizadas no carrinho.</p></div></div>
+<div class="how-intro"><div><h1>Como funciona</h1><p>Explore as peças utilizadas no carrinho.</p></div><button type="button" id="startPresentation" class="start-presentation" aria-haspopup="dialog" aria-controls="presentationDialog"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2.5" y="3.5" width="19" height="14" rx="2"/><path d="M8 21h8m-4-3.5V21m-4-10 4-3 4 3"/></svg>Modo apresentação</button></div>
 <div class="components-grid" id="componentsGrid" aria-label="Componentes do carrinho">
 <button type="button" class="component-card" data-part="esp" aria-expanded="false" aria-controls="componentPanel"><span class="component-figure"><img src="assets/esp32-devkit-v1-30p.svg?v=29" alt="" loading="lazy" draggable="false"></span><span class="component-label">ESP32</span><span class="component-chevron" aria-hidden="true">↗</span></button>
 <button type="button" class="component-card" data-part="lm" aria-expanded="false" aria-controls="componentPanel"><span class="component-figure"><img src="assets/lm2596-desenhado.svg" alt="" loading="lazy" draggable="false"></span><span class="component-label">LM2596</span><span class="component-chevron" aria-hidden="true">↗</span></button>
@@ -47,5 +48,13 @@
 </div>
 </main>
 </div>
+<dialog id="presentationDialog" class="presentation-dialog" aria-labelledby="slideTitle">
+ <div class="presentation-layout">
+  <header class="presentation-header"><div class="presentation-brand"><img src="assets/logo-pet.svg" alt=""><strong>TinkerPET <span>Studio</span></strong><small>Modo apresentação</small></div>
+  <div class="presentation-actions"><button type="button" id="presentationFullscreen" class="presentation-ghost" aria-label="Entrar em tela cheia"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><path d="M8 3H3v5m13-5h5v5M3 16v5h5m13-5v5h-5"/></svg><span>Tela cheia</span></button><button type="button" id="closePresentation" class="presentation-close" aria-label="Fechar apresentação"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m6 6 12 12M18 6 6 18"/></svg><span>Fechar</span></button></div></header>
+  <div class="presentation-stage"><div class="stage-visual"><div class="stage-decoration"></div><img id="slideImage" src="assets/esp32-devkit-v1-30p.svg?v=29" alt=""></div><div class="stage-copy"><div class="stage-overline">CONHEÇA OS COMPONENTES <span id="slideCounter">01 / 08</span></div><h2 id="slideTitle">ESP32</h2><section class="stage-section"><h3>O que é?</h3><p id="slideWhat"></p></section><section class="stage-section"><h3>Como funciona?</h3><p id="slideHow"></p></section><section class="stage-car"><h3>No nosso carrinho</h3><p id="slideCar"></p></section></div></div>
+  <footer class="presentation-bottom"><div id="slideDots" class="progress-dots" role="group" aria-label="Escolher componente"></div><div class="slide-controls"><button type="button" id="slidePrev" class="presentation-ghost" aria-label="Componente anterior">← Anterior</button><button type="button" id="slideNext" class="presentation-next">Próximo →</button></div></footer>
+ </div>
+</dialog>
 </body>
 </html>
