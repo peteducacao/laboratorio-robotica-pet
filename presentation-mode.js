@@ -2,6 +2,7 @@
 (()=>{
  const $=id=>document.getElementById(id);
  const modal=$('presentationDialog'),launch=$('startPresentation');
+ const fullscreenTarget=modal?.querySelector('.presentation-layout');
  if(!modal||!launch)return;
  const cards=[...document.querySelectorAll('.component-card')];
  const data=window.TinkerPETComponentInfo||{};
@@ -31,10 +32,11 @@
   });
  }
  const setFullscreenText=()=>{
-  const on=document.fullscreenElement===modal;
+  const on=document.fullscreenElement===fullscreenTarget||modal.classList.contains('fullscreen-fallback');
   const button=$('presentationFullscreen');
   button.setAttribute('aria-label',on?'Sair da tela cheia':'Entrar em tela cheia');
   button.querySelector('span').textContent=on?'Sair da tela cheia':'Tela cheia';
+  button.setAttribute('aria-pressed',String(on));
  };
  const open=()=>{
   launcher=document.activeElement instanceof HTMLElement?document.activeElement:launch;
@@ -50,6 +52,7 @@
    if(document.fullscreenElement){
     try{await document.exitFullscreen();}catch{}
    }
+   modal.classList.remove('fullscreen-fallback');
    if(modal.open)modal.close();
   }finally{
    closing=false;
@@ -58,13 +61,21 @@
   }
  }
  async function toggleFullscreen(){
-  try{
-   if(document.fullscreenElement===modal)await document.exitFullscreen();
-   else if(modal.requestFullscreen)await modal.requestFullscreen();
-   else throw Error('indisponível');
-  }catch{
-   $('presentationFullscreen').title='Tela cheia indisponível neste navegador.';
-  }finally{setFullscreenText();}
+  if(document.fullscreenElement===fullscreenTarget){
+   try{await document.exitFullscreen();}catch{}
+  }else if(modal.classList.contains('fullscreen-fallback')){
+   modal.classList.remove('fullscreen-fallback');
+  }else{
+   try{
+    if(typeof fullscreenTarget.requestFullscreen!=='function')throw Error('unsupported');
+    await fullscreenTarget.requestFullscreen({navigationUI:'hide'});
+   }catch{
+    // No Safari/iOS e em navegadores que bloqueiam Fullscreen API:
+    // a própria janela ocupa todo o espaço disponível da tela.
+    modal.classList.add('fullscreen-fallback');
+   }
+  }
+  setFullscreenText();
  }
  launch.addEventListener('click',open);
  $('closePresentation').addEventListener('click',close);
@@ -83,7 +94,8 @@
  modal.addEventListener('cancel',e=>{e.preventDefault();close();});
  document.addEventListener('fullscreenchange',setFullscreenText);
  modal.addEventListener('close',()=>{
-  if(document.fullscreenElement===modal)document.exitFullscreen().catch(()=>{});
+  if(document.fullscreenElement===fullscreenTarget)document.exitFullscreen().catch(()=>{});
+  modal.classList.remove('fullscreen-fallback');
   setFullscreenText();
   (launcher?.isConnected?launcher:launch).focus({preventScroll:true});
  });
