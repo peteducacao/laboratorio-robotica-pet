@@ -34,7 +34,7 @@ jobs:
           python scripts/build-pwa-icons.py
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add assets/tinkerpet-app-192.png assets/tinkerpet-app-512.png
+          git add assets/tinkerpet-app-512.png
           if ! git diff --cached --quiet; then
             git commit -m "Atualiza ícones do aplicativo com o mascote TinkerPET"
             git push origin HEAD:feature/same-device-local-refresh-and-icon-20261101
