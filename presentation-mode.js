@@ -51,8 +51,12 @@
   const now=Date.now();
   if(pendingTap&&now-pendingTap.at<340&&Math.hypot(x-pendingTap.x,y-pendingTap.y)<75){
    clearPendingTap();
-   // Dois toques encerram a apresentação, inclusive em fullscreen nativo.
-   void close();
+   // Primeiro sai da tela cheia nativa; fora dela, volta ao guia.
+   if(document.fullscreenElement===fullscreenTarget){
+    void document.exitFullscreen().then(setFullscreenText).catch(()=>close());
+   }else{
+    void close();
+   }
    return;
   }
   clearPendingTap();
