@@ -1,0 +1,21 @@
+name: Verificar botão da abertura no aplicativo
+on:
+  push:
+    branches: [fix/cta-glow-mobile-pwa-20261101]
+  pull_request:
+  workflow_dispatch:
+jobs:
+  home-cta:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: node --check tests/home-cta-browser.mjs
+      - name: Preparar Chromium
+        run: |
+          npm install --no-save --ignore-scripts playwright@1.56.1
+          npx playwright install --with-deps chromium
+      - name: Testar celular, aplicativo instalado e computador
+        run: node tests/home-cta-browser.mjs
