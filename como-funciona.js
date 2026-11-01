@@ -43,6 +43,7 @@
    car:'São os fios usados para fazer as conexões entre as peças durante a montagem e os testes do circuito.'
   }
  };
+ window.TinkerPETComponentInfo=Object.freeze(contents);
  const grid=document.getElementById('componentsGrid');
  const panel=document.getElementById('componentPanel');
  const cards=[...document.querySelectorAll('.component-card')];
