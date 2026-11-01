@@ -141,3 +141,11 @@ body{overflow:hidden;background:#091e39;font-family:'DM Sans',Arial,sans-serif}
   image-rendering:auto!important;
  }
 }
+
+/* v14 — Correção no aplicativo instalado e em telas móveis:
+   alguns renderizadores deslocam os traços SVG animados sobre o texto
+   impresso na arte. A arte aprovada já inclui o contorno luminoso do
+   botão; conservamos o brilho pulsante externo, sem traços sobre a escrita. */
+@media (max-width:900px), (display-mode:standalone){
+ .main-action .cta-energy{display:none!important}
+}
