@@ -1,0 +1,132 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+ <meta charset="utf-8">
+ <meta name="viewport" content="width=device-width,initial-scale=1">
+ <meta name="theme-color" content="#f5faf9">
+ <meta name="description" content="Prévia independente de três propostas para o TinkerPET Studio. Não modifica circuitos salvos.">
+ <title>Prévia de melhorias • TinkerPET Studio</title>
+ <link rel="icon" href="assets/logo-pet.svg" type="image/svg+xml">
+ <link rel="preconnect" href="https://fonts.googleapis.com">
+ <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+ <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&family=Manrope:wght@500;600;700;800&display=swap" rel="stylesheet">
+ <link rel="stylesheet" href="preview-melhorias.css?v=1">
+ <script src="preview-melhorias.js?v=1" defer></script>
+</head>
+<body>
+<svg class="svg-library" aria-hidden="true" xmlns="http://www.w3.org/2000/svg">
+ <symbol id="i-layers" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="4"/><path d="m8 9 4-2 4 2-4 2-4-2Zm0 4 4 2 4-2m-8 2 4 2 4-2"/></symbol>
+ <symbol id="i-screen" viewBox="0 0 24 24"><rect x="2" y="3" width="20" height="15" rx="2"/><path d="M8 22h8m-4-4v4m-5-9 5-5 5 5"/></symbol>
+ <symbol id="i-box" viewBox="0 0 24 24"><path d="m12 3 9 5-9 5-9-5 9-5Zm-9 5v10l9 5 9-5V8M12 13v10"/></symbol>
+ <symbol id="i-sliders" viewBox="0 0 24 24"><path d="M4 7h10m4 0h2M4 17h2m4 0h10"/><circle cx="16" cy="7" r="2"/><circle cx="8" cy="17" r="2"/></symbol>
+ <symbol id="i-arrow-right" viewBox="0 0 24 24"><path d="M5 12h14m-6-6 6 6-6 6"/></symbol>
+ <symbol id="i-arrow-left" viewBox="0 0 24 24"><path d="M19 12H5m6-6-6 6 6 6"/></symbol>
+ <symbol id="i-x" viewBox="0 0 24 24"><path d="m6 6 12 12M18 6 6 18"/></symbol>
+ <symbol id="i-check" viewBox="0 0 24 24"><path d="m5 12 5 5L20 7"/></symbol>
+ <symbol id="i-lock" viewBox="0 0 24 24"><rect x="5" y="10" width="14" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></symbol>
+ <symbol id="i-folder" viewBox="0 0 24 24"><path d="M3 7a2 2 0 0 1 2-2h5l2 2h7a2 2 0 0 1 2 2v10H3V7Z"/></symbol>
+ <symbol id="i-download" viewBox="0 0 24 24"><path d="M12 3v13m-5-5 5 5 5-5M4 17v4h16v-4"/></symbol>
+ <symbol id="i-upload" viewBox="0 0 24 24"><path d="M12 17V4m-5 5 5-5 5 5M4 17v4h16v-4"/></symbol>
+ <symbol id="i-chevron" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></symbol>
+ <symbol id="i-info" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 11v6m0-10v.5"/></symbol>
+ <symbol id="i-calendar" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M8 3v4m8-4v4M3 10h18"/></symbol>
+ <symbol id="i-spark" viewBox="0 0 24 24"><path d="m12 2 2.1 7.9L22 12l-7.9 2.1L12 22l-2.1-7.9L2 12l7.9-2.1L12 2Z"/></symbol>
+ <symbol id="i-maximize" viewBox="0 0 24 24"><path d="M8 3H3v5m13-5h5v5M3 16v5h5m13-5v5h-5"/></symbol>
+ <symbol id="i-eye" viewBox="0 0 24 24"><path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></symbol>
+</svg>
+
+<header class="site-header">
+ <a class="brand" href="./" title="Voltar ao início do TinkerPET">
+  <span class="brand-logo"><img src="assets/logo-pet.svg" alt=""></span>
+  <span>Tinker<span>PET</span> <small>Studio</small></span>
+ </a>
+ <div class="header-side"><span class="preview-pill"><span class="preview-dot"></span> Ambiente de prévia</span><a class="back-link" href="projects.html"><svg><use href="#i-arrow-left"/></svg><span>Voltar ao site</span></a></div>
+</header>
+
+<main class="page">
+ <section class="hero">
+  <div class="hero-content">
+   <p class="eyebrow">LABORATÓRIO DE IDEIAS <span></span> CONCEITO VISUAL</p>
+   <h1>Três possibilidades.<br><span>O mesmo TinkerPET.</span></h1>
+   <p class="hero-desc">Uma prévia interativa das melhorias que conversamos. Explore cada proposta antes de decidir se vale a pena levar para o site.</p>
+   <div class="hero-safe"><svg><use href="#i-info"/></svg> Esta página é isolada: nenhum teste altera ou acessa seus circuitos reais.</div>
+  </div>
+  <div class="hero-art" aria-hidden="true"><div class="hero-ring"></div><img src="assets/esp32-devkit-v1-30p.svg?v=29" alt=""><div class="hero-art-chip chip-one"><svg><use href="#i-check"/></svg> Preservar o que já funciona</div><div class="hero-art-chip chip-two">03 propostas para explorar</div></div>
+ </section>
+
+ <nav class="feature-nav" aria-label="Navegar pelas propostas">
+  <button type="button" class="feature-tab active" data-tab="presentation" aria-selected="true" role="tab" id="tab-presentation" aria-controls="panel-presentation">
+   <span class="tab-number">01</span><svg><use href="#i-screen"/></svg><span>Modo apresentação</span>
+  </button>
+  <button type="button" class="feature-tab" data-tab="backup" aria-selected="false" role="tab" id="tab-backup" aria-controls="panel-backup">
+   <span class="tab-number">02</span><svg><use href="#i-box"/></svg><span>Backup completo</span>
+  </button>
+  <button type="button" class="feature-tab" data-tab="menus" aria-selected="false" role="tab" id="tab-menus" aria-controls="panel-menus">
+   <span class="tab-number">03</span><svg><use href="#i-sliders"/></svg><span>Menus mais simples</span>
+  </button>
+ </nav>
+
+ <section class="feature-section" id="panel-presentation" role="tabpanel" aria-labelledby="tab-presentation" data-panel="presentation">
+  <div class="feature-heading"><div><span class="section-label">PROPOSTA 01</span><h2>Modo apresentação</h2><p>Os mesmos componentes da seção “Como funciona”, em um formato próprio para projetores e explicações durante eventos.</p></div><button type="button" class="button primary" id="openPresentation"><svg><use href="#i-maximize"/></svg> Experimentar apresentação</button></div>
+  <div class="demo-shell guide-demo">
+   <div class="demo-topline"><div><span class="demo-eyebrow">PRÉVIA DE COMO FUNCIONA</span><h3>Explore as peças utilizadas no carrinho.</h3></div><span class="demo-subtle">Selecione uma peça abaixo</span></div>
+   <div class="component-thumbs" id="componentThumbs" aria-label="Escolher componente para apresentar"></div>
+   <div class="guide-selected">
+    <div class="selected-art"><img id="selectedArt" src="assets/esp32-devkit-v1-30p.svg?v=29" alt=""></div>
+    <div class="selected-copy"><span class="mini-label">COMPONENTE SELECIONADO</span><h3 id="selectedTitle">ESP32</h3><p id="selectedDescription"></p><button type="button" class="text-button" id="presentSelected">Mostrar este componente em tela cheia <svg><use href="#i-arrow-right"/></svg></button></div>
+   </div>
+  </div>
+  <p class="feature-caption"><svg><use href="#i-info"/></svg> Na proposta, a explicação ampliada teria navegação por setas, uso do teclado e opção de sair com Esc. Não mostra o gabarito das conexões.</p>
+ </section>
+
+ <section class="feature-section" id="panel-backup" role="tabpanel" aria-labelledby="tab-backup" data-panel="backup" hidden>
+  <div class="feature-heading"><div><span class="section-label">PROPOSTA 02</span><h2>Backup completo</h2><p>Uma maneira de proteger toda a coleção de circuitos de uma vez e recuperá-la em outro navegador.</p></div><span class="feature-neutral-tag"><svg><use href="#i-lock"/></svg> Simulação sem dados reais</span></div>
+  <div class="backup-grid">
+   <article class="demo-shell backup-collection">
+    <div class="backup-heading"><div><span class="demo-eyebrow">BIBLIOTECA DE EXEMPLO</span><h3>Meus circuitos <span class="count">3</span></h3></div><span class="example-tag">Dados fictícios</span></div>
+    <div class="mock-projects" id="mockProjects">
+     <div class="mock-project"><div class="mock-project-icon"><img src="assets/esp32-devkit-v1-30p.svg?v=29" alt=""></div><div><strong>Carrinho com gangorras</strong><small>Exemplo · 31/10/2026</small></div><svg><use href="#i-check"/></svg></div>
+     <div class="mock-project"><div class="mock-project-icon"><img src="assets/mx1508-desenhado.svg?v=38" alt=""></div><div><strong>Teste da ponte H</strong><small>Exemplo · 30/10/2026</small></div><svg><use href="#i-check"/></svg></div>
+     <div class="mock-project"><div class="mock-project-icon"><img src="assets/lm2596-desenhado.svg" alt=""></div><div><strong>Montagem sem gangorra</strong><small>Exemplo · 29/10/2026</small></div><svg><use href="#i-check"/></svg></div>
+    </div>
+    <div class="backup-controls"><button type="button" class="button primary" id="simulateExport"><svg><use href="#i-download"/></svg> Simular backup</button><button type="button" class="button secondary" id="simulateImport"><svg><use href="#i-upload"/></svg> Simular restauração</button></div>
+   </article>
+   <div class="backup-right">
+    <div class="benefit"><div class="benefit-icon"><svg><use href="#i-folder"/></svg></div><div><h3>Um arquivo, todos os projetos</h3><p>O backup real reuniria os circuitos e seus nomes em um único arquivo para guardar ou transferir de dispositivo.</p></div></div>
+    <div class="benefit"><div class="benefit-icon"><svg><use href="#i-check"/></svg></div><div><h3>Restaurar com segurança</h3><p>Antes de importar, o site mostraria uma conferência dos projetos, com a opção de adicionar sem apagar os existentes.</p></div></div>
+    <div class="benefit muted-benefit"><svg><use href="#i-info"/></svg><p>Aqui, os botões mostram somente o fluxo e os avisos. Não há exportação dos seus projetos ou alteração no armazenamento.</p></div>
+   </div>
+  </div>
+  <section class="backup-preview" id="backupResult" aria-live="polite" hidden></section>
+ </section>
+
+ <section class="feature-section" id="panel-menus" role="tabpanel" aria-labelledby="tab-menus" data-panel="menus" hidden>
+  <div class="feature-heading"><div><span class="section-label">PROPOSTA 03</span><h2>Menus mais simples</h2><p>Menos informação repetida, mais espaço para os circuitos. Sem tirar os recursos que já utilizamos.</p></div><div class="toggle-switch" role="group" aria-label="Comparar menus"><button type="button" id="menuNow" class="active" aria-pressed="true">Como está</button><button type="button" id="menuNext" aria-pressed="false">Proposta</button></div></div>
+  <div class="menu-demo" id="menuMock" data-version="now">
+   <div class="menu-demo-header"><span><span class="demo-logo"><img src="assets/logo-pet.svg" alt=""></span><b>Tinker<span>PET</span></b> Studio</span><div class="tiny-search">Buscar circuito...</div><div class="tiny-order"><span id="sortMockLabel">Mais recentes</span><svg><use href="#i-chevron"/></svg></div></div>
+   <div class="menu-demo-body">
+    <aside class="menu-demo-sidebar"><div class="menu-demo-nav"><div><svg><use href="#i-layers"/></svg> Início</div><div class="selected"><svg><use href="#i-folder"/></svg> Meus circuitos</div><div><svg><use href="#i-lock"/></svg> Gabarito</div><div><svg><use href="#i-check"/></svg> Créditos</div><div><svg><use href="#i-info"/></svg> Como funciona</div></div><div class="menu-mock-stats" id="menuStats"><div>Informações da biblioteca</div><small>2 circuitos</small><small>Último editado: Carrinho com gangorras</small><small>Armazenamento local: 24 KB</small></div><button class="menu-more-info" type="button" id="toggleMenuInfo" hidden aria-expanded="false"><svg><use href="#i-info"/></svg> Informações <svg class="chev"><use href="#i-chevron"/></svg></button></aside>
+    <div class="menu-demo-main"><div class="menu-demo-top"><h3>Meus circuitos</h3><button type="button" class="tiny-new" id="fakeCreate"><span>+</span> Novo circuito</button></div>
+     <div class="menu-project-grid"><div class="menu-create-project"><div class="dashed-box"><span>+</span><strong>Criar novo circuito</strong></div></div>
+      <div class="menu-project"><div class="menu-thumb"><img src="assets/esp32-devkit-v1-30p.svg?v=29" alt=""><img src="assets/mx1508-desenhado.svg?v=38" alt=""></div><strong>Carrinho com gangorras</strong><span>31/10/2026, 18:45</span><div class="tiny-edit">Editar <span>·</span> Duplicar</div></div>
+      <div class="menu-project"><div class="menu-thumb"><img src="assets/gangorra-desenhada.svg?v=3" alt=""><img src="assets/lm2596-desenhado.svg" alt=""></div><strong>Teste de conexões</strong><span>30/10/2026, 16:20</span><div class="tiny-edit">Editar <span>·</span> Duplicar</div></div>
+     </div>
+    </div>
+   </div>
+  </div>
+  <div class="comparison-strip"><div><svg><use href="#i-check"/></svg><p><strong>Eu manteria:</strong> Início, Meus circuitos, Gabarito, Créditos e Como funciona.</p></div><div><svg><use href="#i-spark"/></svg><p><strong>Eu simplificaria:</strong> o cartão duplicado de criação, estatísticas sempre abertas e a ordenação “Mais peças”.</p></div></div>
+ </section>
+
+ <footer class="preview-footer"><span>TinkerPET Studio · Prévia independente de melhorias</span><a href="projects.html">Voltar ao site original <svg><use href="#i-arrow-right"/></svg></a></footer>
+</main>
+
+<dialog id="presentationDialog" class="presentation-dialog" aria-labelledby="slideTitle">
+ <div class="presentation-layout">
+  <div class="presentation-header"><div class="presentation-brand"><img src="assets/logo-pet.svg" alt=""> <strong>TinkerPET <span>Studio</span></strong><i>Modo apresentação · Prévia</i></div><div class="presentation-actions"><button type="button" id="presentationFullscreen" class="presentation-ghost"><svg><use href="#i-maximize"/></svg> Tela cheia</button><button type="button" id="closePresentation" class="presentation-close" aria-label="Encerrar apresentação"><svg><use href="#i-x"/></svg><span>Encerrar</span></button></div></div>
+  <div class="presentation-stage"><div class="stage-visual"><div class="stage-decoration" aria-hidden="true"></div><img id="slideImage" src="assets/esp32-devkit-v1-30p.svg?v=29" alt=""></div><div class="stage-copy"><div class="stage-overline">CONHEÇA OS COMPONENTES <span id="slideCounter">01 / 08</span></div><h2 id="slideTitle">ESP32</h2><div class="stage-section"><h3>O que é?</h3><p id="slideWhat"></p></div><div class="stage-section"><h3>Como funciona?</h3><p id="slideHow"></p></div><div class="stage-car"><h3>No nosso carrinho</h3><p id="slideCar"></p></div></div></div>
+  <div class="presentation-bottom"><div class="progress-dots" id="slideDots" aria-label="Escolher slide"></div><div class="slide-controls"><button type="button" id="slidePrev" class="presentation-ghost"><svg><use href="#i-arrow-left"/></svg> Anterior</button><button type="button" id="slideNext" class="presentation-next">Próximo <svg><use href="#i-arrow-right"/></svg></button></div></div>
+ </div>
+</dialog>
+<div class="toast" id="previewToast" role="status" aria-live="polite" hidden></div>
+</body>
+</html>
