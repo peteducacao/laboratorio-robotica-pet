@@ -43,7 +43,7 @@ try{
   assert.equal(await page.locator('#newCircuit').count(),0,'sem botão redundante '+width);
   assert.equal(await page.locator('.create-inner').count(),1,'cartão Criar novo circuito preservado '+width);
   const importButton=page.locator('#importCircuit');
-  assert(importButton.evaluate(el=>getComputedStyle(el).backgroundImage).then(x=>x.includes('gradient')),'fundo verde de Importar '+width);
+  assert(await importButton.evaluate(el=>getComputedStyle(el).backgroundImage.includes('gradient')),'fundo verde de Importar '+width);
   assert.equal(await page.locator('#sortCircuits option').count(),2,'sem Mais peças '+width);
   assert.equal(await page.locator('#libraryStats').isVisible(),false,'estatísticas recolhidas '+width);
   await page.locator('#toggleLibraryInfo').click();
