@@ -13,7 +13,7 @@
  function installed(){
   return matchMedia('(display-mode: standalone)').matches||navigator.standalone===true;
  }
- function setInstallState(){install.hidden=installed();}
+ function setInstallState(){install.hidden=installed();if(installed())try{localStorage.setItem('tinkerpet-local-installed-v1','1')}catch{}}
  function setUpdateState(show){
   update.hidden=!show;
   if(!show){pendingRevision='';update.disabled=false;$('pwaUpdateDescription').textContent='Nova versão pronta';}
@@ -103,6 +103,7 @@
   event.preventDefault();installPrompt=event;setInstallState();
  });
  window.addEventListener('appinstalled',()=>{
+  try{localStorage.setItem('tinkerpet-local-installed-v1','1')}catch{}
   installPrompt=null;setInstallState();help.hidden=true;
   status('TinkerPET instalado. Os recursos preparados também funcionam offline.');
  });

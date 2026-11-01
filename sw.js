@@ -35,7 +35,7 @@ const PRECACHE=[
  "presentation-mode.js",
  "nick-registry.js",
  "manifest.webmanifest",
- "pwa.js",
+ "pwa.js", "local-sync.js", "local-sync.css",
  "assets/logo-pet.svg",
  "assets/welcome-clean-2026.svg",
  "assets/welcome-approved.avif",
