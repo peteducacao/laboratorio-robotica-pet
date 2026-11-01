@@ -1,0 +1,39 @@
+name: Conferir prévia de melhorias
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'preview-melhorias.html'
+      - 'preview-melhorias.css'
+      - 'preview-melhorias.js'
+      - 'tests/preview-melhorias-browser.mjs'
+      - '.github/workflows/preview-melhorias.yml'
+  workflow_dispatch:
+
+jobs:
+  preview:
+    name: Testar protótipo isolado em três telas
+    runs-on: ubuntu-latest
+    steps:
+      - name: Baixar repositório
+        uses: actions/checkout@v4
+      - name: Configurar Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Conferir JavaScript
+        run: node --check preview-melhorias.js
+      - name: Instalar navegador
+        run: |
+          npm install --no-save --ignore-scripts playwright@1.56.1
+          npx playwright install --with-deps chromium
+      - name: Exercitar três propostas
+        run: node tests/preview-melhorias-browser.mjs
+      - name: Salvar capturas da prévia
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: captura-preview-melhorias
+          path: test-results/preview-melhorias/*.png
+          if-no-files-found: ignore
