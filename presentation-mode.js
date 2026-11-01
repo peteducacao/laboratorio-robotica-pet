@@ -51,12 +51,16 @@
   const now=Date.now();
   if(pendingTap&&now-pendingTap.at<340&&Math.hypot(x-pendingTap.x,y-pendingTap.y)<75){
    clearPendingTap();
-   // Primeiro sai da tela cheia nativa; fora dela, volta ao guia.
-   if(document.fullscreenElement===fullscreenTarget){
-    void document.exitFullscreen().then(setFullscreenText).catch(()=>close());
-   }else{
-    void close();
-   }
+   // Aguarda o click sintético do toque terminar antes de fechar o modal:
+   // evita que o segundo toque ative um link da página que está por baixo.
+   setTimeout(()=>{
+    if(!modal.open)return;
+    if(document.fullscreenElement===fullscreenTarget){
+     void document.exitFullscreen().then(setFullscreenText).catch(()=>close());
+    }else{
+     void close();
+    }
+   },80);
    return;
   }
   clearPendingTap();
