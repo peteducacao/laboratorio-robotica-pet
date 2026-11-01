@@ -424,3 +424,67 @@
  .top .search{width:100%;max-width:174px}
  .top #sortCircuits.filter{width:130px;min-width:130px;max-width:130px}
 }
+
+/* Menus simplificados: o botão de criar permanece somente na grade.
+   As informações ficam acessíveis sem ocupar permanentemente a barra. */
+.library-info-toggle{
+ display:flex;align-items:center;gap:10px;width:100%;
+ border:1px solid #e1ebe9;background:#fff;
+ color:#315968;border-radius:12px;padding:12px 13px;
+ font:750 13px/1.4 'DM Sans',Arial,sans-serif;text-align:left;
+ box-shadow:0 2px 12px #133f4908;
+}
+.library-info-toggle:hover{background:#f1faf6}
+.library-info-toggle>svg{width:18px;height:18px;flex:none}
+.library-info-toggle .info-chevron{margin-left:auto;width:16px;height:16px;transition:transform .2s}
+.library-info-toggle[aria-expanded=true]{border-color:#9bd5c8;background:#effaf6;color:#057e73}
+.library-info-toggle[aria-expanded=true] .info-chevron{transform:rotate(180deg)}
+.sidebar .stats:not([hidden]){display:block;margin-top:-11px}
+@media(max-width:810px){
+ .sidebar .stats:not([hidden]){display:block;margin-top:9px}
+ .sidebar .library-info-toggle{margin-top:9px;padding:10px 12px}
+}
+.intro .actions{justify-content:flex-end}
+.intro .actions .btn.primary{
+ background:linear-gradient(130deg,#099e8d,#008476);
+ color:#fff;border-color:#008d80;
+ box-shadow:0 5px 13px #078b7f2c;
+}
+.backup-dialog{width:min(670px,calc(100vw - 28px));max-width:calc(100vw - 28px);max-height:calc(100dvh - 28px);overflow:auto}
+.backup-body{padding:25px}
+.backup-dialog-heading{display:flex;align-items:center;gap:13px;position:relative;padding-right:34px;margin-bottom:20px}
+.backup-dialog-heading h2{font:800 22px/1.25 'Manrope',sans-serif;margin:0;color:#184455}
+.backup-dialog-heading p{font-size:12px;color:#65808b;margin:4px 0 0}
+.backup-symbol{width:46px;height:46px;border-radius:14px;background:#e1f7ef;color:#087c70;display:grid;place-items:center;flex:none}
+.backup-symbol svg{width:24px;height:24px}
+.backup-x{position:absolute;right:0;top:0;background:#fff;border:1px solid #d5e4e2;color:#52717d;font-size:24px;line-height:1;width:32px;height:32px;border-radius:50%;display:grid;place-items:center}
+.backup-options{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:13px}
+.backup-option{padding:19px;border:1px solid #dcebe7;border-radius:15px;background:linear-gradient(135deg,#fff,#f8fcfa);display:flex;flex-direction:column;gap:12px}
+.backup-option-heading{display:flex;align-items:center;gap:9px}
+.backup-option-heading svg{width:20px;height:20px;color:#078679}
+.backup-option-heading h3{font:800 15px/1.3 'Manrope',sans-serif;color:#254d5c;margin:0}
+.backup-option p{font-size:12px;line-height:1.65;color:#637d87;margin:0 0 5px;flex:1}
+.backup-option .btn{width:100%;font-size:12px;min-height:43px}
+.backup-review{padding:17px;margin-top:15px;border-radius:14px;background:#f4faf8;border:1px solid #c9e5db}
+.backup-review h3{font:800 16px/1.4 'Manrope',sans-serif;margin:0 0 7px;color:#21515c}
+.backup-review>p{font-size:12px;color:#57757e;margin:0 0 15px;line-height:1.55}
+.backup-choice{display:flex;align-items:flex-start;gap:10px;background:#fff;border:1px solid #dceae5;border-radius:11px;padding:12px 14px;cursor:pointer;margin:8px 0}
+.backup-choice input{flex:none;width:17px;height:17px;margin:2px 0 0;accent-color:#07877b}
+.backup-choice span{display:flex;flex-direction:column;gap:4px}
+.backup-choice strong{color:#254b59;font-size:12px}
+.backup-choice small{font-size:11px;color:#748d91;line-height:1.4}
+.backup-review .backup-warning{border:1px solid #ffcdbb;background:#fff4ed;color:#9a4b29;padding:11px 12px;border-radius:10px;margin-top:11px;line-height:1.5}
+.backup-review .error{font-size:12px;min-height:0;margin:9px 0 0;color:#b53f51}
+.backup-confirm{display:flex;align-items:center;justify-content:flex-end;gap:10px;margin-top:14px}
+.backup-confirm .btn{min-height:42px;font-size:12px}
+@media(max-width:600px){
+ .backup-body{padding:17px}
+ .backup-dialog-heading{gap:10px}
+ .backup-dialog-heading h2{font-size:19px}
+ .backup-options{grid-template-columns:1fr;gap:10px}
+ .backup-option{padding:14px;gap:8px}
+ .backup-option p{margin:0}
+ .backup-option .btn{min-height:40px}
+ .intro .actions{width:100%;justify-content:stretch}
+ .intro .actions .btn{flex:1 1 0;font-size:12px;padding:0 9px;min-width:0}
+}
