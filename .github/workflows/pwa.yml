@@ -1,0 +1,26 @@
+name: PWA do TinkerPET (offline e atualização)
+on:
+  push:
+    branches: [feature/pwa-offline-informacoes-20261031]
+  pull_request:
+  workflow_dispatch:
+jobs:
+  pwa:
+    name: Instalação, cache e atualização
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Conferir scripts
+        run: |
+          node --check pwa.js
+          node --check sw.js
+          node --check tests/pwa-browser.mjs
+      - name: Preparar Chromium
+        run: |
+          npm install --no-save --ignore-scripts playwright@1.56.1
+          npx playwright install --with-deps chromium
+      - name: Testar PWA sem internet e sem alterar projetos
+        run: node tests/pwa-browser.mjs
