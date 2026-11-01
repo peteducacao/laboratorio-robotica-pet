@@ -77,3 +77,16 @@
  .slide-controls button{flex:1}
 }
 @media(prefers-reduced-motion:reduce){.start-presentation{transition:none!important}}
+
+/* Quando o navegador permite fullscreen, é o conteúdo do diálogo
+   (não o <dialog>) que entra em tela cheia, evitando bloqueios do Chrome.
+   Em dispositivos sem API, o diálogo segue preenchendo a viewport. */
+.presentation-dialog .presentation-layout:fullscreen{
+ display:flex;flex-direction:column;width:100vw;height:100dvh;
+ overflow:auto;background:#f8fcfa;color:#193b4b;
+}
+.presentation-dialog.fullscreen-fallback{
+ position:fixed;inset:0;margin:0;padding:0;max-width:none;max-height:none;
+ width:100vw;height:100dvh;border-radius:0;
+ background:#f8fcfa;
+}
