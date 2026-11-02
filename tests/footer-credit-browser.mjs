@@ -52,12 +52,12 @@ try{
     const footer=document.querySelector('.site-credit-projects'),
       board=document.querySelector('#projectsGrid'),main=document.querySelector('main.main');
     const r=footer.getBoundingClientRect(),b=board.getBoundingClientRect(),m=main.getBoundingClientRect();
-    return {text:footer.textContent.trim(),y:r.top,bottom:r.bottom,x:r.x,width:r.width,
+    return {text:footer.textContent.trim(),y:r.top,contentTop:r.top+parseFloat(getComputedStyle(footer).paddingTop),bottom:r.bottom,x:r.x,width:r.width,
       boardBottom:b.bottom,mainBottom:m.bottom,scrollWidth:document.documentElement.scrollWidth,
       fontSize:getComputedStyle(footer).fontSize};
   });
   assert.equal(library.text,credit,'Autoria na biblioteca '+width);
-  assert.ok(library.y>=library.boardBottom+12,'Rodapé fica após os cartões '+width+': '+JSON.stringify(library));
+  assert.ok(library.contentTop>=library.boardBottom+20,'Texto do rodapé fica após os cartões '+width+': '+JSON.stringify(library));
   assert.ok(library.bottom<=library.mainBottom+1,'Rodapé permanece na área de conteúdo '+width);
   assert.ok(library.scrollWidth<=width+2,'Biblioteca sem rolagem horizontal '+width);
   assert.equal(library.fontSize,'10px','Fonte pequena na biblioteca '+width);
