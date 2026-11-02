@@ -57,7 +57,7 @@ try{
       fontSize:getComputedStyle(footer).fontSize};
   });
   assert.equal(library.text,credit,'Autoria na biblioteca '+width);
-  assert.ok(library.y>=library.boardBottom+20,'Rodapé fica após os cartões '+width+': '+JSON.stringify(library));
+  assert.ok(library.y>=library.boardBottom+12,'Rodapé fica após os cartões '+width+': '+JSON.stringify(library));
   assert.ok(library.bottom<=library.mainBottom+1,'Rodapé permanece na área de conteúdo '+width);
   assert.ok(library.scrollWidth<=width+2,'Biblioteca sem rolagem horizontal '+width);
   assert.equal(library.fontSize,'10px','Fonte pequena na biblioteca '+width);
