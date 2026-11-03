@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 300" role="img" aria-label="Motor DC com redutor amarelo — lateral">
+<title>Motor DC com redutor amarelo — lateral</title>
+<defs>
+<linearGradient id="metal" x2=".85" y2="1"><stop stop-color="#fbfeff"/><stop offset=".23" stop-color="#d6e1e8"/><stop offset=".55" stop-color="#96a9b8"/><stop offset=".8" stop-color="#eff5f9"/><stop offset="1" stop-color="#8597a5"/></linearGradient>
+<linearGradient id="black" x2=".8" y2="1"><stop stop-color="#485968"/><stop offset=".2" stop-color="#20303e"/><stop offset=".75" stop-color="#101b25"/><stop offset="1" stop-color="#2f4351"/></linearGradient>
+<linearGradient id="gold" x2=".8" y2="1"><stop stop-color="#fff0a7"/><stop offset=".3" stop-color="#e9bc58"/><stop offset=".7" stop-color="#ac7f31"/><stop offset="1" stop-color="#f4d17e"/></linearGradient>
+<filter id="soft" x="-30%" y="-30%" width="160%" height="170%"><feDropShadow dy="5" stdDeviation="4" flood-color="#1c3142" flood-opacity=".22"/></filter>
+<linearGradient id="yellow" x2="1" y2="1"><stop stop-color="#fff1a2"/><stop offset=".2" stop-color="#ffdc55"/><stop offset=".75" stop-color="#ebb11c"/><stop offset="1" stop-color="#c99316"/></linearGradient></defs>
+
+<rect x="5" y="127" width="124" height="39" rx="9" fill="url(#metal)" stroke="#7c909b" stroke-width="3"/>
+<rect x="111" y="65" width="310" height="191" rx="20" fill="url(#yellow)" stroke="#be890e" stroke-width="6" filter="url(#soft)"/>
+<path d="M129 87H403" stroke="#fff1a4" stroke-width="7" stroke-linecap="round"/>
+<path d="M134 237H402" stroke="#c89c1d" stroke-width="5"/>
+<circle cx="167" cy="108" r="9" fill="#d7a846" stroke="#ad8025" stroke-width="3"/>
+<circle cx="370" cy="214" r="9" fill="#d7a846" stroke="#ad8025" stroke-width="3"/>
+<text x="257" y="166" text-anchor="middle" font-family="Arial" font-weight="800" font-size="30" fill="#967113">DC 3–6V</text>
+<rect x="421" y="86" width="164" height="144" rx="24" fill="url(#metal)" stroke="#8d9fac" stroke-width="6"/>
+<path d="M438 105H569M438 205H569" stroke="white" stroke-opacity=".65" stroke-width="5"/>
+<rect x="566" y="88" width="33" height="139" rx="12" fill="url(#black)" stroke="#71828d" stroke-width="4"/>
+<rect x="593" y="112" width="38" height="27" rx="5" fill="#212d37" stroke="#d8e2e8" stroke-width="3"/>
+<rect x="593" y="176" width="38" height="27" rx="5" fill="#be3833" stroke="#f2a498" stroke-width="3"/>
+<circle cx="614" cy="126" r="5" fill="#eff4f6"/><circle cx="614" cy="189" r="5" fill="#fff0d1"/>
+
+</svg>

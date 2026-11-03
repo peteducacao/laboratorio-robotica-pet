@@ -1,0 +1,42 @@
+/* TinkerPET · sandbox visual de componentes. Não altera folhas do site publicado. */
+.preview-title-suffix{font-size:.48em;font-weight:700;letter-spacing:0;color:#0f9285;vertical-align:middle}
+.components-preview-note{
+ position:relative;margin:0 0 24px;padding:20px 24px;border:1px solid #bfe6d9;
+ border-radius:16px;background:linear-gradient(112deg,#f1fbf8,#ffffff 82%);
+ box-shadow:0 5px 20px rgba(24,104,94,.06);color:#234b57;
+}
+.preview-note-kicker{display:block;font-size:10px;font-weight:800;letter-spacing:.1em;color:#068778;margin-bottom:8px}
+.components-preview-note strong{display:block;font:800 18px/1.4 'Manrope','DM Sans',sans-serif}
+.components-preview-note p{font-size:12.5px;line-height:1.7;color:#577684;margin:7px 0 12px;max-width:780px}
+.components-preview-note a{display:inline-flex;align-items:center;justify-content:center;padding:9px 13px;border:1px solid #a8d4c9;border-radius:10px;background:#fff;color:#087a6a;font-size:12px;font-weight:750;text-decoration:none}
+.components-preview-note a:hover{background:#e8f9f2}
+.preview-return-link{
+ display:inline-flex;align-items:center;justify-content:center;white-space:nowrap;
+ font:700 12px/1.2 'DM Sans',Arial,sans-serif;color:#096f69;text-decoration:none;
+ border:1px solid #b0dfd2;background:#eaf9f4;border-radius:10px;
+ padding:10px 13px;min-height:36px;
+}
+.preview-return-link:hover{background:#d9f4ea}
+body.studio-main .header-tag.preview-tag{background:#fff7df;color:#8b6516;border-color:#f4dfa4}
+body.studio-main .header-end{gap:10px}
+body.studio-main .autosave-indicator{font-size:10px}
+body.studio-main .preview-return-link:focus-visible,
+.components-preview-note a:focus-visible{outline:3px solid #26a995;outline-offset:2px}
+@media(max-width:810px){
+ .components-preview-note{margin-bottom:19px;padding:16px}
+ .components-preview-note strong{font-size:16px}
+ .components-preview-note p{font-size:12px}
+}
+@media(max-width:700px){
+ body.studio-main .app-header{padding:0 10px;gap:5px}
+ body.studio-main .header-tag.preview-tag{font-size:9px;letter-spacing:0;padding:6px;max-width:76px;white-space:normal;text-align:center}
+ body.studio-main .preview-return-link{font-size:10px;padding:8px 9px;min-height:32px}
+ body.studio-main .header-end .autosave-indicator{display:none!important}
+ body.studio-main .brand small{display:none}
+}
+@media(max-width:410px){
+ body.studio-main .header-tag.preview-tag{display:none}
+ body.studio-main .header-start{gap:5px}
+ body.studio-main .header-end{gap:4px}
+ body.studio-main .preview-return-link{font-size:10px;white-space:normal;max-width:114px;text-align:center;padding:7px 5px}
+}

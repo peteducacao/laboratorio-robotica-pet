@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 255 340" role="img" aria-label="Bateria 9 volts preta e dourada">
+<title>Bateria 9 volts preta e dourada</title>
+<defs>
+<linearGradient id="metal" x2=".85" y2="1"><stop stop-color="#fbfeff"/><stop offset=".23" stop-color="#d6e1e8"/><stop offset=".55" stop-color="#96a9b8"/><stop offset=".8" stop-color="#eff5f9"/><stop offset="1" stop-color="#8597a5"/></linearGradient>
+<linearGradient id="black" x2=".8" y2="1"><stop stop-color="#485968"/><stop offset=".2" stop-color="#20303e"/><stop offset=".75" stop-color="#101b25"/><stop offset="1" stop-color="#2f4351"/></linearGradient>
+<linearGradient id="gold" x2=".8" y2="1"><stop stop-color="#fff0a7"/><stop offset=".3" stop-color="#e9bc58"/><stop offset=".7" stop-color="#ac7f31"/><stop offset="1" stop-color="#f4d17e"/></linearGradient>
+<filter id="soft" x="-30%" y="-30%" width="160%" height="170%"><feDropShadow dy="5" stdDeviation="4" flood-color="#1c3142" flood-opacity=".22"/></filter>
+<linearGradient id="amber" x2="1" y2="1"><stop stop-color="#fff1ac"/><stop offset=".45" stop-color="#eec252"/><stop offset="1" stop-color="#b77c24"/></linearGradient></defs>
+
+<path d="M33 54L48 42H214L226 54V313L211 329H47L33 315Z" fill="url(#black)" stroke="#18242e" stroke-width="5" filter="url(#soft)"/>
+<path d="M34 55L49 42H214L226 54L210 72H47Z" fill="url(#metal)" stroke="#a1acb3" stroke-width="2"/>
+<rect x="48" y="9" width="60" height="42" rx="9" fill="#de4d38" stroke="#a52826" stroke-width="4"/>
+<circle cx="78" cy="18" r="13" fill="url(#metal)" stroke="#95423b" stroke-width="3"/>
+<rect x="145" y="12" width="60" height="40" rx="10" fill="#233544" stroke="#526677" stroke-width="4"/>
+<circle cx="175" cy="19" r="13" fill="#15232d" stroke="#c5d2d8" stroke-width="4"/>
+<text x="78" y="43" fill="#fff" text-anchor="middle" font-size="21" font-weight="800" font-family="Arial">+</text>
+<text x="175" y="43" fill="#fff" text-anchor="middle" font-size="21" font-weight="800" font-family="Arial">−</text>
+<rect x="40" y="82" width="177" height="105" rx="7" fill="url(#amber)" stroke="#ab791d" stroke-width="3"/>
+<path d="M52 94H204" stroke="#fff0b0" stroke-width="5" opacity=".8"/>
+<path d="M42 186H216" stroke="#e2b744" stroke-width="4"/>
+<text x="129" y="153" text-anchor="middle" fill="#1d2d36" font-family="Arial" font-size="65" font-weight="900">9V</text>
+<text x="129" y="222" text-anchor="middle" font-size="23" font-weight="bold" fill="#f7eee0" font-family="Arial">TinkerPET</text>
+<text x="129" y="244" text-anchor="middle" font-size="12" letter-spacing="2" fill="#d0dce2" font-family="Arial">BATERIA</text>
+<path d="M51 269H201" stroke="#d6bf88" opacity=".5"/><text x="129" y="294" text-anchor="middle" font-size="13" letter-spacing="1" fill="#cad9e0" font-family="Arial">ALIMENTAÇÃO</text>
+
+</svg>

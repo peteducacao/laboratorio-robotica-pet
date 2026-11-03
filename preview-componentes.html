@@ -1,0 +1,114 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#fffcfa">
+<meta name="description" content="Meus circuitos do TinkerPET. Organize, edite, duplique, importe e baixe projetos salvos neste navegador.">
+<title>Meus circuitos — Prévia dos componentes • TinkerPET</title>
+
+
+<link rel="icon" href="assets/logo-pet.svg" type="image/svg+xml">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&family=Manrope:wght@600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="projects.css?v=19">
+<link rel="stylesheet" href="preview-componentes.css?v=1">
+
+<script src="preview-componentes-seed.js"></script>
+<script defer src="preview-componentes-projects.js?v=1"></script>
+
+</head>
+<body>
+<header class="top">
+ <a class="brand" href="./" aria-label="Ir para o início do TinkerPET"><span class="symbol"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3v3m8-3v3M5 8H3m18 0h-2M8 17v4m8-4v4M6 7h12v10H6zM9 11l2 2 4-4"/></svg></span><span>TinkerPET <span>Studio</span></span></a>
+ <label class="search"><svg viewBox="0 0 24 24" fill="none" stroke-width="2"><circle cx="10" cy="10" r="7"/><path d="m15 15 6 6"/></svg><input id="searchCircuits" type="search" placeholder="Buscar circuito..." aria-label="Buscar circuito"></label>
+ <select id="sortCircuits" class="filter" aria-label="Ordenar circuitos"><option value="recent">Mais recentes</option><option value="name">Nome A–Z</option></select>
+ <button id="nickButton" type="button" class="nick" title="Editar meu Nick" aria-label="Editar meu Nick"><span class="nick-avatar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-8 16-8 16 0"/></svg></span><span id="nickText" class="nick-name">Seu Nick</span></button>
+</header>
+<div class="shell">
+ <aside class="sidebar">
+  <nav class="nav" aria-label="Menu principal">
+   <a href="./"><svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="m3 11 9-8 9 8v10h-6v-7H9v7H3z"/></svg>Início</a>
+   <a class="active" href="preview-componentes.html" aria-current="page"><svg viewBox="0 0 24 24" fill="none" stroke-width="2"><circle cx="6" cy="5" r="2"/><circle cx="18" cy="19" r="2"/><path d="M6 7v11h7v-7h5V7"/></svg>Meus circuitos</a>
+   <button type="button" id="openGate"><svg viewBox="0 0 24 24" fill="none" stroke-width="2"><rect x="5" y="10" width="14" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3m-4 5v2"/></svg><span id="gateLabel">Gabarito</span></button>
+   <button type="button" id="openCredits" class="nav-credits" aria-haspopup="dialog" aria-controls="creditsDialog" aria-label="Abrir Créditos do projeto"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="5"/><path d="m8.2 12-1.5 9 5.3-3 5.3 3-1.5-9"/></svg><span>Créditos</span></button>
+   <a id="openHow" href="como-funciona.html" aria-label="Conhecer os componentes do carrinho"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><path d="M15 14h6m-3-3v6m-4 4h8"/></svg><span>Como funciona</span></a>
+  </nav>
+  <button type="button" id="toggleLibraryInfo" class="library-info-toggle" aria-controls="libraryStats" aria-expanded="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 11v6m0-10v.5"/></svg><span>Informações</span><svg class="info-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></button>
+  <div class="stats" id="libraryStats" hidden>
+   <div class="stat"><svg viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8" fill="none"><path d="M5 3h10l4 4v14H5zM14 3v5h5M8 13h8M8 17h6"/></svg><div><span>Total de circuitos</span><strong id="projectCount">0</strong></div></div>
+   <div class="stat"><svg viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8" fill="none"><circle cx="12" cy="12" r="9"/><path d="M12 6v6l4 3"/></svg><div><span>Último editado</span><strong id="lastCircuit">—</strong></div></div>
+   <div class="stat"><svg viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8" fill="none"><rect x="3" y="5" width="18" height="15" rx="2"/><path d="M3 13h18"/></svg><div style="flex:1"><span>Armazenamento local</span><div class="usage"><i id="storageBar"></i></div><span id="storageUsed">0 KB usados</span></div></div>
+   <div class="pwa-tools" id="pwaTools" aria-label="Instalação e atualizações do TinkerPET">
+    <button type="button" class="pwa-action" id="pwaInstallButton" aria-describedby="pwaInstallHelp">
+     <span class="pwa-action-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 3v12m-4-4 4 4 4-4M4 17v4h16v-4"/></svg></span>
+     <span class="pwa-action-label"><strong>Instalar TinkerPET</strong><small>Abra como aplicativo e use offline</small></span>
+     <span class="pwa-chevron" aria-hidden="true">›</span>
+    </button>
+    <p id="pwaInstallHelp" class="pwa-install-help" hidden></p>
+    <button type="button" class="pwa-action pwa-update" id="pwaUpdateButton" hidden>
+     <span class="pwa-action-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M20 7v5h-5M4 17v-5h5"/><path d="M5.8 9a7 7 0 0 1 12-3.1L20 12M4 12l2.2 6.1A7 7 0 0 0 18 15"/></svg></span>
+     <span class="pwa-action-label"><strong>Atualização disponível</strong><small id="pwaUpdateDescription">Nova versão pronta</small></span>
+     <span class="pwa-new" aria-hidden="true">Nova</span>
+    </button>
+    <p id="pwaNotice" class="pwa-notice" role="status" hidden></p>
+   </div>
+  </div>
+ </aside>
+ <main class="main">
+  <div class="intro"><h1>Meus circuitos <span class="preview-title-suffix">· Prévia</span></h1><div class="actions">
+   <button class="btn primary" id="importCircuit"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 17V3m-5 5 5-5 5 5M4 15v5h16v-5"/></svg>Importar circuito</button>
+   <button class="btn" type="button" id="backupCircuits"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 6h14v15H5zM8 3h8v3M8 11h8M8 15h8"/></svg>Backup completo</button>
+   <input type="file" id="importFile" accept=".json,.tinkerpet,application/json" hidden>
+   <input type="file" id="restoreFile" accept=".json,.tinkerpet,application/json" hidden>
+  </div></div>
+  <section class="components-preview-note" role="note"><span class="preview-note-kicker">LABORATÓRIO DE TESTES · NÃO PUBLICADO NO SITE</span><strong>Componentes redesenhados dentro dos circuitos</strong><p>Abra o circuito de exemplo ou qualquer circuito desta lista para vê-lo com as novas peças. Esta página trabalha com cópias: seus circuitos originais não são alterados.</p><a href="projects.html">Voltar ao Meus circuitos oficial</a></section>
+  <div class="board" id="projectsGrid" aria-live="polite"></div>
+  <footer class="site-credit-projects">© 2026 TinkerPET Studio · Desenvolvido por Sérgio R. Santos</footer>
+ </main>
+</div>
+<dialog id="backupDialog" class="modal backup-dialog" aria-labelledby="backupTitle">
+ <div class="backup-body">
+  <div class="backup-dialog-heading"><div class="backup-symbol"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><path d="m12 3 9 5-9 5-9-5 9-5Zm-9 5v10l9 5 9-5V8M12 13v10"/></svg></div><div><h2 id="backupTitle">Backup completo</h2><p>Proteja ou recupere seus circuitos.</p></div><button type="button" id="backupClose" class="backup-x" aria-label="Fechar backup">×</button></div>
+  <div class="backup-options">
+   <div class="backup-option"><div class="backup-option-heading"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3v13m-5-5 5 5 5-5M4 17v4h16v-4"/></svg><h3>Baixar tudo</h3></div><p>Guarde todos os seus projetos em um único arquivo de backup.</p><button type="button" id="downloadBackup" class="btn primary">Baixar backup</button></div>
+   <div class="backup-option"><div class="backup-option-heading"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 17V3m-5 5 5-5 5 5M4 15v5h16v-5"/></svg><h3>Restaurar</h3></div><p>Selecione um backup anterior. Seus projetos atuais serão preservados por padrão.</p><button type="button" id="chooseRestore" class="btn">Escolher arquivo</button></div>
+  </div>
+  <div class="backup-review" id="backupReview" hidden>
+   <h3>Conferir restauração</h3><p id="backupReviewCount"></p>
+   <label class="backup-choice"><input type="radio" name="restoreMode" value="merge" checked><span><strong>Adicionar aos meus circuitos</strong><small>Não apaga nem substitui os projetos atuais.</small></span></label>
+   <label class="backup-choice"><input type="radio" name="restoreMode" value="replace"><span><strong>Substituir a biblioteca</strong><small>Exclui os circuitos atuais e coloca os do arquivo no lugar.</small></span></label>
+   <p class="backup-warning" id="backupReplaceWarning" hidden>ATENÇÃO: os circuitos atuais serão substituídos. Baixe um backup deles antes de continuar.</p>
+   <label class="backup-consent" id="backupReplaceConsent" hidden><input id="confirmReplaceLibrary" type="checkbox"> Confirmo que quero substituir todos os circuitos atuais.</label>
+   <p class="error" id="backupError" role="alert"></p>
+   <div class="backup-confirm"><button type="button" id="cancelRestore" class="btn">Cancelar</button><button type="button" id="confirmRestore" class="btn primary">Restaurar circuitos</button></div>
+  </div>
+ </div>
+</dialog>
+<dialog id="editDialog" class="modal"><form class="modal-body" id="editForm"><h2 id="editTitle">Editar</h2><label for="editInput">Nome</label><input id="editInput" type="text" maxlength="80" required><p class="error" id="editError"></p><div class="modal-actions"><button type="button" id="deleteNick" class="nick-delete" hidden aria-label="Excluir meu Nick" title="Excluir meu Nick"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M8 6V4h8v2m3 0-1 15H6L5 6M10 10v7m4-7v7"/></svg><span>Excluir Nick</span></button><button type="button" id="cancelEdit">Cancelar</button><button type="submit" class="ok" id="editSave">Salvar</button></div></form></dialog>
+<dialog id="confirmDialog" class="modal"><div class="modal-body"><h2 id="confirmTitle">Excluir?</h2><p id="confirmBody"></p><div class="modal-actions"><button type="button" id="confirmNo">Cancelar</button><button class="ok" type="button" id="confirmYes">Confirmar</button></div></div></dialog>
+<dialog id="gateDialog" class="modal" aria-label="Senha do Gabarito"><form class="modal-body gate-card" id="gateForm"><div class="gate-mark"><img src="assets/logo-pet.svg" alt="PET Educação"></div><h2>TinkerPET</h2><label for="gatePassword" style="text-align:left">Senha</label><div class="gate-password-wrap" style="display:flex;align-items:center;gap:8px"><input id="gatePassword" type="password" autocomplete="off" required placeholder="" style="min-width:0;flex:1"><button type="button" id="toggleGatePassword" aria-label="Mostrar senha" aria-pressed="false" title="Mostrar senha" style="width:44px;height:44px;flex-shrink:0;border:1px solid #d6e4e1;border-radius:11px;background:#fff;color:#177e77;display:grid;place-items:center"><svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s3.5-6 10-6 10 6 10 6-3.5 6-10 6S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/></svg></button></div><p class="error" id="gateError" aria-live="polite"></p><div class="modal-actions"><button type="button" id="gateClose">Cancelar</button><button class="ok" type="submit">Entrar</button></div></form></dialog>
+<dialog id="creditsDialog" class="modal credits-dialog" aria-labelledby="creditsTitle" aria-describedby="creditsDescription">
+ <div class="credits-content">
+  <button type="button" id="creditsClose" class="credits-close" aria-label="Fechar créditos" title="Fechar">×</button>
+  <div class="credits-heading">
+   <span class="credits-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="5"/><path d="m8.2 12-1.5 9 5.3-3 5.3 3-1.5-9"/></svg></span>
+   <div><span class="credits-eyebrow">CONHEÇA QUEM ESTÁ POR TRÁS DO PROJETO</span><h2 id="creditsTitle">Créditos</h2></div>
+  </div>
+  <div class="credits-person credits-person-original">
+   <span class="credits-kicker">IDEIA E PROJETO ORIGINAL DO CARRINHO</span>
+   <strong>Gabriel J. Santos</strong>
+   <p id="creditsDescription">Graduando em Sistemas de Informação pela Universidade Federal de Sergipe (UFS), no Campus de Itabaiana, e integrante do PET Educação. Idealizador do carrinho Wi-Fi com ESP32, apresentado no material <em>Fundamentos de Prototipagem e Fabricação Digital</em>.</p>
+   <a class="credits-link" href="https://gabrieljsantos.github.io/Fundamentos-de-Prototipagem-e-Fabrica--o-Digital/conteudos/08-carrinho-wifi-esp32-pet-v1.html" target="_blank" rel="noopener noreferrer">Conhecer o projeto original <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 4h6v6M10 14 20 4"/><path d="M20 13v7H4V4h7"/></svg></a>
+  </div>
+  <div class="credits-person credits-person-developer">
+   <span class="credits-kicker">DESENVOLVIMENTO DO SITE TINKERPET STUDIO</span>
+   <strong>Sérgio R. Santos</strong>
+   <p>Graduando em Pedagogia pela Universidade Federal de Sergipe (UFS), no Campus de Itabaiana, e integrante do PET Educação. Responsável pelo desenvolvimento do TinkerPET Studio, plataforma interativa para montagem de circuitos de robótica.</p>
+   <a class="credits-link credits-instagram" href="https://www.instagram.com/sergioricz?vrfl=MXV4bTVud2k0MG5kNw==" target="_blank" rel="noopener noreferrer">Instagram · @sergioricz <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 4h6v6M10 14 20 4"/><path d="M20 13v7H4V4h7"/></svg></a>
+  </div>
+  <div class="credits-footer"><span>TinkerPET Studio · PET Educação</span><button id="creditsDone" type="button">Fechar</button></div>
+ </div>
+</dialog>
+<div class="message" id="notice" role="status" hidden></div>
+</body></html>

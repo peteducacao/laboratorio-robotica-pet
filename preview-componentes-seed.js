@@ -1,0 +1,9 @@
+/* Prévia isolada: lê os circuitos reais sem modificá-los. */
+(()=>{'use strict';
+ const DEMO={"parts":[{"id":"esp","kind":"esp","x":960,"y":65,"view":"front","rotation":0,"flipped":false},{"id":"drv","kind":"driver","x":710,"y":660,"view":"front","rotation":0,"flipped":false},{"id":"lm","kind":"buck","x":580,"y":110,"view":"front","rotation":0,"flipped":false},{"id":"b1","kind":"battery","x":80,"y":110,"view":"front","rotation":0,"flipped":false},{"id":"b2","kind":"batteryPack","x":80,"y":690,"view":"front","rotation":0,"flipped":false},{"id":"s1","kind":"switch","x":338,"y":140,"view":"front","rotation":0,"flipped":false},{"id":"s2","kind":"switch","x":364,"y":733,"view":"front","rotation":0,"flipped":false},{"id":"ml","kind":"motor","x":1130,"y":680,"view":"front","rotation":0,"flipped":false},{"id":"mr","kind":"motor","x":1450,"y":680,"view":"front","rotation":0,"flipped":false}],"wires":[],"voltage":4,"switches":{"s1":false,"s2":false},"wireColor":"#df1724"};
+ const now=Date.now(),preview={id:'preview-componentes-demo',name:'Prévia — todos os componentes',createdAt:now,updatedAt:now,circuit:DEMO};
+ let list=[];
+ try{const real=JSON.parse(localStorage.getItem('tinkerpet-library-v1')||'null');if(Array.isArray(real?.projects))list=real.projects.filter(x=>x&&typeof x.id==='string'&&x.circuit&&Array.isArray(x.circuit.parts));}catch{}
+ try{localStorage.setItem('tinkerpet-componentes-preview-library-v1',JSON.stringify({version:1,projects:[preview,...list]}));}catch{}
+ try{localStorage.setItem('tinkerpet-componentes-preview-nick-v1',localStorage.getItem('tinkerpet-nickname-v1')||'Visitante');}catch{}
+})();
