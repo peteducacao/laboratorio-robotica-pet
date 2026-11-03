@@ -1,0 +1,30 @@
+name: Prévia dos componentes na bancada
+on:
+  push:
+    branches: [preview/componentes-na-bancada-20261103]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+jobs:
+  preview:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verificar sintaxe da cópia independente
+        run: |
+          node --check preview-componentes-projects.js
+          node --check preview-componentes-app.js
+          node --check preview-componentes-app-mobile.js
+          node --check preview-componentes-seed.js
+          node --check preview-componentes-seed-editor.js
+          node --check preview-componentes-editor-layout.js
+          node --check tests/component-preview-browser.mjs
+      - name: Preparar Chromium
+        run: |
+          npm install --no-save --ignore-scripts playwright@1.56.1
+          npx playwright install --with-deps chromium
+      - name: Verificar aparência e isolamento em celular, tablet e PC
+        run: node tests/component-preview-browser.mjs
