@@ -3,7 +3,7 @@
 // Visual preview uses a private localStorage copy. The normal site keeps
 // its original key and nothing in the preview can overwrite its circuit.
 // A aparência Studio também está na página principal: não trocar o progresso salvo.
-const IS_VISUAL_PREVIEW=/(?:^|\\/)preview-componentes-bancada\\.html$/.test(window.location.pathname);
+const IS_VISUAL_PREVIEW=/(?:^|\/)preview-componentes-bancada\.html$/.test(window.location.pathname);
 const IS_PROJECT_EDITOR=/(?:^|\/)editor\.html$/.test(window.location.pathname);
 const STORAGE_KEY=IS_VISUAL_PREVIEW?'tinkerpet-componentes-preview-v1':'tinkerpet-v2';
 const LIBRARY_KEY='tinkerpet-library-v1';
