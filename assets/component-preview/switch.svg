@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 280 225" role="img" aria-label="Chave gangorra de três terminais">
+<title>Chave gangorra de três terminais</title>
+<defs>
+<linearGradient id="metal" x2=".85" y2="1"><stop stop-color="#fbfeff"/><stop offset=".23" stop-color="#d6e1e8"/><stop offset=".55" stop-color="#96a9b8"/><stop offset=".8" stop-color="#eff5f9"/><stop offset="1" stop-color="#8597a5"/></linearGradient>
+<linearGradient id="black" x2=".8" y2="1"><stop stop-color="#485968"/><stop offset=".2" stop-color="#20303e"/><stop offset=".75" stop-color="#101b25"/><stop offset="1" stop-color="#2f4351"/></linearGradient>
+<linearGradient id="gold" x2=".8" y2="1"><stop stop-color="#fff0a7"/><stop offset=".3" stop-color="#e9bc58"/><stop offset=".7" stop-color="#ac7f31"/><stop offset="1" stop-color="#f4d17e"/></linearGradient>
+<filter id="soft" x="-30%" y="-30%" width="160%" height="170%"><feDropShadow dy="5" stdDeviation="4" flood-color="#1c3142" flood-opacity=".22"/></filter>
+<linearGradient id="red" x2=".8" y2="1"><stop stop-color="#ff8271"/><stop offset=".4" stop-color="#e94942"/><stop offset="1" stop-color="#ae2b2b"/></linearGradient></defs>
+
+<rect x="23" y="18" width="234" height="171" rx="20" fill="url(#black)" stroke="#293b47" stroke-width="8" filter="url(#soft)"/>
+<rect x="34" y="27" width="212" height="129" rx="14" fill="#1a2530" stroke="#6c7e89" stroke-width="4"/>
+<path d="M58 44L214 33Q232 33 231 56L227 117Q224 141 205 142L60 149Q47 148 44 126L44 71Z" fill="url(#red)" stroke="#b33c34" stroke-width="5"/>
+<path d="M64 54L204 48" stroke="#ffd3c2" stroke-width="7" stroke-linecap="round" opacity=".78"/>
+<path d="M62 140L212 132" stroke="#932b2d" stroke-width="4" opacity=".6"/>
+<text x="83" y="107" text-anchor="middle" font-size="37" font-weight="800" fill="#f7fbff" font-family="Arial">I</text>
+<text x="189" y="104" text-anchor="middle" font-size="34" font-weight="800" fill="#f7fbff" font-family="Arial">O</text>
+<rect x="34" y="153" width="211" height="28" rx="7" fill="#273a45" stroke="#566874" stroke-width="3"/>
+<rect x="56" y="172" width="28" height="46" rx="5" fill="url(#metal)" stroke="#728b98" stroke-width="3"/><rect x="62" y="192" width="16" height="18" rx="2" fill="#dce7ef"/><circle cx="70" cy="206" r="4" fill="#8d9da7"/><rect x="126" y="172" width="28" height="46" rx="5" fill="url(#metal)" stroke="#728b98" stroke-width="3"/><rect x="132" y="192" width="16" height="18" rx="2" fill="#dce7ef"/><circle cx="140" cy="206" r="4" fill="#8d9da7"/><rect x="196" y="172" width="28" height="46" rx="5" fill="url(#metal)" stroke="#728b98" stroke-width="3"/><rect x="202" y="192" width="16" height="18" rx="2" fill="#dce7ef"/><circle cx="210" cy="206" r="4" fill="#8d9da7"/>
+
+</svg>

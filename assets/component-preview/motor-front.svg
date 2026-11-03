@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 640" role="img" aria-label="Motor DC com caixa amarela e terminais">
+<title>Motor DC com caixa amarela e terminais</title>
+<defs>
+<linearGradient id="metal" x2=".85" y2="1"><stop stop-color="#fbfeff"/><stop offset=".23" stop-color="#d6e1e8"/><stop offset=".55" stop-color="#96a9b8"/><stop offset=".8" stop-color="#eff5f9"/><stop offset="1" stop-color="#8597a5"/></linearGradient>
+<linearGradient id="black" x2=".8" y2="1"><stop stop-color="#485968"/><stop offset=".2" stop-color="#20303e"/><stop offset=".75" stop-color="#101b25"/><stop offset="1" stop-color="#2f4351"/></linearGradient>
+<linearGradient id="gold" x2=".8" y2="1"><stop stop-color="#fff0a7"/><stop offset=".3" stop-color="#e9bc58"/><stop offset=".7" stop-color="#ac7f31"/><stop offset="1" stop-color="#f4d17e"/></linearGradient>
+<filter id="soft" x="-30%" y="-30%" width="160%" height="170%"><feDropShadow dy="5" stdDeviation="4" flood-color="#1c3142" flood-opacity=".22"/></filter>
+<linearGradient id="yellow" x2="1" y2="1"><stop stop-color="#fff3a6"/><stop offset=".25" stop-color="#ffd94d"/><stop offset=".7" stop-color="#edb61c"/><stop offset="1" stop-color="#cb8b12"/></linearGradient></defs>
+
+<rect x="9" y="141" width="282" height="37" rx="12" fill="url(#metal)" stroke="#8b9da8" stroke-width="3"/>
+<rect x="139" y="31" width="26" height="76" rx="8" fill="url(#metal)" stroke="#8497a4" stroke-width="4"/>
+<rect x="51" y="81" width="199" height="348" rx="22" fill="url(#yellow)" stroke="#b77d00" stroke-width="5" filter="url(#soft)"/>
+<path d="M67 103H231" stroke="#fff3ad" stroke-width="9" stroke-linecap="round"/>
+<path d="M70 405H230" stroke="#dca219" stroke-width="6"/>
+<rect x="67" y="115" width="166" height="266" rx="14" fill="none" stroke="#ffd976" stroke-width="4"/>
+<circle cx="98" cy="150" r="10" fill="#e8bb5d" stroke="#a57523" stroke-width="3"/><circle cx="201" cy="356" r="10" fill="#e8bb5d" stroke="#a57523" stroke-width="3"/>
+<path d="M89 212H214M89 234H214" stroke="#d7ab20" stroke-width="3" opacity=".55"/>
+<text x="150" y="282" text-anchor="middle" font-size="27" font-family="Arial" font-weight="bold" fill="#926214">DC · 3–6V</text>
+<path d="M62 416Q150 395 242 417L241 479Q234 490 222 491H75Q60 489 59 470Z" fill="url(#yellow)" stroke="#c08a12" stroke-width="4"/>
+<rect x="68" y="493" width="165" height="96" rx="15" fill="url(#metal)" stroke="#8598a7" stroke-width="5"/>
+<path d="M85 509H220M85 575H220" stroke="#eef6fa" stroke-width="4" opacity=".67"/>
+<rect x="74" y="586" width="156" height="24" rx="6" fill="#24333d"/>
+<path d="M77 514H46Q39 517 39 522V533H77" fill="#263b46" stroke="#b8c9d1" stroke-width="3"/>
+<path d="M77 546H46Q39 550 39 556V568H77" fill="#c93a37" stroke="#f29d89" stroke-width="3"/>
+<circle cx="54" cy="520" r="5" fill="#eff0f2"/><circle cx="54" cy="552" r="5" fill="#fce2cc"/>
+<rect x="140" y="608" width="22" height="31" rx="5" fill="url(#metal)" stroke="#8195a3" stroke-width="3"/>
+
+</svg>
