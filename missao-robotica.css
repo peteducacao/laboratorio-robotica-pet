@@ -219,3 +219,14 @@
  .diagnostic-card img{height:80px}
  .diagnostic-card span{font-size:12px}
 }
+
+/* Cores das zonas do mapa */
+.mission-caption{flex-wrap:wrap}
+.district-chip{margin-left:auto;padding:4px 7px;border-radius:7px;background:#e5f5f1;color:#087b72;font-size:9px;letter-spacing:.65px;white-space:nowrap}
+.district-chip[data-area="fabrica"]{background:#fff0d9;color:#99602e}
+.district-chip[data-area="laboratorio"]{background:#dff4ff;color:#216e97}
+.district-chip[data-area="escola"]{background:#ecf4d6;color:#52752f}
+.district-chip[data-area="parque"]{background:#e3f5dc;color:#357a49}
+.district-chip[data-area="centro"]{background:#f0e9f9;color:#69548b}
+@media(max-width:800px){.district-chip{font-size:8px;padding:3px 5px;letter-spacing:.2px}.mission-caption{gap:5px}}
+@media(orientation:landscape) and (max-height:540px){.district-chip{font-size:7px}}
