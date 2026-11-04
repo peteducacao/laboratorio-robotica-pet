@@ -92,6 +92,7 @@ $('showPassword').addEventListener('click',()=>{const p=$('password');p.type=p.t
 $('startBtn').addEventListener('click',()=>{if(!state.ready)return;resetGame();setMode('drive');toast('Missão iniciada. Controle os dois motores!')});
 $('pauseBtn').addEventListener('click',()=>{if(!isDrive())return;stopRobot();setMode('pause')});
 $('resumeBtn').addEventListener('click',()=>{setMode('drive');stopRobot()});
+$('pauseClose').addEventListener('click',()=>{setMode('drive');stopRobot()});
 $('restartBtn').addEventListener('click',()=>{resetGame();setMode('drive');toast('Nova aventura iniciada!')});
 $('viewBtn').addEventListener('click',()=>{state.cameraTop=!state.cameraTop;$('viewBtn').setAttribute('aria-label',state.cameraTop?'Ativar visão do motorista':'Ativar câmera externa');toast(state.cameraTop?'Câmera externa':'Visão do motorista')});
 $('fullBtn').addEventListener('click',async()=>{try{if(document.fullscreenElement)await document.exitFullscreen();else await $('game').requestFullscreen()}catch{toast('Tela cheia não está disponível neste navegador.')}});
@@ -180,7 +181,7 @@ if(special){const tag=makeLabel(special);tag.position.set(x,height+2.1,z);scene.
 world.walls.push({type:'rect',x,z,hw:ww/2+.2,hd:dd/2+.2});
 }
 function tree(x,z,scale=1){cyl(scene,.23*scale,.3*scale,2*scale,7,x,1.08*scale,z,mats.trunk);cyl(scene,1.33*scale,1.6*scale,3*scale,7,x,3.1*scale,z,mats.leaf);world.walls.push({type:'circle',x,z,r:.83*scale})}
-const specials={'40,-40':'school','40,40':'factory','-40,40':'workshop','-40,-40':'park','0,0':'lab'};
+const specials={'40,-40':'school','40,40':'factory','-40,40':'lab','-40,-40':'park','0,0':'workshop'};
 let index=0;for(const x of [-60,-40,-20,0,20,40,60])for(const z of [-60,-40,-20,0,20,40,60]){const kind=specials[x+','+z]||'house';building(x,z,kind,index++);if(kind==='house'){tree(x-6,z-6,.6);if(index%3===0)tree(x+6,z+6,.7)}}
 function cone(x,z){cyl(scene,.12,.73,1.5,9,x,.82,z,mats.cone);cyl(scene,.44,.44,.2,9,x,.7,z,mats.white);box(scene,1.45,.15,1.45,x,.09,z,mats.dark);world.walls.push({type:'circle',x,z,r:.91})}
 for(const [x,z] of [[-50,13],[-30,3],[-50,-5],[10,-22],[50,4],[30,20],[5,50],[10,1],[-23,-10],[-10,-17],[50,-23],[-10,37],[-50,31],[30,-43]])cone(x,z);
@@ -262,6 +263,6 @@ const a=d.a/255,b=d.b/255;const v=(a+b)/2*9.2,omega=(b-a)*1.85;const angleNext=d
 d.angle=angleNext;d.x=nx;d.z=nz;state.meters+=Math.abs(v*dt);updateDistance();updateRoute();
 const goal=missions[Math.min(state.mission,3)].to;if(Math.hypot(d.x-goal[0],d.z-goal[1])<2.65){completeMission();return}
 if(state.meters>=state.nextEvent&&state.driveSeconds>=state.nextEventTime)triggerEvent()}
-window.__TinkerpetMission={state,questions,missions,baseWires,beginQuestion,beginRepair,resetGame,physics,commands,collides,updateRoute,buildPoints,requestQuitChallenge,cancelQuitChallenge,confirmQuitChallenge};
+window.__TinkerpetMission={state,questions,missions,baseWires,beginQuestion,beginRepair,resetGame,physics,commands,collides,updateRoute,buildPoints,triggerEvent,requestQuitChallenge,cancelQuitChallenge,confirmQuitChallenge};
 boot();
 })();
