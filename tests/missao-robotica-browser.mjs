@@ -55,7 +55,7 @@ try{
   assert.equal(await page.locator('.diagnostic-card').count(),4,'O diagnóstico precisa de quatro alternativas ilustradas');
   const images=await page.locator('.diagnostic-card img').evaluateAll(imgs=>imgs.map(img=>({loaded:img.complete&&img.naturalWidth>0,path:img.getAttribute('src')})));
   assert(images.every(img=>img.loaded),'Imagem de componente não carregou: '+JSON.stringify(images));
-  if(v.name==='pc'||v.name==='celular-horizontal')await page.screenshot({path:'artifacts/petgame-diagnostico-'+v.name+'.png'});
+  if(v.name==='pc'||v.name==='celular-horizontal'){await page.screenshot({path:'artifacts/petgame-diagnostico-'+v.name+'.png'});console.log('VISUAL_DIAG_'+v.name+'='+((await page.screenshot({type:'jpeg',quality:54,scale:'css'})).toString('base64')))}
   // Erro não encerra a rodada nem zera o tempo.
   const bad=await page.locator('.diagnostic-card').evaluateAll(cards=>cards.map(c=>c.dataset.diagnostic).find(k=>k!=='battery'));
   const timeBefore=await page.evaluate(()=>window.__TinkerpetMission.state.challengeEnd);
