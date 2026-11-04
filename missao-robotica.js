@@ -8,20 +8,26 @@ const missions=[
  {title:'Retorno ao laboratório',desc:'Siga a faixa amarela e finalize a aventura.',to:[-50,50],label:'LABORATÓRIO'}
 ];
 const questions=[["O ESP32 liga, mas a ponte H está sem energia. O que conferir?",["Pilhas AA e gangorra dos motores","Bateria 9 V e gangorra do ESP32","Saída do LM2596 para o VIN","Fios de comando entre ESP32 e ponte H"],0],["Os dois motores avançam na mesma velocidade. O carrinho tende a...",["Girar no próprio eixo","Seguir em linha reta","Fazer uma curva constante","Recuar devagar"],1],["Para curvar à esquerda sem dar ré, qual ajuste ajuda?",["Motor esquerdo mais rápido","Ambos os motores na mesma velocidade","Motor direito mais rápido","Desligar as duas alimentações"],2],["Só o motor esquerdo parou; o direito segue. O que conferir?",["Saída do LM2596","Fios entre ponte H e motor esquerdo","Bateria de 9 V","Gangorra do ESP32"],1],["Por que usar bateria 9 V e pilhas AA separadas?",["Para somar as tensões no ESP32","Para substituir o regulador","Para alimentar controle e motores separadamente","Para dispensar o GND comum"],2],["Ao passar de frente para ré, o que muda nos motores?",["Sentido de giro dos dois","Quantidade de pilhas AA","Tensão ajustada no LM2596","Posição dos fios de alimentação"],0],["Qual é a função das gangorras no carrinho?",["Regular a velocidade de cada roda","Ligar e desligar as alimentações","Inverter o giro dos motores","Transmitir comandos do ESP32"],1],["Por que o LM2596 fica antes do ESP32?",["Para comandar o giro das rodas","Para dividir os sinais da ponte H","Para ajustar a tensão de alimentação","Para medir a energia das pilhas AA"],2],["Quem recebe os comandos do ESP32 e aciona os motores?",["LM2596","Suporte de pilhas","Gangorra","Ponte H"],3],["Após uma curva, os motores seguem iguais. O carrinho...",["Volta sozinho ao rumo anterior","Começa a dar ré","Segue reto na nova direção","Continua girando no mesmo lugar"],2]];
-/* Questões reservadas por fase; cada destino só libera após concluir sua etapa.
-   2 + 3 + 2 + 3 perguntas = 10 na aventura, mais 1 diagnóstico em cada fase. */
-const STAGE_QUESTION_COUNTS=[2,3,2,3];
+/* Cada fase alterna perguntas e diagnósticos de circuito.
+   6 perguntas sorteadas do banco de 10 + 8 diagnósticos únicos = 14 desafios.
+   O aluno só conclui a entrega depois dos desafios daquela fase. */
+const STAGE_QUESTION_COUNTS=[2,1,2,1];
+const STAGE_REPAIR_COUNTS=[2,2,2,2];
 function createStageChallenges(){
- const pool=shuffled(questions.map((q,i)=>i));
- let cursor=0;
+ const questionPool=shuffled(questions.map((_,i)=>i));
+ const diagnosticPool=shuffled(diagnosticTests.map((_,i)=>i));
+ let qCursor=0,dCursor=0;
  return STAGE_QUESTION_COUNTS.map(count=>{
-  const slots=pool.slice(cursor,cursor+count).map(index=>({kind:'question',index}));
-  cursor+=count;
-  slots.splice(Math.min(slots.length,1+rand(slots.length)),0,{kind:'repair'});
-  return slots;
+  const quiz=questionPool.slice(qCursor,qCursor+count).map(index=>({kind:'question',index}));
+  const repair=diagnosticPool.slice(dCursor,dCursor+2).map(index=>({kind:'repair',index}));
+  qCursor+=count;dCursor+=2;
+  // Duas perguntas: pergunta → circuito → pergunta → circuito.
+  // Uma pergunta: circuito → pergunta → circuito.
+  return count===2?[quiz[0],repair[0],quiz[1],repair[1]]:
+   [repair[0],quiz[0],repair[1]];
  });
 }
-const stageTotal=i=>STAGE_QUESTION_COUNTS[i]+1;
+const stageTotal=i=>STAGE_QUESTION_COUNTS[i]+STAGE_REPAIR_COUNTS[i];
 const baseWires=[
  {id:'p9',title:'Bateria 9 V (+) → gangorra ESP32 → LM2596 IN+',kind:'wire'},
  {id:'g9',title:'Bateria 9 V (−) → LM2596 IN−',kind:'wire'},
@@ -414,10 +420,10 @@ function answer(correct,button){
  if(button){button.disabled=true;button.classList.add('wrong')}
  recordFailure('Resposta incorreta.')
 }
-function beginDiagnostic(){
+function beginDiagnostic(assignedIndex=null){
  stopRobot();
  const fresh=diagnosticTests.filter(item=>item!==state.lastDiagnosis);
- state.fault=fresh[rand(fresh.length)];
+ state.fault=assignedIndex===null?fresh[rand(fresh.length)]:diagnosticTests[assignedIndex];
  state.lastDiagnosis=state.fault;
  $('diagnosticQuestion').textContent=state.fault.prompt;
  $('diagnosticFeedback').textContent='No terceiro erro, você perde uma vida.';
@@ -437,7 +443,7 @@ function chooseDiagnostic(key,card){
  if(key!==state.fault.answer){card.disabled=true;card.classList.add('wrong');recordFailure('Diagnóstico incorreto.');return}
  state.scoreRepairs++;state.scoreCorrect++;playSound('correct');solveChallenge('Diagnóstico correto! Circuito restabelecido.');
 }
-function beginRepair(){beginDiagnostic()}
+function beginRepair(assignedIndex=null){beginDiagnostic(assignedIndex)}
 function solveChallenge(message){
  const slot=currentStageSlot();
  if(slot&&((state.mode==='question'&&slot.kind==='question'&&slot.index===state.activeQuestion)||
@@ -455,7 +461,7 @@ function triggerEvent(force=false){
    state.driveSeconds-state.stageLastEventSeconds<5.5))return false;
  if(!force&&state.stageMeters<nextStageDistance())return false;
  const slot=currentStageSlot();state.eventCount++;
- if(slot.kind==='question')beginQuestion(slot.index);else beginRepair();
+ if(slot.kind==='question')beginQuestion(slot.index);else beginRepair(slot.index);
  return true
 }
 function completeMission(){
@@ -877,6 +883,6 @@ const a=d.a/255,b=d.b/255;const v=(a+b)/2*9.2,omega=(b-a)*1.68;const angleNext=d
 d.angle=angleNext;d.x=nx;d.z=nz;state.meters+=Math.abs(v*dt);state.stageMeters+=Math.abs(v*dt);updateRoute();
 const goal=missions[Math.min(state.mission,3)].to;if(Math.hypot(d.x-goal[0],d.z-goal[1])<2.65){completeMission();return}
 triggerEvent()}
-window.__TinkerpetMission={state,world,STAGE_QUESTION_COUNTS,currentStageSlot,nextStageDistance,readRecords,displayRecords,drawMiniMap,sound,questions,missions,baseWires,diagnosticParts,diagnosticTests,chooseDiagnostic,beginQuestion,beginRepair,resetGame,physics,commands,collides,updateRoute,buildPoints,triggerEvent,requestQuitChallenge,cancelQuitChallenge,confirmQuitChallenge};
+window.__TinkerpetMission={state,world,STAGE_QUESTION_COUNTS,STAGE_REPAIR_COUNTS,currentStageSlot,nextStageDistance,readRecords,displayRecords,drawMiniMap,sound,questions,missions,baseWires,diagnosticParts,diagnosticTests,chooseDiagnostic,beginQuestion,beginRepair,resetGame,physics,commands,collides,updateRoute,buildPoints,triggerEvent,requestQuitChallenge,cancelQuitChallenge,confirmQuitChallenge};
 boot();
 })();
