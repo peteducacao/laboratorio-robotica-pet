@@ -46,7 +46,7 @@ try{
   if(v.name==='pc'){
    await page.keyboard.down('w');await page.waitForTimeout(800);
    const straight=await page.evaluate(()=>({a:window.__TinkerpetMission.state.drive.a,b:window.__TinkerpetMission.state.drive.b}));
-   assert(straight.a>50&&straight.b>50,'W não acelera ambos os motores');
+   assert(straight.a>50&&straight.b>50,'W não acelera ambos os motores: '+JSON.stringify(straight)+' '+JSON.stringify(await page.evaluate(()=>({mode:window.__TinkerpetMission.state.mode,keys:[...window.__TinkerpetMission.state.keys],collided:window.__TinkerpetMission.state.drive.collided,pos:[window.__TinkerpetMission.state.drive.x,window.__TinkerpetMission.state.drive.z],ready:window.__TinkerpetMission.state.ready}))));
    await page.keyboard.down('a');await page.waitForTimeout(550);
    const curve=await page.evaluate(()=>({a:window.__TinkerpetMission.state.drive.a,b:window.__TinkerpetMission.state.drive.b}));
    assert(curve.b>curve.a+25,'A não desacelera motor esquerdo');
