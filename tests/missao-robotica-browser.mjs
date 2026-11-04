@@ -36,6 +36,8 @@ try{
   assert((await page.locator('.start-dialog h1').textContent()).includes('PETGame'),'título PETGame ausente');
   assert((await page.locator('.start-dialog p').first().textContent()).includes('cidade'),'sinopse ausente');
   await page.waitForFunction(()=>window.__TinkerpetMission?.state.ready,{timeout:60000});
+  if(v.name==='pc'||v.name==='celular-horizontal'){await page.screenshot({path:'artifacts/petgame-inicio-'+v.name+'.png'});console.log('VISUAL_START_'+v.name+'='+((await page.screenshot({type:'jpeg',quality:52,scale:'css'})).toString('base64')))}
+  const startBounds=await page.evaluate(()=>({btn:document.querySelector('#startBtn').getBoundingClientRect().bottom,visible:innerHeight,dialog:document.querySelector('.start-dialog').getBoundingClientRect().height}));
   await page.locator('#startBtn').click();
   assert.equal(await page.locator('#authOverlay').isVisible(),false);
   assert.equal(await page.locator('#startOverlay').isVisible(),false);
