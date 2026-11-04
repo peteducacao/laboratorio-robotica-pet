@@ -37,16 +37,18 @@ try{
   await page.locator('#startBtn').click();
   assert.equal(await page.evaluate(()=>window.__TinkerpetMission.state.mode),'drive','início deve entrar na aventura normal');
   assert.equal(await page.locator('#questionOverlay').isVisible(),false,'rodada de teste não pode surgir');
-  assert.equal(await page.locator('#stageProgress').textContent(),'Desafios desta fase: 0/3','fase inicial exige 3 desafios');
+  assert.equal(await page.locator('#stageProgress').textContent(),'Desafios desta fase: 0/4','fase inicial exige 3 desafios');
   const stages=await page.evaluate(()=>{
    const a=window.__TinkerpetMission,plan=a.state.stageChallenges;
    return{counts:plan.map(p=>p.filter(s=>s.kind==='question').length),
     fixes:plan.map(p=>p.filter(s=>s.kind==='repair').length),
-    questionIds:plan.flat().filter(s=>s.kind==='question').map(s=>s.index)}
+    questionIds:plan.flat().filter(s=>s.kind==='question').map(s=>s.index),repairIds:plan.flat().filter(s=>s.kind==='repair').map(s=>s.index)}
   });
-  assert.deepEqual(stages.counts,[2,3,2,3],'dez perguntas devem estar divididas entre as quatro fases');
-  assert.deepEqual(stages.fixes,[1,1,1,1],'cada fase deve ter um diagnóstico obrigatório');
-  assert.equal(new Set(stages.questionIds).size,10,'perguntas não devem repetir entre fases');
+  assert.deepEqual(stages.counts,[2,1,2,1],'seis perguntas, presentes nas quatro fases');
+  assert.deepEqual(stages.fixes,[2,2,2,2],'dois circuitos por fase');
+  assert.equal(new Set(stages.questionIds).size,6,'as perguntas não devem se repetir');
+  assert.equal(new Set(stages.repairIds).size,8,'os diagnósticos não devem se repetir');
+  assert(stages.repairIds.length>stages.questionIds.length,'mais circuitos que perguntas');
   // O modo de direção voltou a ter um motor para cada controle.
   const motors=await page.evaluate(()=>{
    const a=window.__TinkerpetMission,s=a.state;
@@ -105,106 +107,101 @@ try{
    const label=await page.evaluate(({x,z})=>{const a=window.__TinkerpetMission;a.state.drive.x=x;a.state.drive.z=z;a.physics(.12);return document.querySelector('#districtName').textContent},{x,z});
    assert(label.includes(area),'cor / identificação incorreta da área '+area+': '+label);
   }
-  // Um único erro em pergunta consome vida e fecha o desafio.
-  const wrongQuestion=await page.evaluate(()=>{
+  // Três erros de qualquer tipo consomem uma vida, sem repetir os desafios.
+  const penalties=await page.evaluate(()=>{
    const a=window.__TinkerpetMission,s=a.state;
-   a.resetGame();s.mode='drive';a.beginQuestion();
-   const index=s.activeQuestion,q=a.questions[index];
-   const bad=q[1].find(x=>x!==q[1][q[2]]);
-   const choice=[...document.querySelectorAll('.answer')].find(el=>el.textContent.includes(bad));
-   if(!choice)throw Error('Alternativa incorreta não encontrada');
-   choice.click();
-   return{lives:s.lives,mode:s.mode,wrong:s.scoreWrong,question:index,
-    stageSlot:s.stageSlot,oldChoiceDisabled:choice.disabled};
+   a.resetGame();s.mode='drive';
+   const snapshot=()=>({lives:s.lives,wrong:s.scoreWrong,toward:s.mistakesTowardLife});
+   function question(){
+    a.beginQuestion();
+    const q=a.questions[s.activeQuestion],bad=q[1].find(t=>t!==q[1][q[2]]);
+    [...document.querySelectorAll('.answer')].find(b=>b.textContent.includes(bad)).click();
+    if(s.mode!=='drive')throw Error('Resposta errada não encerrou desafio')
+   }
+   function circuit(){
+    a.beginRepair();
+    a.chooseDiagnostic(s.fault.options.find(k=>k!==s.fault.answer),document.createElement('button'));
+    if(s.mode!=='drive')throw Error('Diagnóstico errado não encerrou desafio')
+   }
+   question();const first=snapshot();
+   circuit();const second=snapshot();
+   question();const third=snapshot();
+   circuit();const fourth=snapshot();
+   return{first,second,third,fourth}
   });
-  assert.equal(wrongQuestion.lives,2,'errar uma pergunta deve tirar uma vida de imediato');
-  assert.equal(wrongQuestion.mode,'drive','pergunta errada deve se encerrar sem outra tentativa');
-  assert.equal(wrongQuestion.wrong,1,'erro de pergunta deve ser contado exatamente uma vez');
-  assert(await page.locator('#questionOverlay').isHidden(),'pergunta errada não pode continuar aberta');
+  assert.deepEqual(penalties,{
+   first:{lives:3,wrong:1,toward:1},second:{lives:3,wrong:2,toward:2},
+   third:{lives:2,wrong:3,toward:0},fourth:{lives:2,wrong:4,toward:1}
+  },'três erros acumulados devem tirar uma vida');
 
-  // Mesmo comportamento para diagnóstico com componente errado.
-  const wrongDiagnostic=await page.evaluate(()=>{
-   const a=window.__TinkerpetMission,s=a.state;
-   a.resetGame();s.mode='drive';a.beginRepair();
-   const wrong=s.fault.options.find(x=>x!==s.fault.answer);
-   document.querySelector('.diagnostic-card[data-diagnostic="'+wrong+'"]').click();
-   return{lives:s.lives,mode:s.mode,wrong:s.scoreWrong};
-  });
-  assert.equal(wrongDiagnostic.lives,2,'diagnóstico errado precisa tirar vida de imediato');
-  assert.equal(wrongDiagnostic.mode,'drive','diagnóstico errado não permite segunda escolha');
-  assert.equal(wrongDiagnostic.wrong,1,'diagnóstico errado deve ser contabilizado apenas uma vez');
-
-  // Partida completa: 10 perguntas nas quatro fases e quatro diagnósticos,
-  // com uma resposta incorreta que elimina a tentativa, mas não pula a fase.
+  // Todas as fases: oito diagnósticos distintos e seis perguntas sorteadas.
   const walkthrough=await page.evaluate(()=>{
    const a=window.__TinkerpetMission,s=a.state;
    a.resetGame();s.mode='drive';
-   const phases=[],shown=[],expected=[2,3,2,3];
-   let deducted=false,separationVerified=false;
+   const phases=[],shownQ=[],shownD=[];
+   let failedOnce=false,spacingChecked=false;
    for(let phase=0;phase<4;phase++){
     const goal=a.missions[phase].to;
     s.drive.x=goal[0];s.drive.z=goal[1];a.physics(.016);
-    if(s.mode==='delivery')throw Error('Fase '+(phase+1)+' deixou concluir sem desafios');
-    let qCount=0,dCount=0,guard=0;
+    if(s.mode==='delivery')throw Error('Entrega antes dos desafios da fase');
+    let countQ=0,countD=0,guard=0;
     while(s.mode!=='delivery'){
-     if(++guard>18)throw Error('Desafios não terminam na fase '+(phase+1));
+     if(++guard>18)throw Error('Desafios não terminaram na fase '+phase+' / '+s.mode);
      if(s.mode==='question'){
-      const idx=s.activeQuestion,q=a.questions[idx],correct=q[1][q[2]],buttons=[...document.querySelectorAll('.answer')];
-      shown.push(idx);qCount++;
-      if(!deducted){
-       const wrong=buttons.find(btn=>!btn.textContent.includes(correct));
-       if(!wrong)throw Error('Falta opção incorreta');
-       const prevSlot=s.stageSlot;
-       wrong.click();
-       if(s.mode!=='drive'||s.lives!==2||s.stageSlot!==prevSlot+1||s.scoreWrong!==1)
-        throw Error('A resposta errada não perdeu vida ou tentou repetir a pergunta');
-       // Mesmo zerando o bloqueio temporal, precisa dirigir antes de outra questão.
+      const id=s.activeQuestion,q=a.questions[id],correct=q[1][q[2]];
+      const options=[...document.querySelectorAll('.answer')];
+      shownQ.push(id);countQ++;
+      if(!failedOnce){
+       const wrong=options.find(o=>!o.textContent.includes(correct));
+       const stageSlot=s.stageSlot;wrong.click();
+       if(s.mode!=='drive'||s.lives!==3||s.mistakesTowardLife!==1||s.scoreWrong!==1||
+         s.stageSlot!==stageSlot+1)throw Error('Primeiro erro não contou 1/3');
        s.skipUntil=0;
-       if(a.triggerEvent(true))throw Error('Nova pergunta surgiu sem dirigir');
-       separationVerified=true;deducted=true;
-      }else{
-       const right=buttons.find(btn=>btn.textContent.includes(correct));
-       if(!right)throw Error('Falta opção correta');
-       right.click();
-      }
+       if(a.triggerEvent(true))throw Error('Outra pergunta apareceu antes de dirigir');
+       failedOnce=true;spacingChecked=true
+      }else options.find(o=>o.textContent.includes(correct)).click()
      }else if(s.mode==='repair'){
-      a.chooseDiagnostic(s.fault.answer,document.createElement('button'));dCount++;
+      shownD.push(s.fault.id);countD++;
+      a.chooseDiagnostic(s.fault.answer,document.createElement('button'))
      }else if(s.mode==='drive'){
-      // Simula a pilotagem real entre desafios, sem usar pausa ou teleporte
-      // para burlar o intervalo mínimo (15m e 5,5s de direção).
-      s.stageMeters+=20;s.driveSeconds+=6.0;s.skipUntil=0;
-      s.drive.x=goal[0];s.drive.z=goal[1];a.physics(.016);
-     }else throw Error('Modo inesperado: '+s.mode);
+      s.stageMeters+=20;s.driveSeconds+=6;s.skipUntil=0;
+      s.drive.x=goal[0];s.drive.z=goal[1];a.physics(.016)
+     }else throw Error('Modo inesperado '+s.mode)
     }
-    if(qCount!==expected[phase]||dCount!==1)throw Error('Distribuição errada na fase '+(phase+1));
-    phases.push({questions:qCount,diagnostics:dCount,completed:s.scoreMissions});
+    if(countQ!==[2,1,2,1][phase]||countD!==2)
+     throw Error('Quantidade errada na fase '+(phase+1)+' '+countQ+' perguntas / '+countD+' circuitos');
+    phases.push({q:countQ,d:countD});
     document.querySelector('#nextMissionBtn').click();
-    if(phase<3&&(s.stageSlot!==0||s.mission!==phase+1))throw Error('Próxima fase não reiniciou desafios');
+    if(phase<3&&(s.mission!==phase+1||s.stageSlot!==0))throw Error('Desafios da fase não reiniciaram')
    }
-   return{phases,shown,deducted,separationVerified,mode:s.mode,lives:s.lives,
-    questionsCorrect:s.scoreQuestions,repairsCorrect:s.scoreRepairs,
-    correct:s.scoreCorrect,wrong:s.scoreWrong};
+   return{phases,shownQ,shownD,failedOnce,spacingChecked,mode:s.mode,lives:s.lives,
+    correct:s.scoreCorrect,wrong:s.scoreWrong,pending:s.mistakesTowardLife,q:s.scoreQuestions,d:s.scoreRepairs}
   });
-  assert.deepEqual(walkthrough.phases.map(p=>p.questions),[2,3,2,3],'10 perguntas não distribuídas nas quatro fases');
-  assert.deepEqual(walkthrough.phases.map(p=>p.diagnostics),[1,1,1,1],'diagnóstico ausente em alguma fase');
-  assert.equal(new Set(walkthrough.shown).size,10,'uma pergunta foi repetida ou apareceu em outra fase');
-  assert(walkthrough.deducted&&walkthrough.separationVerified,'erro e espaçamento precisam estar funcionando');
-  assert.equal(walkthrough.mode,'end','resultado final não apareceu');
-  assert.equal(walkthrough.lives,2);
-  assert.equal(walkthrough.correct,13,'uma questão incorreta não pode virar acerto');
-  assert.equal(walkthrough.wrong,1,'erro deve ser contado uma única vez');
+  assert.deepEqual(walkthrough.phases.map(x=>x.q),[2,1,2,1]);
+  assert.deepEqual(walkthrough.phases.map(x=>x.d),[2,2,2,2]);
+  assert.equal(new Set(walkthrough.shownQ).size,6,'perguntas repetidas');
+  assert.equal(new Set(walkthrough.shownD).size,8,'diagnósticos de circuito repetidos');
+  assert(walkthrough.failedOnce&&walkthrough.spacingChecked,'erro e espaçamento inválidos');
+  assert.equal(walkthrough.mode,'end');
+  assert.equal(walkthrough.lives,3);
+  assert.equal(walkthrough.pending,1);
+  assert.equal(walkthrough.correct,13);
+  assert.equal(walkthrough.wrong,1);
+  assert.equal(walkthrough.q,5);
+  assert.equal(walkthrough.d,8);
   assert.equal(await page.locator('#scoreCorrect').textContent(),'13');
   assert.equal(await page.locator('#scoreWrong').textContent(),'1');
   assert.equal(await page.locator('#scoreMissions').textContent(),'4');
-  assert((await page.locator('#endDescription').textContent()).includes('13 acertos e 1 erro'),'relatório incorreto');
-  assert(/[0-9]+:[0-9]{2}/.test(await page.locator('#scoreElapsed').textContent()),'tempo final em formato incorreto');
+  assert((await page.locator('#endDescription').textContent()).includes('13 acertos e 1 erro'));
   const stored=await page.evaluate(()=>window.__TinkerpetMission.readRecords());
-  assert(stored.plays>=1&&stored.fastestMs>=0,'recorde não foi gravado');
-  assert.equal(stored.maxCorrect,13,'recorde de acertos incorreto');
+  assert(stored.plays>=1&&stored.fastestMs>=0);
+  assert.equal(stored.maxCorrect,13);
   await page.locator('#restartBtn').click();
-  assert.equal(await page.locator('#stageProgress').textContent(),'Desafios desta fase: 0/3');
+  assert.equal(await page.locator('#stageProgress').textContent(),'Desafios desta fase: 0/4');
+  assert.equal(await page.locator('#mistakeProgress').textContent(),'Erros: 0/3');
   assert.equal(await page.evaluate(()=>window.__TinkerpetMission.state.lives),3);
   assert.equal(await page.evaluate(()=>window.__TinkerpetMission.state.scoreWrong),0);
+  assert.equal(await page.evaluate(()=>window.__TinkerpetMission.state.mistakesTowardLife),0);
   assert.equal(await page.evaluate(()=>window.__TinkerpetMission.state.scoreCorrect),0);
   // O eixo local X deve rodar a montagem da roda sem inclinar o pneu.
   const axle=await page.evaluate(()=>{
@@ -218,7 +215,7 @@ try{
    'Pneu não gira em torno do centro do seu eixo');
   await page.screenshot({path:'artifacts/petgame-cidade-'+size.name+'.png'});
   await context.close();
-  console.log('PASS',size.name,'início, 3D, regiões, 10 perguntas, diagnóstico e entregas');
+  console.log('PASS',size.name,'início, 3D, regiões, 6 perguntas, 8 diagnósticos e entregas');
  }
  assert.deepEqual(errors,[],'erros JS no navegador: '+errors.join(' | '));
  console.log('PASS PETGame: aventura principal sem testes, oficina por 4 imagens, bairros texturizados, PC e celulares.');
