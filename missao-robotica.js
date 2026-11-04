@@ -40,8 +40,8 @@ switch1:['Gangorra S1','switch.svg'],switch2:['Gangorra S2','switch.svg'],
 lm:['LM2596','lm2596.svg'],pack:['6 pilhas AA','battery-pack.svg'],jumper:['Jumper','jumpers.svg']
 };
 const diagnosticTests=[{"id":"pack","prompt":"O ESP32 liga, mas a ponte H não recebe energia das pilhas. Qual fonte verificar?","answer":"pack","options":["pack","battery","lm","esp"]},{"id":"bridge","prompt":"Há energia e comandos, mas nenhum motor responde. Qual módulo pode ter falhado?","answer":"bridge","options":["bridge","lm","battery","esp"]},{"id":"switch1","prompt":"A bateria de 9 V funciona, mas a alimentação do ESP32 está interrompida na chave. Qual peça conferir?","answer":"switch1","options":["switch1","switch2","bridge","motor"]},{"id":"switch2","prompt":"As pilhas estão carregadas, mas a chave dos motores está desligada. Qual peça verificar?","answer":"switch2","options":["switch2","switch1","lm","esp"]},{"id":"jumper","prompt":"O sinal não chega à ponte H porque um fio se soltou. O que reconectar?","answer":"jumper","options":["jumper","motor","pack","battery"]},{"id":"lm","prompt":"A bateria de 9 V funciona, mas a tensão de entrada do ESP32 não foi ajustada. Qual módulo verificar?","answer":"lm","options":["lm","bridge","switch2","motor"]},{"id":"motor","prompt":"A ponte H responde, mas uma roda não gira mesmo com os fios ligados. Qual peça pode falhar?","answer":"motor","options":["motor","esp","lm","switch1"]},{"id":"esp","prompt":"A alimentação está correta, mas não chegam comandos à ponte H. Qual placa investigar?","answer":"esp","options":["esp","pack","battery","motor"]},{"id":"battery","prompt":"O regulador não recebe energia, embora a primeira gangorra esteja ligada. Qual fonte conferir?","answer":"battery","options":["battery","pack","bridge","motor"]},{"id":"switch2","prompt":"O carrinho liga, mas os motores só recebem energia quando a segunda chave é acionada. Qual é?","answer":"switch2","options":["switch2","switch1","lm","esp"]}];
-const state={mode:'auth',ready:false,lives:3,mission:0,questionsCorrect:new Set(),asked:[],scoreQuestions:0,scoreRepairs:0,scoreCorrect:0,scoreWrong:0,scoreMissions:0,elapsedMs:0,activeSince:null,timerStarted:false,meters:0,nextEvent:26,nextEventTime:20,driveSeconds:0,eventCount:0,lastFault:null,lastDiagnosis:null,drive:{x:-50,z:50,angle:-Math.PI/2,a:0,b:0,collided:false},desired:[0,0],pointer:[null,null],pointerValue:[0,0],keys:new Set(),cameraTop:true,repairTab:'power',quitRemaining:0,challengeTimer:null,challengeStarted:0,challengeEnd:0,activeQuestion:null,fault:null,wires:null,switches:null,gpios:null,skipUntil:0,completed:false};
-const world={THREE:null,renderer:null,scene:null,camera:null,car:null,carLed:null,uiTimer:0,staticStats:null,wheels:[],walls:[],goal:null,goalLabel:null,goalBeam:null,routeGroup:null,routePoints:[],routeDistance:0,routeLastPos:null,routeLastMission:-1,clockTime:0,lastFrame:0,runFrame:false,sky:null,clouds:[],clockUiAt:0,collisionToastAt:0};
+const state={mode:'auth',ready:false,lives:3,mission:0,questionsCorrect:new Set(),asked:[],scoreQuestions:0,scoreRepairs:0,scoreCorrect:0,scoreWrong:0,scoreMissions:0,elapsedMs:0,activeSince:null,timerStarted:false,meters:0,nextEvent:26,nextEventTime:20,driveSeconds:0,eventCount:0,lastFault:null,lastDiagnosis:null,drive:{x:-50,z:50,angle:-Math.PI/2,a:0,b:0,collided:false},desired:[0,0],pointer:[null,null],pointerValue:[0,0],keys:new Set(),cameraTop:true,repairTab:'power',quitRemaining:0,challengeTimer:null,challengeStarted:0,challengeEnd:0,activeQuestion:null,fault:null,wires:null,switches:null,gpios:null,skipUntil:0,completed:false,recordsSaved:false};
+const world={THREE:null,renderer:null,scene:null,camera:null,car:null,carLed:null,uiTimer:0,staticStats:null,wheels:[],walls:[],goal:null,goalLabel:null,goalBeam:null,routeGroup:null,routePoints:[],routeDistance:0,routeLastPos:null,routeLastMission:-1,clockTime:0,lastFrame:0,runFrame:false,sky:null,clouds:[],clockUiAt:0,minimapUiAt:0,collisionToastAt:0};
 const rand=n=>Math.floor(Math.random()*n);
 function shuffled(arr){const a=[...arr];for(let i=a.length-1;i>0;i--){const j=rand(i+1);[a[i],a[j]]=[a[j],a[i]]}return a}
 function overlay(name){for(const id of overlays)$(id).hidden=id!==name;}
@@ -59,6 +59,156 @@ function setMode(mode){
  if(state.timerStarted&&!state.completed&&['drive','question','repair'].includes(mode))state.activeSince=now;
  overlay(mode==='drive'?null:mode+'Overlay');updateClock();
 }
+/* Dados locais do dispositivo — nenhuma conta ou servidor é necessário. */
+const RECORDS_KEY='tinkerpet-petgame-recordes-v1',SOUND_KEY='tinkerpet-petgame-som-v1';
+function readRecords(){
+ try{
+  const data=JSON.parse(localStorage.getItem(RECORDS_KEY)||'{}');
+  return data&&typeof data==='object'?data:{};
+ }catch{return{}}
+}
+function persistRecords(data){try{localStorage.setItem(RECORDS_KEY,JSON.stringify(data))}catch{}}
+function displayRecords(){
+ const record=readRecords(),best=record.fastestMs;
+ const fmt=Number.isFinite(best)?formatDuration(best):'—';
+ $('recordBestTime').textContent=fmt;
+ $('recordBestScore').textContent=Number.isFinite(record.maxCorrect)?String(record.maxCorrect):'—';
+ $('startRecord').textContent=Number.isFinite(best)?'Seu recorde: '+fmt:'Seu primeiro recorde começa aqui';
+}
+function storeRunRecord(won){
+ if(state.recordsSaved)return;
+ state.recordsSaved=true;
+ const old=readRecords(),elapsed=Math.max(0,Math.round(clockMs()));
+ const fresh={...old,plays:(Number(old.plays)||0)+1,lastMs:elapsed,lastCorrect:state.scoreCorrect,lastWrong:state.scoreWrong,lastWon:won};
+ let newFast=false,newScore=false;
+ if(won){
+  const prev=Number(old.fastestMs);
+  if(!Number.isFinite(prev)||prev<=0||elapsed<prev){fresh.fastestMs=elapsed;newFast=true}
+  if(!Number.isFinite(old.maxCorrect)||state.scoreCorrect>old.maxCorrect){fresh.maxCorrect=state.scoreCorrect;newScore=true}
+  const performanceScore=state.scoreCorrect*3-state.scoreWrong;
+  if(!Number.isFinite(old.bestPerformance)||performanceScore>old.bestPerformance){
+   fresh.bestPerformance=performanceScore;fresh.bestRun={correct:state.scoreCorrect,wrong:state.scoreWrong,timeMs:elapsed};
+  }
+ }
+ persistRecords(fresh);
+ $('newRecord').hidden=!newFast&&!newScore;
+ $('newRecord').textContent=newFast?'★ NOVO RECORDE DE TEMPO!':'★ NOVO RECORDE DE ACERTOS!';
+ displayRecords();
+}
+const sound={
+ enabled:false,ctx:null,osc:null,gain:null,lastEngineUpdate:0
+};
+try{sound.enabled=localStorage.getItem(SOUND_KEY)==='on'}catch{}
+function refreshSoundButton(){
+ const btn=$('soundBtn');if(!btn)return;
+ btn.textContent=sound.enabled?'♫':'♪̸';
+ btn.setAttribute('aria-pressed',String(sound.enabled));
+ btn.setAttribute('aria-label',sound.enabled?'Desativar sons do jogo':'Ativar sons do jogo');
+ btn.title=sound.enabled?'Desativar sons':'Ativar sons';
+}
+function unlockAudio(){
+ if(!sound.enabled)return;
+ try{
+  if(!sound.ctx){
+   const Audio=window.AudioContext||window.webkitAudioContext;
+   if(!Audio)return;
+   const ctx=new Audio(),osc=ctx.createOscillator(),gain=ctx.createGain();
+   osc.type='triangle';osc.frequency.value=70;gain.gain.value=0;
+   osc.connect(gain);gain.connect(ctx.destination);osc.start();
+   sound.ctx=ctx;sound.osc=osc;sound.gain=gain;
+  }
+  if(sound.ctx.state==='suspended')sound.ctx.resume().catch(()=>{});
+ }catch{sound.enabled=false;refreshSoundButton()}
+}
+function toggleAudio(){
+ sound.enabled=!sound.enabled;
+ try{localStorage.setItem(SOUND_KEY,sound.enabled?'on':'off')}catch{}
+ if(sound.enabled)unlockAudio();
+ else if(sound.ctx){
+  sound.gain?.gain.setTargetAtTime(0,sound.ctx.currentTime,.025);
+  sound.ctx.suspend().catch(()=>{});
+ }
+ refreshSoundButton();
+ if(sound.enabled)playSound('on')
+}
+function playSound(type){
+ if(!sound.enabled)return;
+ unlockAudio();
+ if(!sound.ctx||sound.ctx.state!=='running')return;
+ const ctx=sound.ctx,notes={
+  on:[[650,.07],[900,.10]],correct:[[610,.08],[820,.14]],
+  wrong:[[270,.10],[210,.10]],delivery:[[540,.10],[720,.11],[960,.20]],
+  finish:[[523,.09],[659,.10],[784,.14],[1047,.25]]
+ }[type]||[];
+ let offset=0;
+ for(const [frequency,duration] of notes){
+  const o=ctx.createOscillator(),g=ctx.createGain();
+  o.type='sine';o.frequency.value=frequency;
+  const at=ctx.currentTime+offset;
+  g.gain.setValueAtTime(0,at);g.gain.linearRampToValueAtTime(.04,at+.014);
+  g.gain.exponentialRampToValueAtTime(.001,at+duration);
+  o.connect(g);g.connect(ctx.destination);o.start(at);o.stop(at+duration+.012);
+  o.onended=()=>{o.disconnect();g.disconnect()};offset+=duration*.80;
+ }
+}
+function updateEngine(now){
+ if(!sound.ctx||!sound.gain||now-sound.lastEngineUpdate<85)return;
+ sound.lastEngineUpdate=now;
+ const velocity=isDrive()?Math.max(Math.abs(state.drive.a),Math.abs(state.drive.b)):0;
+ const t=sound.ctx.currentTime;
+ sound.gain.gain.setTargetAtTime(sound.enabled?Math.min(.014,velocity/255*.012):0,t,.08);
+ sound.osc.frequency.setTargetAtTime(65+velocity*.31,t,.08);
+}
+/* Mini GPS 2D: vias, posição do robô, direção, trajeto e entrega. */
+function drawMiniMap(){
+ if(!world.THREE||$('minimap').classList.contains('collapsed'))return;
+ const canvas=$('miniCanvas'),ctx=canvas?.getContext?.('2d');
+ if(!ctx)return;
+ const w=canvas.width,h=canvas.height,scale=w/152;
+ const px=x=>(x+76)*scale,pz=z=>(z+76)*scale;
+ ctx.clearRect(0,0,w,h);
+ ctx.fillStyle='#d6e8dc';ctx.fillRect(0,0,w,h);
+ for(const [x,z,color] of [[-38,38,'#bde0e6'],[38,38,'#f3d6ae'],[38,-38,'#d6eab8'],[-38,-38,'#b7dfbe']]){
+  ctx.fillStyle=color;ctx.fillRect(px(x-37),pz(z-37),74*scale,74*scale)
+ }
+ ctx.fillStyle='#72808a';
+ for(const n of [-50,-30,-10,10,30,50]){
+  ctx.fillRect(px(n-4.1),0,8.2*scale,h);
+  ctx.fillRect(0,pz(n-4.1),w,8.2*scale);
+ }
+ ctx.save();ctx.strokeStyle='rgba(255,255,255,.56)';ctx.lineWidth=1.3;ctx.setLineDash([4,5]);
+ for(const n of [-50,-30,-10,10,30,50]){
+  ctx.beginPath();ctx.moveTo(px(n),0);ctx.lineTo(px(n),h);ctx.stroke();
+  ctx.beginPath();ctx.moveTo(0,pz(n));ctx.lineTo(w,pz(n));ctx.stroke()
+ }
+ ctx.restore();
+ if(world.routePoints?.length>1){
+  ctx.beginPath();ctx.moveTo(px(state.drive.x),pz(state.drive.z));
+  world.routePoints.slice(1).forEach(pt=>ctx.lineTo(px(pt[0]),pz(pt[1])));
+  ctx.strokeStyle='#f3cf65';ctx.lineWidth=4;ctx.lineCap='round';ctx.lineJoin='round';ctx.stroke()
+ }
+ const target=missions[Math.min(state.mission,missions.length-1)].to;
+ ctx.fillStyle='#f9ba39';ctx.beginPath();ctx.arc(px(target[0]),pz(target[1]),7,0,2*Math.PI);ctx.fill();
+ ctx.strokeStyle='#fff';ctx.lineWidth=2;ctx.stroke();
+ const d=state.drive;ctx.save();ctx.translate(px(d.x),pz(d.z));ctx.rotate(-d.angle);
+ ctx.fillStyle='#058d86';ctx.strokeStyle='#fff';ctx.lineWidth=2.3;
+ ctx.beginPath();ctx.moveTo(0,-11);ctx.lineTo(8,8);ctx.lineTo(0,4);ctx.lineTo(-8,8);ctx.closePath();
+ ctx.fill();ctx.stroke();ctx.restore();
+}
+function spawnDeliveryParticles(){
+ const host=$('deliverySparkles');host.replaceChildren();
+ for(let i=0;i<21;i++){
+  const particle=document.createElement('span');particle.className='delivery-particle';
+  const angle=i*2.3999,radius=90+(i%4)*17;
+  particle.style.setProperty('--dx',Math.cos(angle)*radius+'px');
+  particle.style.setProperty('--dy',Math.sin(angle)*radius*.65+'px');
+  particle.style.setProperty('--delay',(i%5)*.045+'s');
+  particle.style.setProperty('--color',['#08aa94','#ffd66b','#76b8ed','#f6a976'][i%4]);
+  host.append(particle)
+ }
+ const dialog=$('deliveryOverlay').querySelector('.delivery-dialog');
+ dialog.classList.remove('celebrating');void dialog.offsetWidth;dialog.classList.add('celebrating')
+}
 function clearChallengeTimer(){if(state.challengeTimer){clearInterval(state.challengeTimer);state.challengeTimer=null}}
 function resetInputs(){state.keys.clear();state.pointer=[null,null];state.pointerValue=[0,0];state.desired=[0,0];for(let i=0;i<2;i++)setThumb(i,0)}
 function stopRobot(){resetInputs();state.drive.a=0;state.drive.b=0;updateReadout()}
@@ -75,38 +225,36 @@ function setThumb(i,value){const id=i===0?'thumbA':'thumbB',track=$(i===0?'track
 function updateReadout(){const a=Math.round(state.drive.a),b=Math.round(state.drive.b);$('speedA').textContent=a;$('speedB').textContent=b;$('trackA').setAttribute('aria-valuenow',String(a));$('trackB').setAttribute('aria-valuenow',String(b))}
 function isDrive(){return state.mode==='drive'&&state.ready&&!state.completed}
 function pointerToValue(ev,el){
- const r=el.getBoundingClientRect();
- const normalized=clamp(((r.top+r.height/2)-ev.clientY)/Math.max(27,r.height*.5-12),-1,1);
- const eased=Math.sign(normalized)*Math.pow(Math.abs(normalized),1.24);
- return Math.round(eased*215);
+ const r=el.getBoundingClientRect(),normalized=clamp(((r.top+r.height/2)-ev.clientY)/(r.height*.5-24),-1,1);
+ return Math.round(normalized*255)
 }
 function installControl(i){const el=$(i===0?'trackA':'trackB');el.addEventListener('pointerdown',e=>{if(!isDrive())return;e.preventDefault();state.pointer[i]=e.pointerId;try{el.setPointerCapture(e.pointerId)}catch{}state.pointerValue[i]=pointerToValue(e,el);setThumb(i,state.pointerValue[i])});el.addEventListener('pointermove',e=>{if(state.pointer[i]!==e.pointerId||!isDrive())return;e.preventDefault();state.pointerValue[i]=pointerToValue(e,el);setThumb(i,state.pointerValue[i])});const release=e=>{if(state.pointer[i]!==e.pointerId)return;state.pointer[i]=null;state.pointerValue[i]=0;setThumb(i,0)};el.addEventListener('pointerup',release);el.addEventListener('pointercancel',release);el.addEventListener('lostpointercapture',release);
 el.addEventListener('keydown',e=>{if(!isDrive())return;let change=0;if(e.key==='ArrowUp')change=35;else if(e.key==='ArrowDown')change=-35;else if(e.key==='Home'){e.preventDefault();state.pointer[i]=null;state.pointerValue[i]=0;setThumb(i,0);return}else return;e.preventDefault();state.pointer[i]='keyboard-slider';state.pointerValue[i]=clamp(state.pointerValue[i]+change,-255,255);setThumb(i,state.pointerValue[i])})}
 function installKeys(){const used=new Set(['w','a','s','d','arrowup','arrowdown','arrowleft','arrowright']);document.addEventListener('keydown',e=>{const k=e.key.toLowerCase();if(!used.has(k)||!isDrive())return;if(e.target.matches('input,textarea,select'))return;e.preventDefault();state.keys.add(k)});document.addEventListener('keyup',e=>{const k=e.key.toLowerCase();if(used.has(k)){state.keys.delete(k);if(isDrive())e.preventDefault()}});window.addEventListener('blur',()=>{state.keys.clear();state.pointer=[null,null];state.pointerValue=[0,0];state.desired=[0,0]});document.addEventListener('visibilitychange',()=>{if(document.hidden){state.keys.clear();state.pointer=[null,null];state.pointerValue=[0,0];state.desired=[0,0]}})}
 function keysPressed(){return state.keys.size>0}
-function commands(){if(state.drive.collided){if(state.pointer.every(p=>p===null)&&!keysPressed())state.drive.collided=false;return[0,0]}
-if(state.pointer.some(p=>p!==null)){
- const a=state.pointer[0]===null?null:state.pointerValue[0],b=state.pointer[1]===null?null:state.pointerValue[1];
- // Um único dedo acelera os dois motores. Dois dedos permitem curvas diferenciais.
- const base=a!==null&&b!==null?(a+b)/2:a!==null?a:b;
- const turn=a!==null&&b!==null?clamp((b-a)*.40,-78,78):0;
- const dead=v=>Math.abs(v)<12?0:Math.round(clamp(v,-215,215));
- return[dead(base-turn),dead(base+turn)];
+function commands(){
+ if(state.drive.collided){
+  if(state.pointer.every(p=>p===null)&&!keysPressed())state.drive.collided=false;
+  return[0,0]
+ }
+ // Controle independente por motor, como na versão original aprovada.
+ if(state.pointer.some(p=>p!==null))return[state.pointerValue[0],state.pointerValue[1]];
+ const k=state.keys,front=k.has('w')||k.has('arrowup'),
+ back=k.has('s')||k.has('arrowdown'),left=k.has('a')||k.has('arrowleft'),right=k.has('d')||k.has('arrowright');
+ let base=front&&!back?230:back&&!front?-195:0;
+ return[Math.round(base*(left?.25:1)),Math.round(base*(right?.25:1))]
 }
-const k=state.keys,front=k.has('w')||k.has('arrowup'),back=k.has('s')||k.has('arrowdown'),
- left=k.has('a')||k.has('arrowleft'),right=k.has('d')||k.has('arrowright');
-const base=front&&!back?205:back&&!front?-165:0;
-if(!base){if(left!==right)return left?[-65,65]:[65,-65];return[0,0]}
-return[Math.round(base*(left&&!right?.58:1)),Math.round(base*(right&&!left?.58:1))]}
 function installUI(){
 $('authForm').addEventListener('submit',e=>{e.preventDefault();if($('password').value.trim()!=='peteducacao'){$('authError').textContent='Senha incorreta. Tente novamente.';return}try{sessionStorage.setItem('tinkerpet-missao-3d-acesso','ok')}catch{}$('authError').textContent='';setMode('start')});
 $('showPassword').addEventListener('click',()=>{const p=$('password');p.type=p.type==='password'?'text':'password';$('showPassword').textContent=p.type==='password'?'Mostrar':'Ocultar'});
-$('startBtn').addEventListener('click',()=>{if(!state.ready)return;resetGame();setMode('drive');toast('Aventura iniciada. Siga a faixa amarela até o destino!')});
+$('startBtn').addEventListener('click',()=>{if(!state.ready)return;unlockAudio();resetGame();setMode('drive');toast('Aventura iniciada. Siga a faixa amarela até o destino!')});
+$('soundBtn').addEventListener('click',toggleAudio);
+$('minimapToggle').addEventListener('click',()=>{const pane=$('minimap'),collapsed=pane.classList.toggle('collapsed');$('minimapToggle').textContent=collapsed?'+':'−';$('minimapToggle').setAttribute('aria-expanded',String(!collapsed));if(!collapsed)drawMiniMap()});refreshSoundButton();displayRecords();
 $('nextMissionBtn').addEventListener('click',advanceMission);$('deliveryClose').addEventListener('click',advanceMission);
 $('pauseBtn').addEventListener('click',()=>{if(!isDrive())return;stopRobot();setMode('pause')});
 $('resumeBtn').addEventListener('click',()=>{setMode('drive');stopRobot()});
 $('pauseClose').addEventListener('click',()=>{setMode('drive');stopRobot()});
-$('restartBtn').addEventListener('click',()=>{resetGame();setMode('drive');toast('Nova aventura iniciada!')});
+$('restartBtn').addEventListener('click',()=>{unlockAudio();resetGame();setMode('drive');toast('Nova aventura iniciada!')});
 $('viewBtn').addEventListener('click',()=>{state.cameraTop=!state.cameraTop;$('viewBtn').setAttribute('aria-label',state.cameraTop?'Ativar visão do motorista':'Ativar câmera externa');toast(state.cameraTop?'Câmera atrás do carrinho':'Visão do motorista')});
 $('fullBtn').addEventListener('click',async()=>{try{if(document.fullscreenElement)await document.exitFullscreen();else await $('game').requestFullscreen()}catch{toast('Tela cheia não está disponível neste navegador.')}});
 $('exitGameBtn').addEventListener('click',()=>{window.location.href='projects.html'});
@@ -127,11 +275,12 @@ document.addEventListener('keydown',e=>{
 });
 installControl(0);installControl(1);installKeys();
 window.addEventListener('resize',()=>{if(world.renderer&&world.camera){const w=$('scene').clientWidth,h=$('scene').clientHeight;world.camera.aspect=Math.max(1,w)/Math.max(1,h);world.camera.updateProjectionMatrix();world.renderer.setSize(w,h)}})}
-function resetGame(){clearChallengeTimer();state.lives=3;state.mission=0;state.scoreMissions=0;state.scoreQuestions=0;state.scoreRepairs=0;state.scoreCorrect=0;state.scoreWrong=0;state.elapsedMs=0;state.activeSince=null;state.timerStarted=true;state.questionsCorrect=new Set();state.asked=[];state.meters=0;state.nextEvent=26;state.nextEventTime=20;state.driveSeconds=0;state.eventCount=0;state.lastFault=null;state.lastDiagnosis=null;state.completed=false;state.drive={x:-50,z:50,angle:-Math.PI/2,a:0,b:0,collided:false};state.desired=[0,0];state.pointer=[null,null];state.pointerValue=[0,0];state.keys.clear();state.skipUntil=0;state.cameraTop=true;state.repairTab='power';$('viewBtn').setAttribute('aria-label','Ativar visão do motorista');setThumb(0,0);setThumb(1,0);updateReadout();updateLives();updateMission();updateClock();if(world.car){world.car.position.set(-50,0,50);world.car.rotation.y=-Math.PI/2}updateGoal();updateRoute(true)}
+function resetGame(){clearChallengeTimer();state.lives=3;state.mission=0;state.scoreMissions=0;state.scoreQuestions=0;state.scoreRepairs=0;state.scoreCorrect=0;state.scoreWrong=0;state.elapsedMs=0;state.activeSince=null;state.timerStarted=true;state.questionsCorrect=new Set();state.asked=[];state.meters=0;state.nextEvent=26;state.nextEventTime=20;state.driveSeconds=0;state.eventCount=0;state.lastFault=null;state.lastDiagnosis=null;state.completed=false;state.drive={x:-50,z:50,angle:-Math.PI/2,a:0,b:0,collided:false};state.desired=[0,0];state.pointer=[null,null];state.pointerValue=[0,0];state.keys.clear();state.skipUntil=0;state.recordsSaved=false;state.cameraTop=true;state.repairTab='power';$('viewBtn').setAttribute('aria-label','Ativar visão do motorista');setThumb(0,0);setThumb(1,0);updateReadout();updateLives();updateMission();updateClock();if(world.car){world.car.position.set(-50,0,50);world.car.rotation.y=-Math.PI/2}updateGoal();updateRoute(true)}
 function loseLife(reason){const was=state.mode;if(was==='question'||was==='repair')state.scoreWrong++;clearChallengeTimer();state.lives--;updateLives();if(state.lives<=0){endGame(false);return}
 setMode('drive');stopRobot();state.drive.collided=true;toast(reason||'Tempo esgotado. Você perdeu uma vida.',true);state.skipUntil=performance.now()+9000}
 function endGame(won){
  stopRobot();clearChallengeTimer();setMode('end');state.completed=true;
+ storeRunRecord(won);if(won)playSound('finish');
  const time=formatDuration(clockMs()),attempts=state.scoreCorrect+state.scoreWrong;
  $('endKicker').textContent=won?'AVENTURA CONCLUÍDA':'FIM DE JOGO';
  $('endSymbol').textContent=won?'★':'♥';
@@ -177,7 +326,7 @@ function confirmQuitChallenge(){if($('quitChallengeDialog').open)$('quitChalleng
 function pickQuestion(){let eligible=questions.map((q,i)=>i).filter(i=>!state.questionsCorrect.has(i));if(!eligible.length)return null;const notLast=eligible.filter(i=>i!==state.asked.at(-1));if(notLast.length)eligible=notLast;const fresh=eligible.filter(i=>!state.asked.includes(i));const index=(fresh.length?fresh:eligible)[rand((fresh.length?fresh:eligible).length)];state.asked.push(index);return index}
 function renderQuestion(){const i=pickQuestion();if(i===null){solveChallenge('Todas as perguntas foram respondidas!');return}state.activeQuestion=i;const q=questions[i];$('questionText').textContent=q[0];$('answers').replaceChildren();shuffled(q[1].map((txt,index)=>({txt,correct:index===q[2]}))).forEach((a,i)=>{const b=document.createElement('button');b.type='button';b.className='answer';const letter=document.createElement('span');letter.className='letter';letter.textContent='ABCD'[i];const label=document.createElement('span');label.textContent=a.txt;b.append(letter,label);b.addEventListener('click',()=>answer(a.correct));$('answers').append(b)});}
 function beginQuestion(){stopRobot();setMode('question');$('questionEyebrow').textContent='PARADA DE CONHECIMENTO';$('questionResponse').textContent='Escolha a alternativa correta para continuar.';renderQuestion();startTimer('question')}
-function answer(correct){if(state.mode!=='question')return;if(performance.now()>=state.challengeEnd){loseLife();return}if(correct){state.questionsCorrect.add(state.activeQuestion);state.scoreQuestions++;state.scoreCorrect++;solveChallenge('Resposta correta! Continue a missão.');return}state.scoreWrong++;$('questionResponse').textContent='Resposta incorreta. Nova pergunta!';renderQuestion()}
+function answer(correct){if(state.mode!=='question')return;if(performance.now()>=state.challengeEnd){loseLife();return}if(correct){playSound('correct');state.questionsCorrect.add(state.activeQuestion);state.scoreQuestions++;state.scoreCorrect++;solveChallenge('Resposta correta! Continue a missão.');return}state.scoreWrong++;playSound('wrong');$('questionResponse').textContent='Resposta incorreta. Nova pergunta!';renderQuestion()}
 function beginDiagnostic(){
  stopRobot();
  const fresh=diagnosticTests.filter(item=>item!==state.lastDiagnosis);
@@ -198,8 +347,8 @@ function beginDiagnostic(){
 function chooseDiagnostic(key,card){
  if(state.mode!=='repair'||!state.fault)return;
  if(performance.now()>=state.challengeEnd){loseLife();return}
- if(key!==state.fault.answer){state.scoreWrong++;card.disabled=true;card.classList.add('wrong');$('diagnosticFeedback').textContent='Não é esse. Tente outro componente.';return}
- state.scoreRepairs++;state.scoreCorrect++;solveChallenge('Diagnóstico correto! Circuito restabelecido.');
+ if(key!==state.fault.answer){state.scoreWrong++;playSound('wrong');card.disabled=true;card.classList.add('wrong');$('diagnosticFeedback').textContent='Não é esse. Tente outro componente.';return}
+ state.scoreRepairs++;state.scoreCorrect++;playSound('correct');solveChallenge('Diagnóstico correto! Circuito restabelecido.');
 }
 function beginRepair(){beginDiagnostic()}
 function solveChallenge(message){
@@ -212,12 +361,12 @@ function triggerEvent(){
  state.eventCount++;if(state.eventCount%2===1)beginQuestion();else beginRepair()
 }
 function completeMission(){
- const m=missions[state.mission];state.scoreMissions++;stopRobot();state.drive.collided=true;
+ const m=missions[state.mission];state.scoreMissions++;stopRobot();state.drive.collided=true;playSound('delivery');
  $('deliveryTitle').textContent=m.label==='ESCOLA'?'Entrega na escola concluída!':m.label==='FÁBRICA'?'Entrega na fábrica concluída!':m.label==='PARQUE'?'Entrega no parque concluída!':'Retorno ao laboratório concluído!';
- $('deliveryDesc').textContent='Você chegou ao destino e concluiu a entrega.';
+ $('deliveryDesc').textContent='Você chegou ao destino! Entrega '+state.scoreMissions+' de '+missions.length+' concluída.';
  $('deliveryProgress').textContent=state.scoreMissions+' de '+missions.length+' entregas concluídas';
  $('nextMissionBtn').innerHTML=state.scoreMissions>=missions.length?'Ver resultado <span>→</span>':'Próxima entrega <span>→</span>';
- setMode('delivery');
+ setMode('delivery');spawnDeliveryParticles();
 }
 function advanceMission(){if(state.mode!=='delivery')return;state.mission++;
  if(state.mission>=missions.length){endGame(true);return}
@@ -434,6 +583,8 @@ function animate(now){
  world.runFrame=true;requestAnimationFrame(animate);
  const dt=Math.min(.085,Math.max(0,(now-last)/1000));last=now;world.clockTime+=dt;
  if(now-world.clockUiAt>250){world.clockUiAt=now;updateClock()}
+ if(now-world.minimapUiAt>130){world.minimapUiAt=now;drawMiniMap()}
+ updateEngine(now);
  if(isDrive()){
   accum+=dt;let steps=0;
   while(accum>=fixedStep&&steps<5&&isDrive()){physics(fixedStep);accum-=fixedStep;steps++}
@@ -510,8 +661,8 @@ function updateRoute(force=false){
 
 function collides(x,z){if(Math.abs(x)>73||Math.abs(z)>73)return true;for(const wall of world.walls){if(wall.ghost)continue;if(wall.type==='circle'){if(Math.hypot(x-wall.x,z-wall.z)<wall.r+1)return true}
 else{const dx=Math.max(Math.abs(x-wall.x)-wall.hw,0),dz=Math.max(Math.abs(z-wall.z)-wall.hd,0);if(Math.hypot(dx,dz)<1)return true}}return false}
-function physics(dt){const d=state.drive,cmd=commands();state.desired=cmd;state.driveSeconds+=dt;world.uiTimer+=dt;if(world.uiTimer>=.10){world.uiTimer=0;for(let i=0;i<2;i++)if(state.pointer[i]===null)setThumb(i,cmd[i]);updateReadout();updateDistance();updateDistrict()}const prevA=d.a,prevB=d.b;for(const [key,i] of [['a',0],['b',1]]){const target=cmd[i],current=d[key],rate=Math.abs(target)>Math.abs(current)?430:980;d[key]=current+clamp(target-current,-rate*dt,rate*dt);if(Math.abs(d[key])<.7)d[key]=0}
-const a=d.a/255,b=d.b/255;const v=(a+b)/2*8.4,omega=(b-a)*1.5;const angleNext=d.angle+omega*dt;const nx=d.x-Math.sin((d.angle+angleNext)/2)*v*dt,nz=d.z-Math.cos((d.angle+angleNext)/2)*v*dt;if((Math.abs(v)>.1||Math.abs(omega)>.1)&&collides(nx,nz)){
+function physics(dt){const d=state.drive,cmd=commands();state.desired=cmd;state.driveSeconds+=dt;world.uiTimer+=dt;if(world.uiTimer>=.10){world.uiTimer=0;for(let i=0;i<2;i++)if(state.pointer[i]===null)setThumb(i,cmd[i]);updateReadout();updateDistance();updateDistrict()}const prevA=d.a,prevB=d.b;for(const [key,i] of [['a',0],['b',1]]){const target=cmd[i],current=d[key],rate=Math.abs(target)>Math.abs(current)?570:1550;d[key]=current+clamp(target-current,-rate*dt,rate*dt);if(Math.abs(d[key])<.7)d[key]=0}
+const a=d.a/255,b=d.b/255;const v=(a+b)/2*9.2,omega=(b-a)*1.85;const angleNext=d.angle+omega*dt;const nx=d.x-Math.sin((d.angle+angleNext)/2)*v*dt,nz=d.z-Math.cos((d.angle+angleNext)/2)*v*dt;if((Math.abs(v)>.1||Math.abs(omega)>.1)&&collides(nx,nz)){
  d.a=0;d.b=0;updateReadout();
  const now=performance.now();
  if(now-world.collisionToastAt>1800){world.collisionToastAt=now;toast('Borda da via. Faça a curva ou dê ré para continuar.',true)}
@@ -520,6 +671,6 @@ const a=d.a/255,b=d.b/255;const v=(a+b)/2*8.4,omega=(b-a)*1.5;const angleNext=d.
 d.angle=angleNext;d.x=nx;d.z=nz;state.meters+=Math.abs(v*dt);updateRoute();
 const goal=missions[Math.min(state.mission,3)].to;if(Math.hypot(d.x-goal[0],d.z-goal[1])<2.65){completeMission();return}
 if(state.meters>=state.nextEvent&&state.driveSeconds>=state.nextEventTime)triggerEvent()}
-window.__TinkerpetMission={state,world,questions,missions,baseWires,diagnosticParts,diagnosticTests,chooseDiagnostic,beginQuestion,beginRepair,resetGame,physics,commands,collides,updateRoute,buildPoints,triggerEvent,requestQuitChallenge,cancelQuitChallenge,confirmQuitChallenge};
+window.__TinkerpetMission={state,world,readRecords,displayRecords,drawMiniMap,sound,questions,missions,baseWires,diagnosticParts,diagnosticTests,chooseDiagnostic,beginQuestion,beginRepair,resetGame,physics,commands,collides,updateRoute,buildPoints,triggerEvent,requestQuitChallenge,cancelQuitChallenge,confirmQuitChallenge};
 boot();
 })();
