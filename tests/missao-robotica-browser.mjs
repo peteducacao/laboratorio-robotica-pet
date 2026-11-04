@@ -40,6 +40,16 @@ try{
   await page.locator('#startBtn').click();
   assert.equal(await page.evaluate(()=>window.__TinkerpetMission.state.mode),'drive','início deve entrar na aventura normal');
   assert.equal(await page.locator('#questionOverlay').isVisible(),false,'rodada de teste não pode surgir');
+  assert.equal(await page.locator('#stageProgress').textContent(),'Desafios desta fase: 0/3','fase inicial exige 3 desafios');
+  const stages=await page.evaluate(()=>{
+   const a=window.__TinkerpetMission,plan=a.state.stageChallenges;
+   return{counts:plan.map(p=>p.filter(s=>s.kind==='question').length),
+    fixes:plan.map(p=>p.filter(s=>s.kind==='repair').length),
+    questionIds:plan.flat().filter(s=>s.kind==='question').map(s=>s.index)}
+  });
+  assert.deepEqual(stages.counts,[2,3,2,3],'dez perguntas devem estar divididas entre as quatro fases');
+  assert.deepEqual(stages.fixes,[1,1,1,1],'cada fase deve ter um diagnóstico obrigatório');
+  assert.equal(new Set(stages.questionIds).size,10,'perguntas não devem repetir entre fases');
   // O modo de direção voltou a ter um motor para cada controle.
   const motors=await page.evaluate(()=>{
    const a=window.__TinkerpetMission,s=a.state;
@@ -105,6 +115,8 @@ try{
    if(!btn)throw Error('Alternativa incorreta não encontrada');btn.click()
   });
   assert.equal(await page.evaluate(()=>window.__TinkerpetMission.state.scoreWrong),1,'erro de pergunta não contabilizado');
+  assert.equal(await page.locator('#questionOverlay').isVisible(),true,'erro não deve sair da pergunta atual');
+  assert.equal(await page.evaluate(()=>window.__TinkerpetMission.state.activeQuestion),await page.evaluate(()=>window.__TinkerpetMission.state.asked.at(-1)),'erro não pode sortear outra pergunta');
   await page.screenshot({path:'artifacts/petgame-pergunta-'+size.name+'.png'});
   await page.evaluate(()=>{const a=window.__TinkerpetMission,q=a.questions[a.state.activeQuestion],txt=q[1][q[2]];const b=[...document.querySelectorAll('.answer')].find(el=>el.textContent.includes(txt));if(!b)throw Error('Resposta não encontrada');b.click()});
   assert.equal(await page.evaluate(()=>window.__TinkerpetMission.state.mode),'drive','acerto deve voltar à avenida');
@@ -135,40 +147,69 @@ try{
   await page.locator('#quitConfirm').click();
   assert.equal(await page.evaluate(()=>window.__TinkerpetMission.state.lives),2,'abandonar desafio deve perder uma vida');
   assert.equal(await page.evaluate(()=>window.__TinkerpetMission.state.scoreWrong),3,'desafio abandonado deve aparecer no relatório');
-  await page.evaluate(()=>{const a=window.__TinkerpetMission;a.resetGame();a.state.drive.x=a.missions[0].to[0];a.state.drive.z=a.missions[0].to[1];a.physics(.016)});
-  assert(await page.locator('#deliveryOverlay').isVisible(),'entrega do mapa não concluiu');
-  assert.equal(await page.locator('#deliverySparkles span').count(),21,'animação de entrega não apareceu');
-  await page.locator('#deliveryClose').click();
-  assert.equal(await page.evaluate(()=>window.__TinkerpetMission.state.mission),1,'próxima entrega não avançou');
-  await page.evaluate(()=>{
-   const s=window.__TinkerpetMission.state;
-   s.scoreCorrect=2;s.scoreWrong=3;s.scoreQuestions=1;s.scoreRepairs=1;
+  // Garante que nem um salto direto ao destino permita escapar dos desafios.
+  const walkthrough=await page.evaluate(()=>{
+   const a=window.__TinkerpetMission,s=a.state;
+   a.resetGame();s.mode='drive';
+   const phases=[],shown=[],expected=[2,3,2,3];
+   let wrongRetainsQuestion=false;
+   for(let phase=0;phase<4;phase++){
+    const firstGoal=a.missions[phase].to;
+    s.drive.x=firstGoal[0];s.drive.z=firstGoal[1];a.physics(.016);
+    if(s.mode==='delivery')throw Error('Entrega '+(phase+1)+' ignorou desafios pendentes');
+    let countQ=0,countD=0,guard=0;
+    while(s.mode!=='delivery'){
+     if(++guard>15)throw Error('Desafios não terminam na fase '+(phase+1));
+     if(s.mode==='question'){
+      const idx=s.activeQuestion,q=a.questions[idx],correct=q[1][q[2]],options=[...document.querySelectorAll('.answer')];
+      if(phase===0&&!wrongRetainsQuestion){
+       const wrong=options.find(b=>!b.textContent.includes(correct));
+       if(!wrong)throw Error('Alternativa errada não localizada');
+       wrong.click();
+       if(s.activeQuestion!==idx||s.mode!=='question'||s.scoreWrong!==1)throw Error('Erro mudou a pergunta atual');
+       wrongRetainsQuestion=true;
+      }
+      const btn=options.find(b=>b.textContent.includes(correct));
+      if(!btn)throw Error('Resposta correta indisponível');
+      btn.click();shown.push(idx);countQ++;
+     }else if(s.mode==='repair'){
+      a.chooseDiagnostic(s.fault.answer,document.createElement('button'));countD++;
+     }else if(s.mode==='drive'){
+      s.drive.x=firstGoal[0];s.drive.z=firstGoal[1];a.physics(.016);
+     }else throw Error('Modo inesperado na fase '+(phase+1)+': '+s.mode);
+    }
+    if(countQ!==expected[phase]||countD!==1)throw Error('Quantidade incorreta na fase '+(phase+1));
+    phases.push({questions:countQ,diagnostics:countD,mission:s.mission,progress:document.querySelector('#stageProgress').textContent});
+    if(document.querySelectorAll('#deliverySparkles span').length!==21)throw Error('Faltam efeitos de entrega');
+    document.querySelector('#nextMissionBtn').click();
+    if(phase<3&&(s.stageSlot!==0||s.mission!==phase+1))throw Error('Desafios da próxima fase não reiniciaram');
+   }
+   return{phases,shown,wrongRetainsQuestion,mode:s.mode,
+    questions:s.scoreQuestions,repairs:s.scoreRepairs,correct:s.scoreCorrect,wrong:s.scoreWrong};
   });
-  for(let i=1;i<4;i++){
-   await page.evaluate(()=>{
-    const a=window.__TinkerpetMission,g=a.missions[a.state.mission].to;
-    a.state.drive.x=g[0];a.state.drive.z=g[1];a.physics(.016);
-   });
-   assert(await page.locator('#deliveryOverlay').isVisible(),'entrega '+(i+1)+' não concluiu');
-   await page.locator('#nextMissionBtn').click();
-  }
+  assert.deepEqual(walkthrough.phases.map(p=>p.questions),[2,3,2,3],'perguntas não respeitam o limite das fases');
+  assert.deepEqual(walkthrough.phases.map(p=>p.diagnostics),[1,1,1,1],'diagnósticos não respeitam as fases');
+  assert.equal(new Set(walkthrough.shown).size,10,'repetição ou vazamento de pergunta entre fases');
+  assert(walkthrough.wrongRetainsQuestion,'errar deve preservar a pergunta da fase');
+  assert.equal(walkthrough.mode,'end','quatro fases resolvidas devem abrir o relatório');
+  assert.equal(walkthrough.questions,10);
+  assert.equal(walkthrough.repairs,4);
+  assert.equal(walkthrough.correct,14);
+  assert.equal(walkthrough.wrong,1);
   assert(await page.locator('#endOverlay').isVisible(),'relatório final não apareceu');
-  assert.equal(await page.locator('#scoreMissions').textContent(),'4','entregas erradas no resultado');
-  assert.equal(await page.locator('#scoreCorrect').textContent(),'2','acertos errados no relatório');
-  assert.equal(await page.locator('#scoreWrong').textContent(),'3','erros errados no relatório');
-  assert.equal(await page.locator('#scoreQuestions').textContent(),'1','perguntas erradas no relatório');
-  assert.equal(await page.locator('#scoreRepairs').textContent(),'1','diagnósticos errados no relatório');
+  assert.equal(await page.locator('#scoreCorrect').textContent(),'14');
+  assert.equal(await page.locator('#scoreWrong').textContent(),'1');
+  assert.equal(await page.locator('#scoreMissions').textContent(),'4');
   assert(/[0-9]+:[0-9]{2}/.test(await page.locator('#scoreElapsed').textContent()),'tempo final com formato errado');
-  assert((await page.locator('#endDescription').textContent()).includes('2 acertos e 3 erros'),'resumo verbal não bate');
-  assert((await page.locator('#scoreFeedback').textContent()).length>12,'feedback final ausente');
+  assert((await page.locator('#endDescription').textContent()).includes('14 acertos e 1 erro'),'resumo final não bate');
   const stored=await page.evaluate(()=>window.__TinkerpetMission.readRecords());
-  assert(stored.plays>=1&&stored.fastestMs>=0,'recorde pessoal não foi gravado no navegador');
-  assert.equal(stored.maxCorrect,2,'recorde de acertos não foi gravado');
-  assert.equal(await page.locator('#recordBestScore').textContent(),'2','recorde não aparece no resultado');
-  assert(await page.locator('#newRecord').isVisible(),'sinalização do novo recorde ausente');
+  assert(stored.plays>=1&&stored.fastestMs>=0,'recorde não foi gravado');
+  assert.equal(stored.maxCorrect,14,'recorde de acertos incorreto');
+  assert.equal(await page.locator('#recordBestScore').textContent(),'14');
   await page.locator('#restartBtn').click();
-  assert.equal(await page.evaluate(()=>window.__TinkerpetMission.state.scoreWrong),0,'reiniciar não limpou os erros');
-  assert.equal(await page.evaluate(()=>window.__TinkerpetMission.state.scoreCorrect),0,'reiniciar não limpou os acertos');
+  assert.equal(await page.locator('#stageProgress').textContent(),'Desafios desta fase: 0/3');
+  assert.equal(await page.evaluate(()=>window.__TinkerpetMission.state.scoreWrong),0,'reiniciar não zerou erros');
+  assert.equal(await page.evaluate(()=>window.__TinkerpetMission.state.scoreCorrect),0,'reiniciar não zerou acertos');
   await page.screenshot({path:'artifacts/petgame-cidade-'+size.name+'.png'});
   await context.close();
   console.log('PASS',size.name,'início, 3D, regiões, 10 perguntas, diagnóstico e entregas');
