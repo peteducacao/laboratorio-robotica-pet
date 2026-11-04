@@ -137,8 +137,8 @@ function endGame(won){
  $('endSymbol').textContent=won?'★':'♥';
  $('endTitle').textContent=won?'Missão cumprida!':'Fim de jogo';
  $('endDescription').textContent=won?
-   'Você completou as quatro entregas. Veja como foi sua aventura.':
-   'Você concluiu '+state.scoreMissions+' de 4 entregas. Confira seu desempenho e tente novamente.';
+  'Você completou as quatro entregas em '+time+'. Foram '+state.scoreCorrect+' acertos e '+state.scoreWrong+' erros.':
+  'Você concluiu '+state.scoreMissions+' de 4 entregas em '+time+'. Foram '+state.scoreCorrect+' acertos e '+state.scoreWrong+' erros.';
  $('scoreElapsed').textContent=time;
  $('scoreMissions').textContent=String(state.scoreMissions);
  $('scoreCorrect').textContent=String(state.scoreCorrect);
@@ -154,8 +154,22 @@ function endGame(won){
 }
 function startTimer(kind,remaining=30000){clearChallengeTimer();state.challengeStarted=performance.now();state.challengeEnd=state.challengeStarted+remaining;const tick=()=>{if(state.mode!==kind)return;const sec=Math.max(0,(state.challengeEnd-performance.now())/1000),node=$(kind+'Timer'),bar=$(kind+'Timebar');node.textContent=String(Math.ceil(sec));bar.style.width=(sec/30*100).toFixed(2)+'%';bar.classList.toggle('low',sec<10);node.parentElement.classList.toggle('danger',sec<10);if(sec<=0)loseLife()};state.challengeTimer=setInterval(tick,100);tick()}
 
-function requestQuitChallenge(){if(state.mode!=='question'&&state.mode!=='repair')return;if($('quitChallengeDialog').open)return;state.quitRemaining=Math.max(1,state.challengeEnd-performance.now());clearChallengeTimer();$('quitChallengeDialog').showModal()}
-function cancelQuitChallenge(){if($('quitChallengeDialog').open)$('quitChallengeDialog').close();if(state.mode==='question'||state.mode==='repair')startTimer(state.mode,state.quitRemaining)}
+function requestQuitChallenge(){
+ if(state.mode!=='question'&&state.mode!=='repair')return;
+ if($('quitChallengeDialog').open)return;
+ state.quitRemaining=Math.max(1,state.challengeEnd-performance.now());
+ clearChallengeTimer();
+ // A confirmação de saída não consome o tempo da aventura.
+ if(state.activeSince!==null){state.elapsedMs+=Math.max(0,performance.now()-state.activeSince);state.activeSince=null}
+ $('quitChallengeDialog').showModal();updateClock()
+}
+function cancelQuitChallenge(){
+ if($('quitChallengeDialog').open)$('quitChallengeDialog').close();
+ if(state.mode==='question'||state.mode==='repair'){
+  if(state.timerStarted&&!state.completed)state.activeSince=performance.now();
+  startTimer(state.mode,state.quitRemaining)
+ }
+}
 function confirmQuitChallenge(){if($('quitChallengeDialog').open)$('quitChallengeDialog').close();if(state.mode==='question'||state.mode==='repair')loseLife('Desafio abandonado: você perdeu uma vida.')}
 
 function pickQuestion(){let eligible=questions.map((q,i)=>i).filter(i=>!state.questionsCorrect.has(i));if(!eligible.length)return null;const notLast=eligible.filter(i=>i!==state.asked.at(-1));if(notLast.length)eligible=notLast;const fresh=eligible.filter(i=>!state.asked.includes(i));const index=(fresh.length?fresh:eligible)[rand((fresh.length?fresh:eligible).length)];state.asked.push(index);return index}
