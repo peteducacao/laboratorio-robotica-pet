@@ -136,9 +136,11 @@ function endGame(won){
  $('endKicker').textContent=won?'AVENTURA CONCLUÍDA':'FIM DE JOGO';
  $('endSymbol').textContent=won?'★':'♥';
  $('endTitle').textContent=won?'Missão cumprida!':'Fim de jogo';
+ const counted=state.scoreCorrect+' '+(state.scoreCorrect===1?'acerto':'acertos')+
+  ' e '+state.scoreWrong+' '+(state.scoreWrong===1?'erro':'erros');
  $('endDescription').textContent=won?
-  'Você completou as quatro entregas em '+time+'. Foram '+state.scoreCorrect+' acertos e '+state.scoreWrong+' erros.':
-  'Você concluiu '+state.scoreMissions+' de 4 entregas em '+time+'. Foram '+state.scoreCorrect+' acertos e '+state.scoreWrong+' erros.';
+  'Você completou as quatro entregas em '+time+'. Foram '+counted+'.':
+  'Você concluiu '+state.scoreMissions+' de 4 entregas em '+time+'. Foram '+counted+'.';
  $('scoreElapsed').textContent=time;
  $('scoreMissions').textContent=String(state.scoreMissions);
  $('scoreCorrect').textContent=String(state.scoreCorrect);
