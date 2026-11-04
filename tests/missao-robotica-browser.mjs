@@ -116,6 +116,7 @@ try{
    await page.evaluate(()=>window.__TinkerpetMission.beginRepair());
    assert.equal(await page.locator('#repairOverlay').isVisible(),true);
    await page.screenshot({path:'artifacts/missao-'+v.name+'-circuito.png'});
+   if(v.name==='celular-horizontal')console.log('VISUAL_REPAIR='+((await page.screenshot({type:'jpeg',quality:56,scale:'css'})).toString('base64')));
    await page.evaluate(()=>window.__TinkerpetMission.resetGame());
    await page.evaluate(()=>{document.querySelector('#repairOverlay').hidden=true;window.__TinkerpetMission.state.mode='drive'});
   }
