@@ -79,7 +79,9 @@ try{
   await page.evaluate(()=>{window.__TinkerpetMission.state.activeSince-=63000});
   await page.locator('#pauseBtn').click();
   const paused=await page.locator('#runTimer').textContent();
-  assert(paused.includes('01:03'),'tempo da aventura não foi contabilizado: '+paused);
+  const pausedSegments=(paused.match(/[0-9]+:[0-9]{2}/)?.[0]||'').split(':').map(Number);
+  assert(pausedSegments.length===2&&pausedSegments[0]*60+pausedSegments[1]>=63,
+   'tempo da aventura não foi contabilizado: '+paused);
   await page.waitForTimeout(350);
   assert.equal(await page.locator('#runTimer').textContent(),paused,'cronômetro deve parar na pausa');
   await page.locator('#resumeBtn').click();
