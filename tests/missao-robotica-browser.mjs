@@ -19,18 +19,15 @@ try{
  await wait(800);
  const projects=readFileSync('projects.html','utf8');
  assert(projects.includes('href="missao-robotica.html"'),'PETGame sumiu de Meus circuitos');
+ assert(!projects.includes('JOGO 3D · 🔒'),'PETGame não deve mostrar cadeado no menu');
  for(const size of sizes){
   const context=await browser.newContext({viewport:{width:size.width,height:size.height},isMobile:size.touch,hasTouch:size.touch,deviceScaleFactor:1});
   const page=await context.newPage();
   page.on('pageerror',e=>errors.push(size.name+': '+e.message));
   await page.goto(host+'/missao-robotica.html',{waitUntil:'domcontentloaded'});
-  assert(await page.locator('#authOverlay').isVisible(),'acesso deve ser protegido');
-  await page.locator('#password').fill('senha-errada');
-  await page.locator('#authForm button[type="submit"]').click();
-  assert(await page.locator('#authOverlay').isVisible(),'senha errada não pode liberar');
-  await page.locator('#password').fill('peteducacao');
-  await page.locator('#authForm button[type="submit"]').click();
-  assert(await page.locator('#startOverlay').isVisible(),'entrada deve abrir apresentação');
+  assert.equal(await page.locator('#authOverlay').count(),0,'PETGame não deve pedir senha');
+  assert.equal(await page.locator('#password').count(),0,'campo de senha deve ser removido do jogo');
+  assert(await page.locator('#startOverlay').isVisible(),'entrada direta deve abrir apresentação');
   await page.waitForFunction(()=>window.__TinkerpetMission?.state.ready,{timeout:60000});
   assert.equal(await page.locator('#startBtn').isEnabled(),true);
   assert.equal(await page.locator('#pauseTestBtn').count(),0,'menu de testes não deve existir');
