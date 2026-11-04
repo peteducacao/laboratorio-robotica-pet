@@ -10,8 +10,8 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&family=Manrope:wght@500;600;700;800&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="missao-robotica.css?v=10">
-<script defer src="missao-robotica.js?v=10"></script>
+<link rel="stylesheet" href="missao-robotica.css?v=11">
+<script defer src="missao-robotica.js?v=11"></script>
 </head>
 <body>
 <div class="game" id="game">
@@ -19,7 +19,7 @@
  <div class="scene-vignette"></div>
  <header class="topbar">
   <a class="logo" href="projects.html" aria-label="Voltar a Meus circuitos"><span class="logo-symbol"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 3v3m8-3v3M5 8H3m18 0h-2M8 17v4m8-4v4M6 7h12v10H6zM9 11l2 2 4-4"/></svg></span><span>TinkerPET <b>PETGame</b></span></a>
-  <div class="top-controls"><div class="lives" id="lives" aria-label="3 vidas">♥ ♥ ♥</div><button class="icon-btn sound-button" id="soundBtn" type="button" aria-label="Ativar sons do jogo" aria-pressed="false" title="Ativar sons">♪̸</button><button class="icon-btn" id="viewBtn" type="button" title="Alternar câmera" aria-label="Alternar entre visão do motorista e câmera externa"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><path d="M3 9 12 4l9 5-9 5zM3 9v7l9 5 9-5V9M12 14v7"/></svg></button><button class="icon-btn" id="fullBtn" type="button" title="Tela cheia" aria-label="Alternar tela cheia"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 3H3v5m13-5h5v5M3 16v5h5m13-5v5h-5"/></svg></button><button class="icon-btn exit-game" id="exitGameBtn" type="button" title="Fechar PETGame" aria-label="Fechar jogo e voltar a Meus circuitos">×</button><button class="icon-btn" id="pauseBtn" type="button" title="Pausar" aria-label="Pausar jogo"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 5v14M15 5v14"/></svg></button></div>
+  <div class="top-controls"><div class="lives" id="lives" aria-label="3 vidas">♥ ♥ ♥</div><button class="icon-btn sound-button" id="soundBtn" type="button" aria-label="Ativar sons do jogo" aria-pressed="false" title="Ativar sons"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" aria-hidden="true"><path d="M11 5 6 9H3v6h3l5 4V5Z"/><path d="m16 9 5 6m0-6-5 6"/></svg></button><button class="icon-btn" id="viewBtn" type="button" title="Alternar câmera" aria-label="Alternar entre visão do motorista e câmera externa"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><path d="M3 9 12 4l9 5-9 5zM3 9v7l9 5 9-5V9M12 14v7"/></svg></button><button class="icon-btn" id="fullBtn" type="button" title="Tela cheia" aria-label="Alternar tela cheia"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 3H3v5m13-5h5v5M3 16v5h5m13-5v5h-5"/></svg></button><button class="icon-btn exit-game" id="exitGameBtn" type="button" title="Fechar PETGame" aria-label="Fechar jogo e voltar a Meus circuitos">×</button><button class="icon-btn" id="pauseBtn" type="button" title="Pausar" aria-label="Pausar jogo"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 5v14M15 5v14"/></svg></button></div>
  </header>
  <div class="mission-panel"><div class="mission-caption"><span class="live-dot"></span><span id="missionNumber">MISSÃO 01 DE 04</span><span class="district-chip" id="districtName">ÁREA · LABORATÓRIO</span></div><strong id="missionTitle">Entrega na escola</strong><p id="missionDesc">Leve os materiais até o ponto marcado.</p><div class="mission-status"><span class="distance-wrap"><b id="navCompass" aria-hidden="true">↑</b><span id="missionDistance">Destino · 0 m</span></span><span id="missionDone">0/4</span><span id="runTimer" class="run-time" role="timer" aria-label="Tempo de aventura">◷ 00:00</span></div></div>
  <div class="game-toast" id="toast" role="status" aria-live="polite"></div>
@@ -58,7 +58,7 @@
  <div><b id="scoreWrong">0</b><span>Erros</span></div>
  <div><b id="scoreMissions">0</b><span>Entregas</span></div>
 </div>
-<div class="personal-record"><span id="newRecord" class="record-won" hidden>★ NOVO RECORDE!</span><div><small>Melhor tempo</small><strong id="recordBestTime">—</strong></div><div><small>Maior número de acertos</small><strong id="recordBestScore">—</strong></div></div><p class="results-breakdown">Perguntas certas: <strong id="scoreQuestions">0</strong> · Diagnósticos certos: <strong id="scoreRepairs">0</strong></p>
+<div class="personal-record"><span id="newRecord" class="record-won" hidden>★ NOVO RECORDE!</span><div><small>Melhor tempo</small><strong id="recordBestTime">—</strong></div><div><small>Maior número de acertos</small><strong id="recordBestScore">—</strong></div><div class="best-run"><small>Melhor partida</small><strong id="recordBestRun">—</strong></div></div><p class="results-breakdown">Perguntas certas: <strong id="scoreQuestions">0</strong> · Diagnósticos certos: <strong id="scoreRepairs">0</strong></p>
 <p id="scoreFeedback" class="results-feedback"></p><button class="button primary block" id="restartBtn">Reiniciar aventura</button><a class="back-link" href="projects.html">← Meus circuitos</a></div></div>
 <dialog id="quitChallengeDialog" class="quit-dialog" aria-labelledby="quitChallengeTitle">
  <div class="quit-inner"><span class="eyebrow">PETGAME · DESAFIO EM ANDAMENTO</span><h2 id="quitChallengeTitle">Sair do desafio?</h2><p>Você perderá <strong>uma vida</strong> se abandonar sem resolver.</p>
