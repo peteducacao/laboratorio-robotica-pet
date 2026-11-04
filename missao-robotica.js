@@ -60,8 +60,8 @@ switch1:['Gangorra do ESP32 (9 V)','switch.svg'],switch2:['Gangorra dos motores 
 lm:['LM2596','lm2596.svg'],pack:['6 pilhas AA','battery-pack.svg'],jumper:['Jumper','jumpers.svg']
 };
 const diagnosticTests=[{"id":"pack","prompt":"O ESP32 liga, mas a ponte H não recebe energia das pilhas. Qual fonte verificar?","answer":"pack","options":["pack","battery","lm","esp"]},{"id":"bridge","prompt":"Há energia e comandos, mas nenhum motor responde. Qual módulo pode ter falhado?","answer":"bridge","options":["bridge","lm","battery","esp"]},{"id":"switch1","prompt":"A bateria de 9 V funciona, mas a alimentação do ESP32 está interrompida na chave. Qual peça conferir?","answer":"switch1","options":["switch1","switch2","bridge","motor"]},{"id":"switch2","prompt":"As pilhas estão carregadas, mas a chave dos motores está desligada. Qual peça verificar?","answer":"switch2","options":["switch2","switch1","lm","esp"]},{"id":"jumper","prompt":"O sinal não chega à ponte H porque um fio se soltou. O que reconectar?","answer":"jumper","options":["jumper","motor","pack","battery"]},{"id":"lm","prompt":"A bateria de 9 V funciona, mas a tensão de entrada do ESP32 não foi ajustada. Qual módulo verificar?","answer":"lm","options":["lm","bridge","switch2","motor"]},{"id":"motor","prompt":"A ponte H responde, mas uma roda não gira mesmo com os fios ligados. Qual peça pode falhar?","answer":"motor","options":["motor","esp","lm","switch1"]},{"id":"esp","prompt":"A alimentação está correta, mas não chegam comandos à ponte H. Qual placa investigar?","answer":"esp","options":["esp","pack","battery","motor"]},{"id":"battery","prompt":"O regulador não recebe energia, embora a gangorra da bateria de 9 V esteja ligada. Qual fonte conferir?","answer":"battery","options":["battery","pack","bridge","motor"]},{"id":"switch2","prompt":"O carrinho liga, mas os motores só recebem energia quando a gangorra das pilhas AA é acionada. Qual é?","answer":"switch2","options":["switch2","switch1","lm","esp"]}];
-const state={mode:'start',ready:false,lives:3,mistakesTowardLife:0,mission:0,questionsCorrect:new Set(),asked:[],scoreQuestions:0,scoreRepairs:0,scoreCorrect:0,scoreWrong:0,scoreMissions:0,elapsedMs:0,activeSince:null,timerStarted:false,meters:0,nextEvent:26,nextEventTime:20,driveSeconds:0,eventCount:0,lastFault:null,lastDiagnosis:null,drive:{x:-50,z:50,angle:-Math.PI/2,a:0,b:0,collided:false},desired:[0,0],pointer:[null,null],pointerValue:[0,0],keys:new Set(),cameraTop:true,repairTab:'power',quitRemaining:0,challengeTimer:null,challengeStarted:0,challengeEnd:0,activeQuestion:null,fault:null,wires:null,switches:null,gpios:null,skipUntil:0,completed:false,recordsSaved:false,stageChallenges:[],stageSlot:0,stageMeters:0,stageLastEventMeters:0,stageLastEventSeconds:0,stageGateToastAt:0};
-const world={THREE:null,renderer:null,scene:null,camera:null,car:null,carLed:null,uiTimer:0,staticStats:null,wheels:[],walls:[],goal:null,goalLabel:null,goalBeam:null,routeGroup:null,routePoints:[],routeDistance:0,routeLastPos:null,routeLastMission:-1,clockTime:0,lastFrame:0,runFrame:false,sky:null,clouds:[],clockUiAt:0,minimapUiAt:0,collisionToastAt:0,ambientMovers:[]};
+const state={mode:'start',ready:false,lives:3,mistakesTowardLife:0,mission:0,questionsCorrect:new Set(),asked:[],scoreQuestions:0,scoreRepairs:0,scoreCorrect:0,scoreWrong:0,scoreMissions:0,elapsedMs:0,activeSince:null,timerStarted:false,meters:0,nextEvent:26,nextEventTime:20,driveSeconds:0,eventCount:0,lastFault:null,lastDiagnosis:null,drive:{x:-50,z:50,angle:-Math.PI/2,a:0,b:0,collided:false},desired:[0,0],pointer:[null,null],pointerValue:[0,0],keys:new Set(),cameraTop:true,repairTab:'power',quitRemaining:0,challengeTimer:null,challengeStarted:0,challengeEnd:0,activeQuestion:null,fault:null,wires:null,switches:null,gpios:null,skipUntil:0,completed:false,recordsSaved:false,stageChallenges:[],stageSlot:0,stageMeters:0,stageLastEventMeters:0,stageLastEventSeconds:0,stageGateToastAt:0,rejectedAnswers:[],rejectedDiagnostics:[]};
+const world={THREE:null,renderer:null,scene:null,camera:null,car:null,carLed:null,uiTimer:0,staticStats:null,wheels:[],walls:[],goal:null,goalLabel:null,goalBeam:null,routeGroup:null,routePoints:[],routeDistance:0,routeLastPos:null,routeLastMission:-1,clockTime:0,lastFrame:0,runFrame:false,sky:null,clouds:[],clockUiAt:0,minimapUiAt:0,collisionToastAt:0,ambientMovers:[],autosaveAt:0};
 const rand=n=>Math.floor(Math.random()*n);
 function shuffled(arr){const a=[...arr];for(let i=a.length-1;i>0;i--){const j=rand(i+1);[a[i],a[j]]=[a[j],a[i]]}return a}
 function overlay(name){for(const id of overlays)$(id).hidden=id!==name;}
@@ -322,33 +322,30 @@ document.addEventListener('keydown',e=>{
 });
 installControl(0);installControl(1);installKeys();
 window.addEventListener('resize',()=>{if(world.renderer&&world.camera){const w=$('scene').clientWidth,h=$('scene').clientHeight;world.camera.aspect=Math.max(1,w)/Math.max(1,h);world.camera.updateProjectionMatrix();world.renderer.setSize(w,h)}})}
-function resetGame(){clearChallengeTimer();state.lives=3;state.mistakesTowardLife=0;state.mission=0;state.scoreMissions=0;state.scoreQuestions=0;state.scoreRepairs=0;state.scoreCorrect=0;state.scoreWrong=0;state.elapsedMs=0;state.activeSince=null;state.timerStarted=true;state.questionsCorrect=new Set();state.asked=[];state.meters=0;state.nextEvent=26;state.nextEventTime=20;state.driveSeconds=0;state.eventCount=0;state.lastFault=null;state.lastDiagnosis=null;state.completed=false;state.drive={x:-50,z:50,angle:-Math.PI/2,a:0,b:0,collided:false};state.desired=[0,0];state.pointer=[null,null];state.pointerValue=[0,0];state.keys.clear();state.skipUntil=0;state.recordsSaved=false;state.stageChallenges=createStageChallenges();state.stageSlot=0;state.stageMeters=0;state.stageLastEventMeters=0;state.stageLastEventSeconds=0;state.stageGateToastAt=0;state.cameraTop=true;state.repairTab='power';$('viewBtn').setAttribute('aria-label','Ativar visão do motorista');setThumb(0,0);setThumb(1,0);updateReadout();updateLives();updateMistakeProgress();updateMission();updateClock();if(world.car){world.car.position.set(-50,0,50);world.car.rotation.y=-Math.PI/2;for(const wheel of world.wheels)wheel.pivot.rotation.x=0}updateGoal();updateRoute(true)}
-function recordFailure(reason){
+function resetGame(){clearChallengeTimer();state.lives=3;state.mistakesTowardLife=0;state.mission=0;state.scoreMissions=0;state.scoreQuestions=0;state.scoreRepairs=0;state.scoreCorrect=0;state.scoreWrong=0;state.elapsedMs=0;state.activeSince=null;state.timerStarted=true;state.questionsCorrect=new Set();state.asked=[];state.meters=0;state.nextEvent=26;state.nextEventTime=20;state.driveSeconds=0;state.eventCount=0;state.lastFault=null;state.lastDiagnosis=null;state.completed=false;state.drive={x:-50,z:50,angle:-Math.PI/2,a:0,b:0,collided:false};state.desired=[0,0];state.pointer=[null,null];state.pointerValue=[0,0];state.keys.clear();state.skipUntil=0;state.recordsSaved=false;state.stageChallenges=createStageChallenges();state.stageSlot=0;state.stageMeters=0;state.stageLastEventMeters=0;state.stageLastEventSeconds=0;state.stageGateToastAt=0;state.rejectedAnswers=[];state.rejectedDiagnostics=[];state.cameraTop=true;state.repairTab='power';$('viewBtn').setAttribute('aria-label','Ativar visão do motorista');setThumb(0,0);setThumb(1,0);updateReadout();updateLives();updateMistakeProgress();updateMission();updateClock();if(world.car){world.car.position.set(-50,0,50);world.car.rotation.y=-Math.PI/2;for(const wheel of world.wheels)wheel.pivot.rotation.x=0}updateGoal();updateRoute(true)}
+function recordFailure(reason,{abandon=false,timeout=false}={}){
  if(state.mode!=='question'&&state.mode!=='repair')return;
  const was=state.mode;
- state.scoreWrong++;
- state.mistakesTowardLife++;
- playSound('wrong');
- const slot=currentStageSlot();
- if(slot&&((was==='question'&&slot.kind==='question'&&slot.index===state.activeQuestion)||
-  (was==='repair'&&slot.kind==='repair'))){
-  state.stageSlot++;updateStageProgress()
- }
- state.stageLastEventMeters=state.stageMeters;
- state.stageLastEventSeconds=state.driveSeconds;
- clearChallengeTimer();
- const lostLife=state.mistakesTowardLife>=3;
- if(lostLife){
-  state.mistakesTowardLife=0;
-  state.lives--
- }
+ state.scoreWrong++;state.mistakesTowardLife++;playSound('wrong');
+ const lifeLost=state.mistakesTowardLife>=3;
+ if(lifeLost){state.mistakesTowardLife=0;state.lives--}
  updateLives();updateMistakeProgress();
  if(state.lives<=0){endGame(false);return}
- setMode('drive');stopRobot();state.drive.collided=true;
- const message=lostLife?'Terceiro erro: você perdeu uma vida.':
-  'Erros: '+state.mistakesTowardLife+'/3 antes de perder uma vida.';
- toast((reason||'Tempo esgotado.')+' '+message,true);
- state.skipUntil=performance.now()+2100
+ if(abandon){
+  const slot=currentStageSlot();
+  if(slot&&((was==='question'&&slot.kind==='question'&&slot.index===state.activeQuestion)||
+   (was==='repair'&&slot.kind==='repair'))){state.stageSlot++;updateStageProgress()}
+  state.stageLastEventMeters=state.stageMeters;
+  state.stageLastEventSeconds=state.driveSeconds;
+  clearChallengeTimer();setMode('drive');stopRobot();state.drive.collided=true;
+  state.skipUntil=performance.now()+2100
+ }else if(timeout){startTimer(was,30000)}
+ const output=(reason||'Tempo esgotado.')+' '+(lifeLost?
+  'Terceiro erro: perdeu uma vida. Tente acertar.':
+  'Erros: '+state.mistakesTowardLife+'/3. Tente novamente.');
+ if(!abandon&&was==='question')$('questionResponse').textContent=output;
+ if(!abandon&&was==='repair')$('diagnosticFeedback').textContent=output;
+ toast(output,true);saveRun()
 }
 function endGame(won){
  stopRobot();clearChallengeTimer();setMode('end');state.completed=true;
@@ -375,7 +372,7 @@ function endGame(won){
   rate>=.5?'Bom trabalho! Reveja os desafios em que teve dúvidas.':
   'Você completou etapas importantes. Vale revisar as conexões e os componentes.';
 }
-function startTimer(kind,remaining=30000){clearChallengeTimer();state.challengeStarted=performance.now();state.challengeEnd=state.challengeStarted+remaining;const tick=()=>{if(state.mode!==kind)return;const sec=Math.max(0,(state.challengeEnd-performance.now())/1000),node=$(kind+'Timer'),bar=$(kind+'Timebar');node.textContent=String(Math.ceil(sec));bar.style.width=(sec/30*100).toFixed(2)+'%';bar.classList.toggle('low',sec<10);node.parentElement.classList.toggle('danger',sec<10);if(sec<=0)recordFailure('Tempo esgotado.')};state.challengeTimer=setInterval(tick,100);tick()}
+function startTimer(kind,remaining=30000){clearChallengeTimer();state.challengeStarted=performance.now();state.challengeEnd=state.challengeStarted+remaining;const tick=()=>{if(state.mode!==kind)return;const sec=Math.max(0,(state.challengeEnd-performance.now())/1000),node=$(kind+'Timer'),bar=$(kind+'Timebar');node.textContent=String(Math.ceil(sec));bar.style.width=(sec/30*100).toFixed(2)+'%';bar.classList.toggle('low',sec<10);node.parentElement.classList.toggle('danger',sec<10);if(sec<=0)recordFailure('Tempo esgotado.',{timeout:true})};state.challengeTimer=setInterval(tick,100);tick()}
 
 function requestQuitChallenge(){
  if(state.mode!=='question'&&state.mode!=='repair')return;
@@ -393,7 +390,7 @@ function cancelQuitChallenge(){
   startTimer(state.mode,state.quitRemaining)
  }
 }
-function confirmQuitChallenge(){if($('quitChallengeDialog').open)$('quitChallengeDialog').close();if(state.mode==='question'||state.mode==='repair')recordFailure('Desafio abandonado.')}
+function confirmQuitChallenge(){if($('quitChallengeDialog').open)$('quitChallengeDialog').close();if(state.mode==='question'||state.mode==='repair')recordFailure('Desafio abandonado.',{abandon:true})}
 
 function pickQuestion(){
  const indices=(state.stageChallenges[state.mission]||[]).filter(slot=>slot.kind==='question').map(slot=>slot.index);
@@ -401,9 +398,9 @@ function pickQuestion(){
  if(!available.length)return null;
  const index=available[rand(available.length)];state.asked.push(index);return index
 }
-function renderQuestion(assignedIndex=null){const i=assignedIndex===null?pickQuestion():assignedIndex;if(i===null){solveChallenge('Todas as perguntas foram respondidas!');return}state.activeQuestion=i;const q=questions[i];$('questionText').textContent=q[0];$('answers').replaceChildren();shuffled(q[1].map((txt,index)=>({txt,correct:index===q[2]}))).forEach((a,i)=>{const b=document.createElement('button');b.type='button';b.className='answer';const letter=document.createElement('span');letter.className='letter';letter.textContent='ABCD'[i];const label=document.createElement('span');label.textContent=a.txt;b.append(letter,label);b.addEventListener('click',()=>answer(a.correct,b));$('answers').append(b)});}
+function renderQuestion(assignedIndex=null){const i=assignedIndex===null?pickQuestion():assignedIndex;if(i===null){solveChallenge('Todas as perguntas foram respondidas!');return}state.activeQuestion=i;const q=questions[i];$('questionText').textContent=q[0];$('answers').replaceChildren();shuffled(q[1].map((txt,index)=>({txt,correct:index===q[2]}))).forEach((a,i)=>{const b=document.createElement('button');b.type='button';b.className='answer';b.dataset.answerText=a.txt;const letter=document.createElement('span');letter.className='letter';letter.textContent='ABCD'[i];const label=document.createElement('span');label.textContent=a.txt;b.append(letter,label);if(state.rejectedAnswers.includes(a.txt)){b.disabled=true;b.classList.add('wrong')}b.addEventListener('click',()=>answer(a.correct,b));$('answers').append(b)});}
 function beginQuestion(assignedIndex=null){
- stopRobot();setMode('question');
+ stopRobot();state.rejectedAnswers=[];state.rejectedDiagnostics=[];setMode('question');
  $('questionEyebrow').textContent='PARADA DE CONHECIMENTO · FASE '+(state.mission+1);
  $('questionResponse').textContent='No terceiro erro, você perde uma vida.';
  renderQuestion(assignedIndex);
@@ -411,17 +408,17 @@ function beginQuestion(assignedIndex=null){
 }
 function answer(correct,button){
  if(state.mode!=='question')return;
- if(performance.now()>=state.challengeEnd){recordFailure();return}
+ if(performance.now()>=state.challengeEnd){recordFailure('Tempo esgotado.',{timeout:true});return}
  if(correct){
   playSound('correct');state.questionsCorrect.add(state.activeQuestion);
   state.scoreQuestions++;state.scoreCorrect++;
   solveChallenge('Resposta correta! Continue a missão.');return
  }
- if(button){button.disabled=true;button.classList.add('wrong')}
+ if(button){button.disabled=true;button.classList.add('wrong');if(button.dataset.answerText&&!state.rejectedAnswers.includes(button.dataset.answerText))state.rejectedAnswers.push(button.dataset.answerText)}
  recordFailure('Resposta incorreta.')
 }
 function beginDiagnostic(assignedIndex=null){
- stopRobot();
+ stopRobot();state.rejectedAnswers=[];state.rejectedDiagnostics=[];
  const fresh=diagnosticTests.filter(item=>item!==state.lastDiagnosis);
  state.fault=assignedIndex===null?fresh[rand(fresh.length)]:diagnosticTests[assignedIndex];
  state.lastDiagnosis=state.fault;
@@ -431,7 +428,7 @@ function beginDiagnostic(assignedIndex=null){
  for(const key of shuffled(state.fault.options)){
   const [name,file]=diagnosticParts[key],card=document.createElement('button');
   card.type='button';card.className='diagnostic-card';card.dataset.diagnostic=key;
-  card.setAttribute('aria-label','Selecionar '+name);
+  card.setAttribute('aria-label','Selecionar '+name);if(state.rejectedDiagnostics.includes(key)){card.disabled=true;card.classList.add('wrong')}
   const img=document.createElement('img');img.src='assets/component-preview/'+file;img.alt='';img.loading='eager';
   const label=document.createElement('span');label.textContent=name;card.append(img,label);grid.append(card);
  }
@@ -439,8 +436,8 @@ function beginDiagnostic(assignedIndex=null){
 }
 function chooseDiagnostic(key,card){
  if(state.mode!=='repair'||!state.fault)return;
- if(performance.now()>=state.challengeEnd){recordFailure();return}
- if(key!==state.fault.answer){card.disabled=true;card.classList.add('wrong');recordFailure('Diagnóstico incorreto.');return}
+ if(performance.now()>=state.challengeEnd){recordFailure('Tempo esgotado.',{timeout:true});return}
+ if(key!==state.fault.answer){card.disabled=true;card.classList.add('wrong');if(!state.rejectedDiagnostics.includes(key))state.rejectedDiagnostics.push(key);recordFailure('Diagnóstico incorreto.');return}
  state.scoreRepairs++;state.scoreCorrect++;playSound('correct');solveChallenge('Diagnóstico correto! Circuito restabelecido.');
 }
 function beginRepair(assignedIndex=null){beginDiagnostic(assignedIndex)}
