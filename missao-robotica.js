@@ -41,7 +41,7 @@ lm:['LM2596','lm2596.svg'],pack:['6 pilhas AA','battery-pack.svg'],jumper:['Jump
 };
 const diagnosticTests=[{"id":"pack","prompt":"O ESP32 liga, mas a ponte H não recebe energia das pilhas. Qual fonte verificar?","answer":"pack","options":["pack","battery","lm","esp"]},{"id":"bridge","prompt":"Há energia e comandos, mas nenhum motor responde. Qual módulo pode ter falhado?","answer":"bridge","options":["bridge","lm","battery","esp"]},{"id":"switch1","prompt":"A bateria de 9 V funciona, mas a alimentação do ESP32 está interrompida na chave. Qual peça conferir?","answer":"switch1","options":["switch1","switch2","bridge","motor"]},{"id":"switch2","prompt":"As pilhas estão carregadas, mas a chave dos motores está desligada. Qual peça verificar?","answer":"switch2","options":["switch2","switch1","lm","esp"]},{"id":"jumper","prompt":"O sinal não chega à ponte H porque um fio se soltou. O que reconectar?","answer":"jumper","options":["jumper","motor","pack","battery"]},{"id":"lm","prompt":"A bateria de 9 V funciona, mas a tensão de entrada do ESP32 não foi ajustada. Qual módulo verificar?","answer":"lm","options":["lm","bridge","switch2","motor"]},{"id":"motor","prompt":"A ponte H responde, mas uma roda não gira mesmo com os fios ligados. Qual peça pode falhar?","answer":"motor","options":["motor","esp","lm","switch1"]},{"id":"esp","prompt":"A alimentação está correta, mas não chegam comandos à ponte H. Qual placa investigar?","answer":"esp","options":["esp","pack","battery","motor"]},{"id":"battery","prompt":"O regulador não recebe energia, embora a primeira gangorra esteja ligada. Qual fonte conferir?","answer":"battery","options":["battery","pack","bridge","motor"]},{"id":"switch2","prompt":"O carrinho liga, mas os motores só recebem energia quando a segunda chave é acionada. Qual é?","answer":"switch2","options":["switch2","switch1","lm","esp"]}];
 const state={mode:'auth',ready:false,lives:3,mission:0,questionsCorrect:new Set(),asked:[],scoreQuestions:0,scoreRepairs:0,scoreCorrect:0,scoreWrong:0,scoreMissions:0,elapsedMs:0,activeSince:null,timerStarted:false,meters:0,nextEvent:26,nextEventTime:20,driveSeconds:0,eventCount:0,lastFault:null,lastDiagnosis:null,drive:{x:-50,z:50,angle:-Math.PI/2,a:0,b:0,collided:false},desired:[0,0],pointer:[null,null],pointerValue:[0,0],keys:new Set(),cameraTop:true,repairTab:'power',quitRemaining:0,challengeTimer:null,challengeStarted:0,challengeEnd:0,activeQuestion:null,fault:null,wires:null,switches:null,gpios:null,skipUntil:0,completed:false,recordsSaved:false};
-const world={THREE:null,renderer:null,scene:null,camera:null,car:null,carLed:null,uiTimer:0,staticStats:null,wheels:[],walls:[],goal:null,goalLabel:null,goalBeam:null,routeGroup:null,routePoints:[],routeDistance:0,routeLastPos:null,routeLastMission:-1,clockTime:0,lastFrame:0,runFrame:false,sky:null,clouds:[],clockUiAt:0,minimapUiAt:0,collisionToastAt:0};
+const world={THREE:null,renderer:null,scene:null,camera:null,car:null,carLed:null,uiTimer:0,staticStats:null,wheels:[],walls:[],goal:null,goalLabel:null,goalBeam:null,routeGroup:null,routePoints:[],routeDistance:0,routeLastPos:null,routeLastMission:-1,clockTime:0,lastFrame:0,runFrame:false,sky:null,clouds:[],clockUiAt:0,minimapUiAt:0,collisionToastAt:0,ambientMovers:[]};
 const rand=n=>Math.floor(Math.random()*n);
 function shuffled(arr){const a=[...arr];for(let i=a.length-1;i>0;i--){const j=rand(i+1);[a[i],a[j]]=[a[j],a[i]]}return a}
 function overlay(name){for(const id of overlays)$(id).hidden=id!==name;}
@@ -442,7 +442,7 @@ function tileTexture(kind,base,seed,repeat){
  texture.wrapS=texture.wrapT=T.RepeatWrapping;texture.repeat.set(repeat,repeat);texture.anisotropy=4;return texture
 }
 const textured=(kind,color,seed,repeat=8)=>new T.MeshLambertMaterial({map:tileTexture(kind,color,seed,repeat),color:0xffffff});
-const mats={grass:textured('grass','#9dbc94',101,20),road:textured('road','#656c77',202,12),sidewalk:textured('road','#e2d9c6',303,7),zoneFactory:textured('grass','#d4a780',311,12),zoneLab:textured('grass','#84bebe',411,12),zoneSchool:textured('grass','#bad49b',511,12),zonePark:textured('grass','#7ca77e',611,12),factoryWall:textured('brick','#c88e75',711,3),labWall:textured('brick','#92bbcd',811,3),schoolWall:textured('brick','#f0d3a0',911,3),parkWall:textured('brick','#b9bba1',1011,3),line:new T.MeshBasicMaterial({color:0xf5f1e8}),yellow:new T.MeshLambertMaterial({color:0xf2c04b}),dark:new T.MeshLambertMaterial({color:0x303e4c}),teal:new T.MeshLambertMaterial({color:0x2d8ead}),white:new T.MeshLambertMaterial({color:0xfff9ed}),leaf:new T.MeshLambertMaterial({color:0x829366}),trunk:new T.MeshLambertMaterial({color:0x92755b}),red:new T.MeshLambertMaterial({color:0xe17968}),window:new T.MeshLambertMaterial({color:0xa7c5db}),board:new T.MeshLambertMaterial({color:0x326f91}),cone:new T.MeshLambertMaterial({color:0xf08e51}),door:new T.MeshLambertMaterial({color:0x456475}),trim:new T.MeshLambertMaterial({color:0xffeee2}),awning:new T.MeshLambertMaterial({color:0xefb261}),glass:new T.MeshLambertMaterial({color:0x83c6d8}),metal:new T.MeshLambertMaterial({color:0xbecbd0}),railPost:new T.MeshLambertMaterial({color:0x7c939b}),bush:new T.MeshLambertMaterial({color:0x649478}),lampGlow:new T.MeshBasicMaterial({color:0xffe7a5}),hill:new T.MeshLambertMaterial({color:0x819da0}),hillLight:new T.MeshLambertMaterial({color:0x9cb4a3})};
+const mats={grass:textured('grass','#9dbc94',101,20),road:textured('road','#656c77',202,12),sidewalk:textured('road','#e2d9c6',303,7),zoneFactory:textured('grass','#d4a780',311,12),zoneLab:textured('grass','#84bebe',411,12),zoneSchool:textured('grass','#bad49b',511,12),zonePark:textured('grass','#7ca77e',611,12),factoryWall:textured('brick','#c88e75',711,3),labWall:textured('brick','#92bbcd',811,3),schoolWall:textured('brick','#f0d3a0',911,3),parkWall:textured('brick','#b9bba1',1011,3),line:new T.MeshBasicMaterial({color:0xf5f1e8}),yellow:new T.MeshLambertMaterial({color:0xf2c04b}),dark:new T.MeshLambertMaterial({color:0x303e4c}),teal:new T.MeshLambertMaterial({color:0x2d8ead}),white:new T.MeshLambertMaterial({color:0xfff9ed}),leaf:new T.MeshLambertMaterial({color:0x829366}),trunk:new T.MeshLambertMaterial({color:0x92755b}),red:new T.MeshLambertMaterial({color:0xe17968}),window:new T.MeshLambertMaterial({color:0xa7c5db}),board:new T.MeshLambertMaterial({color:0x326f91}),cone:new T.MeshLambertMaterial({color:0xf08e51}),roofBlue:textured('brick','#7b9fa9',1245,3),roofTerracotta:textured('brick','#d58a77',1246,3),flower:new T.MeshLambertMaterial({color:0xf6bca3}),water:new T.MeshLambertMaterial({color:0x6eb9c6}),lawn:new T.MeshLambertMaterial({color:0x96c68a}),sign:new T.MeshBasicMaterial({color:0xf5e7a0}),door:new T.MeshLambertMaterial({color:0x456475}),trim:new T.MeshLambertMaterial({color:0xffeee2}),awning:new T.MeshLambertMaterial({color:0xefb261}),glass:new T.MeshLambertMaterial({color:0x83c6d8}),metal:new T.MeshLambertMaterial({color:0xbecbd0}),railPost:new T.MeshLambertMaterial({color:0x7c939b}),bush:new T.MeshLambertMaterial({color:0x649478}),lampGlow:new T.MeshBasicMaterial({color:0xffe7a5}),hill:new T.MeshLambertMaterial({color:0x819da0}),hillLight:new T.MeshLambertMaterial({color:0x9cb4a3})};
 const box=(parent,w,h,d,x,y,z,mat)=>{const o=new T.Mesh(new T.BoxGeometry(w,h,d),mat);o.position.set(x,y,z);parent.add(o);return o};
 const cyl=(parent,rt,rb,h,segments,x,y,z,mat)=>{const o=new T.Mesh(new T.CylinderGeometry(rt,rb,h,segments),mat);o.position.set(x,y,z);parent.add(o);return o};
 box(scene,152,.3,152,0,-.24,0,mats.grass);
@@ -454,7 +454,8 @@ for(const x of [-50,-30,-10,10,30,50])for(const z of [-50,-30,-10,10,30,50])for(
 function batchCubes(positions,w,h,d){const mesh=new T.InstancedMesh(new T.BoxGeometry(w,h,d),mats.line,positions.length),dummy=new T.Object3D();positions.forEach((p,i)=>{dummy.position.set(...p);dummy.updateMatrix();mesh.setMatrixAt(i,dummy.matrix)});mesh.instanceMatrix.needsUpdate=true;mesh.frustumCulled=false;scene.add(mesh)}
 batchCubes(dashedVertical,.17,.11,3.3);batchCubes(dashedHorizontal,3.3,.11,.17);batchCubes(crossV,.68,.13,1.3);
 const makeLabel=(txt,w=170)=>{const c=document.createElement('canvas');c.width=512;c.height=116;const ctx=c.getContext('2d');ctx.fillStyle='#ffffffed';ctx.beginPath();ctx.roundRect(5,6,502,102,22);ctx.fill();ctx.fillStyle='#096f69';ctx.font='bold 45px Manrope, Arial';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(txt,256,59,480);const texture=new T.CanvasTexture(c);texture.colorSpace=T.SRGBColorSpace;const sprite=new T.Sprite(new T.SpriteMaterial({map:texture,depthWrite:false}));sprite.scale.set(w/25,1.7,1);return sprite};
-function building(x,z,kind,index){const scheme=[0xdcb9a6,0xe5d4b2,0xa9bed1,0xd1c2ba,0xd3ccae,0xb6c1bf];const mat=kind==='factory'?mats.factoryWall:kind==='lab'?mats.labWall:kind==='school'?mats.schoolWall:kind==='park'?mats.parkWall:new T.MeshLambertMaterial({color:scheme[index%scheme.length]});const special={school:'ESCOLA',factory:'FÁBRICA',workshop:'OFICINA',lab:'LABORATÓRIO',park:'PARQUE'}[kind];
+const homeWallPalette=[0xdcb9a6,0xe5d4b2,0xa9bed1,0xd1c2ba,0xd3ccae,0xb6c1bf].map(color=>new T.MeshLambertMaterial({color}));
+function building(x,z,kind,index){const mat=kind==='factory'?mats.factoryWall:kind==='lab'?mats.labWall:kind==='school'?mats.schoolWall:kind==='park'?mats.parkWall:homeWallPalette[index%homeWallPalette.length];const special={school:'ESCOLA',factory:'FÁBRICA',workshop:'OFICINA',lab:'LABORATÓRIO',park:'PARQUE'}[kind];
 if(kind==='park'){box(scene,11,.2,11,x,.02,z,new T.MeshLambertMaterial({color:0x9ab784}));for(const [dx,dz] of [[-3,-2],[2,2],[3,-3]])tree(x+dx,z+dz,.9);const tag=makeLabel(special);tag.position.set(x,4.9,z);scene.add(tag);world.walls.push({type:'rect',x,z,hw:5,hd:5,ghost:true});return}
 const height=kind==='factory'?7:kind==='school'?5:kind==='lab'?6.5:3.2+(index%4)*1.1,ww=kind==='factory'?12:10,dd=kind==='factory'?10:9.5;box(scene,ww,height,dd,x,height/2,z,mat);box(scene,ww+.7,.45,dd+.7,x,height+.23,z,mats.white);
 // Fachadas com entradas, cobertura, janelas emolduradas e elementos por função.
@@ -492,7 +493,104 @@ world.walls.push({type:'rect',x,z,hw:ww/2+.2,hd:dd/2+.2});
 }
 function tree(x,z,scale=1){cyl(scene,.23*scale,.3*scale,2*scale,7,x,1.08*scale,z,mats.trunk);cyl(scene,1.33*scale,1.6*scale,3*scale,7,x,3.1*scale,z,mats.leaf);world.walls.push({type:'circle',x,z,r:.83*scale,ghost:true})}
 const specials={'40,-40':'school','40,40':'factory','-40,40':'lab','-40,-40':'park','0,0':'workshop'};
-let index=0;for(const x of [-60,-40,-20,0,20,40,60])for(const z of [-60,-40,-20,0,20,40,60]){const kind=specials[x+','+z]||'house';building(x,z,kind,index++);if(kind==='house'){tree(x-6,z-6,.6);if(index%3===0)tree(x+6,z+6,.7)}}
+/* Todas as zonas têm silhuetas reconhecíveis, não só blocos de cores.
+   Detalhes dentro dos lotes para não obstruir a via. */
+function residenceDetails(x,z,i){
+ const height=3.2+(i%4)*1.1;
+ if(i%3!==1){
+  const roof=new T.Mesh(new T.ConeGeometry(7.1,2.25,4),i%2?mats.roofTerracotta:mats.roofBlue);
+  roof.rotation.y=Math.PI/4;roof.position.set(x,height+1.6,z);scene.add(roof);
+ }else{
+  // Terraço com parapeito, claraboia e floreira
+  for(const zz of [-4.4,4.4])box(scene,9.2,.55,.18,x,height+.7,z+zz,mats.trim);
+  box(scene,3.5,.25,2,x,height+.6,z,mats.glass);
+  box(scene,2.5,.24,.8,x,height+.93,z+2.4,mats.lawn)
+ }
+ const back=z+4.86,side=x-5.14,py=Math.max(1.65,height*.57);
+ for(const dx of [-2,2]){
+  box(scene,1.45,1.4,.19,x+dx,py,back,mats.trim);
+  box(scene,1.16,1.10,.21,x+dx,py,back+.1,mats.window);
+ }
+ for(const dz of [-2.1,2.1]){
+  box(scene,.2,1.45,1.32,side,py,z+dz,mats.trim);
+  box(scene,.22,1.14,1.03,side-.13,py,z+dz,mats.window);
+ }
+ if(i%4===0){
+  const front=z-4.88;
+  box(scene,3.2,.16,1.2,x,2.52,front-.38,mats.trim);
+  box(scene,.14,.9,.14,x-1.35,2.05,front-.78,mats.railPost);
+  box(scene,.14,.9,.14,x+1.35,2.05,front-.78,mats.railPost)
+ }
+}
+let index=0;
+for(const x of [-60,-40,-20,0,20,40,60])for(const z of [-60,-40,-20,0,20,40,60]){
+ const kind=specials[x+','+z]||'house',i=index++;
+ building(x,z,kind,i);
+ if(kind==='house'){residenceDetails(x,z,i);tree(x-6,z-6,.6);if(index%3===0)tree(x+6,z+6,.7)}
+}
+function sceneryDecorations(){
+ // ESCOLA: telhado colorido, fachada marcada e bandeira no pátio.
+ const sx=40,sz=-40,front=sz-5;
+ box(scene,12,.18,1.0,sx,5.65,sz-4.9,mats.roofTerracotta);
+ box(scene,6,.20,3.0,sx,5.46,sz+2.4,mats.awning);
+ for(let dx=-4;dx<=4;dx+=2)box(scene,1.3,.12,.8,sx+dx,5.6,sz-4.2,dx%4?mats.teal:mats.flower);
+ cyl(scene,.07,.07,4.4,8,sx+4.2,2.2,front+.4,mats.metal);
+ box(scene,1.65,.75,.07,sx+3.33,3.55,front+.4,mats.teal);
+ for(const ox of [-2.8,2.8])box(scene,1,.65,.27,sx+ox,1.25,front-.12,mats.lawn);
+ // FÁBRICA: chaminés, dutos, painéis e portão de carga.
+ const fx=40,fz=40;
+ for(const dx of [-3.6,-1.2,1.2,3.6]){
+  const smokestack=cyl(scene,.44,.44,2.8,10,fx+dx,8.55,fz+2.3,mats.metal);
+  cyl(scene,.48,.48,.35,10,fx+dx,10.1,fz+2.3,mats.railPost)
+ }
+ for(let n=0;n<5;n++)box(scene,4.5,.075,.15,fx,1.0+n*.55,fz-5.13,mats.railPost);
+ box(scene,8,.2,.8,fx,7.43,fz-4.6,mats.roofTerracotta);
+ box(scene,1.25,1.1,1.4,fx-4.6,7.8,fz-1.3,mats.awning);
+ box(scene,1.25,1.1,1.4,fx+4.6,7.8,fz-1.3,mats.awning);
+ // LABORATÓRIO: domo de vidro, antena giratória e placas solares no teto.
+ const lx=-40,lz=40;
+ const dome=new T.Mesh(new T.SphereGeometry(2.25,16,9,0,Math.PI*2,0,Math.PI/2),mats.glass);
+ dome.position.set(lx,7.1,lz);scene.add(dome);
+ const ring=new T.Mesh(new T.TorusGeometry(2.3,.12,7,28),mats.teal);
+ ring.rotation.x=Math.PI/2;ring.position.set(lx,7.12,lz);scene.add(ring);
+ for(const xx of [-3.4,3.4])for(const zz of [-2,0,2]){
+  box(scene,1.75,.1,1.35,lx+xx,7.3,lz+zz,mats.board);
+  box(scene,1.60,.02,1.18,lx+xx,7.37,lz+zz,mats.glass)
+ }
+ const dish=new T.Group();dish.position.set(lx+3.45,8.25,lz);scene.add(dish);
+ const antenna=new T.Mesh(new T.CylinderGeometry(.08,.08,1.4,8),mats.metal);
+ antenna.position.y=.65;dish.add(antenna);
+ const dishHead=new T.Mesh(new T.SphereGeometry(.65,12,6,0,Math.PI*2,0,Math.PI/2),mats.white);
+ dishHead.position.y=1.45;dish.add(dishHead);world.ambientMovers.push({group:dish,speed:.23});
+ // PARQUE: lago raso e caminhos, árvores e flores; somente decoração.
+ const px=-40,pz=-40;
+ const pond=new T.Mesh(new T.CylinderGeometry(1.7,1.7,.14,24),mats.water);
+ pond.position.set(px-1,.22,pz+.7);scene.add(pond);
+ const pondRim=new T.Mesh(new T.TorusGeometry(1.73,.12,7,32),mats.white);
+ pondRim.rotation.x=Math.PI/2;pondRim.position.set(px-1,.31,pz+.7);scene.add(pondRim);
+ const fountain=cyl(scene,.10,.18,1.25,8,px-1,.86,pz+.7,mats.metal);
+ const fountainBall=new T.Mesh(new T.SphereGeometry(.35,9,7),mats.water);
+ fountainBall.position.set(px-1,1.55,pz+.7);scene.add(fountainBall);
+ for(const [dx,dz] of [[-3.6,-3.6],[-3.5,3.2],[3.6,-3.5],[3.5,3.2]]){
+  for(let k=0;k<5;k++){
+   const flower=new T.Mesh(new T.SphereGeometry(.16,7,5),k%2?mats.flower:mats.awning);
+   flower.position.set(px+dx+(k%3)*.3,.35,pz+dz+Math.floor(k/3)*.3);scene.add(flower)
+  }
+ }
+ for(const zz of [-3,3]){
+  box(scene,2,.14,.65,px+2.2,.65,pz+zz,mats.awning);
+  box(scene,.12,.60,.11,px+1.3,.35,pz+zz,mats.railPost);
+  box(scene,.12,.60,.11,px+3.1,.35,pz+zz,mats.railPost)
+ }
+ // OFICINA central: bancada e símbolo luminoso de robótica no teto.
+ const cx=0,cz=0;
+ box(scene,8,.20,6,cx,6.8,cz,mats.roofBlue);
+ for(const xx of [-2.6,2.6]){
+  const light=new T.Mesh(new T.SphereGeometry(.38,10,8),mats.lampGlow);
+  light.position.set(cx+xx,7.2,cz-1);scene.add(light)
+ }
+}
+sceneryDecorations();
 function cone(x,z){cyl(scene,.12,.73,1.5,9,x,.82,z,mats.cone);cyl(scene,.44,.44,.2,9,x,.7,z,mats.white);box(scene,1.45,.15,1.45,x,.09,z,mats.dark);world.walls.push({type:'circle',x,z,r:.91})}
 // Pista livre: as curvas e a direção diferencial são o desafio.
 function crate(x,z){box(scene,2.1,1.8,2.1,x,.98,z,mats.yellow);box(scene,2.15,.17,.15,x,1.5,z-1.1,mats.dark);world.walls.push({type:'rect',x,z,hw:1.1,hd:1.1})}
@@ -595,6 +693,7 @@ function animate(now){
  if(world.carLed)world.carLed.scale.setScalar(1+.12*Math.sin(world.clockTime*6));
  if(world.sky)world.sky.position.copy(camera.position);
  for(let i=0;i<world.clouds.length;i++){const cloud=world.clouds[i];cloud.position.x=cloud.userData.origin+Math.sin(world.clockTime*.065+i)*1.5}
+ for(const mover of world.ambientMovers)mover.group.rotation.y+=mover.speed*dt;
  goal.children[0].rotation.z=world.clockTime*.5;const glow=1+Math.sin(world.clockTime*3)*.10;goal.children[0].scale.set(glow,glow,glow);marker.position.y=6.1+Math.sin(world.clockTime*2)*.3;marker.rotation.y=world.clockTime*.5;
  const angle=state.drive.angle,external=state.cameraTop,px=state.drive.x,pz=state.drive.z,fx=-Math.sin(angle),fz=-Math.cos(angle);
  cameraTarget.set(px-fx*(external?8.4:.25),external?3.6:1.95,pz-fz*(external?8.4:.25));
