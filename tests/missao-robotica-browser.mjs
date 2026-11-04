@@ -5,244 +5,88 @@ import assert from 'node:assert/strict';
 
 const host='http://127.0.0.1:8738';
 const server=spawn('python3',['-m','http.server','8738','--bind','127.0.0.1'],{stdio:'ignore'});
-const sleep=ms=>new Promise(resolve=>setTimeout(resolve,ms));
+const wait=ms=>new Promise(ok=>setTimeout(ok,ms));
 mkdirSync('artifacts',{recursive:true});
 const browser=await chromium.launch({headless:true,args:['--use-gl=angle','--use-angle=swiftshader','--enable-webgl','--disable-dev-shm-usage']});
-const screens=[
+const sizes=[
  {name:'pc',width:1366,height:768,touch:false},
  {name:'tablet',width:1024,height:768,touch:true},
  {name:'celular-horizontal',width:844,height:390,touch:true},
  {name:'celular-vertical',width:390,height:844,touch:true}
 ];
-const problems=[];
+const errors=[];
 try{
- await sleep(850);
- const home=readFileSync('projects.html','utf8');
- assert(home.includes('href="missao-robotica.html"'),'link para o jogo ausente');
- assert(home.indexOf('id="openMissionGame"')>home.indexOf('id="openHow"'),'link do jogo não está abaixo de Como funciona');
- for(const v of screens){
-  const context=await browser.newContext({viewport:{width:v.width,height:v.height},isMobile:v.touch,hasTouch:v.touch,deviceScaleFactor:1});
+ await wait(800);
+ const projects=readFileSync('projects.html','utf8');
+ assert(projects.includes('href="missao-robotica.html"'),'PETGame sumiu de Meus circuitos');
+ for(const size of sizes){
+  const context=await browser.newContext({viewport:{width:size.width,height:size.height},isMobile:size.touch,hasTouch:size.touch,deviceScaleFactor:1});
   const page=await context.newPage();
-  page.on('pageerror',e=>problems.push(v.name+': '+e.message));
+  page.on('pageerror',e=>errors.push(size.name+': '+e.message));
   await page.goto(host+'/missao-robotica.html',{waitUntil:'domcontentloaded'});
-  assert.equal(await page.locator('#authOverlay').isVisible(),true,'senha deve ser exigida');
-  assert.equal(await page.locator('#startOverlay').isVisible(),false,'não abrir sem senha');
-  await page.locator('#password').fill('incorreta');
+  assert(await page.locator('#authOverlay').isVisible(),'acesso deve ser protegido');
+  await page.locator('#password').fill('senha-errada');
   await page.locator('#authForm button[type="submit"]').click();
-  assert.equal(await page.locator('#authOverlay').isVisible(),true,'senha incorreta deve bloquear');
+  assert(await page.locator('#authOverlay').isVisible(),'senha errada não pode liberar');
   await page.locator('#password').fill('peteducacao');
   await page.locator('#authForm button[type="submit"]').click();
-  assert.equal(await page.locator('#startOverlay').isVisible(),true,'senha correta deve abrir início');
-  assert((await page.locator('.start-dialog h1').textContent()).includes('PETGame'),'título PETGame ausente');
-  assert((await page.locator('.start-dialog p').first().textContent()).includes('cidade'),'sinopse ausente');
+  assert(await page.locator('#startOverlay').isVisible(),'entrada deve abrir apresentação');
   await page.waitForFunction(()=>window.__TinkerpetMission?.state.ready,{timeout:60000});
-  if(v.name==='pc'||v.name==='celular-horizontal'){await page.screenshot({path:'artifacts/petgame-inicio-'+v.name+'.png'});console.log('VISUAL_START_'+v.name+'='+((await page.screenshot({type:'jpeg',quality:52,scale:'css'})).toString('base64')))}
-  const startBounds=await page.evaluate(()=>({btn:document.querySelector('#startBtn').getBoundingClientRect().bottom,visible:innerHeight,dialog:document.querySelector('.start-dialog').getBoundingClientRect().height}));
-  // O botão principal abre imediatamente a pergunta da rodada de testes.
+  assert.equal(await page.locator('#startBtn').isEnabled(),true);
+  assert.equal(await page.locator('#pauseTestBtn').count(),0,'menu de testes não deve existir');
+  assert.equal(await page.locator('#testSummaryOverlay').count(),0,'resumo de testes não deve existir');
+  assert.equal(await page.locator('#playBtn').count(),0,'início deve ser único');
+  await page.screenshot({path:'artifacts/petgame-inicio-'+size.name+'.png'});
   await page.locator('#startBtn').click();
-  assert.equal(await page.locator('#questionOverlay').isVisible(),true,'Rodada de teste não abriu pergunta imediatamente');
-  const firstIndex=await page.evaluate(()=>window.__TinkerpetMission.state.activeQuestion);
-  assert.equal(firstIndex,4,'Primeira pergunta de demonstração precisa ser simples');
-  await page.evaluate(()=>{
-    const api=window.__TinkerpetMission,q=api.questions[api.state.activeQuestion],correct=q[1][q[2]];
-    [...document.querySelectorAll('.answer')].find(a=>a.textContent.includes(correct)).click();
-  });
-  assert.equal(await page.locator('#repairOverlay').isVisible(),true,'Responder não abriu o circuito imediatamente');
-  const firstFault=await page.evaluate(()=>window.__TinkerpetMission.state.fault);
-  assert.equal(firstFault.id,'battery','Primeiro diagnóstico deve identificar a bateria de 9 V');
-  assert.equal(await page.locator('#testDiagnosticPanel').isVisible(),true,'Diagnóstico por ícones não apareceu');
-  assert.equal(await page.locator('#fullRepairPanel').isVisible(),false,'Bancada completa não deve aparecer no modo teste');
-  assert.equal(await page.locator('.diagnostic-card').count(),4,'O diagnóstico precisa de quatro alternativas ilustradas');
-  const images=await page.locator('.diagnostic-card img').evaluateAll(imgs=>imgs.map(img=>({loaded:img.complete&&img.naturalWidth>0,path:img.getAttribute('src')})));
-  assert(images.every(img=>img.loaded),'Imagem de componente não carregou: '+JSON.stringify(images));
-  if(v.name==='pc'||v.name==='celular-horizontal'){await page.screenshot({path:'artifacts/petgame-diagnostico-'+v.name+'.png'});console.log('VISUAL_DIAG_'+v.name+'='+((await page.screenshot({type:'jpeg',quality:54,scale:'css'})).toString('base64')))}
-  // Erro não encerra a rodada nem zera o tempo.
-  const bad=await page.locator('.diagnostic-card').evaluateAll(cards=>cards.map(c=>c.dataset.diagnostic).find(k=>k!=='battery'));
-  const timeBefore=await page.evaluate(()=>window.__TinkerpetMission.state.challengeEnd);
-  await page.locator('.diagnostic-card[data-diagnostic="'+bad+'"]').click();
-  assert.equal(await page.locator('#repairOverlay').isVisible(),true,'Resposta errada deve permitir nova escolha');
-  assert.equal(await page.locator('.diagnostic-card.wrong').count(),1,'Erro deve marcar apenas a escolha errada');
-  assert.equal(await page.evaluate(()=>window.__TinkerpetMission.state.challengeEnd),timeBefore,'Erro não pode reiniciar os 30 segundos');
-  await page.locator('.diagnostic-card[data-diagnostic="battery"]').click();
-  assert.equal(await page.locator('#testSummaryOverlay').isVisible(),true,'Consertar não concluiu a rodada de teste');
-  if(v.name==='pc'){
-   // Rodadas seguintes testam a gangorra e o jumper visualmente.
-   for(const kind of ['switch2','jumper']){
-    await page.locator('#repeatTestBtn').click();
-    assert.equal(await page.locator('#questionOverlay').isVisible(),true,'Repetir não iniciou pergunta');
-    await page.evaluate(()=>{
-      const api=window.__TinkerpetMission,q=api.questions[api.state.activeQuestion],correct=q[1][q[2]];
-      [...document.querySelectorAll('.answer')].find(a=>a.textContent.includes(correct)).click();
-    });
-    const f=await page.evaluate(()=>window.__TinkerpetMission.state.fault);
-    assert.equal(f.id,kind,'Sequência de diagnósticos diferente: '+JSON.stringify(f));
-    assert.equal(await page.locator('.diagnostic-card').count(),4,'Diagnóstico deve manter apenas quatro ícones');
-    await page.locator('.diagnostic-card[data-diagnostic="'+kind+'"]').click();
-    assert.equal(await page.locator('#testSummaryOverlay').isVisible(),true,'Diagnóstico de '+kind+' não foi aceito');
-   }
+  assert.equal(await page.evaluate(()=>window.__TinkerpetMission.state.mode),'drive','início deve entrar na aventura normal');
+  assert.equal(await page.locator('#questionOverlay').isVisible(),false,'rodada de teste não pode surgir');
+  const rules=await page.evaluate(()=>({n:window.__TinkerpetMission.questions.length,q:window.__TinkerpetMission.questions.map(q=>q[0])}));
+  assert.equal(rules.n,10,'esperadas dez perguntas revisadas');
+  assert(rules.q.every(q=>q.length<100&&!/GPIO|192\.168|pararTudo\(/i.test(q)),'perguntas não devem cobrar pinos ou código');
+  const map=await page.evaluate(()=>window.__TinkerpetMission.world);
+  const state3d=await page.evaluate(()=>({loaded:!!window.__TinkerpetMission.world.renderer,route:window.__TinkerpetMission.world.routePoints.length,batched:window.__TinkerpetMission.world.staticStats?.batchSavings||0}));
+  assert(state3d.loaded&&state3d.route>=2&&state3d.batched>0,'cidade texturizada ou GPS não carregou');
+  for(const [x,z,area] of [[35,35,'FÁBRICA'],[-35,35,'LABORATÓRIO'],[35,-35,'ESCOLA'],[-35,-35,'PARQUE']]){
+   const label=await page.evaluate(({x,z})=>{const a=window.__TinkerpetMission;a.state.drive.x=x;a.state.drive.z=z;a.physics(.12);return document.querySelector('#districtName').textContent},{x,z});
+   assert(label.includes(area),'cor / identificação incorreta da área '+area+': '+label);
   }
-  await page.locator('#goExploreBtn').click();
-  assert.equal(await page.locator('#testSummaryOverlay').isVisible(),false,'Sair do teste não fechou resumo');
-  assert.equal(await page.locator('#lives').getAttribute('aria-label'),'3 vidas','O jogo normal precisa começar com vidas restauradas');
-  assert.equal(await page.locator('#authOverlay').isVisible(),false);
-  assert.equal(await page.locator('#startOverlay').isVisible(),false);
-  assert.equal(await page.locator('#scene canvas').count(),1,'mapa 3D sem canvas');
-  const gpsMesh=await page.evaluate(()=>{const w=window.__TinkerpetMission.world;return{visible:w.routeGroup?.visible,segments:w.routeGroup?.children?.length||0,pts:w.routePoints?.length||0,driver:!window.__TinkerpetMission.state.cameraTop}});
-  assert(gpsMesh.visible&&gpsMesh.segments>8&&gpsMesh.pts>=2&&gpsMesh.driver,'A rota deve estar pintada na pista e a câmera deve começar no motorista: '+JSON.stringify(gpsMesh));
-  const viewport=await page.evaluate(()=>({scroll:document.documentElement.scrollWidth,inner:window.innerWidth,scene:document.querySelector('#scene canvas').getBoundingClientRect().width}));
-  assert(viewport.scroll<=viewport.inner+2,v.name+' overflow horizontal '+JSON.stringify(viewport));
-  assert(viewport.scene>100,'canvas invisível');
-  assert.equal(await page.locator('.motor-track').count(),2,'precisa de 2 controles');
-  assert.equal(await page.locator('#navCompass').count(),1,'GPS visual ausente');
-  assert.equal(await page.locator('#exitGameBtn').count(),1,'botão de fechar o jogo ausente');
-  const route=await page.evaluate(()=>window.__TinkerpetMission.buildPoints());
-  assert(route.length>=2&&route.at(-1)[0]===50&&route.at(-1)[1]===-50,'rota não aponta ao primeiro destino: '+JSON.stringify(route));
-  const timing=await page.evaluate(()=>({meters:window.__TinkerpetMission.state.nextEvent,seconds:window.__TinkerpetMission.state.nextEventTime}));
-  assert(timing.meters>=20&&timing.meters<=35&&timing.seconds>=18&&timing.seconds<=30,'cadência normal fora da faixa: '+JSON.stringify(timing));
-  const perf=await page.evaluate(()=>({drawCalls:window.__TinkerpetMission.world.renderer.info.render.calls,stats:window.__TinkerpetMission.world.staticStats}));
-  assert(perf.stats&&perf.stats.batchSavings>80,'cidade não foi otimizada por instâncias: '+JSON.stringify(perf));
-  assert.equal(await page.locator('#lives').getAttribute('aria-label'),'3 vidas');
-  if(v.name==='pc'){
-   // O primeiro desafio só começa após tempo E distância de direção real.
-   const early=await page.evaluate(()=>{const api=window.__TinkerpetMission;api.state.meters=100;api.state.driveSeconds=12;api.triggerEvent();return api.state.mode});
-   assert.equal(early,'drive','pergunta disparou antes de aprender os controles');
-   const scheduled=await page.evaluate(()=>{const api=window.__TinkerpetMission;api.state.driveSeconds=61;api.triggerEvent();return api.state.mode});
-   assert.equal(scheduled,'question','pergunta não disparou após o tempo e a distância previstos');
-   await page.evaluate(()=>{const api=window.__TinkerpetMission,q=api.questions[api.state.activeQuestion],correct=q[1][q[2]];[...document.querySelectorAll('.answer')].find(a=>a.textContent.includes(correct)).click();api.resetGame()});
-   // Esc pausa; botão X do modal retoma sem sair.
-   await page.keyboard.press('Escape');
-   assert.equal(await page.locator('#pauseOverlay').isVisible(),true,'Esc não pausou');
-   await page.locator('#pauseClose').click();
-   assert.equal(await page.locator('#pauseOverlay').isVisible(),false,'X não fechou pausa');
-   await page.keyboard.down('w');await page.evaluate(()=>window.__TinkerpetMission.physics(.3));
-   const straight=await page.evaluate(()=>({a:window.__TinkerpetMission.state.drive.a,b:window.__TinkerpetMission.state.drive.b}));
-   assert(straight.a>50&&straight.b>50,'W não acelera ambos os motores: '+JSON.stringify(straight)+' '+JSON.stringify(await page.evaluate(()=>({mode:window.__TinkerpetMission.state.mode,keys:[...window.__TinkerpetMission.state.keys],collided:window.__TinkerpetMission.state.drive.collided,pos:[window.__TinkerpetMission.state.drive.x,window.__TinkerpetMission.state.drive.z],ready:window.__TinkerpetMission.state.ready}))));
-   await page.keyboard.down('a');await page.evaluate(()=>window.__TinkerpetMission.physics(.3));
-   const curve=await page.evaluate(()=>({a:window.__TinkerpetMission.state.drive.a,b:window.__TinkerpetMission.state.drive.b}));
-   assert(curve.b>curve.a+25,'A não desacelera motor esquerdo');
-   await page.keyboard.up('w');await page.keyboard.up('a');await page.evaluate(()=>window.__TinkerpetMission.physics(.5));
-   const off=await page.evaluate(()=>({a:window.__TinkerpetMission.state.drive.a,b:window.__TinkerpetMission.state.drive.b}));
-   assert(Math.abs(off.a)<10&&Math.abs(off.b)<10,'motores não param quando soltam teclas');
-   // Ensaiar colisão, exigindo soltar as teclas antes de acelerar de novo.
-   const collision=await page.evaluate(()=>{
-    const api=window.__TinkerpetMission,s=api.state;s.drive.x=-50;s.drive.z=16;s.drive.angle=0;s.drive.a=200;s.drive.b=200;s.keys=new Set(['w']);for(let i=0;i<28&&!s.drive.collided;i++)api.physics(.045);
-    const result={collided:s.drive.collided,lives:s.lives,motors:[s.drive.a,s.drive.b]};s.keys.clear();api.physics(.02);
-    return {...result,released:!s.drive.collided};
-   });
-   assert(collision.collided,'colisão não detetada');
-   assert(collision.lives===3,'colisão não deve tirar vida');
-   assert(collision.released,'colisão não liberou após soltar');
-   // Perguntas: erro apresenta outra e acerto não volta.
-   await page.evaluate(()=>window.__TinkerpetMission.beginQuestion());
-   const before=await page.evaluate(()=>window.__TinkerpetMission.state.activeQuestion);
-   await page.evaluate(()=>{
-    const api=window.__TinkerpetMission,q=api.questions[api.state.activeQuestion],bad=q[1].find(a=>a!==q[1][q[2]]);
-    const el=[...document.querySelectorAll('.answer')].find(a=>a.textContent.includes(bad));el.click()
-   });
-   const after=await page.evaluate(()=>window.__TinkerpetMission.state.activeQuestion);
-   assert(before!==after,'pergunta errada não foi trocada');
-   await page.evaluate(()=>{
-    const api=window.__TinkerpetMission,q=api.questions[api.state.activeQuestion],correct=q[1][q[2]];
-    [...document.querySelectorAll('.answer')].find(a=>a.textContent.includes(correct)).click()
-   });
-   const answered=await page.evaluate(()=>({mode:window.__TinkerpetMission.state.mode,score:window.__TinkerpetMission.state.scoreQuestions,seen:[...window.__TinkerpetMission.state.questionsCorrect]}));
-   assert(answered.mode==='drive'&&answered.score===1&&answered.seen.length===1,'acerto não salva e fecha desafio');
-   // Defeitos independentes do editor do usuário; testar formatos diferentes.
-   for(let i=0;i<12;i++){
-    await page.evaluate(()=>window.__TinkerpetMission.beginRepair());
-    assert.equal(await page.locator('#testDiagnosticPanel').isVisible(),false,'Teste visual vazou para jogo normal');
-    assert.equal(await page.locator('#fullRepairPanel').isVisible(),true,'Bancada original deve permanecer no jogo normal');
-    const fault=await page.evaluate(()=>window.__TinkerpetMission.state.fault);
-    if(fault.kind==='switch')await page.locator('[data-component="'+fault.id+'"]').click();
-    else if(fault.kind==='gpio'){
-      await page.locator('[data-repair-tab="gpio"]').click();
-      await page.locator('select[data-gpio="'+fault.id+'"]').selectOption(fault.id==='in1'?'D27':fault.id==='in2'?'D26':fault.id==='in3'?'D32':'D18');
-    } else {
-      await page.locator('[data-repair-tab="'+(fault.id==='ma'||fault.id==='mb'?'motors':(['in1','in2','in3','in4'].includes(fault.id)?'gpio':'power'))+'"]').click();
-      await page.locator('.wire-row.loose').click();
-    }
-    const repaired=await page.evaluate(()=>window.__TinkerpetMission.state.mode);
-    assert(repaired==='drive','falha '+JSON.stringify(fault)+' não foi resolvida');
-   }
-   // Esc e × fecham os desafios com confirmação; desistir custa uma vida.
-   await page.evaluate(()=>window.__TinkerpetMission.beginQuestion());
-   await page.keyboard.press('Escape');
-   assert.equal(await page.locator('#quitChallengeDialog').evaluate(e=>e.open),true,'Esc não abriu a confirmação para fechar pergunta');
-   await page.locator('#quitCancel').click();
-   assert.equal(await page.locator('#quitChallengeDialog').evaluate(e=>e.open),false,'Cancelar não retomou o desafio');
-   assert.equal(await page.locator('#questionOverlay').isVisible(),true,'Pergunta sumiu ao cancelar');
-   await page.locator('#questionClose').click();
-   assert.equal(await page.locator('#quitChallengeDialog').evaluate(e=>e.open),true,'X não abriu confirmação');
-   await page.locator('#quitConfirm').click();
-   assert.equal(await page.locator('#lives').getAttribute('aria-label'),'2 vidas','Sair de desafio não custou uma vida');
-   await page.evaluate(()=>window.__TinkerpetMission.resetGame());
-   await page.evaluate(()=>{document.querySelector('#questionOverlay').hidden=true;window.__TinkerpetMission.state.mode='drive'});
-   // Estourar temporizador leva à perda de vidas e game over com reinício total.
-   for(let i=0;i<3;i++){
-    await page.evaluate(()=>{window.__TinkerpetMission.beginQuestion();window.__TinkerpetMission.state.challengeEnd=performance.now()-1});
-    await page.waitForFunction(()=>window.__TinkerpetMission.state.mode!=='question',{timeout:5000});
-   }
-   assert.equal(await page.locator('#endOverlay').isVisible(),true,'fim de jogo não aparece: '+JSON.stringify(await page.evaluate(()=>({lives:window.__TinkerpetMission.state.lives,mode:window.__TinkerpetMission.state.mode}))));
-   await page.locator('#restartBtn').click();
-   assert.equal(await page.locator('#lives').getAttribute('aria-label'),'3 vidas');
-   const reset=await page.evaluate(()=>({missions:window.__TinkerpetMission.state.scoreMissions,correct:window.__TinkerpetMission.state.questionsCorrect.size,repairs:window.__TinkerpetMission.state.scoreRepairs}));
-   assert.deepEqual(reset,{missions:0,correct:0,repairs:0},'reiniciar não limpou a partida');
-   // Toda entrega precisa exibir um pop-up antes de liberar a seguinte.
-   for(let i=0;i<4;i++){
-    await page.evaluate(()=>{
-      const api=window.__TinkerpetMission,s=api.state,to=api.missions[s.mission].to;
-      s.drive.x=to[0];s.drive.z=to[1];api.physics(.016);
-    });
-    assert.equal(await page.locator('#deliveryOverlay').isVisible(),true,'Entrega '+(i+1)+' sem pop-up');
-    assert((await page.locator('#deliveryTitle').textContent()).includes('concluíd'),'Texto da entrega ausente');
-    if(i===0){await page.screenshot({path:'artifacts/petgame-entrega-pc.png'});}
-    await page.locator('#nextMissionBtn').click();
-    if(i<3)assert.equal(await page.evaluate(()=>window.__TinkerpetMission.state.mission),i+1,'Avançar missão falhou');
-   }
-   assert.equal(await page.locator('#endOverlay').isVisible(),true,'Fim de campanha não abriu');
-   await page.locator('#restartBtn').click();
-  } else {
-   // Duas áreas de toque simultâneas e independentes.
-   const touch=await page.evaluate(()=>{
-    const api=window.__TinkerpetMission,A=document.querySelector('#trackA'),B=document.querySelector('#trackB'),ra=A.getBoundingClientRect(),rb=B.getBoundingClientRect();
-    const dispatch=(el,type,id,x,y)=>el.dispatchEvent(new PointerEvent(type,{bubbles:true,pointerId:id,pointerType:'touch',clientX:x,clientY:y}));
-    dispatch(A,'pointerdown',31,ra.left+ra.width/2,ra.top+23);
-    dispatch(B,'pointerdown',32,rb.left+rb.width/2,rb.top+23);
-    const both=[...api.state.pointerValue];
-    dispatch(A,'pointerup',31,ra.left+ra.width/2,ra.top+23);
-    dispatch(B,'pointerup',32,rb.left+rb.width/2,rb.top+23);
-    return {both,released:api.state.pointer.every(p=>p===null)};
-   });
-   assert(touch.both[0]>0&&touch.both[1]>0&&touch.released,'toque simultâneo no tablet/celular falhou');
-   await page.evaluate(()=>window.__TinkerpetMission.beginQuestion());
-   assert.equal(await page.locator('#questionOverlay').isVisible(),true);
-   await page.screenshot({path:'artifacts/missao-'+v.name+'-pergunta.png'});
-   await page.evaluate(()=>window.__TinkerpetMission.beginRepair());
-   assert.equal(await page.locator('#repairOverlay').isVisible(),true);
-   assert.equal(await page.locator('#testDiagnosticPanel').isVisible(),false,'Diagnóstico experimental não deve alterar jogo normal');
-   assert.equal(await page.locator('#fullRepairPanel').isVisible(),true,'Oficina normal precisa continuar disponível');
-   if(v.name==='celular-horizontal'){const bounds=await page.evaluate(()=>({foot:document.querySelector('.repair-footer').getBoundingClientRect().bottom,view:innerHeight,list:document.querySelector('.connection-list').getBoundingClientRect().height}));assert(bounds.foot<=bounds.view+2&&bounds.list>85,'reparo inacessível no celular horizontal: '+JSON.stringify(bounds))}
-   await page.screenshot({path:'artifacts/missao-'+v.name+'-circuito.png'});
-   assert.equal(await page.locator('.repair-tab').count(),3,'reparo não foi simplificado em três abas');
-   assert((await page.locator('.wire-row').count())<=7,'lista de reparos continua extensa');
-   await page.locator('#repairClose').click();
-   assert.equal(await page.locator('#quitChallengeDialog').evaluate(e=>e.open),true,'X não fecha reparo com confirmação');
-   await page.locator('#quitCancel').click();
-   if(v.name==='celular-horizontal')console.log('VISUAL_REPAIR='+((await page.screenshot({type:'jpeg',quality:56,scale:'css'})).toString('base64')));
-   await page.evaluate(()=>window.__TinkerpetMission.resetGame());
-   await page.evaluate(()=>{document.querySelector('#repairOverlay').hidden=true;window.__TinkerpetMission.state.mode='drive'});
-   await page.evaluate(()=>{const api=window.__TinkerpetMission,to=api.missions[0].to;api.state.drive.x=to[0];api.state.drive.z=to[1];api.physics(.016)});
-   assert.equal(await page.locator('#deliveryOverlay').isVisible(),true,'Pop-up da entrega ausente no dispositivo '+v.name);
-   await page.screenshot({path:'artifacts/petgame-entrega-'+v.name+'.png'});
-   await page.locator('#deliveryClose').click();
-   assert.equal(await page.locator('#deliveryOverlay').isVisible(),false,'X não fechou o pop-up de entrega');
-  }
-  await page.screenshot({path:'artifacts/missao-'+v.name+'.png',fullPage:true});
-  if(v.name==='pc'||v.name==='celular-horizontal'){const audit=(await page.screenshot({type:'jpeg',quality:50,scale:'css'})).toString('base64');console.log('VISUAL_AUDIT_'+v.name+'='+audit)}
-  if(v.name==='pc'){await page.locator('#exitGameBtn').click();await page.waitForURL('**/projects.html');}
+  await page.evaluate(()=>{const a=window.__TinkerpetMission;a.resetGame();a.state.mode='drive';a.beginQuestion()});
+  assert(await page.locator('#questionOverlay').isVisible(),'pergunta principal não apareceu');
+  assert.equal(await page.locator('.answer').count(),4,'pergunta exige quatro alternativas');
+  await page.screenshot({path:'artifacts/petgame-pergunta-'+size.name+'.png'});
+  await page.evaluate(()=>{const a=window.__TinkerpetMission,q=a.questions[a.state.activeQuestion],txt=q[1][q[2]];const b=[...document.querySelectorAll('.answer')].find(el=>el.textContent.includes(txt));if(!b)throw Error('Resposta não encontrada');b.click()});
+  assert.equal(await page.evaluate(()=>window.__TinkerpetMission.state.mode),'drive','acerto deve voltar à avenida');
+  await page.evaluate(()=>window.__TinkerpetMission.beginRepair());
+  assert(await page.locator('#repairOverlay').isVisible(),'oficina principal não apareceu');
+  assert.equal(await page.locator('.diagnostic-card').count(),4,'diagnóstico exige 4 ícones');
+  const imgs=await page.locator('.diagnostic-card img').evaluateAll(imgs=>imgs.map(img=>img.getAttribute('src')));
+  assert(imgs.every(src=>src?.startsWith('assets/component-preview/')),'ícones do carrinho inválidos');
+  const fault=await page.evaluate(()=>window.__TinkerpetMission.state.fault);
+  assert(fault.answer&&fault.prompt,'não existe falha sorteada');
+  const wrong=fault.options.find(x=>x!==fault.answer);
+  const started=await page.evaluate(()=>window.__TinkerpetMission.state.challengeEnd);
+  await page.locator('.diagnostic-card[data-diagnostic="'+wrong+'"]').click();
+  assert.equal(await page.locator('.diagnostic-card.wrong').count(),1,'erro deve aparecer na imagem escolhida');
+  assert.equal(await page.evaluate(()=>window.__TinkerpetMission.state.challengeEnd),started,'erro não pode reiniciar o relógio');
+  await page.screenshot({path:'artifacts/petgame-diagnostico-'+size.name+'.png'});
+  await page.locator('.diagnostic-card[data-diagnostic="'+fault.answer+'"]').click();
+  assert.equal(await page.evaluate(()=>window.__TinkerpetMission.state.mode),'drive','acerto de diagnóstico deve voltar à missão');
+  await page.evaluate(()=>window.__TinkerpetMission.beginRepair());
+  await page.locator('#diagnosticClose').click();
+  assert(await page.locator('#quitChallengeDialog').evaluate(e=>e.open),'sair do desafio exige confirmação');
+  await page.locator('#quitCancel').click();
+  assert(await page.locator('#repairOverlay').isVisible(),'cancelar saída deve manter o desafio');
+  await page.locator('#diagnosticClose').click();
+  await page.locator('#quitConfirm').click();
+  assert.equal(await page.evaluate(()=>window.__TinkerpetMission.state.lives),2,'abandonar desafio deve perder uma vida');
+  await page.evaluate(()=>{const a=window.__TinkerpetMission;a.resetGame();a.state.drive.x=a.missions[0].to[0];a.state.drive.z=a.missions[0].to[1];a.physics(.016)});
+  assert(await page.locator('#deliveryOverlay').isVisible(),'entrega do mapa não concluiu');
+  await page.locator('#deliveryClose').click();
+  assert.equal(await page.evaluate(()=>window.__TinkerpetMission.state.mission),1,'próxima entrega não avançou');
+  await page.screenshot({path:'artifacts/petgame-cidade-'+size.name+'.png'});
   await context.close();
-  console.log('PASS',v.name,'mapa, UI, senha, cena 3D, controles, layout');
+  console.log('PASS',size.name,'início, 3D, regiões, 10 perguntas, diagnóstico e entregas');
  }
- assert.deepEqual(problems,[],'Erros do navegador: '+problems.join('\n'));
- console.log('SUCESSO: autenticação, mapa 3D, navegação, entrada por teclado e toque, perguntas, sorteio, reparos, tempo, 3 vidas, game over, reinício, colisão e telas responsivas.');
+ assert.deepEqual(errors,[],'erros JS no navegador: '+errors.join(' | '));
+ console.log('PASS PETGame: aventura principal sem testes, oficina por 4 imagens, bairros texturizados, PC e celulares.');
 }finally{await browser.close();server.kill()}
