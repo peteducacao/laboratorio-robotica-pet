@@ -145,3 +145,32 @@
  .quit-buttons{grid-template-columns:1fr}
  .mission-panel{top:57px}
 }
+
+/* PETGame • rodada de testes e retorno das entregas */
+.start-actions{display:grid;gap:9px}
+.start-actions .button{min-height:46px}
+.button.secondary{border:1px solid #ccdedb;color:#1e6173;background:#f8fcfb;box-shadow:none}
+.button.secondary:hover{background:#e9f6f4}
+.test-intro{margin:6px 0 13px;padding:10px 12px;border:1px solid #d3e6e3;background:#f0f7f6;border-radius:12px;display:flex;align-items:flex-start;gap:10px;color:#4f6a78;font-size:11px;line-height:1.4}
+.test-pill{display:inline-flex;flex:none;background:#dbefe9;color:#087e73;font-size:9px;letter-spacing:.5px;font-weight:900;padding:5px 6px;border-radius:6px}
+.delivery-check{width:65px;height:65px;display:grid;place-items:center;margin:15px auto 9px;border-radius:50%;color:#0f9e88;background:#ddf5ee;font-size:38px;font-weight:800}
+.delivery-progress{padding:11px 12px;border-radius:11px;background:#f1f8f5;color:#168c79;font-size:12px;font-weight:850;margin:15px 0}
+.test-summary .score-grid{margin:18px 0}
+.test-summary .button+.button{margin-top:9px}
+@media(max-height:570px) and (orientation:landscape){
+ .start-dialog{max-height:96dvh;overflow:auto}
+ .start-dialog .hero-graphic{display:none}
+ .start-dialog h1{font-size:23px;margin:5px 0}
+ .start-dialog>p{font-size:11px;line-height:1.33;margin:6px 0}
+ .start-facts{margin:7px 0}
+ .test-intro{margin:5px 0;padding:6px 8px;font-size:10px}
+ .start-actions{gap:5px}
+ .start-actions .button{min-height:39px;padding:6px 12px;font-size:12px}
+ .dialog.small-dialog .delivery-check{width:42px;height:42px;margin:5px auto;font-size:24px}
+ .dialog.small-dialog .delivery-progress{margin:7px 0}
+}
+@media(max-width:480px) and (orientation:portrait){
+ .test-intro{display:grid;gap:4px}
+ .test-pill{width:max-content}
+ .start-dialog .hero-graphic{height:85px}
+}

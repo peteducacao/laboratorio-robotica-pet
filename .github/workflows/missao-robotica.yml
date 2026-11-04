@@ -1,7 +1,7 @@
 name: Missão Robótica 3D — testes reais
 on:
   push:
-    branches: [feature/missao-robotica-3d-20261104, feature/petgame-simplificacao-camera-20261104]
+    branches: [feature/missao-robotica-3d-20261104, feature/petgame-simplificacao-camera-20261104, feature/petgame-rodada-teste-fluidez-20261104]
   pull_request:
     branches: [main]
   workflow_dispatch:

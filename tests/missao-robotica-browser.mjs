@@ -38,7 +38,40 @@ try{
   await page.waitForFunction(()=>window.__TinkerpetMission?.state.ready,{timeout:60000});
   if(v.name==='pc'||v.name==='celular-horizontal'){await page.screenshot({path:'artifacts/petgame-inicio-'+v.name+'.png'});console.log('VISUAL_START_'+v.name+'='+((await page.screenshot({type:'jpeg',quality:52,scale:'css'})).toString('base64')))}
   const startBounds=await page.evaluate(()=>({btn:document.querySelector('#startBtn').getBoundingClientRect().bottom,visible:innerHeight,dialog:document.querySelector('.start-dialog').getBoundingClientRect().height}));
+  // O botão principal abre imediatamente a pergunta da rodada de testes.
   await page.locator('#startBtn').click();
+  assert.equal(await page.locator('#questionOverlay').isVisible(),true,'Rodada de teste não abriu pergunta imediatamente');
+  const firstIndex=await page.evaluate(()=>window.__TinkerpetMission.state.activeQuestion);
+  assert.equal(firstIndex,4,'Primeira pergunta de demonstração precisa ser simples');
+  await page.evaluate(()=>{
+    const api=window.__TinkerpetMission,q=api.questions[api.state.activeQuestion],correct=q[1][q[2]];
+    [...document.querySelectorAll('.answer')].find(a=>a.textContent.includes(correct)).click();
+  });
+  assert.equal(await page.locator('#repairOverlay').isVisible(),true,'Responder não abriu o circuito imediatamente');
+  const firstFault=await page.evaluate(()=>window.__TinkerpetMission.state.fault);
+  assert.equal(firstFault.id,'ma','Primeiro teste deve mostrar jumper desconectado no Motor A');
+  await page.locator('[data-repair-tab="motors"]').click();
+  await page.locator('.wire-row.loose').click();
+  assert.equal(await page.locator('#testSummaryOverlay').isVisible(),true,'Consertar não concluiu a rodada de teste');
+  if(v.name==='pc'){
+   // Três rodadas mostram jumper, gangorra e pino trocado.
+   for(const kind of ['switch','gpio']){
+    await page.locator('#repeatTestBtn').click();
+    assert.equal(await page.locator('#questionOverlay').isVisible(),true,'Repetir não iniciou pergunta');
+    await page.evaluate(()=>{
+      const api=window.__TinkerpetMission,q=api.questions[api.state.activeQuestion],correct=q[1][q[2]];
+      [...document.querySelectorAll('.answer')].find(a=>a.textContent.includes(correct)).click();
+    });
+    const f=await page.evaluate(()=>window.__TinkerpetMission.state.fault);
+    assert.equal(f.kind,kind,'Sequência de falhas na repetição não corresponde: '+JSON.stringify(f));
+    if(kind==='switch')await page.locator('[data-component="switch2"]').click();
+    else{await page.locator('[data-repair-tab="gpio"]').click();await page.locator('select[data-gpio="in1"]').selectOption('D27')}
+    assert.equal(await page.locator('#testSummaryOverlay').isVisible(),true,'Reparo do tipo '+kind+' não foi aceito');
+   }
+  }
+  await page.locator('#goExploreBtn').click();
+  assert.equal(await page.locator('#testSummaryOverlay').isVisible(),false,'Sair do teste não fechou resumo');
+  assert.equal(await page.locator('#lives').getAttribute('aria-label'),'3 vidas','O jogo normal precisa começar com vidas restauradas');
   assert.equal(await page.locator('#authOverlay').isVisible(),false);
   assert.equal(await page.locator('#startOverlay').isVisible(),false);
   assert.equal(await page.locator('#scene canvas').count(),1,'mapa 3D sem canvas');
@@ -53,7 +86,9 @@ try{
   const route=await page.evaluate(()=>window.__TinkerpetMission.buildPoints());
   assert(route.length>=2&&route.at(-1)[0]===50&&route.at(-1)[1]===-50,'rota não aponta ao primeiro destino: '+JSON.stringify(route));
   const timing=await page.evaluate(()=>({meters:window.__TinkerpetMission.state.nextEvent,seconds:window.__TinkerpetMission.state.nextEventTime}));
-  assert(timing.meters>=90&&timing.seconds>=55,'desafios não estão espaçados: '+JSON.stringify(timing));
+  assert(timing.meters>=20&&timing.meters<=35&&timing.seconds>=18&&timing.seconds<=30,'cadência normal fora da faixa: '+JSON.stringify(timing));
+  const perf=await page.evaluate(()=>({drawCalls:window.__TinkerpetMission.world.renderer.info.render.calls,stats:window.__TinkerpetMission.world.staticStats}));
+  assert(perf.stats&&perf.stats.batchSavings>80,'cidade não foi otimizada por instâncias: '+JSON.stringify(perf));
   assert.equal(await page.locator('#lives').getAttribute('aria-label'),'3 vidas');
   if(v.name==='pc'){
    // O primeiro desafio só começa após tempo E distância de direção real.
@@ -138,6 +173,20 @@ try{
    assert.equal(await page.locator('#lives').getAttribute('aria-label'),'3 vidas');
    const reset=await page.evaluate(()=>({missions:window.__TinkerpetMission.state.scoreMissions,correct:window.__TinkerpetMission.state.questionsCorrect.size,repairs:window.__TinkerpetMission.state.scoreRepairs}));
    assert.deepEqual(reset,{missions:0,correct:0,repairs:0},'reiniciar não limpou a partida');
+   // Toda entrega precisa exibir um pop-up antes de liberar a seguinte.
+   for(let i=0;i<4;i++){
+    await page.evaluate(()=>{
+      const api=window.__TinkerpetMission,s=api.state,to=api.missions[s.mission].to;
+      s.drive.x=to[0];s.drive.z=to[1];api.physics(.016);
+    });
+    assert.equal(await page.locator('#deliveryOverlay').isVisible(),true,'Entrega '+(i+1)+' sem pop-up');
+    assert((await page.locator('#deliveryTitle').textContent()).includes('concluíd'),'Texto da entrega ausente');
+    if(i===0){await page.screenshot({path:'artifacts/petgame-entrega-pc.png'});}
+    await page.locator('#nextMissionBtn').click();
+    if(i<3)assert.equal(await page.evaluate(()=>window.__TinkerpetMission.state.mission),i+1,'Avançar missão falhou');
+   }
+   assert.equal(await page.locator('#endOverlay').isVisible(),true,'Fim de campanha não abriu');
+   await page.locator('#restartBtn').click();
   } else {
    // Duas áreas de toque simultâneas e independentes.
    const touch=await page.evaluate(()=>{
@@ -166,6 +215,11 @@ try{
    if(v.name==='celular-horizontal')console.log('VISUAL_REPAIR='+((await page.screenshot({type:'jpeg',quality:56,scale:'css'})).toString('base64')));
    await page.evaluate(()=>window.__TinkerpetMission.resetGame());
    await page.evaluate(()=>{document.querySelector('#repairOverlay').hidden=true;window.__TinkerpetMission.state.mode='drive'});
+   await page.evaluate(()=>{const api=window.__TinkerpetMission,to=api.missions[0].to;api.state.drive.x=to[0];api.state.drive.z=to[1];api.physics(.016)});
+   assert.equal(await page.locator('#deliveryOverlay').isVisible(),true,'Pop-up da entrega ausente no dispositivo '+v.name);
+   await page.screenshot({path:'artifacts/petgame-entrega-'+v.name+'.png'});
+   await page.locator('#deliveryClose').click();
+   assert.equal(await page.locator('#deliveryOverlay').isVisible(),false,'X não fechou o pop-up de entrega');
   }
   await page.screenshot({path:'artifacts/missao-'+v.name+'.png',fullPage:true});
   if(v.name==='pc'||v.name==='celular-horizontal'){const audit=(await page.screenshot({type:'jpeg',quality:50,scale:'css'})).toString('base64');console.log('VISUAL_AUDIT_'+v.name+'='+audit)}
