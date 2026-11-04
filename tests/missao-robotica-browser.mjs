@@ -127,9 +127,9 @@ try{
    // Estourar temporizador leva à perda de vidas e game over com reinício total.
    for(let i=0;i<3;i++){
     await page.evaluate(()=>{window.__TinkerpetMission.beginQuestion();window.__TinkerpetMission.state.challengeEnd=performance.now()-1});
-    await page.waitForTimeout(220);
+    await page.waitForFunction(()=>window.__TinkerpetMission.state.mode!=='question',{timeout:5000});
    }
-   assert.equal(await page.locator('#endOverlay').isVisible(),true,'fim de jogo não aparece');
+   assert.equal(await page.locator('#endOverlay').isVisible(),true,'fim de jogo não aparece: '+JSON.stringify(await page.evaluate(()=>({lives:window.__TinkerpetMission.state.lives,mode:window.__TinkerpetMission.state.mode}))));
    await page.locator('#restartBtn').click();
    assert.equal(await page.locator('#lives').getAttribute('aria-label'),'3 vidas');
    const reset=await page.evaluate(()=>({missions:window.__TinkerpetMission.state.scoreMissions,correct:window.__TinkerpetMission.state.questionsCorrect.size,repairs:window.__TinkerpetMission.state.scoreRepairs}));
