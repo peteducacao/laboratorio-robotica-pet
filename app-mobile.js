@@ -1347,7 +1347,10 @@ function renderWireHandles(){
   button.hidden=false;
   // Área de toque compacta (26px de tela), com aro visual menor (12px).
   // O tamanho anterior de 42px cobria bornes adjacentes no celular.
-  const size=26/zoom;
+  // Uma ponta solta tem área de toque maior sem aumentar o aro que aparece.
+  const isLoose=w.loose?.end===end;
+  button.dataset.loose=isLoose?'true':'false';
+  const size=(isLoose?38:26)/zoom;
   button.style.setProperty('--mobile-ring-size',(12/zoom)+'px');
   button.style.setProperty('--mobile-ring-border',(2/zoom)+'px');
   // Depois de soltar a bolinha, ela deixa o pino de destino clicável.
@@ -1366,8 +1369,17 @@ function beginReconnect(e,index,end){
  if(e.cancelable)e.preventDefault();
  e.stopPropagation?.();
  state.selectedWire=index;state.selected=null;state.inspector='wires';state.wireColor=wire.color;
- reconnectPending={index,end,point:wire.loose?.end===end?{...wire.loose.point}:getPortPos(wire[end]),snapPort:null,corners:[],base:wirePoints(wire).map(p=>({...p}))};
+ // Retoque na ponta já ativa não apaga as curvas anteriores.
+ const continuing=reconnectPending&&reconnectPending.index===index&&reconnectPending.end===end;
+ if(!continuing)reconnectPending={
+  index,end,point:wire.loose?.end===end?{...wire.loose.point}:getPortPos(wire[end]),
+  snapPort:null,corners:[],base:wirePoints(wire).map(p=>({...p}))
+ };
  gesture={type:'wire-end',pointer:e.pointerId,startX:e.clientX,startY:e.clientY,moved:false};
+ // Captura o dedo até a liberação, mesmo ao sair da área do botão.
+ if(e.pointerType==='touch'){
+  try{e.target.closest('.wire-end-handle')?.setPointerCapture(e.pointerId)}catch{}
+ }
  renderColors();renderInspector();updateHistoryButtons();requestDraw();
 }
 function moveReconnect(clientX,clientY){
@@ -2258,7 +2270,8 @@ function pointerMove(e){
     startDragEdgePan();
    }
   }else if(g.type==='wire-end'||g.type==='reconnect-bend'){
-   if(g.type==='wire-end')mobileReconnectFinger(g,e);
+   // A ponta pode continuar pelo dedo mesmo quando foi selecionada com toque curto.
+   mobileReconnectFinger(g,e);
    moveReconnect(e.clientX,e.clientY);
   }else if(g.type==='wire-bend'){
    if(g.moved&&!g.saved){snapshot();g.saved=true;}
@@ -2327,12 +2340,17 @@ function pointerUp(e){
  if(g.type==='reconnect-bend'){
   if(reconnectPending){
    const w=state.wires[reconnectPending.index],fixed=w?.[reconnectPending.end==='a'?'b':'a'];
-   const dest=fixed?nearestPort(e.clientX,e.clientY,fixed,9):null;
+   const dest=fixed?nearestPort(e.clientX,e.clientY,fixed,30):null;
    if(dest)finishReconnect(dest);
    else{
     const box=Q('viewport').getBoundingClientRect();
     if(e.clientX>=box.left&&e.clientX<=box.right&&e.clientY>=box.top&&e.clientY<=box.bottom){
-     const pt=worldXY(e.clientX,e.clientY);addReconnectCorner(pt.x,pt.y);
+     if(g.moved&&e.pointerType==='touch'&&w?.loose?.end===reconnectPending.end){
+      // Finaliza a nova posição da ponta solta, sem outro gesto e sem duplicar o fio.
+      leaveReconnectLoose(e.clientX,e.clientY)
+     }else{
+      const pt=worldXY(e.clientX,e.clientY);addReconnectCorner(pt.x,pt.y)
+     }
     }
    }
   }
@@ -2343,7 +2361,13 @@ function pointerUp(e){
    const destination=fixed?nearestPort(e.clientX,e.clientY,fixed,32):null;
    if(destination){suppressPortClickUntil=Date.now()+380;finishReconnect(destination);}
    else leaveReconnectLoose(e.clientX,e.clientY);
-  }else cancelReconnect();
+  }else{
+   const pending=reconnectPending,wire=pending&&state.wires[pending.index];
+   if(e.pointerType==='touch'&&wire?.loose?.end===pending.end){
+    // Um toque curto abre a edição; o próximo arraste continua o traçado.
+    message('Ponta selecionada. Arraste o dedo para curvar ou toque em um pino.',true);
+   }else cancelReconnect()
+  }
   requestDraw();
  }else if(g.type==='catalog'){
   // O painel permanece aberto para arrastar vários componentes seguidos.
