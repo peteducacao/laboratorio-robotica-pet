@@ -161,7 +161,7 @@ try{
        failedOnce=true;spacingChecked=true
       }else options.find(o=>o.textContent.includes(correct)).click()
      }else if(s.mode==='repair'){
-      shownD.push(s.fault.id);countD++;
+      shownD.push(s.fault.prompt);countD++;
       a.chooseDiagnostic(s.fault.answer,document.createElement('button'))
      }else if(s.mode==='drive'){
       s.stageMeters+=20;s.driveSeconds+=6;s.skipUntil=0;
@@ -180,7 +180,7 @@ try{
   assert.deepEqual(walkthrough.phases.map(x=>x.q),[2,1,2,1]);
   assert.deepEqual(walkthrough.phases.map(x=>x.d),[2,2,2,2]);
   assert.equal(new Set(walkthrough.shownQ).size,6,'perguntas repetidas');
-  assert.equal(new Set(walkthrough.shownD).size,8,'diagnósticos de circuito repetidos');
+  assert.equal(new Set(walkthrough.shownD).size,8,'situações de diagnóstico repetidas');
   assert(walkthrough.failedOnce&&walkthrough.spacingChecked,'erro e espaçamento inválidos');
   assert.equal(walkthrough.mode,'end');
   assert.equal(walkthrough.lives,3);
