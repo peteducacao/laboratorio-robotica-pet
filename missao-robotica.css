@@ -278,3 +278,10 @@
 .personal-record .best-run strong{font-size:11px;line-height:1.35;align-self:center}
 .personal-record .best-run small{white-space:normal}
 @media(max-width:480px){.personal-record{gap:5px}.personal-record div{padding:7px 4px}.personal-record strong{font-size:14px}.personal-record .best-run strong{font-size:10px}}
+
+/* Fases com desafios obrigatórios e respostas incorretas sem trocar o enunciado. */
+.stage-progress{font-size:10px;color:#406d73;font-weight:800;white-space:nowrap}
+.mission-status{flex-wrap:wrap}
+.answer.wrong,.answer.wrong:disabled{opacity:.60;background:#fff1f1;border-color:#eabac1;color:#9f5260;cursor:default}
+@media(max-width:800px){.stage-progress{font-size:9px}}
+@media(orientation:landscape) and (max-height:540px){.stage-progress{font-size:8px}}
