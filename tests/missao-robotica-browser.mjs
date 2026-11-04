@@ -40,6 +40,14 @@ try{
   await page.locator('#startBtn').click();
   assert.equal(await page.evaluate(()=>window.__TinkerpetMission.state.mode),'drive','início deve entrar na aventura normal');
   assert.equal(await page.locator('#questionOverlay').isVisible(),false,'rodada de teste não pode surgir');
+  assert(await page.locator('#runTimer').isVisible(),'cronômetro precisa estar na missão');
+  await page.evaluate(()=>{window.__TinkerpetMission.state.activeSince-=63000});
+  await page.locator('#pauseBtn').click();
+  const paused=await page.locator('#runTimer').textContent();
+  assert(paused.includes('01:03'),'tempo da aventura não foi contabilizado: '+paused);
+  await page.waitForTimeout(350);
+  assert.equal(await page.locator('#runTimer').textContent(),paused,'cronômetro deve parar na pausa');
+  await page.locator('#resumeBtn').click();
   const rules=await page.evaluate(()=>({n:window.__TinkerpetMission.questions.length,q:window.__TinkerpetMission.questions.map(q=>q[0])}));
   assert.equal(rules.n,10,'esperadas dez perguntas revisadas');
   assert(rules.q.every(q=>q.length<100&&!/GPIO|192\.168|pararTudo\(/i.test(q)),'perguntas não devem cobrar pinos ou código');
@@ -52,9 +60,16 @@ try{
   await page.evaluate(()=>{const a=window.__TinkerpetMission;a.resetGame();a.state.mode='drive';a.beginQuestion()});
   assert(await page.locator('#questionOverlay').isVisible(),'pergunta principal não apareceu');
   assert.equal(await page.locator('.answer').count(),4,'pergunta exige quatro alternativas');
+  await page.evaluate(()=>{
+   const a=window.__TinkerpetMission,q=a.questions[a.state.activeQuestion],wrong=q[1].find(t=>t!==q[1][q[2]]);
+   const btn=[...document.querySelectorAll('.answer')].find(el=>el.textContent.includes(wrong));
+   if(!btn)throw Error('Alternativa incorreta não encontrada');btn.click()
+  });
+  assert.equal(await page.evaluate(()=>window.__TinkerpetMission.state.scoreWrong),1,'erro de pergunta não contabilizado');
   await page.screenshot({path:'artifacts/petgame-pergunta-'+size.name+'.png'});
   await page.evaluate(()=>{const a=window.__TinkerpetMission,q=a.questions[a.state.activeQuestion],txt=q[1][q[2]];const b=[...document.querySelectorAll('.answer')].find(el=>el.textContent.includes(txt));if(!b)throw Error('Resposta não encontrada');b.click()});
   assert.equal(await page.evaluate(()=>window.__TinkerpetMission.state.mode),'drive','acerto deve voltar à avenida');
+  assert.equal(await page.evaluate(()=>window.__TinkerpetMission.state.scoreCorrect),1,'acerto de pergunta não contabilizado');
   await page.evaluate(()=>window.__TinkerpetMission.beginRepair());
   assert(await page.locator('#repairOverlay').isVisible(),'oficina principal não apareceu');
   assert.equal(await page.locator('.diagnostic-card').count(),4,'diagnóstico exige 4 ícones');
@@ -66,10 +81,12 @@ try{
   const started=await page.evaluate(()=>window.__TinkerpetMission.state.challengeEnd);
   await page.locator('.diagnostic-card[data-diagnostic="'+wrong+'"]').click();
   assert.equal(await page.locator('.diagnostic-card.wrong').count(),1,'erro deve aparecer na imagem escolhida');
+  assert.equal(await page.evaluate(()=>window.__TinkerpetMission.state.scoreWrong),2,'erro de diagnóstico não contabilizado');
   assert.equal(await page.evaluate(()=>window.__TinkerpetMission.state.challengeEnd),started,'erro não pode reiniciar o relógio');
   await page.screenshot({path:'artifacts/petgame-diagnostico-'+size.name+'.png'});
   await page.locator('.diagnostic-card[data-diagnostic="'+fault.answer+'"]').click();
   assert.equal(await page.evaluate(()=>window.__TinkerpetMission.state.mode),'drive','acerto de diagnóstico deve voltar à missão');
+  assert.equal(await page.evaluate(()=>window.__TinkerpetMission.state.scoreCorrect),2,'acerto de diagnóstico não contabilizado');
   await page.evaluate(()=>window.__TinkerpetMission.beginRepair());
   await page.locator('#diagnosticClose').click();
   assert(await page.locator('#quitChallengeDialog').evaluate(e=>e.open),'sair do desafio exige confirmação');
@@ -78,10 +95,35 @@ try{
   await page.locator('#diagnosticClose').click();
   await page.locator('#quitConfirm').click();
   assert.equal(await page.evaluate(()=>window.__TinkerpetMission.state.lives),2,'abandonar desafio deve perder uma vida');
+  assert.equal(await page.evaluate(()=>window.__TinkerpetMission.state.scoreWrong),3,'desafio abandonado deve aparecer no relatório');
   await page.evaluate(()=>{const a=window.__TinkerpetMission;a.resetGame();a.state.drive.x=a.missions[0].to[0];a.state.drive.z=a.missions[0].to[1];a.physics(.016)});
   assert(await page.locator('#deliveryOverlay').isVisible(),'entrega do mapa não concluiu');
   await page.locator('#deliveryClose').click();
   assert.equal(await page.evaluate(()=>window.__TinkerpetMission.state.mission),1,'próxima entrega não avançou');
+  await page.evaluate(()=>{
+   const s=window.__TinkerpetMission.state;
+   s.scoreCorrect=2;s.scoreWrong=3;s.scoreQuestions=1;s.scoreRepairs=1;
+  });
+  for(let i=1;i<4;i++){
+   await page.evaluate(()=>{
+    const a=window.__TinkerpetMission,g=a.missions[a.state.mission].to;
+    a.state.drive.x=g[0];a.state.drive.z=g[1];a.physics(.016);
+   });
+   assert(await page.locator('#deliveryOverlay').isVisible(),'entrega '+(i+1)+' não concluiu');
+   await page.locator('#nextMissionBtn').click();
+  }
+  assert(await page.locator('#endOverlay').isVisible(),'relatório final não apareceu');
+  assert.equal(await page.locator('#scoreMissions').textContent(),'4','entregas erradas no resultado');
+  assert.equal(await page.locator('#scoreCorrect').textContent(),'2','acertos errados no relatório');
+  assert.equal(await page.locator('#scoreWrong').textContent(),'3','erros errados no relatório');
+  assert.equal(await page.locator('#scoreQuestions').textContent(),'1','perguntas erradas no relatório');
+  assert.equal(await page.locator('#scoreRepairs').textContent(),'1','diagnósticos errados no relatório');
+  assert(/[0-9]+:[0-9]{2}/.test(await page.locator('#scoreElapsed').textContent()),'tempo final com formato errado');
+  assert((await page.locator('#endDescription').textContent()).includes('2 acertos e 3 erros'),'resumo verbal não bate');
+  assert((await page.locator('#scoreFeedback').textContent()).length>12,'feedback final ausente');
+  await page.locator('#restartBtn').click();
+  assert.equal(await page.evaluate(()=>window.__TinkerpetMission.state.scoreWrong),0,'reiniciar não limpou os erros');
+  assert.equal(await page.evaluate(()=>window.__TinkerpetMission.state.scoreCorrect),0,'reiniciar não limpou os acertos');
   await page.screenshot({path:'artifacts/petgame-cidade-'+size.name+'.png'});
   await context.close();
   console.log('PASS',size.name,'início, 3D, regiões, 10 perguntas, diagnóstico e entregas');
