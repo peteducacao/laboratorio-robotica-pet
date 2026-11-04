@@ -40,6 +40,8 @@ try{
   assert.equal(await page.locator('#authOverlay').isVisible(),false);
   assert.equal(await page.locator('#startOverlay').isVisible(),false);
   assert.equal(await page.locator('#scene canvas').count(),1,'mapa 3D sem canvas');
+  const gpsMesh=await page.evaluate(()=>{const w=window.__TinkerpetMission.world;return{visible:w.routeGroup?.visible,segments:w.routeGroup?.children?.length||0,pts:w.routePoints?.length||0,driver:!window.__TinkerpetMission.state.cameraTop}});
+  assert(gpsMesh.visible&&gpsMesh.segments>8&&gpsMesh.pts>=2&&gpsMesh.driver,'A rota deve estar pintada na pista e a câmera deve começar no motorista: '+JSON.stringify(gpsMesh));
   const viewport=await page.evaluate(()=>({scroll:document.documentElement.scrollWidth,inner:window.innerWidth,scene:document.querySelector('#scene canvas').getBoundingClientRect().width}));
   assert(viewport.scroll<=viewport.inner+2,v.name+' overflow horizontal '+JSON.stringify(viewport));
   assert(viewport.scene>100,'canvas invisível');

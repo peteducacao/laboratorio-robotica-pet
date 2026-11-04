@@ -250,7 +250,7 @@ function updateRoute(force=false){
    group.add(new T.Mesh(g,arrowMaterial.clone()));
   }
  }
- group.visible=state.mode==='drive'||state.mode==='pause'||state.mode==='start';
+ group.visible=true;
  ribbonMaterial.dispose();arrowMaterial.dispose();
  world.routePoints=points;world.routeDistance=distance;world.routeLastPos=[d.x,d.z];world.routeLastMission=state.mission;
  updateCompass();
@@ -263,6 +263,6 @@ const a=d.a/255,b=d.b/255;const v=(a+b)/2*9.2,omega=(b-a)*1.85;const angleNext=d
 d.angle=angleNext;d.x=nx;d.z=nz;state.meters+=Math.abs(v*dt);updateDistance();updateRoute();
 const goal=missions[Math.min(state.mission,3)].to;if(Math.hypot(d.x-goal[0],d.z-goal[1])<2.65){completeMission();return}
 if(state.meters>=state.nextEvent&&state.driveSeconds>=state.nextEventTime)triggerEvent()}
-window.__TinkerpetMission={state,questions,missions,baseWires,beginQuestion,beginRepair,resetGame,physics,commands,collides,updateRoute,buildPoints,triggerEvent,requestQuitChallenge,cancelQuitChallenge,confirmQuitChallenge};
+window.__TinkerpetMission={state,world,questions,missions,baseWires,beginQuestion,beginRepair,resetGame,physics,commands,collides,updateRoute,buildPoints,triggerEvent,requestQuitChallenge,cancelQuitChallenge,confirmQuitChallenge};
 boot();
 })();
