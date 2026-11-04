@@ -272,3 +272,9 @@
 @media(orientation:landscape) and (max-height:540px){.minimap{top:55px;right:12px;width:112px}.minimap.collapsed{width:70px}.personal-record{padding-top:7px;margin-top:8px}.personal-record div{padding:5px}.personal-record strong{font-size:14px}.record-won{font-size:10px}}
 @media(max-width:640px) and (orientation:portrait){.minimap{top:153px;right:10px;width:124px}.minimap.collapsed{width:72px}}
 @media(prefers-reduced-motion:reduce){.delivery-particle,.delivery-dialog.celebrating .delivery-check{animation:none}}
+
+/* Recordes: três métricas legíveis também na tela estreita. */
+.personal-record{grid-template-columns:repeat(3,minmax(0,1fr))}
+.personal-record .best-run strong{font-size:11px;line-height:1.35;align-self:center}
+.personal-record .best-run small{white-space:normal}
+@media(max-width:480px){.personal-record{gap:5px}.personal-record div{padding:7px 4px}.personal-record strong{font-size:14px}.personal-record .best-run strong{font-size:10px}}
