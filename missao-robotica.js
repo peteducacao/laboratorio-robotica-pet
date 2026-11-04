@@ -1,6 +1,6 @@
 (()=>{'use strict';
 const $=id=>document.getElementById(id),clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
-const overlays=['authOverlay','startOverlay','questionOverlay','repairOverlay','pauseOverlay','deliveryOverlay','endOverlay'];
+const overlays=['startOverlay','questionOverlay','repairOverlay','pauseOverlay','deliveryOverlay','endOverlay'];
 const missions=[
  {title:'Entrega na escola',desc:'Siga a faixa amarela até a escola.',to:[50,-50],label:'ESCOLA'},
  {title:'Peças para a fábrica',desc:'Siga a faixa amarela até a fábrica.',to:[50,50],label:'FÁBRICA'},
@@ -54,7 +54,7 @@ switch1:['Gangorra do ESP32 (9 V)','switch.svg'],switch2:['Gangorra dos motores 
 lm:['LM2596','lm2596.svg'],pack:['6 pilhas AA','battery-pack.svg'],jumper:['Jumper','jumpers.svg']
 };
 const diagnosticTests=[{"id":"pack","prompt":"O ESP32 liga, mas a ponte H não recebe energia das pilhas. Qual fonte verificar?","answer":"pack","options":["pack","battery","lm","esp"]},{"id":"bridge","prompt":"Há energia e comandos, mas nenhum motor responde. Qual módulo pode ter falhado?","answer":"bridge","options":["bridge","lm","battery","esp"]},{"id":"switch1","prompt":"A bateria de 9 V funciona, mas a alimentação do ESP32 está interrompida na chave. Qual peça conferir?","answer":"switch1","options":["switch1","switch2","bridge","motor"]},{"id":"switch2","prompt":"As pilhas estão carregadas, mas a chave dos motores está desligada. Qual peça verificar?","answer":"switch2","options":["switch2","switch1","lm","esp"]},{"id":"jumper","prompt":"O sinal não chega à ponte H porque um fio se soltou. O que reconectar?","answer":"jumper","options":["jumper","motor","pack","battery"]},{"id":"lm","prompt":"A bateria de 9 V funciona, mas a tensão de entrada do ESP32 não foi ajustada. Qual módulo verificar?","answer":"lm","options":["lm","bridge","switch2","motor"]},{"id":"motor","prompt":"A ponte H responde, mas uma roda não gira mesmo com os fios ligados. Qual peça pode falhar?","answer":"motor","options":["motor","esp","lm","switch1"]},{"id":"esp","prompt":"A alimentação está correta, mas não chegam comandos à ponte H. Qual placa investigar?","answer":"esp","options":["esp","pack","battery","motor"]},{"id":"battery","prompt":"O regulador não recebe energia, embora a gangorra da bateria de 9 V esteja ligada. Qual fonte conferir?","answer":"battery","options":["battery","pack","bridge","motor"]},{"id":"switch2","prompt":"O carrinho liga, mas os motores só recebem energia quando a gangorra das pilhas AA é acionada. Qual é?","answer":"switch2","options":["switch2","switch1","lm","esp"]}];
-const state={mode:'auth',ready:false,lives:3,mission:0,questionsCorrect:new Set(),asked:[],scoreQuestions:0,scoreRepairs:0,scoreCorrect:0,scoreWrong:0,scoreMissions:0,elapsedMs:0,activeSince:null,timerStarted:false,meters:0,nextEvent:26,nextEventTime:20,driveSeconds:0,eventCount:0,lastFault:null,lastDiagnosis:null,drive:{x:-50,z:50,angle:-Math.PI/2,a:0,b:0,collided:false},desired:[0,0],pointer:[null,null],pointerValue:[0,0],keys:new Set(),cameraTop:true,repairTab:'power',quitRemaining:0,challengeTimer:null,challengeStarted:0,challengeEnd:0,activeQuestion:null,fault:null,wires:null,switches:null,gpios:null,skipUntil:0,completed:false,recordsSaved:false,stageChallenges:[],stageSlot:0,stageMeters:0,stageLastEventMeters:0,stageLastEventSeconds:0,stageGateToastAt:0};
+const state={mode:'start',ready:false,lives:3,mission:0,questionsCorrect:new Set(),asked:[],scoreQuestions:0,scoreRepairs:0,scoreCorrect:0,scoreWrong:0,scoreMissions:0,elapsedMs:0,activeSince:null,timerStarted:false,meters:0,nextEvent:26,nextEventTime:20,driveSeconds:0,eventCount:0,lastFault:null,lastDiagnosis:null,drive:{x:-50,z:50,angle:-Math.PI/2,a:0,b:0,collided:false},desired:[0,0],pointer:[null,null],pointerValue:[0,0],keys:new Set(),cameraTop:true,repairTab:'power',quitRemaining:0,challengeTimer:null,challengeStarted:0,challengeEnd:0,activeQuestion:null,fault:null,wires:null,switches:null,gpios:null,skipUntil:0,completed:false,recordsSaved:false,stageChallenges:[],stageSlot:0,stageMeters:0,stageLastEventMeters:0,stageLastEventSeconds:0,stageGateToastAt:0};
 const world={THREE:null,renderer:null,scene:null,camera:null,car:null,carLed:null,uiTimer:0,staticStats:null,wheels:[],walls:[],goal:null,goalLabel:null,goalBeam:null,routeGroup:null,routePoints:[],routeDistance:0,routeLastPos:null,routeLastMission:-1,clockTime:0,lastFrame:0,runFrame:false,sky:null,clouds:[],clockUiAt:0,minimapUiAt:0,collisionToastAt:0,ambientMovers:[]};
 const rand=n=>Math.floor(Math.random()*n);
 function shuffled(arr){const a=[...arr];for(let i=a.length-1;i>0;i--){const j=rand(i+1);[a[i],a[j]]=[a[j],a[i]]}return a}
@@ -278,8 +278,6 @@ function commands(){
  return[Math.round(base*(left?.34:1)),Math.round(base*(right?.34:1))]
 }
 function installUI(){
-$('authForm').addEventListener('submit',e=>{e.preventDefault();if($('password').value.trim()!=='peteducacao'){$('authError').textContent='Senha incorreta. Tente novamente.';return}try{sessionStorage.setItem('tinkerpet-missao-3d-acesso','ok')}catch{}$('authError').textContent='';setMode('start')});
-$('showPassword').addEventListener('click',()=>{const p=$('password');p.type=p.type==='password'?'text':'password';$('showPassword').textContent=p.type==='password'?'Mostrar':'Ocultar'});
 $('startBtn').addEventListener('click',()=>{if(!state.ready)return;unlockAudio();resetGame();setMode('drive');toast('Aventura iniciada. Siga a faixa amarela até o destino!')});
 $('soundBtn').addEventListener('click',toggleAudio);
 $('minimapToggle').addEventListener('click',()=>{const pane=$('minimap'),collapsed=pane.classList.toggle('collapsed');$('minimapToggle').textContent=collapsed?'+':'−';$('minimapToggle').setAttribute('aria-expanded',String(!collapsed));if(!collapsed)drawMiniMap()});refreshSoundButton();displayRecords();
@@ -304,7 +302,7 @@ document.addEventListener('keydown',e=>{
  if(state.mode==='drive'){e.preventDefault();stopRobot();setMode('pause');return}
  if(state.mode==='pause'){e.preventDefault();setMode('drive');stopRobot();return}
  if(state.mode==='delivery'){e.preventDefault();advanceMission();return}
- if(state.mode==='start'||state.mode==='auth'||state.mode==='end'){e.preventDefault();window.location.href='projects.html'}
+ if(state.mode==='start'||state.mode==='end'){e.preventDefault();window.location.href='projects.html'}
 });
 installControl(0);installControl(1);installKeys();
 window.addEventListener('resize',()=>{if(world.renderer&&world.camera){const w=$('scene').clientWidth,h=$('scene').clientHeight;world.camera.aspect=Math.max(1,w)/Math.max(1,h);world.camera.updateProjectionMatrix();world.renderer.setSize(w,h)}})}
@@ -459,11 +457,11 @@ function advanceMission(){if(state.mode!=='delivery')return;state.mission++;
  setMode('drive');stopRobot();toast('Entrega concluída. Siga a rota para a próxima!');
 }
 
-function boot(){installUI();updateLives();updateMission();if(sessionStorage.getItem('tinkerpet-missao-3d-acesso')==='ok')setMode('start');else setMode('auth');load3D()}
+function boot(){installUI();updateLives();updateMission();setMode('start');load3D()}
 async function load3D(){try{
  const THREE=await import('https://cdn.jsdelivr.net/npm/three@0.160.1/build/three.module.js');
  init3D(THREE);state.ready=true;$('startBtn').disabled=false;
- }catch(error){console.error('Não foi possível carregar a cidade 3D',error);$('startBtn').disabled=true;$('startBtn').textContent='Não foi possível carregar o mapa 3D';if(state.mode==='auth')$('authError').textContent='O mapa precisa de conexão para carregar. Verifique a internet.';toast('Não foi possível carregar o cenário 3D. Verifique a conexão.',true)}
+ }catch(error){console.error('Não foi possível carregar a cidade 3D',error);$('startBtn').disabled=true;$('startBtn').textContent='Não foi possível carregar o mapa 3D';toast('Não foi possível carregar o cenário 3D. Verifique a conexão.',true)}
 }
 function init3D(T){
 world.THREE=T;const scene=new T.Scene();
