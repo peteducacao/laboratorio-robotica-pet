@@ -40,8 +40,8 @@ switch1:['Gangorra S1','switch.svg'],switch2:['Gangorra S2','switch.svg'],
 lm:['LM2596','lm2596.svg'],pack:['6 pilhas AA','battery-pack.svg'],jumper:['Jumper','jumpers.svg']
 };
 const diagnosticTests=[{"id":"pack","prompt":"O ESP32 liga, mas a ponte H não recebe energia das pilhas. Qual fonte verificar?","answer":"pack","options":["pack","battery","lm","esp"]},{"id":"bridge","prompt":"Há energia e comandos, mas nenhum motor responde. Qual módulo pode ter falhado?","answer":"bridge","options":["bridge","lm","battery","esp"]},{"id":"switch1","prompt":"A bateria de 9 V funciona, mas a alimentação do ESP32 está interrompida na chave. Qual peça conferir?","answer":"switch1","options":["switch1","switch2","bridge","motor"]},{"id":"switch2","prompt":"As pilhas estão carregadas, mas a chave dos motores está desligada. Qual peça verificar?","answer":"switch2","options":["switch2","switch1","lm","esp"]},{"id":"jumper","prompt":"O sinal não chega à ponte H porque um fio se soltou. O que reconectar?","answer":"jumper","options":["jumper","motor","pack","battery"]},{"id":"lm","prompt":"A bateria de 9 V funciona, mas a tensão de entrada do ESP32 não foi ajustada. Qual módulo verificar?","answer":"lm","options":["lm","bridge","switch2","motor"]},{"id":"motor","prompt":"A ponte H responde, mas uma roda não gira mesmo com os fios ligados. Qual peça pode falhar?","answer":"motor","options":["motor","esp","lm","switch1"]},{"id":"esp","prompt":"A alimentação está correta, mas não chegam comandos à ponte H. Qual placa investigar?","answer":"esp","options":["esp","pack","battery","motor"]},{"id":"battery","prompt":"O regulador não recebe energia, embora a primeira gangorra esteja ligada. Qual fonte conferir?","answer":"battery","options":["battery","pack","bridge","motor"]},{"id":"switch2","prompt":"O carrinho liga, mas os motores só recebem energia quando a segunda chave é acionada. Qual é?","answer":"switch2","options":["switch2","switch1","lm","esp"]}];
-const state={mode:'auth',ready:false,lives:3,mission:0,questionsCorrect:new Set(),asked:[],scoreQuestions:0,scoreRepairs:0,scoreMissions:0,meters:0,nextEvent:26,nextEventTime:20,driveSeconds:0,eventCount:0,lastFault:null,lastDiagnosis:null,drive:{x:-50,z:50,angle:-Math.PI/2,a:0,b:0,collided:false},desired:[0,0],pointer:[null,null],pointerValue:[0,0],keys:new Set(),cameraTop:false,repairTab:'power',quitRemaining:0,challengeTimer:null,challengeStarted:0,challengeEnd:0,activeQuestion:null,fault:null,wires:null,switches:null,gpios:null,skipUntil:0,completed:false};
-const world={THREE:null,renderer:null,scene:null,camera:null,car:null,uiTimer:0,staticStats:null,wheels:[],walls:[],goal:null,goalLabel:null,goalBeam:null,routeGroup:null,routePoints:[],routeDistance:0,routeLastPos:null,routeLastMission:-1,clockTime:0,lastFrame:0,runFrame:false};
+const state={mode:'auth',ready:false,lives:3,mission:0,questionsCorrect:new Set(),asked:[],scoreQuestions:0,scoreRepairs:0,scoreMissions:0,meters:0,nextEvent:26,nextEventTime:20,driveSeconds:0,eventCount:0,lastFault:null,lastDiagnosis:null,drive:{x:-50,z:50,angle:-Math.PI/2,a:0,b:0,collided:false},desired:[0,0],pointer:[null,null],pointerValue:[0,0],keys:new Set(),cameraTop:true,repairTab:'power',quitRemaining:0,challengeTimer:null,challengeStarted:0,challengeEnd:0,activeQuestion:null,fault:null,wires:null,switches:null,gpios:null,skipUntil:0,completed:false};
+const world={THREE:null,renderer:null,scene:null,camera:null,car:null,carLed:null,uiTimer:0,staticStats:null,wheels:[],walls:[],goal:null,goalLabel:null,goalBeam:null,routeGroup:null,routePoints:[],routeDistance:0,routeLastPos:null,routeLastMission:-1,clockTime:0,lastFrame:0,runFrame:false};
 const rand=n=>Math.floor(Math.random()*n);
 function shuffled(arr){const a=[...arr];for(let i=a.length-1;i>0;i--){const j=rand(i+1);[a[i],a[j]]=[a[j],a[i]]}return a}
 function overlay(name){for(const id of overlays)$(id).hidden=id!==name;}
@@ -79,7 +79,7 @@ $('pauseBtn').addEventListener('click',()=>{if(!isDrive())return;stopRobot();set
 $('resumeBtn').addEventListener('click',()=>{setMode('drive');stopRobot()});
 $('pauseClose').addEventListener('click',()=>{setMode('drive');stopRobot()});
 $('restartBtn').addEventListener('click',()=>{resetGame();setMode('drive');toast('Nova aventura iniciada!')});
-$('viewBtn').addEventListener('click',()=>{state.cameraTop=!state.cameraTop;$('viewBtn').setAttribute('aria-label',state.cameraTop?'Ativar visão do motorista':'Ativar câmera externa');toast(state.cameraTop?'Câmera externa':'Visão do motorista')});
+$('viewBtn').addEventListener('click',()=>{state.cameraTop=!state.cameraTop;$('viewBtn').setAttribute('aria-label',state.cameraTop?'Ativar visão do motorista':'Ativar câmera externa');toast(state.cameraTop?'Câmera atrás do carrinho':'Visão do motorista')});
 $('fullBtn').addEventListener('click',async()=>{try{if(document.fullscreenElement)await document.exitFullscreen();else await $('game').requestFullscreen()}catch{toast('Tela cheia não está disponível neste navegador.')}});
 $('exitGameBtn').addEventListener('click',()=>{window.location.href='projects.html'});
 $('questionClose').addEventListener('click',requestQuitChallenge);
@@ -99,7 +99,7 @@ document.addEventListener('keydown',e=>{
 });
 installControl(0);installControl(1);installKeys();
 window.addEventListener('resize',()=>{if(world.renderer&&world.camera){const w=$('scene').clientWidth,h=$('scene').clientHeight;world.camera.aspect=Math.max(1,w)/Math.max(1,h);world.camera.updateProjectionMatrix();world.renderer.setSize(w,h)}})}
-function resetGame(){clearChallengeTimer();state.lives=3;state.mission=0;state.scoreMissions=0;state.scoreQuestions=0;state.scoreRepairs=0;state.questionsCorrect=new Set();state.asked=[];state.meters=0;state.nextEvent=26;state.nextEventTime=20;state.driveSeconds=0;state.eventCount=0;state.lastFault=null;state.lastDiagnosis=null;state.completed=false;state.drive={x:-50,z:50,angle:-Math.PI/2,a:0,b:0,collided:false};state.desired=[0,0];state.pointer=[null,null];state.pointerValue=[0,0];state.keys.clear();state.skipUntil=0;state.cameraTop=false;state.repairTab='power';setThumb(0,0);setThumb(1,0);updateReadout();updateLives();updateMission();if(world.car){world.car.position.set(-50,0,50);world.car.rotation.y=-Math.PI/2}updateGoal();updateRoute(true)}
+function resetGame(){clearChallengeTimer();state.lives=3;state.mission=0;state.scoreMissions=0;state.scoreQuestions=0;state.scoreRepairs=0;state.questionsCorrect=new Set();state.asked=[];state.meters=0;state.nextEvent=26;state.nextEventTime=20;state.driveSeconds=0;state.eventCount=0;state.lastFault=null;state.lastDiagnosis=null;state.completed=false;state.drive={x:-50,z:50,angle:-Math.PI/2,a:0,b:0,collided:false};state.desired=[0,0];state.pointer=[null,null];state.pointerValue=[0,0];state.keys.clear();state.skipUntil=0;state.cameraTop=true;state.repairTab='power';$('viewBtn').setAttribute('aria-label','Ativar visão do motorista');setThumb(0,0);setThumb(1,0);updateReadout();updateLives();updateMission();if(world.car){world.car.position.set(-50,0,50);world.car.rotation.y=-Math.PI/2}updateGoal();updateRoute(true)}
 function loseLife(reason){const was=state.mode;clearChallengeTimer();state.lives--;updateLives();if(state.lives<=0){endGame(false);return}
 setMode('drive');stopRobot();state.drive.collided=true;toast(reason||'Tempo esgotado. Você perdeu uma vida.',true);state.skipUntil=performance.now()+9000}
 function endGame(won){state.completed=true;stopRobot();clearChallengeTimer();$('endKicker').textContent=won?'AVENTURA CONCLUÍDA':'FIM DE JOGO';$('endSymbol').textContent=won?'★':'♥';$('endTitle').textContent=won?'Missão cumprida!':'Fim de jogo';$('endDescription').textContent=won?'Você percorreu a cidade e concluiu todas as entregas!':'As três vidas terminaram. Reinicie para tentar novamente.';$('scoreMissions').textContent=state.scoreMissions;$('scoreQuestions').textContent=state.scoreQuestions;$('scoreRepairs').textContent=state.scoreRepairs;setMode('end')}
@@ -193,7 +193,7 @@ function tileTexture(kind,base,seed,repeat){
  texture.wrapS=texture.wrapT=T.RepeatWrapping;texture.repeat.set(repeat,repeat);texture.anisotropy=4;return texture
 }
 const textured=(kind,color,seed,repeat=8)=>new T.MeshLambertMaterial({map:tileTexture(kind,color,seed,repeat),color:0xffffff});
-const mats={grass:textured('grass','#9dbc94',101,20),road:textured('road','#656c77',202,12),sidewalk:textured('road','#e2d9c6',303,7),zoneFactory:textured('grass','#d4a780',311,12),zoneLab:textured('grass','#84bebe',411,12),zoneSchool:textured('grass','#bad49b',511,12),zonePark:textured('grass','#7ca77e',611,12),factoryWall:textured('brick','#c88e75',711,3),labWall:textured('brick','#92bbcd',811,3),schoolWall:textured('brick','#f0d3a0',911,3),parkWall:textured('brick','#b9bba1',1011,3),line:new T.MeshBasicMaterial({color:0xf5f1e8}),yellow:new T.MeshLambertMaterial({color:0xf2c04b}),dark:new T.MeshLambertMaterial({color:0x303e4c}),teal:new T.MeshLambertMaterial({color:0x2d8ead}),white:new T.MeshLambertMaterial({color:0xfff9ed}),leaf:new T.MeshLambertMaterial({color:0x829366}),trunk:new T.MeshLambertMaterial({color:0x92755b}),red:new T.MeshLambertMaterial({color:0xe17968}),window:new T.MeshLambertMaterial({color:0xa7c5db}),board:new T.MeshLambertMaterial({color:0x326f91}),cone:new T.MeshLambertMaterial({color:0xf08e51})};
+const mats={grass:textured('grass','#9dbc94',101,20),road:textured('road','#656c77',202,12),sidewalk:textured('road','#e2d9c6',303,7),zoneFactory:textured('grass','#d4a780',311,12),zoneLab:textured('grass','#84bebe',411,12),zoneSchool:textured('grass','#bad49b',511,12),zonePark:textured('grass','#7ca77e',611,12),factoryWall:textured('brick','#c88e75',711,3),labWall:textured('brick','#92bbcd',811,3),schoolWall:textured('brick','#f0d3a0',911,3),parkWall:textured('brick','#b9bba1',1011,3),line:new T.MeshBasicMaterial({color:0xf5f1e8}),yellow:new T.MeshLambertMaterial({color:0xf2c04b}),dark:new T.MeshLambertMaterial({color:0x303e4c}),teal:new T.MeshLambertMaterial({color:0x2d8ead}),white:new T.MeshLambertMaterial({color:0xfff9ed}),leaf:new T.MeshLambertMaterial({color:0x829366}),trunk:new T.MeshLambertMaterial({color:0x92755b}),red:new T.MeshLambertMaterial({color:0xe17968}),window:new T.MeshLambertMaterial({color:0xa7c5db}),board:new T.MeshLambertMaterial({color:0x326f91}),cone:new T.MeshLambertMaterial({color:0xf08e51}),metal:new T.MeshLambertMaterial({color:0xbecbd0}),railPost:new T.MeshLambertMaterial({color:0x7c939b}),bush:new T.MeshLambertMaterial({color:0x649478}),lampGlow:new T.MeshBasicMaterial({color:0xffe7a5}),hill:new T.MeshLambertMaterial({color:0x819da0}),hillLight:new T.MeshLambertMaterial({color:0x9cb4a3})};
 const box=(parent,w,h,d,x,y,z,mat)=>{const o=new T.Mesh(new T.BoxGeometry(w,h,d),mat);o.position.set(x,y,z);parent.add(o);return o};
 const cyl=(parent,rt,rb,h,segments,x,y,z,mat)=>{const o=new T.Mesh(new T.CylinderGeometry(rt,rb,h,segments),mat);o.position.set(x,y,z);parent.add(o);return o};
 box(scene,152,.3,152,0,-.24,0,mats.grass);
@@ -222,8 +222,45 @@ function cone(x,z){cyl(scene,.12,.73,1.5,9,x,.82,z,mats.cone);cyl(scene,.44,.44,
 for(const [x,z] of [[-50,13],[-30,3],[-50,-5],[10,-22],[50,4],[30,20],[5,50],[10,1],[-23,-10],[-10,-17],[50,-23],[-10,37],[-50,31],[30,-43]])cone(x,z);
 function crate(x,z){box(scene,2.1,1.8,2.1,x,.98,z,mats.yellow);box(scene,2.15,.17,.15,x,1.5,z-1.1,mats.dark);world.walls.push({type:'rect',x,z,hw:1.1,hd:1.1})}
 for(const [x,z] of [[-10,22],[50,-25],[2,-50],[30,43],[-50,-15]])crate(x,z);
-function lamp(x,z){cyl(scene,.1,.12,4.4,7,x,2.2,z,mats.dark);cyl(scene,.38,.55,.45,7,x,4.6,z,mats.white)}
+function lamp(x,z){cyl(scene,.1,.12,4.4,7,x,2.2,z,mats.dark);cyl(scene,.45,.55,.3,9,x,4.65,z,mats.metal);cyl(scene,.30,.35,.12,10,x,4.44,z,mats.lampGlow)}
 for(const [x,z] of [[-23,26],[16,-24],[23,15],[-16,-24],[-35,-15],[5,15],[-5,-35],[45,45],[-43,53],[53,-44]])lamp(x,z);
+
+/* Guard-rails contínuos nas bordas externas das avenidas, com postes regulares.
+   Ficam fora das rotas de entrega e preservam todos os cruzamentos. */
+function guardrail(vertical,offset){
+ const total=144,start=-72;
+ for(let p=start;p<start+total;p+=12){
+  const center=p+6;
+  if(vertical){
+   box(scene,.14,.2,11.7,offset,.77,center,mats.metal);
+   box(scene,.12,.08,11.7,offset,1.04,center,mats.railPost);
+  }else{
+   box(scene,11.7,.2,.14,center,.77,offset,mats.metal);
+   box(scene,11.7,.08,.12,center,1.04,offset,mats.railPost);
+  }
+ }
+ for(let p=-70;p<=70;p+=5){
+  if(vertical)box(scene,.22,.87,.22,offset,.45,p,mats.railPost);
+  else box(scene,.22,.87,.22,p,.45,offset,mats.railPost);
+ }
+}
+for(const p of [-55.4,55.4]){guardrail(true,p);guardrail(false,p)}
+
+/* Silhuetas de colinas ao longe para que o mapa não termine em um vazio. */
+for(let i=0;i<24;i++){
+ const angle=i*Math.PI/12,dist=99+(i%4)*6;
+ const mound=new T.Mesh(new T.ConeGeometry(13+(i%3)*3,19+(i%5)*3,7),i%2?mats.hill:mats.hillLight);
+ mound.position.set(Math.cos(angle)*dist,5,Math.sin(angle)*dist);
+ scene.add(mound);
+}
+/* Jardins baixos nas margens; não criam obstáculos invisíveis. */
+for(let i=0;i<40;i++){
+ const t=(i-19.5)*3.6,edge=i%2?66:-66;
+ const x=i%4<2?edge:t,z=i%4<2?t:edge;
+ const shrub=new T.Mesh(new T.DodecahedronGeometry(.8+(i%3)*.17,0),mats.bush);
+ shrub.position.set(x,.63,z);
+ scene.add(shrub);
+}
 
 /* Geometria estática reunida em instâncias: menos chamadas à GPU no celular. */
 function compactCity(){
@@ -252,7 +289,12 @@ compactCity();
 
 const car=new T.Group();world.car=car;scene.add(car);
 box(car,1.85,.42,3.2,0,.65,0,mats.dark);box(car,1.55,.65,2.1,0,1.02,.1,mats.yellow);box(car,1.25,.15,.9,0,1.43,.1,mats.board);box(car,1.3,.18,.5,0,.97,-1.13,mats.teal);for(const side of [-1,1])for(const zz of [-1.05,1.03]){const wheel=new T.Mesh(new T.CylinderGeometry(.49,.49,.27,14),mats.dark);wheel.rotation.z=Math.PI/2;wheel.position.set(side*1.03,.51,zz);car.add(wheel);world.wheels.push({mesh:wheel,side});box(car,.24,.23,.73,side*.65,.51,zz,mats.yellow)}
-box(car,.5,.18,.14,-.42,.85,-1.5,mats.white);box(car,.5,.18,.14,.42,.85,-1.5,mats.white);box(car,1.8,.18,.18,0,.5,1.63,mats.red);car.position.set(-50,0,50);
+box(car,.5,.18,.14,-.42,.85,-1.5,mats.white);box(car,.5,.18,.14,.42,.85,-1.5,mats.white);
+box(car,1.8,.18,.18,0,.5,1.63,mats.red);
+const espBoard=box(car,1.05,.12,.8,0,1.59,.14,mats.board);
+box(car,.68,.07,.45,0,1.68,.14,mats.dark);
+const ledMat=new T.MeshBasicMaterial({color:0x20dfaa});
+const carLed=new T.Mesh(new T.SphereGeometry(.075,8,6),ledMat);carLed.position.set(.35,1.77,-.05);car.add(carLed);world.carLed=carLed;car.position.set(-50,0,50);
 const goal=new T.Group();world.goal=goal;scene.add(goal);const ring=new T.Mesh(new T.TorusGeometry(2.25,.22,8,36),new T.MeshBasicMaterial({color:0xffd56c}));ring.rotation.x=Math.PI/2;ring.position.y=.25;goal.add(ring);cyl(goal,.28,.28,5,10,0,2.5,0,mats.teal);const marker=new T.Mesh(new T.OctahedronGeometry(1.5),new T.MeshBasicMaterial({color:0xffda7a}));marker.position.y=6.25;goal.add(marker);world.goalBeam=marker;updateGoal();
 let last=performance.now(),accum=0;
 const fixedStep=1/60,cameraTarget=new T.Vector3();
@@ -266,14 +308,15 @@ function animate(now){
  }else accum=0;
  car.position.set(state.drive.x,0,state.drive.z);car.rotation.y=state.drive.angle;
  for(const wheel of world.wheels)wheel.mesh.rotation.y+=((wheel.side<0?state.drive.a:state.drive.b)/255)*dt*13;
+ if(world.carLed)world.carLed.scale.setScalar(1+.12*Math.sin(world.clockTime*6));
  goal.children[0].rotation.z=world.clockTime*.5;const glow=1+Math.sin(world.clockTime*3)*.10;goal.children[0].scale.set(glow,glow,glow);marker.position.y=6.1+Math.sin(world.clockTime*2)*.3;marker.rotation.y=world.clockTime*.5;
  const angle=state.drive.angle,external=state.cameraTop,px=state.drive.x,pz=state.drive.z,fx=-Math.sin(angle),fz=-Math.cos(angle);
- cameraTarget.set(px-fx*(external?9:.25),external?6.2:1.95,pz-fz*(external?9:.25));
+ cameraTarget.set(px-fx*(external?7.8:.25),external?3.25:1.95,pz-fz*(external?7.8:.25));
  camera.position.lerp(cameraTarget,1-Math.exp(-11*dt));
- camera.lookAt(px+fx*(external?8:16),external?1.35:.48,pz+fz*(external?8:16));
+ camera.lookAt(px+fx*(external?8.8:16),external?1.05:.48,pz+fz*(external?8.8:16));
  renderer.render(scene,camera)
 }
-camera.position.set(-49.75,1.95,50);camera.lookAt(-30,.48,50);requestAnimationFrame(animate)}
+camera.position.set(-57.8,3.25,50);camera.lookAt(-40,1.05,50);requestAnimationFrame(animate)}
 function updateGoal(){if(!world.goal)return;const m=missions[Math.min(state.mission,3)];world.goal.position.set(m.to[0],0,m.to[1]);if(world.goalLabel){world.scene.remove(world.goalLabel);world.goalLabel.material.dispose();world.goalLabel=null}if(world.THREE){const T=world.THREE;const c=document.createElement('canvas');c.width=360;c.height=80;const ctx=c.getContext('2d');ctx.fillStyle='#fff9ed';ctx.beginPath();ctx.roundRect(5,4,350,72,22);ctx.fill();ctx.fillStyle='#126d6a';ctx.font='bold 31px Arial';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(m.label,180,40,338);const t=new T.CanvasTexture(c);const sprite=new T.Sprite(new T.SpriteMaterial({map:t,depthWrite:false}));sprite.scale.set(7.2,1.6,1);sprite.position.set(m.to[0],9,m.to[1]);world.scene.add(sprite);world.goalLabel=sprite}updateRoute(true)}
 
 /* GPS da cidade: rota verde sobre as ruas; recalcula ao mudar de corredor ou sair do caminho. */
