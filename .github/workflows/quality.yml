@@ -39,6 +39,8 @@ jobs:
         run: |
           npm install --no-save --ignore-scripts playwright@1.56.1
           npx playwright install --with-deps chromium
+      - name: Conferir progresso sem conexões e corrigir fios fantasmas no computador e celular
+        run: node tests/empty-wiring-status-browser.mjs
       - name: Confirmar ponta de fio solta seguindo o dedo no Android
         run: node tests/mobile-loose-end-browser.mjs
       - name: Testar backup completo e apresentação em computadores e celulares
