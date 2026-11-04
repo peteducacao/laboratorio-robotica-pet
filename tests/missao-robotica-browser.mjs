@@ -44,13 +44,13 @@ try{
   assert.equal(await page.locator('.motor-track').count(),2,'precisa de 2 controles');
   assert.equal(await page.locator('#lives').getAttribute('aria-label'),'3 vidas');
   if(v.name==='pc'){
-   await page.keyboard.down('w');await page.waitForTimeout(800);
+   await page.keyboard.down('w');await page.evaluate(()=>window.__TinkerpetMission.physics(.3));
    const straight=await page.evaluate(()=>({a:window.__TinkerpetMission.state.drive.a,b:window.__TinkerpetMission.state.drive.b}));
    assert(straight.a>50&&straight.b>50,'W não acelera ambos os motores: '+JSON.stringify(straight)+' '+JSON.stringify(await page.evaluate(()=>({mode:window.__TinkerpetMission.state.mode,keys:[...window.__TinkerpetMission.state.keys],collided:window.__TinkerpetMission.state.drive.collided,pos:[window.__TinkerpetMission.state.drive.x,window.__TinkerpetMission.state.drive.z],ready:window.__TinkerpetMission.state.ready}))));
-   await page.keyboard.down('a');await page.waitForTimeout(550);
+   await page.keyboard.down('a');await page.evaluate(()=>window.__TinkerpetMission.physics(.3));
    const curve=await page.evaluate(()=>({a:window.__TinkerpetMission.state.drive.a,b:window.__TinkerpetMission.state.drive.b}));
    assert(curve.b>curve.a+25,'A não desacelera motor esquerdo');
-   await page.keyboard.up('w');await page.keyboard.up('a');await page.waitForTimeout(420);
+   await page.keyboard.up('w');await page.keyboard.up('a');await page.evaluate(()=>window.__TinkerpetMission.physics(.5));
    const off=await page.evaluate(()=>({a:window.__TinkerpetMission.state.drive.a,b:window.__TinkerpetMission.state.drive.b}));
    assert(Math.abs(off.a)<10&&Math.abs(off.b)<10,'motores não param quando soltam teclas');
    // Ensaiar colisão, exigindo soltar as teclas antes de acelerar de novo.
