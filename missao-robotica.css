@@ -285,3 +285,9 @@
 .answer.wrong,.answer.wrong:disabled{opacity:.60;background:#fff1f1;border-color:#eabac1;color:#9f5260;cursor:default}
 @media(max-width:800px){.stage-progress{font-size:9px}}
 @media(orientation:landscape) and (max-height:540px){.stage-progress{font-size:8px}}
+
+/* PETGame v15: cada vida admite três erros acumulados. */
+.mistake-progress{white-space:nowrap;font-size:10px;font-weight:900;letter-spacing:.15px;color:#8b5b25;background:#fff7e7;border:1px solid #ecd8ac;padding:4px 7px;border-radius:9px;font-variant-numeric:tabular-nums}
+.mistake-progress.near-loss{color:#b44b49;background:#fff0ed;border-color:#f3c6bc}
+@media(max-width:800px){.mistake-progress{font-size:9px;padding:3px 5px}}
+@media(orientation:landscape) and (max-height:540px){.mistake-progress{font-size:8px;padding:3px 5px}}
