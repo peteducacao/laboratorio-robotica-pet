@@ -105,7 +105,7 @@ try{
       await page.locator('[data-repair-tab="gpio"]').click();
       await page.locator('select[data-gpio="'+fault.id+'"]').selectOption(fault.id==='in1'?'D27':fault.id==='in2'?'D26':fault.id==='in3'?'D32':'D18');
     } else {
-      await page.locator('[data-repair-tab="'+(fault.id==='ma'||fault.id==='mb'?'motors':'power')+'"]').click();
+      await page.locator('[data-repair-tab="'+(fault.id==='ma'||fault.id==='mb'?'motors':(['in1','in2','in3','in4'].includes(fault.id)?'gpio':'power'))+'"]').click();
       await page.locator('.wire-row.loose').click();
     }
     const repaired=await page.evaluate(()=>window.__TinkerpetMission.state.mode);
