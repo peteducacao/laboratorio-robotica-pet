@@ -115,6 +115,7 @@ try{
    await page.screenshot({path:'artifacts/missao-'+v.name+'-pergunta.png'});
    await page.evaluate(()=>window.__TinkerpetMission.beginRepair());
    assert.equal(await page.locator('#repairOverlay').isVisible(),true);
+   if(v.name==='celular-horizontal'){const bounds=await page.evaluate(()=>({foot:document.querySelector('.repair-footer').getBoundingClientRect().bottom,view:innerHeight,list:document.querySelector('.connection-list').getBoundingClientRect().height}));assert(bounds.foot<=bounds.view+2&&bounds.list>85,'reparo inacessível no celular horizontal: '+JSON.stringify(bounds))}
    await page.screenshot({path:'artifacts/missao-'+v.name+'-circuito.png'});
    if(v.name==='celular-horizontal')console.log('VISUAL_REPAIR='+((await page.screenshot({type:'jpeg',quality:56,scale:'css'})).toString('base64')));
    await page.evaluate(()=>window.__TinkerpetMission.resetGame());

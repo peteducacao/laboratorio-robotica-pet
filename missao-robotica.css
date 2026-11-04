@@ -17,3 +17,29 @@
 .control-hint{max-width:390px;padding:8px 14px;border-radius:11px;background:#fefefbee;border:1px solid #ffffffbd;color:#3d5d6e;box-shadow:0 4px 20px #0e354329}
 .control-hint .keyboard-hint{display:block;font-size:11px;margin:0;color:#285367;font-weight:700;line-height:1.4}
 @media(max-width:800px){.control-hint{display:none}}
+
+/* Bancada de reparos: todos os componentes visíveis em celular/tablet horizontal.
+   A lista tem rolagem independente, sem esconder o relógio ou o rodapé. */
+@media(orientation:landscape) and (max-height:540px){
+ .repair-dialog{height:calc(100dvh - 12px);max-height:calc(100dvh - 12px);display:flex;flex-direction:column;overflow:hidden;padding:11px 13px}
+ .repair-heading{flex:0 0 auto;gap:8px}
+ .repair-heading h2{font-size:17px;margin:3px 0}
+ .repair-heading p{margin:0 0 8px;font-size:10px;line-height:1.25}
+ .repair-heading .timer{padding:5px 7px;min-width:64px}
+ .repair-heading .timer b{font-size:20px}
+ .repair-layout{min-height:0;flex:1;display:grid;grid-template-columns:minmax(0,1.2fr) minmax(0,1fr);gap:8px;overflow:hidden}
+ .component-board{min-width:0;min-height:0;grid-template-columns:repeat(4,minmax(0,1fr));grid-template-rows:repeat(2,minmax(0,1fr));align-items:stretch;padding:5px;gap:4px}
+ .component-tile{min-height:0;overflow:hidden;padding:2px 3px}
+ .component-tile img{height:min(43px,12dvh)}
+ .component-tile span{font-size:8px;margin:3px 0 1px}
+ .component-tile b{font-size:8px}
+ .connection-panel{min-height:0;display:flex;flex-direction:column;overflow:hidden;padding:9px}
+ .connection-panel h3{font-size:13px;margin:0 0 2px}
+ .connection-panel>p{font-size:9px;line-height:1.25;margin:0 0 5px}
+ .connection-list{flex:1;min-height:0;max-height:none;overflow:auto;gap:5px}
+ .wire-row{min-height:35px;padding:5px 7px;font-size:9px;line-height:1.25}
+ .wire-row .wire-status{font-size:9px}
+ .repair-footer{flex:0 0 auto;margin-top:7px;display:flex;gap:10px;align-items:center}
+ .repair-footer .repair-attempt{font-size:9px;max-width:42%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+ .repair-footer .timebar{flex:1}
+}
