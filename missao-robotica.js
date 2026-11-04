@@ -93,8 +93,8 @@ $('startBtn').addEventListener('click',()=>{if(state.ready)beginTestRound()});
 $('playBtn').addEventListener('click',()=>{if(!state.ready)return;resetGame();setMode('drive');toast('Aventura iniciada. Siga a faixa até o destino!')});
 $('pauseTestBtn').addEventListener('click',beginTestRound);
 $('repeatTestBtn').addEventListener('click',beginTestRound);
-$('goExploreBtn').addEventListener('click',()=>{state.testStep=0;setMode('drive');stopRobot();state.skipUntil=performance.now()+9000;toast('Aventura liberada. Siga a faixa até o destino!')});
-$('nextMissionBtn').addEventListener('click',advanceMission);
+function exploreAfterTest(){resetGame();setMode('drive');stopRobot();toast('Aventura liberada. Siga a faixa até o destino!')};$('goExploreBtn').addEventListener('click',exploreAfterTest);$('testClose').addEventListener('click',exploreAfterTest);
+$('nextMissionBtn').addEventListener('click',advanceMission);$('deliveryClose').addEventListener('click',advanceMission);
 $('pauseBtn').addEventListener('click',()=>{if(!isDrive())return;stopRobot();setMode('pause')});
 $('resumeBtn').addEventListener('click',()=>{setMode('drive');stopRobot()});
 $('pauseClose').addEventListener('click',()=>{setMode('drive');stopRobot()});
@@ -113,6 +113,8 @@ document.addEventListener('keydown',e=>{
  if(state.mode==='question'||state.mode==='repair'){e.preventDefault();requestQuitChallenge();return}
  if(state.mode==='drive'){e.preventDefault();stopRobot();setMode('pause');return}
  if(state.mode==='pause'){e.preventDefault();setMode('drive');stopRobot();return}
+ if(state.mode==='delivery'){e.preventDefault();advanceMission();return}
+ if(state.mode==='testSummary'){e.preventDefault();exploreAfterTest();return}
  if(state.mode==='start'||state.mode==='auth'||state.mode==='end'){e.preventDefault();window.location.href='projects.html'}
 });
 $('repairTabs').addEventListener('click',e=>{const btn=e.target.closest('[data-repair-tab]');if(!btn||state.mode!=='repair')return;state.repairTab=btn.dataset.repairTab;renderRepair()});

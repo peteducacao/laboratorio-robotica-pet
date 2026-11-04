@@ -57,13 +57,13 @@
  <div class="repair-footer"><span class="repair-attempt" id="repairStatus">Toque nas conexões para corrigir.</span><div class="timebar"><span id="repairTimebar"></span></div></div>
  </section></div>
 <div class="overlay" id="pauseOverlay" hidden><div class="dialog small-dialog"><button class="dialog-dismiss" id="pauseClose" type="button" aria-label="Fechar pausa e continuar jogando" title="Continuar jogo">×</button><span class="eyebrow">JOGO PAUSADO</span><h2>Uma pausa na aventura</h2><p>O tempo dos desafios e o movimento do carrinho estão parados.</p><button class="button primary block" id="resumeBtn">Continuar jogo</button><button class="button secondary block" id="pauseTestBtn">Iniciar rodada de teste</button><a class="back-link" href="projects.html">← Meus circuitos</a></div></div>
-<div class="overlay" id="deliveryOverlay" hidden><div class="dialog small-dialog delivery-dialog" role="dialog" aria-modal="true" aria-labelledby="deliveryTitle">
+<div class="overlay" id="deliveryOverlay" hidden><div class="dialog small-dialog delivery-dialog" role="dialog" aria-modal="true" aria-labelledby="deliveryTitle"><button class="dialog-dismiss" type="button" id="deliveryClose" aria-label="Continuar após entrega">×</button>
  <span class="eyebrow">PETGAME · ENTREGA CONCLUÍDA</span><div class="delivery-check" aria-hidden="true">✓</div>
  <h2 id="deliveryTitle">Entrega realizada!</h2><p id="deliveryDesc">Materiais entregues com sucesso.</p>
  <div class="delivery-progress" id="deliveryProgress">1 de 4 entregas</div>
  <button class="button primary block" id="nextMissionBtn">Próxima entrega <span>→</span></button>
  </div></div>
-<div class="overlay" id="testSummaryOverlay" hidden><div class="dialog small-dialog test-summary" role="dialog" aria-modal="true" aria-labelledby="testSummaryTitle">
+<div class="overlay" id="testSummaryOverlay" hidden><div class="dialog small-dialog test-summary" role="dialog" aria-modal="true" aria-labelledby="testSummaryTitle"><button class="dialog-dismiss" type="button" id="testClose" aria-label="Voltar ao jogo">×</button>
  <span class="eyebrow">PETGAME · RODADA CONCLUÍDA</span><div class="delivery-check" aria-hidden="true">✓</div>
  <h2 id="testSummaryTitle">Teste finalizado!</h2><p id="testSummaryDesc">Você conheceu a pergunta e a oficina do carrinho.</p>
  <div class="score-grid"><div><b id="testQuestions">0</b><span>Respostas</span></div><div><b id="testRepairs">0</b><span>Consertos</span></div><div><b id="testLives">3</b><span>Vidas</span></div></div>
