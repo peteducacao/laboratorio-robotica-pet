@@ -39,6 +39,8 @@ jobs:
         run: |
           npm install --no-save --ignore-scripts playwright@1.56.1
           npx playwright install --with-deps chromium
+      - name: Confirmar ponta de fio solta seguindo o dedo no Android
+        run: node tests/mobile-loose-end-browser.mjs
       - name: Testar backup completo e apresentação em computadores e celulares
         run: node tests/approved-features-browser.mjs
       - name: Conferir polimento da página Meus circuitos
