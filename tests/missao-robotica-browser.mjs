@@ -49,13 +49,25 @@ try{
   });
   assert.equal(await page.locator('#repairOverlay').isVisible(),true,'Responder não abriu o circuito imediatamente');
   const firstFault=await page.evaluate(()=>window.__TinkerpetMission.state.fault);
-  assert.equal(firstFault.id,'ma','Primeiro teste deve mostrar jumper desconectado no Motor A');
-  await page.locator('[data-repair-tab="motors"]').click();
-  await page.locator('.wire-row.loose').click();
+  assert.equal(firstFault.id,'battery','Primeiro diagnóstico deve identificar a bateria de 9 V');
+  assert.equal(await page.locator('#testDiagnosticPanel').isVisible(),true,'Diagnóstico por ícones não apareceu');
+  assert.equal(await page.locator('#fullRepairPanel').isVisible(),false,'Bancada completa não deve aparecer no modo teste');
+  assert.equal(await page.locator('.diagnostic-card').count(),4,'O diagnóstico precisa de quatro alternativas ilustradas');
+  const images=await page.locator('.diagnostic-card img').evaluateAll(imgs=>imgs.map(img=>({loaded:img.complete&&img.naturalWidth>0,path:img.getAttribute('src')})));
+  assert(images.every(img=>img.loaded),'Imagem de componente não carregou: '+JSON.stringify(images));
+  if(v.name==='pc'||v.name==='celular-horizontal')await page.screenshot({path:'artifacts/petgame-diagnostico-'+v.name+'.png'});
+  // Erro não encerra a rodada nem zera o tempo.
+  const bad=await page.locator('.diagnostic-card').evaluateAll(cards=>cards.map(c=>c.dataset.diagnostic).find(k=>k!=='battery'));
+  const timeBefore=await page.evaluate(()=>window.__TinkerpetMission.state.challengeEnd);
+  await page.locator('.diagnostic-card[data-diagnostic="'+bad+'"]').click();
+  assert.equal(await page.locator('#repairOverlay').isVisible(),true,'Resposta errada deve permitir nova escolha');
+  assert.equal(await page.locator('.diagnostic-card.wrong').count(),1,'Erro deve marcar apenas a escolha errada');
+  assert.equal(await page.evaluate(()=>window.__TinkerpetMission.state.challengeEnd),timeBefore,'Erro não pode reiniciar os 30 segundos');
+  await page.locator('.diagnostic-card[data-diagnostic="battery"]').click();
   assert.equal(await page.locator('#testSummaryOverlay').isVisible(),true,'Consertar não concluiu a rodada de teste');
   if(v.name==='pc'){
-   // Três rodadas mostram jumper, gangorra e pino trocado.
-   for(const kind of ['switch','gpio']){
+   // Rodadas seguintes testam a gangorra e o jumper visualmente.
+   for(const kind of ['switch2','jumper']){
     await page.locator('#repeatTestBtn').click();
     assert.equal(await page.locator('#questionOverlay').isVisible(),true,'Repetir não iniciou pergunta');
     await page.evaluate(()=>{
@@ -63,10 +75,10 @@ try{
       [...document.querySelectorAll('.answer')].find(a=>a.textContent.includes(correct)).click();
     });
     const f=await page.evaluate(()=>window.__TinkerpetMission.state.fault);
-    assert.equal(f.kind,kind,'Sequência de falhas na repetição não corresponde: '+JSON.stringify(f));
-    if(kind==='switch')await page.locator('[data-component="switch2"]').click();
-    else{await page.locator('[data-repair-tab="gpio"]').click();await page.locator('select[data-gpio="in1"]').selectOption('D27')}
-    assert.equal(await page.locator('#testSummaryOverlay').isVisible(),true,'Reparo do tipo '+kind+' não foi aceito');
+    assert.equal(f.id,kind,'Sequência de diagnósticos diferente: '+JSON.stringify(f));
+    assert.equal(await page.locator('.diagnostic-card').count(),4,'Diagnóstico deve manter apenas quatro ícones');
+    await page.locator('.diagnostic-card[data-diagnostic="'+kind+'"]').click();
+    assert.equal(await page.locator('#testSummaryOverlay').isVisible(),true,'Diagnóstico de '+kind+' não foi aceito');
    }
   }
   await page.locator('#goExploreBtn').click();
@@ -138,6 +150,8 @@ try{
    // Defeitos independentes do editor do usuário; testar formatos diferentes.
    for(let i=0;i<12;i++){
     await page.evaluate(()=>window.__TinkerpetMission.beginRepair());
+    assert.equal(await page.locator('#testDiagnosticPanel').isVisible(),false,'Teste visual vazou para jogo normal');
+    assert.equal(await page.locator('#fullRepairPanel').isVisible(),true,'Bancada original deve permanecer no jogo normal');
     const fault=await page.evaluate(()=>window.__TinkerpetMission.state.fault);
     if(fault.kind==='switch')await page.locator('[data-component="'+fault.id+'"]').click();
     else if(fault.kind==='gpio'){
@@ -205,6 +219,8 @@ try{
    await page.screenshot({path:'artifacts/missao-'+v.name+'-pergunta.png'});
    await page.evaluate(()=>window.__TinkerpetMission.beginRepair());
    assert.equal(await page.locator('#repairOverlay').isVisible(),true);
+   assert.equal(await page.locator('#testDiagnosticPanel').isVisible(),false,'Diagnóstico experimental não deve alterar jogo normal');
+   assert.equal(await page.locator('#fullRepairPanel').isVisible(),true,'Oficina normal precisa continuar disponível');
    if(v.name==='celular-horizontal'){const bounds=await page.evaluate(()=>({foot:document.querySelector('.repair-footer').getBoundingClientRect().bottom,view:innerHeight,list:document.querySelector('.connection-list').getBoundingClientRect().height}));assert(bounds.foot<=bounds.view+2&&bounds.list>85,'reparo inacessível no celular horizontal: '+JSON.stringify(bounds))}
    await page.screenshot({path:'artifacts/missao-'+v.name+'-circuito.png'});
    assert.equal(await page.locator('.repair-tab').count(),3,'reparo não foi simplificado em três abas');

@@ -62,6 +62,23 @@ const faultPool=[
  {kind:'gpio',id:'in1',wrong:'D19'},{kind:'gpio',id:'in2',wrong:'D27'},
  {kind:'gpio',id:'in3',wrong:'D26'},{kind:'gpio',id:'in4',wrong:'D19'}
 ];
+
+/* Diagnóstico exclusivo das rodadas de teste — nenhum efeito na oficina do jogo. */
+const diagnosticParts={
+ battery:['Bateria 9 V','battery-9v.svg'],bridge:['Ponte H','driver-mx1508.svg'],
+ esp:['ESP32','esp32.svg'],motor:['Motor DC','motor-front.svg'],
+ switch1:['Gangorra S1','switch.svg'],switch2:['Gangorra S2','switch.svg'],
+ lm:['LM2596','lm2596.svg'],pack:['6 pilhas AA','battery-pack.svg'],jumper:['Jumper','jumpers.svg']
+};
+const diagnosticTests=[
+ {id:'battery',prompt:'O LM2596 não recebe energia. A gangorra S1 está ligada e os fios estão conectados. Qual fonte de energia pode estar com problema?',answer:'battery',options:['battery','bridge','esp','motor']},
+ {id:'switch2',prompt:'As pilhas AA estão carregadas, mas a ponte H não recebe energia. Qual interruptor pode estar desligado?',answer:'switch2',options:['switch2','switch1','lm','esp']},
+ {id:'jumper',prompt:'Um fio entre a ponte H e o motor esquerdo se soltou. Qual peça precisa ser reconectada?',answer:'jumper',options:['jumper','battery','lm','bridge']},
+ {id:'bridge',prompt:'O ESP32 envia comandos e as conexões estão corretas, mas o módulo que aciona os motores falhou. Qual é ele?',answer:'bridge',options:['bridge','lm','battery','esp']},
+ {id:'lm',prompt:'A bateria de 9 V está funcionando, mas o regulador que fornece 5 V ao ESP32 apresentou defeito. Qual componente é?',answer:'lm',options:['lm','bridge','motor','pack']},
+ {id:'pack',prompt:'Os interruptores estão ligados, mas as pilhas AA estão descarregadas. Qual fonte alimenta os motores?',answer:'pack',options:['pack','battery','switch1','esp']}
+];
+
 const state={mode:'auth',ready:false,lives:3,mission:0,questionsCorrect:new Set(),asked:[],scoreQuestions:0,scoreRepairs:0,scoreMissions:0,meters:0,nextEvent:26,nextEventTime:20,driveSeconds:0,eventCount:0,lastFault:null,testStep:0,testRounds:0,drive:{x:-50,z:50,angle:-Math.PI/2,a:0,b:0,collided:false},desired:[0,0],pointer:[null,null],pointerValue:[0,0],keys:new Set(),cameraTop:false,repairTab:'power',quitRemaining:0,challengeTimer:null,challengeStarted:0,challengeEnd:0,activeQuestion:null,fault:null,wires:null,switches:null,gpios:null,skipUntil:0,completed:false};
 const world={THREE:null,renderer:null,scene:null,camera:null,car:null,uiTimer:0,staticStats:null,wheels:[],walls:[],goal:null,goalLabel:null,goalBeam:null,routeGroup:null,routePoints:[],routeDistance:0,routeLastPos:null,routeLastMission:-1,clockTime:0,lastFrame:0,runFrame:false};
 const rand=n=>Math.floor(Math.random()*n);
@@ -104,6 +121,8 @@ $('fullBtn').addEventListener('click',async()=>{try{if(document.fullscreenElemen
 $('exitGameBtn').addEventListener('click',()=>{window.location.href='projects.html'});
 $('questionClose').addEventListener('click',requestQuitChallenge);
 $('repairClose').addEventListener('click',requestQuitChallenge);
+$('testDiagnosticClose').addEventListener('click',requestQuitChallenge);
+$('diagnosticChoices').addEventListener('click',e=>{const card=e.target.closest('button[data-diagnostic]');if(card&&!card.disabled)chooseDiagnostic(card.dataset.diagnostic,card)});
 $('quitCancel').addEventListener('click',cancelQuitChallenge);
 $('quitConfirm').addEventListener('click',confirmQuitChallenge);
 $('quitChallengeDialog').addEventListener('cancel',e=>{e.preventDefault();cancelQuitChallenge()});
@@ -130,7 +149,7 @@ if(was==='question'&&state.testStep===1){state.testStep=2;beginRepair();return}
 if(was==='repair'&&state.testStep===2){state.testStep=3;finishTestRound();return}
 setMode('drive');stopRobot();state.drive.collided=true;toast(reason||'Tempo esgotado. Você perdeu uma vida.',true);state.skipUntil=performance.now()+9000}
 function endGame(won){state.completed=true;stopRobot();clearChallengeTimer();$('endKicker').textContent=won?'AVENTURA CONCLUÍDA':'FIM DE JOGO';$('endSymbol').textContent=won?'★':'♥';$('endTitle').textContent=won?'Missão cumprida!':'Fim de jogo';$('endDescription').textContent=won?'Você percorreu a cidade e concluiu todas as entregas!':'As três vidas terminaram. Reinicie para tentar novamente.';$('scoreMissions').textContent=state.scoreMissions;$('scoreQuestions').textContent=state.scoreQuestions;$('scoreRepairs').textContent=state.scoreRepairs;setMode('end')}
-function startTimer(kind,remaining=30000){clearChallengeTimer();state.challengeStarted=performance.now();state.challengeEnd=state.challengeStarted+remaining;const prefix=kind==='question'?'question':'repair';const tick=()=>{if(state.mode!==kind)return;const sec=Math.max(0,(state.challengeEnd-performance.now())/1000),node=$(prefix+'Timer'),bar=$(prefix+'Timebar');node.textContent=String(Math.ceil(sec));bar.style.width=(sec/30*100).toFixed(2)+'%';bar.classList.toggle('low',sec<10);node.parentElement.classList.toggle('danger',sec<10);if(sec<=0)loseLife()};state.challengeTimer=setInterval(tick,100);tick()}
+function startTimer(kind,remaining=30000){clearChallengeTimer();state.challengeStarted=performance.now();state.challengeEnd=state.challengeStarted+remaining;const prefix=kind==='question'?'question':'repair';const tick=()=>{if(state.mode!==kind)return;const sec=Math.max(0,(state.challengeEnd-performance.now())/1000),demo=kind==='repair'&&state.testStep===2,node=$(demo?'testTimer':prefix+'Timer'),bar=$(demo?'testTimebar':prefix+'Timebar');node.textContent=String(Math.ceil(sec));bar.style.width=(sec/30*100).toFixed(2)+'%';bar.classList.toggle('low',sec<10);node.parentElement.classList.toggle('danger',sec<10);if(sec<=0)loseLife()};state.challengeTimer=setInterval(tick,100);tick()}
 
 function requestQuitChallenge(){if(state.mode!=='question'&&state.mode!=='repair')return;if($('quitChallengeDialog').open)return;state.quitRemaining=Math.max(1,state.challengeEnd-performance.now());clearChallengeTimer();$('quitChallengeDialog').showModal()}
 function cancelQuitChallenge(){if($('quitChallengeDialog').open)$('quitChallengeDialog').close();if(state.mode==='question'||state.mode==='repair')startTimer(state.mode,state.quitRemaining)}
@@ -141,7 +160,30 @@ function renderQuestion(){const i=pickQuestion();if(i===null){solveChallenge('To
 function beginQuestion(){stopRobot();setMode('question');$('questionEyebrow').textContent=state.testStep===1?'RODADA DE TESTE · 1 DE 2':'PARADA DE CONHECIMENTO';$('questionResponse').textContent='Escolha a alternativa correta para continuar.';renderQuestion();startTimer('question')}
 function answer(correct){if(state.mode!=='question')return;if(performance.now()>=state.challengeEnd){loseLife();return}if(correct){state.questionsCorrect.add(state.activeQuestion);state.scoreQuestions++;solveChallenge('Resposta correta! Continue a missão.');return}$('questionResponse').textContent='Resposta incorreta. Nova pergunta!';renderQuestion()}
 function newFault(){const available=faultPool.filter(f=>f.kind+f.id!==state.lastFault);const fault=available[rand(available.length)];state.lastFault=fault.kind+fault.id;return {...fault}}
-function beginRepair(){stopRobot();state.fault=state.testStep===2?[{kind:'wire',id:'ma'},{kind:'switch',id:'switch2'},{kind:'gpio',id:'in1',wrong:'D19'}][(state.testRounds-1)%3]:newFault();$('repairEyebrow').textContent=state.testStep===2?'RODADA DE TESTE · 2 DE 2':'PETGAME · OFICINA';state.wires=Object.fromEntries(baseWires.map(w=>[w.id,true]));state.switches={switch1:true,switch2:true};state.gpios=Object.fromEntries(baseWires.filter(w=>w.kind==='gpio').map(w=>[w.id,w.correct]));if(state.fault.kind==='wire')state.wires[state.fault.id]=false;if(state.fault.kind==='switch')state.switches[state.fault.id]=false;if(state.fault.kind==='gpio')state.gpios[state.fault.id]=state.fault.wrong;state.repairTab='power';setMode('repair');const f=state.fault;const title=f.id==='ma'||f.id==='in1'||f.id==='in2'?'Motor esquerdo não responde':f.id==='mb'||f.id==='in3'||f.id==='in4'?'Motor direito não responde':f.id==='switch2'||f.id==='aa'||f.id==='aag'?'Os motores pararam':'Carrinho com falha elétrica';$('repairTitle').textContent=title;renderRepair();startTimer('repair')}
+
+function beginDiagnosticTest(){
+ stopRobot();
+ state.fault=diagnosticTests[(state.testRounds-1)%diagnosticTests.length];
+ $('testDiagnosticPanel').hidden=false;$('fullRepairPanel').hidden=true;
+ $('testDiagnosticQuestion').textContent=state.fault.prompt;
+ $('testDiagnosticFeedback').textContent='Selecione o componente responsável.';
+ const grid=$('diagnosticChoices');grid.replaceChildren();
+ for(const key of shuffled(state.fault.options)){
+  const [name,file]=diagnosticParts[key],card=document.createElement('button');card.type='button';
+  card.className='diagnostic-card';card.dataset.diagnostic=key;card.setAttribute('aria-label','Selecionar '+name);
+  const img=document.createElement('img');img.src='assets/component-preview/'+file;img.alt='';img.loading='eager';
+  const label=document.createElement('span');label.textContent=name;card.append(img,label);grid.append(card);
+ }
+ setMode('repair');startTimer('repair');
+}
+function chooseDiagnostic(key,card){
+ if(state.mode!=='repair'||state.testStep!==2||!state.fault)return;
+ if(performance.now()>=state.challengeEnd){loseLife();return}
+ if(key!==state.fault.answer){card.disabled=true;card.classList.add('wrong');$('testDiagnosticFeedback').textContent='Não é esse. Escolha outro componente.';return}
+ state.scoreRepairs++;solveChallenge('Diagnóstico correto!');
+}
+
+function beginRepair(){if(state.testStep===2){beginDiagnosticTest();return} $('testDiagnosticPanel').hidden=true;$('fullRepairPanel').hidden=false;stopRobot();state.fault=newFault();$('repairEyebrow').textContent=state.testStep===2?'RODADA DE TESTE · 2 DE 2':'PETGAME · OFICINA';state.wires=Object.fromEntries(baseWires.map(w=>[w.id,true]));state.switches={switch1:true,switch2:true};state.gpios=Object.fromEntries(baseWires.filter(w=>w.kind==='gpio').map(w=>[w.id,w.correct]));if(state.fault.kind==='wire')state.wires[state.fault.id]=false;if(state.fault.kind==='switch')state.switches[state.fault.id]=false;if(state.fault.kind==='gpio')state.gpios[state.fault.id]=state.fault.wrong;state.repairTab='power';setMode('repair');const f=state.fault;const title=f.id==='ma'||f.id==='in1'||f.id==='in2'?'Motor esquerdo não responde':f.id==='mb'||f.id==='in3'||f.id==='in4'?'Motor direito não responde':f.id==='switch2'||f.id==='aa'||f.id==='aag'?'Os motores pararam':'Carrinho com falha elétrica';$('repairTitle').textContent=title;renderRepair();startTimer('repair')}
 function renderRepair(){
 for(const id of ['switch1','switch2']){const node=$('switch'+id.slice(-1)+'status');node.textContent=state.switches[id]?'LIGADA':'DESLIGADA';document.querySelector('[data-component="'+id+'"]').classList.toggle('off',!state.switches[id])}
 for(const tab of document.querySelectorAll('[data-repair-tab]')){const yes=tab.dataset.repairTab===state.repairTab;tab.classList.toggle('active',yes);tab.setAttribute('aria-selected',String(yes))}
@@ -166,7 +208,7 @@ function finishTestRound(){
  stopRobot();$('testQuestions').textContent=String(state.scoreQuestions);
  $('testRepairs').textContent=String(state.scoreRepairs);
  $('testLives').textContent=String(state.lives);
- $('testSummaryDesc').textContent='Pergunta e circuito apresentados. Você pode testar novamente ou sair para dirigir pelo mapa.';
+ $('testSummaryDesc').textContent='Pergunta e diagnóstico apresentados. Você pode testar novamente ou dirigir pela cidade.';
  setMode('testSummary')
 }
 function completeMission(){
@@ -337,6 +379,6 @@ const a=d.a/255,b=d.b/255;const v=(a+b)/2*9.2,omega=(b-a)*1.85;const angleNext=d
 d.angle=angleNext;d.x=nx;d.z=nz;state.meters+=Math.abs(v*dt);updateRoute();
 const goal=missions[Math.min(state.mission,3)].to;if(Math.hypot(d.x-goal[0],d.z-goal[1])<2.65){completeMission();return}
 if(state.meters>=state.nextEvent&&state.driveSeconds>=state.nextEventTime)triggerEvent()}
-window.__TinkerpetMission={state,world,questions,missions,baseWires,beginQuestion,beginRepair,resetGame,physics,commands,collides,updateRoute,buildPoints,triggerEvent,requestQuitChallenge,cancelQuitChallenge,confirmQuitChallenge};
+window.__TinkerpetMission={state,world,questions,missions,baseWires,diagnosticParts,diagnosticTests,chooseDiagnostic,beginQuestion,beginRepair,resetGame,physics,commands,collides,updateRoute,buildPoints,triggerEvent,requestQuitChallenge,cancelQuitChallenge,confirmQuitChallenge};
 boot();
 })();
