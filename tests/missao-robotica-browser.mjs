@@ -40,6 +40,31 @@ try{
   await page.locator('#startBtn').click();
   assert.equal(await page.evaluate(()=>window.__TinkerpetMission.state.mode),'drive','início deve entrar na aventura normal');
   assert.equal(await page.locator('#questionOverlay').isVisible(),false,'rodada de teste não pode surgir');
+  // O modo de direção voltou a ter um motor para cada controle.
+  const motors=await page.evaluate(()=>{
+   const a=window.__TinkerpetMission,s=a.state;
+   s.drive.collided=false;s.pointer=['touch-A',null];s.pointerValue=[175,0];
+   const one=a.commands();
+   s.pointer=['touch-A','touch-B'];s.pointerValue=[190,120];
+   const two=a.commands();
+   s.pointer=[null,null];s.pointerValue=[0,0];
+   return{one,two}
+  });
+  assert.deepEqual(motors.one,[175,0],'um controle não pode acelerar o outro motor');
+  assert.deepEqual(motors.two,[190,120],'controles A e B devem permanecer independentes');
+  assert(await page.locator('#minimap').isVisible(),'minimapa não apareceu');
+  const canvas=await page.locator('#miniCanvas').evaluate(el=>({width:el.width,height:el.height}));
+  assert(canvas.width>=200&&canvas.height>=200,'minimapa com resolução insuficiente');
+  await page.locator('#minimapToggle').click();
+  assert.equal(await page.locator('#miniCanvas').isVisible(),false,'recolher minimapa não funcionou');
+  await page.locator('#minimapToggle').click();
+  assert(await page.locator('#miniCanvas').isVisible(),'expandir minimapa não funcionou');
+  const sfx=await page.locator('#soundBtn').getAttribute('aria-pressed');
+  assert.equal(sfx,'false','som deve vir desligado por padrão');
+  await page.locator('#soundBtn').click();
+  assert.equal(await page.locator('#soundBtn').getAttribute('aria-pressed'),'true','som não ativou');
+  await page.locator('#soundBtn').click();
+  assert.equal(await page.locator('#soundBtn').getAttribute('aria-pressed'),'false','som não desligou');
   assert(await page.locator('#runTimer').isVisible(),'cronômetro precisa estar na missão');
   await page.evaluate(()=>{window.__TinkerpetMission.state.activeSince-=63000});
   await page.locator('#pauseBtn').click();
@@ -62,6 +87,11 @@ try{
   assert(scenery.sky&&scenery.sun&&scenery.clouds>=5,'céu com sol e nuvens não carregou');
   assert(scenery.tires.length===4&&scenery.tires.every(r=>r<=.34),'pneus continuam grandes');
   assert(scenery.streets.every(x=>!x),'cones e caixas ainda bloqueiam a pista');
+  const city=await page.evaluate(()=>({
+   moving:window.__TinkerpetMission.world.ambientMovers.length,
+   drawSaving:window.__TinkerpetMission.world.staticStats.batchSavings
+  }));
+  assert(city.moving>=1&&city.drawSaving>30,'cenário não tem detalhes ou otimização estática');
   for(const [x,z,area] of [[35,35,'FÁBRICA'],[-35,35,'LABORATÓRIO'],[35,-35,'ESCOLA'],[-35,-35,'PARQUE']]){
    const label=await page.evaluate(({x,z})=>{const a=window.__TinkerpetMission;a.state.drive.x=x;a.state.drive.z=z;a.physics(.12);return document.querySelector('#districtName').textContent},{x,z});
    assert(label.includes(area),'cor / identificação incorreta da área '+area+': '+label);
@@ -107,6 +137,7 @@ try{
   assert.equal(await page.evaluate(()=>window.__TinkerpetMission.state.scoreWrong),3,'desafio abandonado deve aparecer no relatório');
   await page.evaluate(()=>{const a=window.__TinkerpetMission;a.resetGame();a.state.drive.x=a.missions[0].to[0];a.state.drive.z=a.missions[0].to[1];a.physics(.016)});
   assert(await page.locator('#deliveryOverlay').isVisible(),'entrega do mapa não concluiu');
+  assert.equal(await page.locator('#deliverySparkles span').count(),21,'animação de entrega não apareceu');
   await page.locator('#deliveryClose').click();
   assert.equal(await page.evaluate(()=>window.__TinkerpetMission.state.mission),1,'próxima entrega não avançou');
   await page.evaluate(()=>{
@@ -130,6 +161,11 @@ try{
   assert(/[0-9]+:[0-9]{2}/.test(await page.locator('#scoreElapsed').textContent()),'tempo final com formato errado');
   assert((await page.locator('#endDescription').textContent()).includes('2 acertos e 3 erros'),'resumo verbal não bate');
   assert((await page.locator('#scoreFeedback').textContent()).length>12,'feedback final ausente');
+  const stored=await page.evaluate(()=>window.__TinkerpetMission.readRecords());
+  assert(stored.plays>=1&&stored.fastestMs>=0,'recorde pessoal não foi gravado no navegador');
+  assert.equal(stored.maxCorrect,2,'recorde de acertos não foi gravado');
+  assert.equal(await page.locator('#recordBestScore').textContent(),'2','recorde não aparece no resultado');
+  assert(await page.locator('#newRecord').isVisible(),'sinalização do novo recorde ausente');
   await page.locator('#restartBtn').click();
   assert.equal(await page.evaluate(()=>window.__TinkerpetMission.state.scoreWrong),0,'reiniciar não limpou os erros');
   assert.equal(await page.evaluate(()=>window.__TinkerpetMission.state.scoreCorrect),0,'reiniciar não limpou os acertos');
