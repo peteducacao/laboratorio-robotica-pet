@@ -43,3 +43,105 @@
  .repair-footer .repair-attempt{font-size:9px;max-width:42%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
  .repair-footer .timebar{flex:1}
 }
+
+/* PETGame — foco no percurso e na identificação dos defeitos. */
+.exit-game{font-size:27px;font-weight:400;line-height:1;color:#476d75;background:#fffdf9}
+.dialog-dismiss{position:absolute;right:17px;top:15px;display:grid;place-items:center;z-index:3;width:36px;height:36px;border-radius:11px;border:1px solid #e3eeee;color:#42677a;background:#fff;text-decoration:none;font-size:26px;line-height:1}
+.dialog-dismiss:hover,.challenge-close:hover{background:#e4f7f2;color:#0d867b}
+.distance-wrap{display:inline-flex;align-items:center;gap:7px}
+#navCompass{flex:none;display:grid;place-items:center;border-radius:9px;background:#d0f7e9;border:1px solid #b5e8d5;color:#008d7d;width:27px;height:27px;transform-origin:center;transition:transform .16s;font-size:17px;font-weight:900;box-shadow:0 1px 6px #078d7240}
+.mission-status{align-items:center}
+.mission-caption{color:#008e7e}
+#missionDesc{color:#3e776b;font-weight:750}
+.challenge-actions{display:flex;align-items:center;gap:9px}
+.challenge-close{width:38px;height:38px;border:1px solid #d7e8e6;border-radius:11px;background:#fff;color:#376875;font-size:25px;line-height:1;display:grid;place-items:center;flex:none}
+.repair-dialog{width:min(100%,850px);padding:24px 26px;overflow:hidden}
+.repair-heading{align-items:flex-start}
+.repair-heading h2{font-size:clamp(22px,3vw,29px);margin:7px 0 5px}
+.repair-heading p{margin:0 0 15px;font-size:12px;line-height:1.35}
+.repair-layout{grid-template-columns:minmax(0,1fr) minmax(0,.9fr);gap:13px;align-items:stretch}
+.component-board{display:flex;flex-direction:column;gap:11px;padding:10px 11px}
+.flow-group{min-width:0}
+.flow-title{font-size:9px;color:#137f74;letter-spacing:.9px;font-weight:900;margin:0 3px 6px}
+.flow-devices{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:7px}
+.component-tile{padding:7px 3px;min-height:95px;cursor:default;border-radius:10px;box-shadow:none}
+.component-tile.interactive{cursor:pointer;font:inherit;color:inherit;width:100%}
+.component-tile:not(.interactive):hover{background:#fff;border-color:#d8e8e6}
+.component-tile img{width:100%;height:53px;object-fit:contain}
+.component-tile span{font-size:9px;margin:4px 0 2px}
+.component-tile b{font-size:9px}
+.connection-panel{padding:11px;min-width:0;display:flex;flex-direction:column;overflow:hidden}
+.repair-tabs{display:flex;gap:5px;padding:4px;margin-bottom:8px;border:1px solid #dbeae6;background:#f2f9f7;border-radius:12px}
+.repair-tab{flex:1;min-width:0;border:0;border-radius:9px;padding:9px 4px;font-size:11px;font-weight:850;color:#597785;background:transparent}
+.repair-tab.active{background:#fff;color:#068979;box-shadow:0 2px 8px #0e4f451d}
+.connection-list{display:flex;flex-direction:column;gap:7px;max-height:258px;min-height:0;overflow:auto;scrollbar-width:thin}
+.wire-row{font-size:11px;min-height:43px;padding:9px 11px;line-height:1.3}
+.wire-row span:first-child{min-width:0}
+.wire-status{font-weight:850}
+.wire-status.loose{background:#fee5e6;color:#ad3b48}
+.wire-row select{width:75px}
+.repair-footer{margin-top:12px}
+.repair-attempt{font-size:11px;color:#567889}
+.quit-dialog{border:0;border-radius:22px;width:min(94vw,440px);box-shadow:0 25px 80px #092c3d9b;padding:0;color:#193c4f;background:#fffcf7}
+.quit-dialog::backdrop{background:#092435b8;backdrop-filter:blur(4px)}
+.quit-inner{padding:26px}
+.quit-inner h2{font-family:Manrope,sans-serif;font-size:25px;letter-spacing:-.8px;margin:12px 0 8px}
+.quit-inner p{font-size:14px;color:#667b84;line-height:1.5;margin:0 0 19px}
+.quit-buttons{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.quit-buttons .button{font-size:12px;padding:8px 10px;min-height:52px;line-height:1.3}
+.danger-button{background:#fff2f3;color:#a7384e;border-color:#f3d6da}
+@media(max-width:850px){
+ .top-controls{gap:5px}
+ .exit-game{font-size:21px}
+ .repair-dialog{width:100%;padding:15px}
+ .repair-layout{grid-template-columns:minmax(0,1fr) minmax(0,.9fr);gap:9px}
+ .component-board{padding:8px;gap:7px}
+ .component-tile{min-height:75px}
+ .component-tile img{height:40px}
+ .component-tile span{font-size:8px}
+ .flow-title{font-size:8px;margin-bottom:4px}
+ .repair-tabs{padding:3px;gap:3px}
+ .repair-tab{font-size:10px;padding:7px 3px}
+ .connection-list{max-height:190px}
+ .repair-footer{margin-top:9px}
+}
+@media(orientation:landscape) and (max-height:540px){
+ .repair-dialog{height:calc(100dvh - 12px);max-height:calc(100dvh - 12px);padding:10px 12px;display:flex;flex-direction:column;overflow:hidden}
+ .repair-heading{flex:0 0 auto}
+ .repair-heading h2{font-size:17px;margin:4px 0 3px}
+ .repair-heading p{font-size:10px;margin-bottom:7px}
+ .repair-heading .eyebrow{font-size:9px}
+ .repair-heading .timer{padding:4px 7px;min-width:66px}
+ .repair-heading .timer b{font-size:20px}
+ .repair-heading .challenge-close{width:32px;height:32px;font-size:22px}
+ .repair-layout{flex:1;min-height:0;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,.9fr);gap:9px;overflow:hidden}
+ .component-board{min-height:0;display:flex;flex-direction:column;justify-content:space-around;gap:5px;padding:6px}
+ .flow-group{flex:1;display:flex;flex-direction:column;min-height:0}
+ .flow-title{font-size:8px;margin:0 2px 3px}
+ .flow-devices{flex:1;min-height:0;gap:4px}
+ .component-tile{min-height:0;padding:2px;justify-content:center}
+ .component-tile img{height:min(33px,10dvh)}
+ .component-tile span{font-size:8px;margin:2px 0 0}
+ .component-tile b{font-size:7px}
+ .connection-panel{min-height:0;overflow:hidden;padding:7px;display:flex;flex-direction:column}
+ .repair-tabs{flex:0 0 auto;margin-bottom:5px}
+ .repair-tab{font-size:10px;padding:5px 2px}
+ .connection-list{flex:1;min-height:0;max-height:none;gap:4px;overflow:auto}
+ .wire-row{min-height:30px;padding:5px 7px;font-size:9px}
+ .wire-row select{height:27px;font-size:10px;width:65px}
+ .repair-footer{flex:0 0 auto;margin-top:6px}
+}
+@media(max-width:640px) and (orientation:portrait){
+ .topbar .logo{max-width:125px}
+ .exit-game{font-size:20px}
+ .repair-dialog{height:auto;max-height:94dvh;overflow:auto}
+ .repair-layout{display:block}
+ .component-board{margin-bottom:8px}
+ .flow-devices{gap:5px}
+ .component-tile img{height:43px}
+ .connection-panel{max-height:245px;overflow:hidden}
+ .connection-list{flex:1;max-height:160px}
+ .repair-tabs{flex:0 0 auto}
+ .quit-buttons{grid-template-columns:1fr}
+ .mission-panel{top:57px}
+}

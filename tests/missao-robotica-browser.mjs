@@ -33,17 +33,40 @@ try{
   await page.locator('#password').fill('peteducacao');
   await page.locator('#authForm button[type="submit"]').click();
   assert.equal(await page.locator('#startOverlay').isVisible(),true,'senha correta deve abrir início');
+  assert((await page.locator('.start-dialog h1').textContent()).includes('PETGame'),'título PETGame ausente');
+  assert((await page.locator('.start-dialog p').first().textContent()).includes('cidade'),'sinopse ausente');
   await page.waitForFunction(()=>window.__TinkerpetMission?.state.ready,{timeout:60000});
+  if(v.name==='pc'||v.name==='celular-horizontal'){await page.screenshot({path:'artifacts/petgame-inicio-'+v.name+'.png'});console.log('VISUAL_START_'+v.name+'='+((await page.screenshot({type:'jpeg',quality:52,scale:'css'})).toString('base64')))}
+  const startBounds=await page.evaluate(()=>({btn:document.querySelector('#startBtn').getBoundingClientRect().bottom,visible:innerHeight,dialog:document.querySelector('.start-dialog').getBoundingClientRect().height}));
   await page.locator('#startBtn').click();
   assert.equal(await page.locator('#authOverlay').isVisible(),false);
   assert.equal(await page.locator('#startOverlay').isVisible(),false);
   assert.equal(await page.locator('#scene canvas').count(),1,'mapa 3D sem canvas');
+  const gpsMesh=await page.evaluate(()=>{const w=window.__TinkerpetMission.world;return{visible:w.routeGroup?.visible,segments:w.routeGroup?.children?.length||0,pts:w.routePoints?.length||0,driver:!window.__TinkerpetMission.state.cameraTop}});
+  assert(gpsMesh.visible&&gpsMesh.segments>8&&gpsMesh.pts>=2&&gpsMesh.driver,'A rota deve estar pintada na pista e a câmera deve começar no motorista: '+JSON.stringify(gpsMesh));
   const viewport=await page.evaluate(()=>({scroll:document.documentElement.scrollWidth,inner:window.innerWidth,scene:document.querySelector('#scene canvas').getBoundingClientRect().width}));
   assert(viewport.scroll<=viewport.inner+2,v.name+' overflow horizontal '+JSON.stringify(viewport));
   assert(viewport.scene>100,'canvas invisível');
   assert.equal(await page.locator('.motor-track').count(),2,'precisa de 2 controles');
+  assert.equal(await page.locator('#navCompass').count(),1,'GPS visual ausente');
+  assert.equal(await page.locator('#exitGameBtn').count(),1,'botão de fechar o jogo ausente');
+  const route=await page.evaluate(()=>window.__TinkerpetMission.buildPoints());
+  assert(route.length>=2&&route.at(-1)[0]===50&&route.at(-1)[1]===-50,'rota não aponta ao primeiro destino: '+JSON.stringify(route));
+  const timing=await page.evaluate(()=>({meters:window.__TinkerpetMission.state.nextEvent,seconds:window.__TinkerpetMission.state.nextEventTime}));
+  assert(timing.meters>=90&&timing.seconds>=55,'desafios não estão espaçados: '+JSON.stringify(timing));
   assert.equal(await page.locator('#lives').getAttribute('aria-label'),'3 vidas');
   if(v.name==='pc'){
+   // O primeiro desafio só começa após tempo E distância de direção real.
+   const early=await page.evaluate(()=>{const api=window.__TinkerpetMission;api.state.meters=100;api.state.driveSeconds=12;api.triggerEvent();return api.state.mode});
+   assert.equal(early,'drive','pergunta disparou antes de aprender os controles');
+   const scheduled=await page.evaluate(()=>{const api=window.__TinkerpetMission;api.state.driveSeconds=61;api.triggerEvent();return api.state.mode});
+   assert.equal(scheduled,'question','pergunta não disparou após o tempo e a distância previstos');
+   await page.evaluate(()=>{const api=window.__TinkerpetMission,q=api.questions[api.state.activeQuestion],correct=q[1][q[2]];[...document.querySelectorAll('.answer')].find(a=>a.textContent.includes(correct)).click();api.resetGame()});
+   // Esc pausa; botão X do modal retoma sem sair.
+   await page.keyboard.press('Escape');
+   assert.equal(await page.locator('#pauseOverlay').isVisible(),true,'Esc não pausou');
+   await page.locator('#pauseClose').click();
+   assert.equal(await page.locator('#pauseOverlay').isVisible(),false,'X não fechou pausa');
    await page.keyboard.down('w');await page.evaluate(()=>window.__TinkerpetMission.physics(.3));
    const straight=await page.evaluate(()=>({a:window.__TinkerpetMission.state.drive.a,b:window.__TinkerpetMission.state.drive.b}));
    assert(straight.a>50&&straight.b>50,'W não acelera ambos os motores: '+JSON.stringify(straight)+' '+JSON.stringify(await page.evaluate(()=>({mode:window.__TinkerpetMission.state.mode,keys:[...window.__TinkerpetMission.state.keys],collided:window.__TinkerpetMission.state.drive.collided,pos:[window.__TinkerpetMission.state.drive.x,window.__TinkerpetMission.state.drive.z],ready:window.__TinkerpetMission.state.ready}))));
@@ -55,7 +78,7 @@ try{
    assert(Math.abs(off.a)<10&&Math.abs(off.b)<10,'motores não param quando soltam teclas');
    // Ensaiar colisão, exigindo soltar as teclas antes de acelerar de novo.
    const collision=await page.evaluate(()=>{
-    const api=window.__TinkerpetMission,s=api.state;s.drive.x=-30;s.drive.z=16;s.drive.angle=0;s.drive.a=200;s.drive.b=200;s.keys=new Set(['w']);for(let i=0;i<28&&!s.drive.collided;i++)api.physics(.045);
+    const api=window.__TinkerpetMission,s=api.state;s.drive.x=-50;s.drive.z=16;s.drive.angle=0;s.drive.a=200;s.drive.b=200;s.keys=new Set(['w']);for(let i=0;i<28&&!s.drive.collided;i++)api.physics(.045);
     const result={collided:s.drive.collided,lives:s.lives,motors:[s.drive.a,s.drive.b]};s.keys.clear();api.physics(.02);
     return {...result,released:!s.drive.collided};
    });
@@ -82,17 +105,35 @@ try{
     await page.evaluate(()=>window.__TinkerpetMission.beginRepair());
     const fault=await page.evaluate(()=>window.__TinkerpetMission.state.fault);
     if(fault.kind==='switch')await page.locator('[data-component="'+fault.id+'"]').click();
-    else if(fault.kind==='gpio')await page.locator('select[data-gpio="'+fault.id+'"]').selectOption(fault.id==='in1'?'D27':fault.id==='in2'?'D26':fault.id==='in3'?'D32':'D18');
-    else await page.locator('.wire-row.loose').click();
+    else if(fault.kind==='gpio'){
+      await page.locator('[data-repair-tab="gpio"]').click();
+      await page.locator('select[data-gpio="'+fault.id+'"]').selectOption(fault.id==='in1'?'D27':fault.id==='in2'?'D26':fault.id==='in3'?'D32':'D18');
+    } else {
+      await page.locator('[data-repair-tab="'+(fault.id==='ma'||fault.id==='mb'?'motors':(['in1','in2','in3','in4'].includes(fault.id)?'gpio':'power'))+'"]').click();
+      await page.locator('.wire-row.loose').click();
+    }
     const repaired=await page.evaluate(()=>window.__TinkerpetMission.state.mode);
     assert(repaired==='drive','falha '+JSON.stringify(fault)+' não foi resolvida');
    }
+   // Esc e × fecham os desafios com confirmação; desistir custa uma vida.
+   await page.evaluate(()=>window.__TinkerpetMission.beginQuestion());
+   await page.keyboard.press('Escape');
+   assert.equal(await page.locator('#quitChallengeDialog').evaluate(e=>e.open),true,'Esc não abriu a confirmação para fechar pergunta');
+   await page.locator('#quitCancel').click();
+   assert.equal(await page.locator('#quitChallengeDialog').evaluate(e=>e.open),false,'Cancelar não retomou o desafio');
+   assert.equal(await page.locator('#questionOverlay').isVisible(),true,'Pergunta sumiu ao cancelar');
+   await page.locator('#questionClose').click();
+   assert.equal(await page.locator('#quitChallengeDialog').evaluate(e=>e.open),true,'X não abriu confirmação');
+   await page.locator('#quitConfirm').click();
+   assert.equal(await page.locator('#lives').getAttribute('aria-label'),'2 vidas','Sair de desafio não custou uma vida');
+   await page.evaluate(()=>window.__TinkerpetMission.resetGame());
+   await page.evaluate(()=>{document.querySelector('#questionOverlay').hidden=true;window.__TinkerpetMission.state.mode='drive'});
    // Estourar temporizador leva à perda de vidas e game over com reinício total.
    for(let i=0;i<3;i++){
     await page.evaluate(()=>{window.__TinkerpetMission.beginQuestion();window.__TinkerpetMission.state.challengeEnd=performance.now()-1});
-    await page.waitForTimeout(220);
+    await page.waitForFunction(()=>window.__TinkerpetMission.state.mode!=='question',{timeout:5000});
    }
-   assert.equal(await page.locator('#endOverlay').isVisible(),true,'fim de jogo não aparece');
+   assert.equal(await page.locator('#endOverlay').isVisible(),true,'fim de jogo não aparece: '+JSON.stringify(await page.evaluate(()=>({lives:window.__TinkerpetMission.state.lives,mode:window.__TinkerpetMission.state.mode}))));
    await page.locator('#restartBtn').click();
    assert.equal(await page.locator('#lives').getAttribute('aria-label'),'3 vidas');
    const reset=await page.evaluate(()=>({missions:window.__TinkerpetMission.state.scoreMissions,correct:window.__TinkerpetMission.state.questionsCorrect.size,repairs:window.__TinkerpetMission.state.scoreRepairs}));
@@ -117,12 +158,18 @@ try{
    assert.equal(await page.locator('#repairOverlay').isVisible(),true);
    if(v.name==='celular-horizontal'){const bounds=await page.evaluate(()=>({foot:document.querySelector('.repair-footer').getBoundingClientRect().bottom,view:innerHeight,list:document.querySelector('.connection-list').getBoundingClientRect().height}));assert(bounds.foot<=bounds.view+2&&bounds.list>85,'reparo inacessível no celular horizontal: '+JSON.stringify(bounds))}
    await page.screenshot({path:'artifacts/missao-'+v.name+'-circuito.png'});
+   assert.equal(await page.locator('.repair-tab').count(),3,'reparo não foi simplificado em três abas');
+   assert((await page.locator('.wire-row').count())<=7,'lista de reparos continua extensa');
+   await page.locator('#repairClose').click();
+   assert.equal(await page.locator('#quitChallengeDialog').evaluate(e=>e.open),true,'X não fecha reparo com confirmação');
+   await page.locator('#quitCancel').click();
    if(v.name==='celular-horizontal')console.log('VISUAL_REPAIR='+((await page.screenshot({type:'jpeg',quality:56,scale:'css'})).toString('base64')));
    await page.evaluate(()=>window.__TinkerpetMission.resetGame());
    await page.evaluate(()=>{document.querySelector('#repairOverlay').hidden=true;window.__TinkerpetMission.state.mode='drive'});
   }
   await page.screenshot({path:'artifacts/missao-'+v.name+'.png',fullPage:true});
   if(v.name==='pc'||v.name==='celular-horizontal'){const audit=(await page.screenshot({type:'jpeg',quality:50,scale:'css'})).toString('base64');console.log('VISUAL_AUDIT_'+v.name+'='+audit)}
+  if(v.name==='pc'){await page.locator('#exitGameBtn').click();await page.waitForURL('**/projects.html');}
   await context.close();
   console.log('PASS',v.name,'mapa, UI, senha, cena 3D, controles, layout');
  }
