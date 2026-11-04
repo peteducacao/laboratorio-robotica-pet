@@ -291,3 +291,105 @@
 .mistake-progress.near-loss{color:#b44b49;background:#fff0ed;border-color:#f3c6bc}
 @media(max-width:800px){.mistake-progress{font-size:9px;padding:3px 5px}}
 @media(orientation:landscape) and (max-height:540px){.mistake-progress{font-size:8px;padding:3px 5px}}
+
+
+/* ================================================================
+   PETGame 2.0: oficina de descobertas e cidade revisada
+   Prioridades: acessibilidade, leitura no celular e ritmo da criança.
+   ================================================================ */
+.start-record,.final-time,.personal-record,.final-results>div:nth-child(2),
+.question-overlay .timer,.timer,.timebar,.run-time{display:none!important}
+.final-results{grid-template-columns:repeat(2,minmax(0,1fr))}
+.final-results>div{padding:16px 8px}
+.mission-status{flex-wrap:wrap;justify-content:flex-start;gap:7px 10px;align-items:center}
+.stage-progress{white-space:nowrap;border-radius:9px;background:#e1f4eb;color:#1a7c65;border:1px solid #c9e8d8;padding:5px 8px;font-size:10px}
+.dialog .challenge-actions{display:flex;align-items:center;justify-content:flex-end}
+.challenge-dialog,.diagnostic-dialog{width:min(100%,720px);border-radius:24px;max-height:min(94dvh,910px);overflow-y:auto;overscroll-behavior:contain}
+.challenge-dialog h2,.diagnostic-dialog h2{font-size:clamp(22px,3vw,30px)}
+.question-text,.diagnostic-prompt{font-size:clamp(13px,1.9vw,16px)!important;line-height:1.5!important}
+#answers,#diagnosticChoices{display:flex;flex-direction:column;gap:13px}
+#answers button,#diagnosticChoices button{touch-action:manipulation}
+.pet-circuit{border:1px solid #cce6df;border-radius:17px;padding:12px 15px;
+  background:radial-gradient(circle at 10% 0%,#e0faf0 0%,#f7fcf9 63%);overflow:hidden}
+.pet-circuit svg{display:block;width:100%;height:auto;max-height:135px}
+.pet-circuit .circuit-wire{stroke:#b7c9d4;stroke-width:6;fill:none;stroke-linecap:round;stroke-dasharray:9 6}
+.pet-circuit .circuit-node{fill:#fff;stroke:#5ba49b;stroke-width:2.5}
+.pet-circuit svg text{font-size:16px;font-weight:850;font-family:'DM Sans',Arial,sans-serif;fill:#29566b}
+.pet-circuit .power-led{fill:#bac9cc}
+.pet-circuit.powered .circuit-wire{stroke:url(#petFlow);stroke-dasharray:none}
+.pet-circuit.powered .power-led{fill:#52d39a;filter:drop-shadow(0 0 5px #52d39a)}
+.pet-circuit-status{display:flex;gap:8px;align-items:center;justify-content:center;color:#5c7786;font-size:12px;font-weight:800}
+.pet-circuit.powered .pet-circuit-status{color:#17836a}
+.power-indicator{width:9px;height:9px;border-radius:50%;background:#bac9cc}
+.powered .power-indicator{background:#39bf8d;box-shadow:0 0 0 4px #4bcc9229}
+.pet-instruction{font-size:12px;color:#62798a;font-weight:800;text-align:center}
+.pet-parts{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+.pet-part{min-width:0;display:flex;flex-direction:column;align-items:center;gap:6px;padding:14px 9px 12px;
+  border:1.5px solid #dce9e5;border-radius:14px;background:#fff;
+  transition:background .17s,border-color .17s,transform .17s;color:#214b5a;box-shadow:0 3px 12px #22505009}
+.pet-part:hover,.pet-part:focus-visible{background:#f0fbf6;border-color:#56bfa1}
+.pet-part.active{background:#e6f8ef;border-color:#15aa90;box-shadow:inset 0 0 0 1px #1aad96}
+.pet-part img{width:min(100%,125px);height:90px;display:block;object-fit:contain;pointer-events:none}
+.pet-part strong{font-size:12px;text-align:center;line-height:1.25}
+.pet-part small{font-size:10px;color:#6a8995;text-align:center;line-height:1.25}
+.pet-observation,.pet-repair-action,.pet-success,.pet-clue{padding:15px 17px;border:1px solid #dbeae8;border-radius:15px;
+  background:#f7fbf9;color:#254b5b;line-height:1.5;font-size:13px}
+.pet-observation strong,.pet-success strong,.pet-clue strong{display:block;color:#16796d;font-size:14px}
+.pet-observation p,.pet-repair-action p,.pet-success p,.pet-clue p{margin:6px 0 0!important;
+  font-size:13px!important;line-height:1.5!important;color:#426878!important}
+.pet-observation p+p{margin-top:6px!important}
+.pet-repair-action{background:#f4faff}
+.pet-repair-action label{display:flex;justify-content:space-between;align-items:center;gap:10px;font-weight:800}
+.pet-repair-action label b{font-size:17px;color:#007d72;white-space:nowrap}
+.pet-repair-action input{width:100%;accent-color:#008e83;margin:16px 0 8px;touch-action:pan-x}
+.pet-repair-action .button,.pet-success .button{margin-top:12px}
+.pet-success{border-color:#b5e8d1;background:#eaf9f0}
+.pet-success strong{color:#087a58}
+.pet-clue{background:#fff9ea;border-color:#f3e4b9}
+.pet-clue strong{color:#916b26}
+.pet-hint-button{border:1px dashed #b8d8cb;background:#fff;
+  border-radius:13px;min-height:44px;padding:11px;color:#267f71;font-weight:800;font-size:13px}
+.pet-hint-button:hover{background:#ecf8ee}
+#questionOverlay .challenge-response,#repairOverlay .diagnostic-feedback{color:#567c88;font-size:12px!important;line-height:1.4!important;min-height:0;margin:5px 0!important}
+.pet-experiment-visual{display:flex;flex-direction:column;align-items:center;gap:10px;
+  padding:18px;background:linear-gradient(155deg,#e4f6ee,#ecf6ff);border-radius:17px;border:1px solid #cee6df}
+.pet-experiment-visual>p{margin:0!important;font-size:12px!important;font-weight:800;color:#376779!important}
+.pet-mini-car{height:105px;width:180px;display:grid;grid-template-columns:35px 110px 35px;align-items:center}
+.pet-mini-body{height:101px;border:7px solid #2a414b;border-radius:21px;
+  background:linear-gradient(155deg,#f6c75f,#eab046);display:grid;place-items:center;text-align:center;
+  font-weight:900;letter-spacing:.5px;color:#135872;font-size:14px;box-shadow:0 6px 14px #17565126}
+.pet-wheel{height:63px;width:27px;border:5px solid #2c3f48;border-radius:12px;
+  background:repeating-linear-gradient(0deg,#2e3943 0 9px,#60727a 9px 13px);display:block}
+.pet-wheel.moving{animation:petWheelRolling var(--spin,1.5s) linear infinite}
+@keyframes petWheelRolling{to{background-position-y:120px}}
+.pet-motor-pair{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.pet-motor-experiment{border:1px solid #d8e6e1;border-radius:15px;background:#fbfefd;padding:15px;
+  display:flex;flex-direction:column;gap:9px}
+.pet-motor-experiment span{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.pet-motor-experiment strong{font-size:13px;color:#274e61}
+.pet-motor-experiment b{color:#0c8876;font-size:18px;font-variant-numeric:tabular-nums}
+.pet-motor-experiment input{width:100%;accent-color:#0c9b86;min-height:35px;touch-action:pan-x}
+.pet-motor-experiment small{font-size:10px;color:#637d88;text-align:center}
+#answers>.button,#diagnosticChoices>.button{flex-shrink:0}
+@media(max-width:650px){
+ .challenge-dialog,.diagnostic-dialog{padding:19px 16px;max-height:94dvh;border-radius:20px}
+ .pet-circuit{padding:8px 10px}.pet-circuit svg{max-height:90px}
+ .pet-parts{gap:7px}.pet-part{padding:9px 4px;gap:4px}
+ .pet-part img{height:59px}.pet-part strong{font-size:10px}.pet-part small{font-size:9px}
+ .pet-motor-pair{gap:7px}.pet-motor-experiment{padding:9px}
+ .pet-motor-experiment span{flex-direction:column;align-items:flex-start;gap:3px}
+ .pet-observation,.pet-success,.pet-clue,.pet-repair-action{padding:12px}
+ .pet-mini-car{transform:scale(.82);height:83px}
+ .mission-status{gap:5px}
+ .stage-progress{font-size:9px}
+}
+@media(max-height:600px) and (orientation:landscape){
+ .challenge-dialog,.diagnostic-dialog{padding:12px 18px;max-height:94dvh}
+ .pet-part img{height:55px}.pet-circuit svg{max-height:70px}
+ .pet-experiment-visual{padding:9px}.pet-mini-car{height:75px;transform:scale(.78)}
+ .pet-observation,.pet-repair-action,.pet-clue,.pet-success{padding:9px}
+}
+@media(prefers-reduced-motion:reduce){
+ .pet-wheel.moving{animation:none}
+ .pet-part,.pet-hint-button{transition:none}
+}
