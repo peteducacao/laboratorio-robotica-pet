@@ -60,7 +60,7 @@ switch1:['Gangorra do ESP32 (9 V)','switch.svg'],switch2:['Gangorra dos motores 
 lm:['LM2596','lm2596.svg'],pack:['6 pilhas AA','battery-pack.svg'],jumper:['Jumper','jumpers.svg']
 };
 const diagnosticTests=[{"id":"pack","prompt":"O ESP32 liga, mas a ponte H não recebe energia das pilhas. Qual fonte verificar?","answer":"pack","options":["pack","battery","lm","esp"]},{"id":"bridge","prompt":"Há energia e comandos, mas nenhum motor responde. Qual módulo pode ter falhado?","answer":"bridge","options":["bridge","lm","battery","esp"]},{"id":"switch1","prompt":"A bateria de 9 V funciona, mas a alimentação do ESP32 está interrompida na chave. Qual peça conferir?","answer":"switch1","options":["switch1","switch2","bridge","motor"]},{"id":"switch2","prompt":"As pilhas estão carregadas, mas a chave dos motores está desligada. Qual peça verificar?","answer":"switch2","options":["switch2","switch1","lm","esp"]},{"id":"jumper","prompt":"O sinal não chega à ponte H porque um fio se soltou. O que reconectar?","answer":"jumper","options":["jumper","motor","pack","battery"]},{"id":"lm","prompt":"A bateria de 9 V funciona, mas a tensão de entrada do ESP32 não foi ajustada. Qual módulo verificar?","answer":"lm","options":["lm","bridge","switch2","motor"]},{"id":"motor","prompt":"A ponte H responde, mas uma roda não gira mesmo com os fios ligados. Qual peça pode falhar?","answer":"motor","options":["motor","esp","lm","switch1"]},{"id":"esp","prompt":"A alimentação está correta, mas não chegam comandos à ponte H. Qual placa investigar?","answer":"esp","options":["esp","pack","battery","motor"]},{"id":"battery","prompt":"O regulador não recebe energia, embora a gangorra da bateria de 9 V esteja ligada. Qual fonte conferir?","answer":"battery","options":["battery","pack","bridge","motor"]},{"id":"switch2","prompt":"O carrinho liga, mas os motores só recebem energia quando a gangorra das pilhas AA é acionada. Qual é?","answer":"switch2","options":["switch2","switch1","lm","esp"]}];
-const state={mode:'start',ready:false,lives:3,mistakesTowardLife:0,mission:0,questionsCorrect:new Set(),asked:[],scoreQuestions:0,scoreRepairs:0,scoreCorrect:0,scoreWrong:0,scoreMissions:0,elapsedMs:0,activeSince:null,timerStarted:false,meters:0,nextEvent:26,nextEventTime:20,driveSeconds:0,eventCount:0,lastFault:null,lastDiagnosis:null,drive:{x:-50,z:50,angle:-Math.PI/2,a:0,b:0,collided:false},desired:[0,0],pointer:[null,null],pointerValue:[0,0],keys:new Set(),cameraTop:true,repairTab:'power',quitRemaining:0,challengeTimer:null,challengeStarted:0,challengeEnd:0,activeQuestion:null,fault:null,wires:null,switches:null,gpios:null,skipUntil:0,completed:false,recordsSaved:false,stageChallenges:[],stageSlot:0,stageMeters:0,stageLastEventMeters:0,stageLastEventSeconds:0,stageGateToastAt:0,rejectedAnswers:[],rejectedDiagnostics:[]};
+const state={mode:'start',ready:false,mission:0,questionsCorrect:new Set(),asked:[],scoreQuestions:0,scoreRepairs:0,scoreCorrect:0,scoreWrong:0,scoreMissions:0,elapsedMs:0,activeSince:null,timerStarted:false,meters:0,nextEvent:26,nextEventTime:20,driveSeconds:0,eventCount:0,lastFault:null,lastDiagnosis:null,drive:{x:-50,z:50,angle:-Math.PI/2,a:0,b:0,collided:false},desired:[0,0],pointer:[null,null],pointerValue:[0,0],keys:new Set(),cameraTop:true,repairTab:'power',quitRemaining:0,challengeTimer:null,challengeStarted:0,challengeEnd:0,activeQuestion:null,fault:null,wires:null,switches:null,gpios:null,skipUntil:0,completed:false,recordsSaved:false,stageChallenges:[],stageSlot:0,stageMeters:0,stageLastEventMeters:0,stageLastEventSeconds:0,stageGateToastAt:0,rejectedAnswers:[],rejectedDiagnostics:[]};
 const world={THREE:null,renderer:null,scene:null,camera:null,car:null,carLed:null,uiTimer:0,staticStats:null,wheels:[],walls:[],goal:null,goalLabel:null,goalBeam:null,routeGroup:null,routePoints:[],routeDistance:0,routeLastPos:null,routeLastMission:-1,clockTime:0,lastFrame:0,runFrame:false,sky:null,clouds:[],clockUiAt:0,minimapUiAt:0,collisionToastAt:0,ambientMovers:[],autosaveAt:0};
 const rand=n=>Math.floor(Math.random()*n);
 function shuffled(arr){const a=[...arr];for(let i=a.length-1;i>0;i--){const j=rand(i+1);[a[i],a[j]]=[a[j],a[i]]}return a}
@@ -240,17 +240,6 @@ function spawnDeliveryParticles(){
 function clearChallengeTimer(){if(state.challengeTimer){clearInterval(state.challengeTimer);state.challengeTimer=null}}
 function resetInputs(){state.keys.clear();state.pointer=[null,null];state.pointerValue=[0,0];state.desired=[0,0];for(let i=0;i<2;i++)setThumb(i,0)}
 function stopRobot(){resetInputs();state.drive.a=0;state.drive.b=0;updateReadout()}
-function updateLives(){
- $('lives').innerHTML=Array.from({length:3},(_,i)=>i<state.lives?'♥':'<span class="lost">♥</span>').join(' ');
- $('lives').setAttribute('aria-label',state.lives+' vidas restantes')
-}
-function updateMistakeProgress(){
- const node=$('mistakeProgress');
- if(!node)return;
- node.textContent='Erros: '+state.mistakesTowardLife+'/3';
- node.setAttribute('aria-label',state.mistakesTowardLife+' de 3 erros para perder uma vida');
- node.classList.toggle('near-loss',state.mistakesTowardLife===2)
-}
 function updateMission(){const m=missions[Math.min(state.mission,missions.length-1)];$('missionNumber').textContent='MISSÃO '+String(state.mission+1).padStart(2,'0')+' DE 04';$('missionTitle').textContent=m.title;$('missionDesc').textContent=m.desc;$('missionDone').textContent=state.scoreMissions+'/4';$('missionDone').setAttribute('aria-label',state.scoreMissions+' de 4 entregas concluídas');updateStageProgress();updateDistance();updateDistrict()}
 function updateStageProgress(){
  const index=Math.min(state.mission,3),total=stageTotal(index);
@@ -322,30 +311,30 @@ document.addEventListener('keydown',e=>{
 });
 installControl(0);installControl(1);installKeys();
 window.addEventListener('resize',()=>{if(world.renderer&&world.camera){const w=$('scene').clientWidth,h=$('scene').clientHeight;world.camera.aspect=Math.max(1,w)/Math.max(1,h);world.camera.updateProjectionMatrix();world.renderer.setSize(w,h)}})}
-function resetGame(){clearSavedRun();clearChallengeTimer();state.lives=3;state.mistakesTowardLife=0;state.mission=0;state.scoreMissions=0;state.scoreQuestions=0;state.scoreRepairs=0;state.scoreCorrect=0;state.scoreWrong=0;state.elapsedMs=0;state.activeSince=null;state.timerStarted=true;state.questionsCorrect=new Set();state.asked=[];state.meters=0;state.nextEvent=26;state.nextEventTime=20;state.driveSeconds=0;state.eventCount=0;state.lastFault=null;state.lastDiagnosis=null;state.completed=false;state.drive={x:-50,z:50,angle:-Math.PI/2,a:0,b:0,collided:false};state.desired=[0,0];state.pointer=[null,null];state.pointerValue=[0,0];state.keys.clear();state.skipUntil=0;state.recordsSaved=false;state.stageChallenges=createStageChallenges();state.stageSlot=0;state.stageMeters=0;state.stageLastEventMeters=0;state.stageLastEventSeconds=0;state.stageGateToastAt=0;state.rejectedAnswers=[];state.rejectedDiagnostics=[];state.cameraTop=true;state.repairTab='power';$('viewBtn').setAttribute('aria-label','Ativar visão do motorista');setThumb(0,0);setThumb(1,0);updateReadout();updateLives();updateMistakeProgress();updateMission();updateClock();if(world.car){world.car.position.set(-50,0,50);world.car.rotation.y=-Math.PI/2;for(const wheel of world.wheels)wheel.pivot.rotation.x=0}updateGoal();updateRoute(true)}
+function resetGame(){clearSavedRun();clearChallengeTimer();state.mission=0;state.scoreMissions=0;state.scoreQuestions=0;state.scoreRepairs=0;state.scoreCorrect=0;state.scoreWrong=0;state.elapsedMs=0;state.activeSince=null;state.timerStarted=true;state.questionsCorrect=new Set();state.asked=[];state.meters=0;state.nextEvent=26;state.nextEventTime=20;state.driveSeconds=0;state.eventCount=0;state.lastFault=null;state.lastDiagnosis=null;state.completed=false;state.drive={x:-50,z:50,angle:-Math.PI/2,a:0,b:0,collided:false};state.desired=[0,0];state.pointer=[null,null];state.pointerValue=[0,0];state.keys.clear();state.skipUntil=0;state.recordsSaved=false;state.stageChallenges=createStageChallenges();state.stageSlot=0;state.stageMeters=0;state.stageLastEventMeters=0;state.stageLastEventSeconds=0;state.stageGateToastAt=0;state.rejectedAnswers=[];state.rejectedDiagnostics=[];state.cameraTop=true;state.repairTab='power';$('viewBtn').setAttribute('aria-label','Ativar visão do motorista');setThumb(0,0);setThumb(1,0);updateReadout();updateMission();updateClock();if(world.car){world.car.position.set(-50,0,50);world.car.rotation.y=-Math.PI/2;for(const wheel of world.wheels)wheel.pivot.rotation.x=0}updateGoal();updateRoute(true)}
+/* Os erros ficam no relatório, mas não há sistema de vidas.
+   Resposta incorreta mantém o desafio aberto para nova tentativa. */
 function recordFailure(reason,{abandon=false,timeout=false}={}){
  if(state.mode!=='question'&&state.mode!=='repair')return;
  const was=state.mode;
- state.scoreWrong++;state.mistakesTowardLife++;playSound('wrong');
- const lifeLost=state.mistakesTowardLife>=3;
- if(lifeLost){state.mistakesTowardLife=0;state.lives--}
- updateLives();updateMistakeProgress();
- if(state.lives<=0){endGame(false);return}
+ state.scoreWrong++;
+ playSound('wrong');
  if(abandon){
   const slot=currentStageSlot();
   if(slot&&((was==='question'&&slot.kind==='question'&&slot.index===state.activeQuestion)||
    (was==='repair'&&slot.kind==='repair'))){state.stageSlot++;updateStageProgress()}
   state.stageLastEventMeters=state.stageMeters;
   state.stageLastEventSeconds=state.driveSeconds;
-  clearChallengeTimer();setMode('drive');stopRobot();state.drive.collided=true;
-  state.skipUntil=performance.now()+2100
- }else if(timeout){startTimer(was,30000)}
- const output=(reason||'Tempo esgotado.')+' '+(lifeLost?
-  'Terceiro erro: perdeu uma vida. Tente acertar.':
-  'Erros: '+state.mistakesTowardLife+'/3. Tente novamente.');
- if(!abandon&&was==='question')$('questionResponse').textContent=output;
- if(!abandon&&was==='repair')$('diagnosticFeedback').textContent=output;
- toast(output,true);saveRun()
+  clearChallengeTimer();
+  setMode('drive');stopRobot();state.drive.collided=true;
+  state.skipUntil=performance.now()+2100;
+ }else if(timeout){
+  startTimer(was,30000);
+ }
+ const message=(reason||'Tempo esgotado.')+(abandon?' Continue a aventura.':' Tente novamente.');
+ if(!abandon&&was==='question')$('questionResponse').textContent=message;
+ if(!abandon&&was==='repair')$('diagnosticFeedback').textContent=message;
+ toast(message,true);saveRun();
 }
 function endGame(won){
  clearSavedRun();stopRobot();clearChallengeTimer();setMode('end');state.completed=true;
@@ -403,7 +392,7 @@ function renderQuestion(assignedIndex=null){const i=assignedIndex===null?pickQue
 function beginQuestion(assignedIndex=null){
  stopRobot();state.rejectedAnswers=[];state.rejectedDiagnostics=[];setMode('question');
  $('questionEyebrow').textContent='PARADA DE CONHECIMENTO · FASE '+(state.mission+1);
- $('questionResponse').textContent='No terceiro erro, você perde uma vida.';
+ $('questionResponse').textContent='Se errar, tente novamente.';
  renderQuestion(assignedIndex);
  if(state.mode==='question')startTimer('question')
 }
@@ -424,7 +413,7 @@ function beginDiagnostic(assignedIndex=null){
  state.fault=assignedIndex===null?fresh[rand(fresh.length)]:diagnosticTests[assignedIndex];
  state.lastDiagnosis=state.fault;
  $('diagnosticQuestion').textContent=state.fault.prompt;
- $('diagnosticFeedback').textContent='No terceiro erro, você perde uma vida.';
+ $('diagnosticFeedback').textContent='Se errar, tente novamente.';
  const grid=$('diagnosticChoices');grid.replaceChildren();
  for(const key of shuffled(state.fault.options)){
   const [name,file]=diagnosticParts[key],card=document.createElement('button');
@@ -487,8 +476,7 @@ const SAVE_KEY='tinkerpet-petgame-partida-v1';
 function saveRun(){
  if(!state.timerStarted||state.completed)return;
  try{
-  const data={v:1,mode:state.mode,mission:state.mission,lives:state.lives,
-   mistakesTowardLife:state.mistakesTowardLife,scoreMissions:state.scoreMissions,
+  const data={v:1,mode:state.mode,mission:state.mission,scoreMissions:state.scoreMissions,
    scoreQuestions:state.scoreQuestions,scoreRepairs:state.scoreRepairs,
    scoreCorrect:state.scoreCorrect,scoreWrong:state.scoreWrong,
    elapsedMs:clockMs(),drive:state.drive,meters:state.meters,
@@ -510,10 +498,9 @@ function restoreRun(){
  if(!d||d.v!==1||!Array.isArray(d.stageChallenges)||d.stageChallenges.length!==4||
   !Number.isInteger(d.mission)||d.mission<0||d.mission>=4||
   !Number.isInteger(d.stageSlot)||d.stageSlot<0||d.stageSlot>4||
-  !Number.isInteger(d.lives)||d.lives<1||d.lives>3||
   !d.drive||!Number.isFinite(d.drive.x)||!Number.isFinite(d.drive.z))return false;
  resetGame();
- for(const key of ['mission','lives','mistakesTowardLife','scoreMissions','scoreQuestions',
+ for(const key of ['mission','scoreMissions','scoreQuestions',
   'scoreRepairs','scoreCorrect','scoreWrong','elapsedMs','meters','driveSeconds',
   'stageMeters','stageSlot','stageLastEventMeters','stageLastEventSeconds']){
   if(Number.isFinite(d[key]))state[key]=d[key]
@@ -527,7 +514,7 @@ function restoreRun(){
  state.activeQuestion=d.activeQuestion;
  state.fault=diagnosticTests[d.faultIndex]||null;
  state.activeSince=null;state.timerStarted=true;state.completed=false;
- updateLives();updateMistakeProgress();updateMission();updateStageProgress();updateClock();
+ updateMission();updateStageProgress();updateClock();
  updateGoal();updateRoute(true);
  const mode=['drive','question','repair','pause','delivery'].includes(d.mode)?d.mode:'drive';
  if(mode==='question'&&Number.isInteger(d.activeQuestion)){
@@ -556,7 +543,7 @@ function restoreRun(){
  toast('Partida recuperada! Continue de onde parou.');
  return true
 }
-function boot(){installUI();updateLives();updateMistakeProgress();updateMission();setMode('start');load3D()}
+function boot(){installUI();updateMission();setMode('start');load3D()}
 async function load3D(){try{
  const THREE=await import('https://cdn.jsdelivr.net/npm/three@0.160.1/build/three.module.js');
  init3D(THREE);state.ready=true;$('startBtn').disabled=false;restoreRun();
