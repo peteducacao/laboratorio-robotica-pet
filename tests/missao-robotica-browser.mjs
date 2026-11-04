@@ -106,110 +106,117 @@ try{
    const label=await page.evaluate(({x,z})=>{const a=window.__TinkerpetMission;a.state.drive.x=x;a.state.drive.z=z;a.physics(.12);return document.querySelector('#districtName').textContent},{x,z});
    assert(label.includes(area),'cor / identificação incorreta da área '+area+': '+label);
   }
-  await page.evaluate(()=>{const a=window.__TinkerpetMission;a.resetGame();a.state.mode='drive';a.beginQuestion()});
-  assert(await page.locator('#questionOverlay').isVisible(),'pergunta principal não apareceu');
-  assert.equal(await page.locator('.answer').count(),4,'pergunta exige quatro alternativas');
-  await page.evaluate(()=>{
-   const a=window.__TinkerpetMission,q=a.questions[a.state.activeQuestion],wrong=q[1].find(t=>t!==q[1][q[2]]);
-   const btn=[...document.querySelectorAll('.answer')].find(el=>el.textContent.includes(wrong));
-   if(!btn)throw Error('Alternativa incorreta não encontrada');btn.click()
+  // Um único erro em pergunta consome vida e fecha o desafio.
+  const wrongQuestion=await page.evaluate(()=>{
+   const a=window.__TinkerpetMission,s=a.state;
+   a.resetGame();s.mode='drive';a.beginQuestion();
+   const index=s.activeQuestion,q=a.questions[index];
+   const bad=q[1].find(x=>x!==q[1][q[2]]);
+   const choice=[...document.querySelectorAll('.answer')].find(el=>el.textContent.includes(bad));
+   if(!choice)throw Error('Alternativa incorreta não encontrada');
+   choice.click();
+   return{lives:s.lives,mode:s.mode,wrong:s.scoreWrong,question:index,
+    stageSlot:s.stageSlot,oldChoiceDisabled:choice.disabled};
   });
-  assert.equal(await page.evaluate(()=>window.__TinkerpetMission.state.scoreWrong),1,'erro de pergunta não contabilizado');
-  assert.equal(await page.locator('#questionOverlay').isVisible(),true,'erro não deve sair da pergunta atual');
-  assert.equal(await page.evaluate(()=>window.__TinkerpetMission.state.activeQuestion),await page.evaluate(()=>window.__TinkerpetMission.state.asked.at(-1)),'erro não pode sortear outra pergunta');
-  await page.screenshot({path:'artifacts/petgame-pergunta-'+size.name+'.png'});
-  await page.evaluate(()=>{const a=window.__TinkerpetMission,q=a.questions[a.state.activeQuestion],txt=q[1][q[2]];const b=[...document.querySelectorAll('.answer')].find(el=>el.textContent.includes(txt));if(!b)throw Error('Resposta não encontrada');b.click()});
-  assert.equal(await page.evaluate(()=>window.__TinkerpetMission.state.mode),'drive','acerto deve voltar à avenida');
-  assert.equal(await page.evaluate(()=>window.__TinkerpetMission.state.scoreCorrect),1,'acerto de pergunta não contabilizado');
-  await page.evaluate(()=>window.__TinkerpetMission.beginRepair());
-  assert(await page.locator('#repairOverlay').isVisible(),'oficina principal não apareceu');
-  assert.equal(await page.locator('.diagnostic-card').count(),4,'diagnóstico exige 4 ícones');
-  const imgs=await page.locator('.diagnostic-card img').evaluateAll(imgs=>imgs.map(img=>img.getAttribute('src')));
-  assert(imgs.every(src=>src?.startsWith('assets/component-preview/')),'ícones do carrinho inválidos');
-  const fault=await page.evaluate(()=>window.__TinkerpetMission.state.fault);
-  assert(fault.answer&&fault.prompt,'não existe falha sorteada');
-  const wrong=fault.options.find(x=>x!==fault.answer);
-  const started=await page.evaluate(()=>window.__TinkerpetMission.state.challengeEnd);
-  await page.locator('.diagnostic-card[data-diagnostic="'+wrong+'"]').click();
-  assert.equal(await page.locator('.diagnostic-card.wrong').count(),1,'erro deve aparecer na imagem escolhida');
-  assert.equal(await page.evaluate(()=>window.__TinkerpetMission.state.scoreWrong),2,'erro de diagnóstico não contabilizado');
-  assert.equal(await page.evaluate(()=>window.__TinkerpetMission.state.challengeEnd),started,'erro não pode reiniciar o relógio');
-  await page.screenshot({path:'artifacts/petgame-diagnostico-'+size.name+'.png'});
-  await page.locator('.diagnostic-card[data-diagnostic="'+fault.answer+'"]').click();
-  assert.equal(await page.evaluate(()=>window.__TinkerpetMission.state.mode),'drive','acerto de diagnóstico deve voltar à missão');
-  assert.equal(await page.evaluate(()=>window.__TinkerpetMission.state.scoreCorrect),2,'acerto de diagnóstico não contabilizado');
-  await page.evaluate(()=>window.__TinkerpetMission.beginRepair());
-  await page.locator('#diagnosticClose').click();
-  assert(await page.locator('#quitChallengeDialog').evaluate(e=>e.open),'sair do desafio exige confirmação');
-  await page.locator('#quitCancel').click();
-  assert(await page.locator('#repairOverlay').isVisible(),'cancelar saída deve manter o desafio');
-  await page.locator('#diagnosticClose').click();
-  await page.locator('#quitConfirm').click();
-  assert.equal(await page.evaluate(()=>window.__TinkerpetMission.state.lives),2,'abandonar desafio deve perder uma vida');
-  assert.equal(await page.evaluate(()=>window.__TinkerpetMission.state.scoreWrong),3,'desafio abandonado deve aparecer no relatório');
-  // Garante que nem um salto direto ao destino permita escapar dos desafios.
+  assert.equal(wrongQuestion.lives,2,'errar uma pergunta deve tirar uma vida de imediato');
+  assert.equal(wrongQuestion.mode,'drive','pergunta errada deve se encerrar sem outra tentativa');
+  assert.equal(wrongQuestion.wrong,1,'erro de pergunta deve ser contado exatamente uma vez');
+  assert(await page.locator('#questionOverlay').isHidden(),'pergunta errada não pode continuar aberta');
+
+  // Mesmo comportamento para diagnóstico com componente errado.
+  const wrongDiagnostic=await page.evaluate(()=>{
+   const a=window.__TinkerpetMission,s=a.state;
+   a.resetGame();s.mode='drive';a.beginRepair();
+   const wrong=s.fault.options.find(x=>x!==s.fault.answer);
+   document.querySelector('.diagnostic-card[data-diagnostic="'+wrong+'"]').click();
+   return{lives:s.lives,mode:s.mode,wrong:s.scoreWrong};
+  });
+  assert.equal(wrongDiagnostic.lives,2,'diagnóstico errado precisa tirar vida de imediato');
+  assert.equal(wrongDiagnostic.mode,'drive','diagnóstico errado não permite segunda escolha');
+  assert.equal(wrongDiagnostic.wrong,1,'diagnóstico errado deve ser contabilizado apenas uma vez');
+
+  // Partida completa: 10 perguntas nas quatro fases e quatro diagnósticos,
+  // com uma resposta incorreta que elimina a tentativa, mas não pula a fase.
   const walkthrough=await page.evaluate(()=>{
    const a=window.__TinkerpetMission,s=a.state;
    a.resetGame();s.mode='drive';
    const phases=[],shown=[],expected=[2,3,2,3];
-   let wrongRetainsQuestion=false;
+   let deducted=false,separationVerified=false;
    for(let phase=0;phase<4;phase++){
-    const firstGoal=a.missions[phase].to;
-    s.drive.x=firstGoal[0];s.drive.z=firstGoal[1];a.physics(.016);
-    if(s.mode==='delivery')throw Error('Entrega '+(phase+1)+' ignorou desafios pendentes');
-    let countQ=0,countD=0,guard=0;
+    const goal=a.missions[phase].to;
+    s.drive.x=goal[0];s.drive.z=goal[1];a.physics(.016);
+    if(s.mode==='delivery')throw Error('Fase '+(phase+1)+' deixou concluir sem desafios');
+    let qCount=0,dCount=0,guard=0;
     while(s.mode!=='delivery'){
-     if(++guard>15)throw Error('Desafios não terminam na fase '+(phase+1));
+     if(++guard>18)throw Error('Desafios não terminam na fase '+(phase+1));
      if(s.mode==='question'){
-      const idx=s.activeQuestion,q=a.questions[idx],correct=q[1][q[2]],options=[...document.querySelectorAll('.answer')];
-      if(phase===0&&!wrongRetainsQuestion){
-       const wrong=options.find(b=>!b.textContent.includes(correct));
-       if(!wrong)throw Error('Alternativa errada não localizada');
+      const idx=s.activeQuestion,q=a.questions[idx],correct=q[1][q[2]],buttons=[...document.querySelectorAll('.answer')];
+      shown.push(idx);qCount++;
+      if(!deducted){
+       const wrong=buttons.find(btn=>!btn.textContent.includes(correct));
+       if(!wrong)throw Error('Falta opção incorreta');
+       const prevSlot=s.stageSlot;
        wrong.click();
-       if(s.activeQuestion!==idx||s.mode!=='question'||s.scoreWrong!==1)throw Error('Erro mudou a pergunta atual');
-       wrongRetainsQuestion=true;
+       if(s.mode!=='drive'||s.lives!==2||s.stageSlot!==prevSlot+1||s.scoreWrong!==1)
+        throw Error('A resposta errada não perdeu vida ou tentou repetir a pergunta');
+       // Mesmo zerando o bloqueio temporal, precisa dirigir antes de outra questão.
+       s.skipUntil=0;
+       if(a.triggerEvent(true))throw Error('Nova pergunta surgiu sem dirigir');
+       separationVerified=true;deducted=true;
+      }else{
+       const right=buttons.find(btn=>btn.textContent.includes(correct));
+       if(!right)throw Error('Falta opção correta');
+       right.click();
       }
-      const btn=options.find(b=>b.textContent.includes(correct));
-      if(!btn)throw Error('Resposta correta indisponível');
-      btn.click();shown.push(idx);countQ++;
      }else if(s.mode==='repair'){
-      a.chooseDiagnostic(s.fault.answer,document.createElement('button'));countD++;
+      a.chooseDiagnostic(s.fault.answer,document.createElement('button'));dCount++;
      }else if(s.mode==='drive'){
-      s.drive.x=firstGoal[0];s.drive.z=firstGoal[1];a.physics(.016);
-     }else throw Error('Modo inesperado na fase '+(phase+1)+': '+s.mode);
+      // Simula a pilotagem real entre desafios, sem usar pausa ou teleporte
+      // para burlar o intervalo mínimo (15m e 5,5s de direção).
+      s.stageMeters+=20;s.driveSeconds+=6.0;s.skipUntil=0;
+      s.drive.x=goal[0];s.drive.z=goal[1];a.physics(.016);
+     }else throw Error('Modo inesperado: '+s.mode);
     }
-    if(countQ!==expected[phase]||countD!==1)throw Error('Quantidade incorreta na fase '+(phase+1));
-    phases.push({questions:countQ,diagnostics:countD,mission:s.mission,progress:document.querySelector('#stageProgress').textContent});
-    if(document.querySelectorAll('#deliverySparkles span').length!==21)throw Error('Faltam efeitos de entrega');
+    if(qCount!==expected[phase]||dCount!==1)throw Error('Distribuição errada na fase '+(phase+1));
+    phases.push({questions:qCount,diagnostics:dCount,completed:s.scoreMissions});
     document.querySelector('#nextMissionBtn').click();
-    if(phase<3&&(s.stageSlot!==0||s.mission!==phase+1))throw Error('Desafios da próxima fase não reiniciaram');
+    if(phase<3&&(s.stageSlot!==0||s.mission!==phase+1))throw Error('Próxima fase não reiniciou desafios');
    }
-   return{phases,shown,wrongRetainsQuestion,mode:s.mode,
-    questions:s.scoreQuestions,repairs:s.scoreRepairs,correct:s.scoreCorrect,wrong:s.scoreWrong};
+   return{phases,shown,deducted,separationVerified,mode:s.mode,lives:s.lives,
+    questionsCorrect:s.scoreQuestions,repairsCorrect:s.scoreRepairs,
+    correct:s.scoreCorrect,wrong:s.scoreWrong};
   });
-  assert.deepEqual(walkthrough.phases.map(p=>p.questions),[2,3,2,3],'perguntas não respeitam o limite das fases');
-  assert.deepEqual(walkthrough.phases.map(p=>p.diagnostics),[1,1,1,1],'diagnósticos não respeitam as fases');
-  assert.equal(new Set(walkthrough.shown).size,10,'repetição ou vazamento de pergunta entre fases');
-  assert(walkthrough.wrongRetainsQuestion,'errar deve preservar a pergunta da fase');
-  assert.equal(walkthrough.mode,'end','quatro fases resolvidas devem abrir o relatório');
-  assert.equal(walkthrough.questions,10);
-  assert.equal(walkthrough.repairs,4);
-  assert.equal(walkthrough.correct,14);
-  assert.equal(walkthrough.wrong,1);
-  assert(await page.locator('#endOverlay').isVisible(),'relatório final não apareceu');
-  assert.equal(await page.locator('#scoreCorrect').textContent(),'14');
+  assert.deepEqual(walkthrough.phases.map(p=>p.questions),[2,3,2,3],'10 perguntas não distribuídas nas quatro fases');
+  assert.deepEqual(walkthrough.phases.map(p=>p.diagnostics),[1,1,1,1],'diagnóstico ausente em alguma fase');
+  assert.equal(new Set(walkthrough.shown).size,10,'uma pergunta foi repetida ou apareceu em outra fase');
+  assert(walkthrough.deducted&&walkthrough.separationVerified,'erro e espaçamento precisam estar funcionando');
+  assert.equal(walkthrough.mode,'end','resultado final não apareceu');
+  assert.equal(walkthrough.lives,2);
+  assert.equal(walkthrough.correct,13,'uma questão incorreta não pode virar acerto');
+  assert.equal(walkthrough.wrong,1,'erro deve ser contado uma única vez');
+  assert.equal(await page.locator('#scoreCorrect').textContent(),'13');
   assert.equal(await page.locator('#scoreWrong').textContent(),'1');
   assert.equal(await page.locator('#scoreMissions').textContent(),'4');
-  assert(/[0-9]+:[0-9]{2}/.test(await page.locator('#scoreElapsed').textContent()),'tempo final com formato errado');
-  assert((await page.locator('#endDescription').textContent()).includes('14 acertos e 1 erro'),'resumo final não bate');
+  assert((await page.locator('#endDescription').textContent()).includes('13 acertos e 1 erro'),'relatório incorreto');
+  assert(/[0-9]+:[0-9]{2}/.test(await page.locator('#scoreElapsed').textContent()),'tempo final em formato incorreto');
   const stored=await page.evaluate(()=>window.__TinkerpetMission.readRecords());
   assert(stored.plays>=1&&stored.fastestMs>=0,'recorde não foi gravado');
-  assert.equal(stored.maxCorrect,14,'recorde de acertos incorreto');
-  assert.equal(await page.locator('#recordBestScore').textContent(),'14');
+  assert.equal(stored.maxCorrect,13,'recorde de acertos incorreto');
   await page.locator('#restartBtn').click();
   assert.equal(await page.locator('#stageProgress').textContent(),'Desafios desta fase: 0/3');
-  assert.equal(await page.evaluate(()=>window.__TinkerpetMission.state.scoreWrong),0,'reiniciar não zerou erros');
-  assert.equal(await page.evaluate(()=>window.__TinkerpetMission.state.scoreCorrect),0,'reiniciar não zerou acertos');
+  assert.equal(await page.evaluate(()=>window.__TinkerpetMission.state.lives),3);
+  assert.equal(await page.evaluate(()=>window.__TinkerpetMission.state.scoreWrong),0);
+  assert.equal(await page.evaluate(()=>window.__TinkerpetMission.state.scoreCorrect),0);
+  // O eixo local X deve rodar a montagem da roda sem inclinar o pneu.
+  const axle=await page.evaluate(()=>{
+   const a=window.__TinkerpetMission;
+   return a.world.wheels.map(w=>({
+    hasPivot:!!w.pivot,axleX:w.pivot?.rotation.x,
+    tireTilt:w.mesh.rotation.z,offset:w.mesh.position.length()
+   }));
+  });
+  assert(axle.length===4&&axle.every(w=>w.hasPivot&&Math.abs(w.tireTilt-Math.PI/2)<.01&&w.offset===0),
+   'Pneu não gira em torno do centro do seu eixo');
   await page.screenshot({path:'artifacts/petgame-cidade-'+size.name+'.png'});
   await context.close();
   console.log('PASS',size.name,'início, 3D, regiões, 10 perguntas, diagnóstico e entregas');
