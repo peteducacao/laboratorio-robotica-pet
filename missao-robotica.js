@@ -73,6 +73,9 @@ function displayRecords(){
  const fmt=Number.isFinite(best)?formatDuration(best):'—';
  $('recordBestTime').textContent=fmt;
  $('recordBestScore').textContent=Number.isFinite(record.maxCorrect)?String(record.maxCorrect):'—';
+ const bestRun=record.bestRun;
+ $('recordBestRun').textContent=bestRun&&Number.isFinite(bestRun.correct)&&Number.isFinite(bestRun.wrong)?
+  bestRun.correct+' acertos · '+bestRun.wrong+' erros':'—';
  $('startRecord').textContent=Number.isFinite(best)?'Seu recorde: '+fmt:'Seu primeiro recorde começa aqui';
 }
 function storeRunRecord(won){
@@ -80,19 +83,22 @@ function storeRunRecord(won){
  state.recordsSaved=true;
  const old=readRecords(),elapsed=Math.max(0,Math.round(clockMs()));
  const fresh={...old,plays:(Number(old.plays)||0)+1,lastMs:elapsed,lastCorrect:state.scoreCorrect,lastWrong:state.scoreWrong,lastWon:won};
- let newFast=false,newScore=false;
+ let newFast=false,newScore=false,newPerf=false;
  if(won){
   const prev=Number(old.fastestMs);
   if(!Number.isFinite(prev)||prev<=0||elapsed<prev){fresh.fastestMs=elapsed;newFast=true}
   if(!Number.isFinite(old.maxCorrect)||state.scoreCorrect>old.maxCorrect){fresh.maxCorrect=state.scoreCorrect;newScore=true}
   const performanceScore=state.scoreCorrect*3-state.scoreWrong;
-  if(!Number.isFinite(old.bestPerformance)||performanceScore>old.bestPerformance){
+  if(!Number.isFinite(old.bestPerformance)||performanceScore>old.bestPerformance||
+   (performanceScore===old.bestPerformance&&(!old.bestRun||elapsed<old.bestRun.timeMs))){
    fresh.bestPerformance=performanceScore;fresh.bestRun={correct:state.scoreCorrect,wrong:state.scoreWrong,timeMs:elapsed};
+   newPerf=true;
   }
  }
  persistRecords(fresh);
- $('newRecord').hidden=!newFast&&!newScore;
- $('newRecord').textContent=newFast?'★ NOVO RECORDE DE TEMPO!':'★ NOVO RECORDE DE ACERTOS!';
+ $('newRecord').hidden=!newFast&&!newScore&&!newPerf;
+ $('newRecord').textContent=newFast?'★ NOVO RECORDE DE TEMPO!':
+  newScore?'★ NOVO RECORDE DE ACERTOS!':'★ SUA MELHOR PARTIDA!';
  displayRecords();
 }
 const sound={
@@ -101,7 +107,9 @@ const sound={
 try{sound.enabled=localStorage.getItem(SOUND_KEY)==='on'}catch{}
 function refreshSoundButton(){
  const btn=$('soundBtn');if(!btn)return;
- btn.textContent=sound.enabled?'♫':'♪̸';
+ btn.innerHTML=sound.enabled?
+  '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11 5 6 9H3v6h3l5 4V5Z"/><path d="M15 9a5 5 0 0 1 0 6m3-9a9 9 0 0 1 0 12"/></svg>':
+  '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11 5 6 9H3v6h3l5 4V5Z"/><path d="m16 9 5 6m0-6-5 6"/></svg>';
  btn.setAttribute('aria-pressed',String(sound.enabled));
  btn.setAttribute('aria-label',sound.enabled?'Desativar sons do jogo':'Ativar sons do jogo');
  btn.title=sound.enabled?'Desativar sons':'Ativar sons';
