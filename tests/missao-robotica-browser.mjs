@@ -120,6 +120,7 @@ try{
    await page.evaluate(()=>{document.querySelector('#repairOverlay').hidden=true;window.__TinkerpetMission.state.mode='drive'});
   }
   await page.screenshot({path:'artifacts/missao-'+v.name+'.png',fullPage:true});
+  if(v.name==='pc'||v.name==='celular-horizontal'){const audit=(await page.screenshot({type:'jpeg',quality:50,scale:'css'})).toString('base64');console.log('VISUAL_AUDIT_'+v.name+'='+audit)}
   await context.close();
   console.log('PASS',v.name,'mapa, UI, senha, cena 3D, controles, layout');
  }
