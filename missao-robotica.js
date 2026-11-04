@@ -83,7 +83,6 @@ $('viewBtn').addEventListener('click',()=>{state.cameraTop=!state.cameraTop;$('v
 $('fullBtn').addEventListener('click',async()=>{try{if(document.fullscreenElement)await document.exitFullscreen();else await $('game').requestFullscreen()}catch{toast('Tela cheia não está disponível neste navegador.')}});
 $('exitGameBtn').addEventListener('click',()=>{window.location.href='projects.html'});
 $('questionClose').addEventListener('click',requestQuitChallenge);
-$('repairClose').addEventListener('click',requestQuitChallenge);
 $('diagnosticClose').addEventListener('click',requestQuitChallenge);
 $('diagnosticChoices').addEventListener('click',e=>{const card=e.target.closest('button[data-diagnostic]');if(card&&!card.disabled)chooseDiagnostic(card.dataset.diagnostic,card)});
 $('quitCancel').addEventListener('click',cancelQuitChallenge);
