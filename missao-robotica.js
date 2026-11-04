@@ -2,10 +2,10 @@
 const $=id=>document.getElementById(id),clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
 const overlays=['authOverlay','startOverlay','questionOverlay','repairOverlay','pauseOverlay','deliveryOverlay','testSummaryOverlay','endOverlay'];
 const missions=[
- {title:'Entrega na escola',desc:'Siga a rota verde até a escola.',to:[50,-50],label:'ESCOLA'},
- {title:'Peças para a fábrica',desc:'Siga a rota verde até a fábrica.',to:[50,50],label:'FÁBRICA'},
- {title:'Manutenção do parque',desc:'Siga a rota verde até o parque.',to:[-50,-50],label:'PARQUE'},
- {title:'Retorno ao laboratório',desc:'Siga a rota verde e finalize a aventura.',to:[-50,50],label:'LABORATÓRIO'}
+ {title:'Entrega na escola',desc:'Siga a faixa amarela até a escola.',to:[50,-50],label:'ESCOLA'},
+ {title:'Peças para a fábrica',desc:'Siga a faixa amarela até a fábrica.',to:[50,50],label:'FÁBRICA'},
+ {title:'Manutenção do parque',desc:'Siga a faixa amarela até o parque.',to:[-50,-50],label:'PARQUE'},
+ {title:'Retorno ao laboratório',desc:'Siga a faixa amarela e finalize a aventura.',to:[-50,50],label:'LABORATÓRIO'}
 ];
 const questions=[
  ['Qual GPIO controla o Motor A para a frente no código?',['GPIO 32','GPIO 27','GPIO 18','GPIO 26'],0],
@@ -90,10 +90,10 @@ function installUI(){
 $('authForm').addEventListener('submit',e=>{e.preventDefault();if($('password').value.trim()!=='peteducacao'){$('authError').textContent='Senha incorreta. Tente novamente.';return}try{sessionStorage.setItem('tinkerpet-missao-3d-acesso','ok')}catch{}$('authError').textContent='';setMode('start')});
 $('showPassword').addEventListener('click',()=>{const p=$('password');p.type=p.type==='password'?'text':'password';$('showPassword').textContent=p.type==='password'?'Mostrar':'Ocultar'});
 $('startBtn').addEventListener('click',()=>{if(state.ready)beginTestRound()});
-$('playBtn').addEventListener('click',()=>{if(!state.ready)return;resetGame();setMode('drive');toast('Aventura iniciada. Siga a faixa até o destino!')});
+$('playBtn').addEventListener('click',()=>{if(!state.ready)return;resetGame();setMode('drive');toast('Aventura iniciada. Siga a faixa amarela até o destino!')});
 $('pauseTestBtn').addEventListener('click',beginTestRound);
 $('repeatTestBtn').addEventListener('click',beginTestRound);
-function exploreAfterTest(){resetGame();setMode('drive');stopRobot();toast('Aventura liberada. Siga a faixa até o destino!')};$('goExploreBtn').addEventListener('click',exploreAfterTest);$('testClose').addEventListener('click',exploreAfterTest);
+function exploreAfterTest(){resetGame();setMode('drive');stopRobot();toast('Aventura liberada. Siga a faixa amarela até o destino!')};$('goExploreBtn').addEventListener('click',exploreAfterTest);$('testClose').addEventListener('click',exploreAfterTest);
 $('nextMissionBtn').addEventListener('click',advanceMission);$('deliveryClose').addEventListener('click',advanceMission);
 $('pauseBtn').addEventListener('click',()=>{if(!isDrive())return;stopRobot();setMode('pause')});
 $('resumeBtn').addEventListener('click',()=>{setMode('drive');stopRobot()});
