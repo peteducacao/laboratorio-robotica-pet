@@ -379,7 +379,7 @@ function renderQuestion(assignedIndex=null){const i=assignedIndex===null?pickQue
 function beginQuestion(assignedIndex=null){
  stopRobot();setMode('question');
  $('questionEyebrow').textContent='PARADA DE CONHECIMENTO · FASE '+(state.mission+1);
- $('questionResponse').textContent='Escolha a alternativa correta para continuar.';
+ $('questionResponse').textContent='Atenção: uma resposta incorreta custa uma vida.';
  renderQuestion(assignedIndex);
  if(state.mode==='question')startTimer('question')
 }
@@ -400,7 +400,7 @@ function beginDiagnostic(){
  state.fault=fresh[rand(fresh.length)];
  state.lastDiagnosis=state.fault;
  $('diagnosticQuestion').textContent=state.fault.prompt;
- $('diagnosticFeedback').textContent='Selecione o componente responsável.';
+ $('diagnosticFeedback').textContent='Atenção: escolher o componente errado custa uma vida.';
  const grid=$('diagnosticChoices');grid.replaceChildren();
  for(const key of shuffled(state.fault.options)){
   const [name,file]=diagnosticParts[key],card=document.createElement('button');
