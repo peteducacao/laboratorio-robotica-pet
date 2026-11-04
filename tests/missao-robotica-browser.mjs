@@ -53,6 +53,15 @@ try{
   assert(rules.q.every(q=>q.length<100&&!/GPIO|192\.168|pararTudo\(/i.test(q)),'perguntas não devem cobrar pinos ou código');
   const state3d=await page.evaluate(()=>({loaded:!!window.__TinkerpetMission.world.renderer,route:window.__TinkerpetMission.world.routePoints.length,batched:window.__TinkerpetMission.world.staticStats?.batchSavings||0}));
   assert(state3d.loaded&&state3d.route>=2&&state3d.batched>0,'cidade texturizada ou GPS não carregou');
+  const scenery=await page.evaluate(()=>{
+   const a=window.__TinkerpetMission,w=a.world;
+   return{sky:!!w.sky,clouds:w.clouds.length,sun:!!w.sunDisc,
+    tires:w.wheels.map(w=>w.mesh.geometry.parameters.radiusTop),
+    streets:[[-50,13],[-30,3],[10,-22],[50,4]].map(p=>a.collides(p[0],p[1]))};
+  });
+  assert(scenery.sky&&scenery.sun&&scenery.clouds>=5,'céu com sol e nuvens não carregou');
+  assert(scenery.tires.length===4&&scenery.tires.every(r=>r<=.34),'pneus continuam grandes');
+  assert(scenery.streets.every(x=>!x),'cones e caixas ainda bloqueiam a pista');
   for(const [x,z,area] of [[35,35,'FÁBRICA'],[-35,35,'LABORATÓRIO'],[35,-35,'ESCOLA'],[-35,-35,'PARQUE']]){
    const label=await page.evaluate(({x,z})=>{const a=window.__TinkerpetMission;a.state.drive.x=x;a.state.drive.z=z;a.physics(.12);return document.querySelector('#districtName').textContent},{x,z});
    assert(label.includes(area),'cor / identificação incorreta da área '+area+': '+label);
