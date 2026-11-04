@@ -135,6 +135,9 @@ function safeRestore(){
    }
   }
   enforceManualMode();
+  // Elimina pontas fantasmas de arrastos mínimos em montagens antigas.
+  // Um fio sem nenhum traço visível não pode provocar aviso de ligação errada.
+  state.wires=state.wires.filter(w=>!isInvisibleLooseWire(w));
  }catch(err){console.warn('Progresso indisponível',err);}
 }
 // Salvo só aparece depois de uma mudança real e desaparece sozinho.
@@ -369,7 +372,22 @@ function countGood(){
  const expected=new Set(expectedConnections().map(([a,b])=>electricalKey(a,b)));
  return new Set(state.wires.filter(w=>!w.loose&&expected.has(electricalKey(w.a,w.b))).map(w=>electricalKey(w.a,w.b))).size;
 }
-function mistakes(){const allowed=acceptedConnectionSet();return state.wires.filter(w=>!!w.loose||!allowed.has(electricalKey(w.a,w.b)));}
+function isInvisibleLooseWire(w){
+ if(!w?.loose?.point)return false;
+ const attached=w.loose.end==='a'?w.b:w.a;
+ const origin=getPortPos(attached);
+ if(!origin)return false;
+ const route=wirePoints(w);
+ if(route.length<2)return true;
+ // Preserve visible bends made intentionally by the student.
+ if(w.via?.length)return false;
+ return Math.hypot(w.loose.point.x-origin.x,w.loose.point.y-origin.y)<8;
+}
+function mistakes(){
+ const allowed=acceptedConnectionSet();
+ return state.wires.filter(w=>!isInvisibleLooseWire(w)&&
+  (!!w.loose||!allowed.has(electricalKey(w.a,w.b))));
+}
 function missing(){const wired=new Set(state.wires.filter(w=>!w.loose).map(w=>electricalKey(w.a,w.b)));return expectedConnections().filter(([a,b])=>!wired.has(electricalKey(a,b)));}
 function mistakeExplanation(w){
  if(w.loose)return 'O jumper tem uma ponta solta. Arraste a bolinha até o pino correto ou remova o fio.';
@@ -676,14 +694,15 @@ function demoMotor(id){
 }
 function renderProgress(){
  updateContextualHint();
- const total=countGood(),errors=mistakes().length,expected=expectedConnections();
+ const total=countGood(),invalid=mistakes(),unfinished=invalid.filter(w=>w.loose);
+ const errors=invalid.length-unfinished.length,expected=expectedConnections();
  const required=requiredParts(),partsDone=state.parts.length,switched=assemblyMode()==='switched';
  const inAssembly=partsDone<required;
  const progress=inAssembly?partsDone/required:total/expected.length;
  Q('progressBar').style.width=Math.round(progress*100)+'%';
  Q('connectionsCount').textContent=inAssembly?partsDone+'/'+required:total+'/'+expected.length;
  Q('progressCaption').textContent=inAssembly?'Componentes':'Conexões corretas';
- const wiringComplete=!inAssembly&&!errors&&missing().length===0;
+ const wiringComplete=!inAssembly&&!invalid.length&&missing().length===0;
  const voltageValid=Math.abs(state.voltage-5)<.01;
  const switchesValid=!switched||(state.switches.s1&&state.switches.s2);
  const fullyValid=wiringComplete&&voltageValid&&switchesValid&&!voltageAdjusting;
@@ -693,9 +712,10 @@ function renderProgress(){
   wiringComplete&&voltageAdjusting?'Ajustando LM2596… solte para conferir os 5,0 V':
   wiringComplete&&!voltageValid?'⚠ Ajuste o LM2596 para 5,0 V (atual: '+state.voltage.toFixed(1).replace('.',',')+' V)':
   wiringComplete&&!switchesValid?'Ative as duas gangorras para concluir':
-  errors?(mistakes().some(w=>[w.a,w.b].some(p=>p.endsWith('.LEDG')))?errors+' fio(s) a revisar · LED− não é saída':errors+' ligação(ões) a revisar'):
+  errors?(invalid.some(w=>!w.loose&&[w.a,w.b].some(p=>p.endsWith('.LEDG')))?errors+' fio(s) a revisar · LED− não é saída':errors+' ligação(ões) a revisar'):
+  unfinished.length?unfinished.length+' fio(s) com ponta solta':
   inAssembly?'Continue adicionando componentes':'Faltam '+missing().length+' ligações';
- const invalid=mistakes(),pending=missing();
+ const pending=missing();
  badge.title=invalid.length
   ?invalid.map(w=>w.loose?'Jumper com ponta solta: mova a bolinha até um pino.':'Fio incorreto: '+portName(w.a)+' → '+portName(w.b)).join('\n')
    +(pending.length?'\nFaltam '+pending.length+' ligações corretas.':'')
@@ -2251,6 +2271,15 @@ function pointerUp(e){
        const position=worldXY(e.clientX,e.clientY);
        const origin=state.startPort;
        if(!g.startedNew)snapshot();
+       // Um toque ou arrasto mínimo não cria um fio invisível.
+       const originPoint=getPortPos(origin);
+       if(originPoint&&!state.bends.length&&Math.hypot(
+        position.x-originPoint.x,position.y-originPoint.y)<8){
+        previewPoint=null;previewSnapPort=null;pendingAlignment=null;
+        requestDraw();
+        message('Pino selecionado. Arraste mais o fio antes de soltar.',true);
+        return;
+       }
        state.wires.push({
         a:origin,b:origin,color:state.wireColor,
         via:state.bends.map(p=>({...p})),manual:true,
