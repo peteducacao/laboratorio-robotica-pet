@@ -1,44 +1,13 @@
 (()=>{'use strict';
 const $=id=>document.getElementById(id),clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
-const overlays=['authOverlay','startOverlay','questionOverlay','repairOverlay','pauseOverlay','deliveryOverlay','testSummaryOverlay','endOverlay'];
+const overlays=['authOverlay','startOverlay','questionOverlay','repairOverlay','pauseOverlay','deliveryOverlay','endOverlay'];
 const missions=[
  {title:'Entrega na escola',desc:'Siga a faixa amarela até a escola.',to:[50,-50],label:'ESCOLA'},
  {title:'Peças para a fábrica',desc:'Siga a faixa amarela até a fábrica.',to:[50,50],label:'FÁBRICA'},
  {title:'Manutenção do parque',desc:'Siga a faixa amarela até o parque.',to:[-50,-50],label:'PARQUE'},
  {title:'Retorno ao laboratório',desc:'Siga a faixa amarela e finalize a aventura.',to:[-50,50],label:'LABORATÓRIO'}
 ];
-const questions=[
- ['Qual GPIO controla o Motor A para a frente no código?',['GPIO 32','GPIO 27','GPIO 18','GPIO 26'],0],
- ['Qual GPIO controla o Motor A em marcha à ré?',['GPIO 27','GPIO 18','GPIO 32','GPIO 19'],1],
- ['Qual GPIO controla o Motor B para a frente?',['GPIO 26','GPIO 18','GPIO 32','GPIO 27'],0],
- ['Qual GPIO controla o Motor B em marcha à ré?',['GPIO 27','GPIO 26','GPIO 19','GPIO 32'],0],
- ['No código, qual motor corresponde ao lado esquerdo?',['Motor B','Motor A','Ambos','Nenhum'],1],
- ['Qual motor corresponde ao lado direito?',['Motor B','Motor A','LM2596','ESP32'],0],
- ['Qual componente fornece os sinais de comando à ponte H?',['ESP32','Motor DC','Pilha AA','Roda'],0],
- ['Qual componente controla a alimentação dos motores e seu sentido de giro?',['LM2596','Ponte H','Bateria 9 V','Gangorra'],1],
- ['No projeto, a saída do LM2596 para o VIN do ESP32 deve ser ajustada para:',['9,0 V','3,2 V','5,0 V','12,0 V'],2],
- ['A bateria de 9 V do projeto alimenta inicialmente qual componente?',['LM2596','Motor A diretamente','Roda','Jumper'],0],
- ['Qual fonte alimenta a ponte H no projeto?',['Seis pilhas AA em série','USB do computador','Uma pilha AAA','A bateria do celular'],0],
- ['Qual é a função do GND comum entre ESP32 e ponte H?',['Aumentar a velocidade','Dar referência comum aos sinais','Carregar o Wi-Fi','Ligar o LED'],1],
- ['Qual é a função do regulador LM2596?',['Reduzir e ajustar a tensão','Controlar o Wi-Fi','Medir a distância','Girar o motor'],0],
- ['Quantas gangorras são usadas na montagem com interruptores?',['Uma','Três','Duas','Quatro'],2],
- ['Na montagem com duas gangorras, uma delas interrompe a alimentação de:',['ESP32 através do LM2596','Somente as rodas','Dois GPIOs ao mesmo tempo','Da antena do Wi-Fi'],0],
- ['Na montagem com duas gangorras, a segunda controla a alimentação de:',['Ponte H','Porta USB','Antena','LCD'],0],
- ['No código, uma velocidade PWM igual a 0 significa:',['Motor parado','Velocidade máxima','Ré máxima','Duas voltas'],0],
- ['Qual é o valor PWM máximo usado no código com resolução de 8 bits?',['100','180','255','1024'],2],
- ['Qual valor foi definido como velocidade baixa no código do carrinho?',['180','255','90','0'],0],
- ['Qual valor foi definido como velocidade alta no código do carrinho?',['100','255','180','50'],1],
- ['O que acontece quando os dois motores avançam com a mesma velocidade?',['O carrinho segue reto','Ele sempre gira','Ele dá ré','Somente a roda direita anda'],0],
- ['Se o Motor B avançar mais rápido que o Motor A, para qual lado o robô tende a curvar?',['Direita','Esquerda','Nenhum','Para trás'],1],
- ['Se o Motor A avançar mais rápido que o Motor B, a curva tende a ser para:',['Esquerda','Direita','Ré','Nenhum'],1],
- ['No código, a letra U identifica:',['Sentido para frente','Wi-Fi desligado','Motor desligado','Velocidade zero'],0],
- ['No código, a letra D identifica:',['Motor esquerdo','Sentido de ré','Dia','Somente o Motor B'],1],
- ['Qual chamada do código para os dois motores?',['pararTudo()','WiFi.softAP()','server.begin()','Serial.print()'],0],
- ['Qual recurso permite controlar o carrinho pelo navegador conectado ao ESP32?',['Servidor web do ESP32','Sensor de luz','GPS do celular','Cabo HDMI'],0],
- ['Qual endereço IP padrão aparece no código para o controle do carrinho?',['127.0.0.1','192.168.4.1','8.8.8.8','10.0.0.255'],1],
- ['No circuito, os terminais MOTOR A e MOTOR B da ponte H servem para:',['Receber sensores','Conectar os motores DC','Conectar a rede','Medir a tensão'],1],
- ['Qual ligação NÃO deve ser esquecida entre a ponte H e o ESP32?',['O GND comum','A saída do motor no VIN','A bateria direto no GPIO','O motor na porta USB'],0]
-];
+const questions=[["O ESP32 liga, mas os motores não giram. Por onde começar?",["Verificar a ponte H e sua alimentação","Trocar a posição do ESP32","Aumentar a potência do Wi-Fi","Reduzir o brilho dos LEDs"],0],["Com os dois motores à frente e na mesma velocidade, o carrinho tende a...",["Girar no próprio eixo","Seguir em linha reta","Fazer uma curva constante","Recuar devagar"],1],["Para curvar à esquerda, qual ajuste pode funcionar?",["Acelerar mais o motor esquerdo","Colocar ambos os motores em ré","Acelerar mais o motor direito","Desligar a ponte H"],2],["Uma roda parou, mas a outra funciona. O que verificar?",["A antena do ESP32","A saída e os fios daquele motor","O ajuste de tensão do LED","A cor da bateria 9 V"],1],["Por que o projeto usa duas fontes de energia?",["Para aumentar o sinal de Wi-Fi","Para substituir a ponte H","Para separar controle e motores","Para dispensar o GND comum"],2],["O carrinho precisa dar ré. O que deve mudar?",["O sentido de giro dos motores","A quantidade de pilhas AA","A tensão de entrada do LM2596","A posição das gangorras"],0],["Qual é a função das duas gangorras?",["Regular a velocidade das rodas","Ligar e desligar as alimentações","Inverter o giro automaticamente","Enviar comandos ao ESP32"],1],["Por que há um LM2596 antes do ESP32?",["Para controlar as rodas separadamente","Para transmitir os comandos","Para ajustar a tensão de alimentação","Para medir a distância percorrida"],2],["Que componente recebe comandos do ESP32 e aciona os motores?",["LM2596","Suporte de pilhas","Gangorra","Ponte H"],3],["Após uma curva, os motores seguem iguais. O carrinho...",["Retorna sozinho ao rumo anterior","Passa a andar para trás","Segue reto na nova direção","Continua girando no mesmo lugar"],2]];
 const baseWires=[
  {id:'p9',title:'Bateria 9 V (+) → S1 → LM2596 IN+',kind:'wire'},
  {id:'g9',title:'Bateria 9 V (−) → LM2596 IN−',kind:'wire'},
@@ -63,23 +32,15 @@ const faultPool=[
  {kind:'gpio',id:'in3',wrong:'D26'},{kind:'gpio',id:'in4',wrong:'D19'}
 ];
 
-/* Diagnóstico exclusivo das rodadas de teste — nenhum efeito na oficina do jogo. */
+/* Diagnóstico integrado às missões. */
 const diagnosticParts={
- battery:['Bateria 9 V','battery-9v.svg'],bridge:['Ponte H','driver-mx1508.svg'],
- esp:['ESP32','esp32.svg'],motor:['Motor DC','motor-front.svg'],
- switch1:['Gangorra S1','switch.svg'],switch2:['Gangorra S2','switch.svg'],
- lm:['LM2596','lm2596.svg'],pack:['6 pilhas AA','battery-pack.svg'],jumper:['Jumper','jumpers.svg']
+battery:['Bateria 9 V','battery-9v.svg'],bridge:['Ponte H','driver-mx1508.svg'],
+esp:['ESP32','esp32.svg'],motor:['Motor DC','motor-front.svg'],
+switch1:['Gangorra S1','switch.svg'],switch2:['Gangorra S2','switch.svg'],
+lm:['LM2596','lm2596.svg'],pack:['6 pilhas AA','battery-pack.svg'],jumper:['Jumper','jumpers.svg']
 };
-const diagnosticTests=[
- {id:'battery',prompt:'O LM2596 não recebe energia. A gangorra S1 está ligada e os fios estão conectados. Qual fonte de energia pode estar com problema?',answer:'battery',options:['battery','bridge','esp','motor']},
- {id:'switch2',prompt:'As pilhas AA estão carregadas, mas a ponte H não recebe energia. Qual interruptor pode estar desligado?',answer:'switch2',options:['switch2','switch1','lm','esp']},
- {id:'jumper',prompt:'Um fio entre a ponte H e o motor esquerdo se soltou. Qual peça precisa ser reconectada?',answer:'jumper',options:['jumper','battery','lm','bridge']},
- {id:'bridge',prompt:'O ESP32 envia comandos e as conexões estão corretas, mas o módulo que aciona os motores falhou. Qual é ele?',answer:'bridge',options:['bridge','lm','battery','esp']},
- {id:'lm',prompt:'A bateria de 9 V está funcionando, mas o regulador que fornece 5 V ao ESP32 apresentou defeito. Qual componente é?',answer:'lm',options:['lm','bridge','motor','pack']},
- {id:'pack',prompt:'Os interruptores estão ligados, mas as pilhas AA estão descarregadas. Qual fonte alimenta os motores?',answer:'pack',options:['pack','battery','switch1','esp']}
-];
-
-const state={mode:'auth',ready:false,lives:3,mission:0,questionsCorrect:new Set(),asked:[],scoreQuestions:0,scoreRepairs:0,scoreMissions:0,meters:0,nextEvent:26,nextEventTime:20,driveSeconds:0,eventCount:0,lastFault:null,testStep:0,testRounds:0,drive:{x:-50,z:50,angle:-Math.PI/2,a:0,b:0,collided:false},desired:[0,0],pointer:[null,null],pointerValue:[0,0],keys:new Set(),cameraTop:false,repairTab:'power',quitRemaining:0,challengeTimer:null,challengeStarted:0,challengeEnd:0,activeQuestion:null,fault:null,wires:null,switches:null,gpios:null,skipUntil:0,completed:false};
+const diagnosticTests=[{"id":"pack","prompt":"O ESP32 liga, mas a ponte H não recebe energia das pilhas. Qual fonte verificar?","answer":"pack","options":["pack","battery","lm","esp"]},{"id":"bridge","prompt":"Há energia e comandos, mas nenhum motor responde. Qual módulo pode ter falhado?","answer":"bridge","options":["bridge","lm","battery","esp"]},{"id":"switch1","prompt":"A bateria de 9 V funciona, mas a alimentação do ESP32 está interrompida na chave. Qual peça conferir?","answer":"switch1","options":["switch1","switch2","bridge","motor"]},{"id":"switch2","prompt":"As pilhas estão carregadas, mas a chave dos motores está desligada. Qual peça verificar?","answer":"switch2","options":["switch2","switch1","lm","esp"]},{"id":"jumper","prompt":"O sinal não chega à ponte H porque um fio se soltou. O que reconectar?","answer":"jumper","options":["jumper","motor","pack","battery"]},{"id":"lm","prompt":"A bateria de 9 V funciona, mas a tensão de entrada do ESP32 não foi ajustada. Qual módulo verificar?","answer":"lm","options":["lm","bridge","switch2","motor"]},{"id":"motor","prompt":"A ponte H responde, mas uma roda não gira mesmo com os fios ligados. Qual peça pode falhar?","answer":"motor","options":["motor","esp","lm","switch1"]},{"id":"esp","prompt":"A alimentação está correta, mas não chegam comandos à ponte H. Qual placa investigar?","answer":"esp","options":["esp","pack","battery","motor"]},{"id":"battery","prompt":"O regulador não recebe energia, embora a primeira gangorra esteja ligada. Qual fonte conferir?","answer":"battery","options":["battery","pack","bridge","motor"]},{"id":"switch2","prompt":"O carrinho liga, mas os motores só recebem energia quando a segunda chave é acionada. Qual é?","answer":"switch2","options":["switch2","switch1","lm","esp"]}];
+const state={mode:'auth',ready:false,lives:3,mission:0,questionsCorrect:new Set(),asked:[],scoreQuestions:0,scoreRepairs:0,scoreMissions:0,meters:0,nextEvent:26,nextEventTime:20,driveSeconds:0,eventCount:0,lastFault:null,lastDiagnosis:null,drive:{x:-50,z:50,angle:-Math.PI/2,a:0,b:0,collided:false},desired:[0,0],pointer:[null,null],pointerValue:[0,0],keys:new Set(),cameraTop:false,repairTab:'power',quitRemaining:0,challengeTimer:null,challengeStarted:0,challengeEnd:0,activeQuestion:null,fault:null,wires:null,switches:null,gpios:null,skipUntil:0,completed:false};
 const world={THREE:null,renderer:null,scene:null,camera:null,car:null,uiTimer:0,staticStats:null,wheels:[],walls:[],goal:null,goalLabel:null,goalBeam:null,routeGroup:null,routePoints:[],routeDistance:0,routeLastPos:null,routeLastMission:-1,clockTime:0,lastFrame:0,runFrame:false};
 const rand=n=>Math.floor(Math.random()*n);
 function shuffled(arr){const a=[...arr];for(let i=a.length-1;i>0;i--){const j=rand(i+1);[a[i],a[j]]=[a[j],a[i]]}return a}
@@ -90,8 +51,14 @@ function clearChallengeTimer(){if(state.challengeTimer){clearInterval(state.chal
 function resetInputs(){state.keys.clear();state.pointer=[null,null];state.pointerValue=[0,0];state.desired=[0,0];for(let i=0;i<2;i++)setThumb(i,0)}
 function stopRobot(){resetInputs();state.drive.a=0;state.drive.b=0;updateReadout()}
 function updateLives(){$('lives').innerHTML=Array.from({length:3},(_,i)=>i<state.lives?'♥':'<span class="lost">♥</span>').join(' ');$('lives').setAttribute('aria-label',state.lives+' vidas')}
-function updateMission(){const m=missions[Math.min(state.mission,missions.length-1)];$('missionNumber').textContent='MISSÃO '+String(state.mission+1).padStart(2,'0')+' DE 04';$('missionTitle').textContent=m.title;$('missionDesc').textContent=m.desc;$('missionDone').textContent=state.scoreMissions+'/4 concluídas';updateDistance()}
+function updateMission(){const m=missions[Math.min(state.mission,missions.length-1)];$('missionNumber').textContent='MISSÃO '+String(state.mission+1).padStart(2,'0')+' DE 04';$('missionTitle').textContent=m.title;$('missionDesc').textContent=m.desc;$('missionDone').textContent=state.scoreMissions+'/4 concluídas';updateDistance();updateDistrict()}
 function updateDistance(){if(state.completed)return;const m=missions[Math.min(state.mission,3)],d=Math.hypot(state.drive.x-m.to[0],state.drive.z-m.to[1]);$('missionDistance').textContent='Destino · '+Math.ceil(d)+' m';updateCompass()}
+function updateDistrict(){
+ const d=state.drive,area=Math.abs(d.x)<10&&Math.abs(d.z)<10?'CENTRO':d.x>=0?(d.z>=0?'FÁBRICA':'ESCOLA'):(d.z>=0?'LABORATÓRIO':'PARQUE');
+ const tag=$('districtName');if(!tag)return;
+ tag.textContent='ÁREA · '+area;
+ tag.dataset.area=area.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'')
+}
 function setThumb(i,value){const id=i===0?'thumbA':'thumbB',track=$(i===0?'trackA':'trackB');const height=track.clientHeight||160;const half=(height-49)/2;$(id).style.top='calc(50% - '+(value/255*half).toFixed(1)+'px)'}
 function updateReadout(){const a=Math.round(state.drive.a),b=Math.round(state.drive.b);$('speedA').textContent=a;$('speedB').textContent=b;$('trackA').setAttribute('aria-valuenow',String(a));$('trackB').setAttribute('aria-valuenow',String(b))}
 function isDrive(){return state.mode==='drive'&&state.ready&&!state.completed}
@@ -106,11 +73,7 @@ const k=state.keys,front=k.has('w')||k.has('arrowup'),back=k.has('s')||k.has('ar
 function installUI(){
 $('authForm').addEventListener('submit',e=>{e.preventDefault();if($('password').value.trim()!=='peteducacao'){$('authError').textContent='Senha incorreta. Tente novamente.';return}try{sessionStorage.setItem('tinkerpet-missao-3d-acesso','ok')}catch{}$('authError').textContent='';setMode('start')});
 $('showPassword').addEventListener('click',()=>{const p=$('password');p.type=p.type==='password'?'text':'password';$('showPassword').textContent=p.type==='password'?'Mostrar':'Ocultar'});
-$('startBtn').addEventListener('click',()=>{if(state.ready)beginTestRound()});
-$('playBtn').addEventListener('click',()=>{if(!state.ready)return;resetGame();setMode('drive');toast('Aventura iniciada. Siga a faixa amarela até o destino!')});
-$('pauseTestBtn').addEventListener('click',beginTestRound);
-$('repeatTestBtn').addEventListener('click',beginTestRound);
-function exploreAfterTest(){resetGame();setMode('drive');stopRobot();toast('Aventura liberada. Siga a faixa amarela até o destino!')};$('goExploreBtn').addEventListener('click',exploreAfterTest);$('testClose').addEventListener('click',exploreAfterTest);
+$('startBtn').addEventListener('click',()=>{if(!state.ready)return;resetGame();setMode('drive');toast('Aventura iniciada. Siga a faixa amarela até o destino!')});
 $('nextMissionBtn').addEventListener('click',advanceMission);$('deliveryClose').addEventListener('click',advanceMission);
 $('pauseBtn').addEventListener('click',()=>{if(!isDrive())return;stopRobot();setMode('pause')});
 $('resumeBtn').addEventListener('click',()=>{setMode('drive');stopRobot()});
@@ -121,7 +84,7 @@ $('fullBtn').addEventListener('click',async()=>{try{if(document.fullscreenElemen
 $('exitGameBtn').addEventListener('click',()=>{window.location.href='projects.html'});
 $('questionClose').addEventListener('click',requestQuitChallenge);
 $('repairClose').addEventListener('click',requestQuitChallenge);
-$('testDiagnosticClose').addEventListener('click',requestQuitChallenge);
+$('diagnosticClose').addEventListener('click',requestQuitChallenge);
 $('diagnosticChoices').addEventListener('click',e=>{const card=e.target.closest('button[data-diagnostic]');if(card&&!card.disabled)chooseDiagnostic(card.dataset.diagnostic,card)});
 $('quitCancel').addEventListener('click',cancelQuitChallenge);
 $('quitConfirm').addEventListener('click',confirmQuitChallenge);
@@ -133,83 +96,56 @@ document.addEventListener('keydown',e=>{
  if(state.mode==='drive'){e.preventDefault();stopRobot();setMode('pause');return}
  if(state.mode==='pause'){e.preventDefault();setMode('drive');stopRobot();return}
  if(state.mode==='delivery'){e.preventDefault();advanceMission();return}
- if(state.mode==='testSummary'){e.preventDefault();exploreAfterTest();return}
  if(state.mode==='start'||state.mode==='auth'||state.mode==='end'){e.preventDefault();window.location.href='projects.html'}
 });
-$('repairTabs').addEventListener('click',e=>{const btn=e.target.closest('[data-repair-tab]');if(!btn||state.mode!=='repair')return;state.repairTab=btn.dataset.repairTab;renderRepair()});
-
 installControl(0);installControl(1);installKeys();
-$('componentBoard').addEventListener('click',e=>{if(state.mode!=='repair'||!state.fault)return;const box=e.target.closest('[data-component]');if(!box)return;const id=box.dataset.component;if(id==='switch1'||id==='switch2'){state.switches[id]=!state.switches[id];renderRepair();checkRepair()}});
-$('connectionList').addEventListener('click',e=>{if(state.mode!=='repair'||!state.fault)return;const row=e.target.closest('[data-wire]');if(!row||e.target.tagName==='SELECT')return;const id=row.dataset.wire;if(state.wires[id]===false){state.wires[id]=true;renderRepair();checkRepair()}});
-$('connectionList').addEventListener('change',e=>{if(state.mode!=='repair'||!state.fault||!e.target.matches('select[data-gpio]'))return;state.gpios[e.target.dataset.gpio]=e.target.value;renderRepair();checkRepair()});
 window.addEventListener('resize',()=>{if(world.renderer&&world.camera){const w=$('scene').clientWidth,h=$('scene').clientHeight;world.camera.aspect=Math.max(1,w)/Math.max(1,h);world.camera.updateProjectionMatrix();world.renderer.setSize(w,h)}})}
-function resetGame(){clearChallengeTimer();state.lives=3;state.mission=0;state.scoreMissions=0;state.scoreQuestions=0;state.scoreRepairs=0;state.questionsCorrect=new Set();state.asked=[];state.meters=0;state.nextEvent=26;state.nextEventTime=20;state.driveSeconds=0;state.eventCount=0;state.lastFault=null;state.testStep=0;state.completed=false;state.drive={x:-50,z:50,angle:-Math.PI/2,a:0,b:0,collided:false};state.desired=[0,0];state.pointer=[null,null];state.pointerValue=[0,0];state.keys.clear();state.skipUntil=0;state.cameraTop=false;state.repairTab='power';setThumb(0,0);setThumb(1,0);updateReadout();updateLives();updateMission();if(world.car){world.car.position.set(-50,0,50);world.car.rotation.y=-Math.PI/2}updateGoal();updateRoute(true)}
+function resetGame(){clearChallengeTimer();state.lives=3;state.mission=0;state.scoreMissions=0;state.scoreQuestions=0;state.scoreRepairs=0;state.questionsCorrect=new Set();state.asked=[];state.meters=0;state.nextEvent=26;state.nextEventTime=20;state.driveSeconds=0;state.eventCount=0;state.lastFault=null;state.lastDiagnosis=null;state.completed=false;state.drive={x:-50,z:50,angle:-Math.PI/2,a:0,b:0,collided:false};state.desired=[0,0];state.pointer=[null,null];state.pointerValue=[0,0];state.keys.clear();state.skipUntil=0;state.cameraTop=false;state.repairTab='power';setThumb(0,0);setThumb(1,0);updateReadout();updateLives();updateMission();if(world.car){world.car.position.set(-50,0,50);world.car.rotation.y=-Math.PI/2}updateGoal();updateRoute(true)}
 function loseLife(reason){const was=state.mode;clearChallengeTimer();state.lives--;updateLives();if(state.lives<=0){endGame(false);return}
-if(was==='question'&&state.testStep===1){state.testStep=2;beginRepair();return}
-if(was==='repair'&&state.testStep===2){state.testStep=3;finishTestRound();return}
 setMode('drive');stopRobot();state.drive.collided=true;toast(reason||'Tempo esgotado. Você perdeu uma vida.',true);state.skipUntil=performance.now()+9000}
 function endGame(won){state.completed=true;stopRobot();clearChallengeTimer();$('endKicker').textContent=won?'AVENTURA CONCLUÍDA':'FIM DE JOGO';$('endSymbol').textContent=won?'★':'♥';$('endTitle').textContent=won?'Missão cumprida!':'Fim de jogo';$('endDescription').textContent=won?'Você percorreu a cidade e concluiu todas as entregas!':'As três vidas terminaram. Reinicie para tentar novamente.';$('scoreMissions').textContent=state.scoreMissions;$('scoreQuestions').textContent=state.scoreQuestions;$('scoreRepairs').textContent=state.scoreRepairs;setMode('end')}
-function startTimer(kind,remaining=30000){clearChallengeTimer();state.challengeStarted=performance.now();state.challengeEnd=state.challengeStarted+remaining;const prefix=kind==='question'?'question':'repair';const tick=()=>{if(state.mode!==kind)return;const sec=Math.max(0,(state.challengeEnd-performance.now())/1000),demo=kind==='repair'&&state.testStep===2,node=$(demo?'testTimer':prefix+'Timer'),bar=$(demo?'testTimebar':prefix+'Timebar');node.textContent=String(Math.ceil(sec));bar.style.width=(sec/30*100).toFixed(2)+'%';bar.classList.toggle('low',sec<10);node.parentElement.classList.toggle('danger',sec<10);if(sec<=0)loseLife()};state.challengeTimer=setInterval(tick,100);tick()}
+function startTimer(kind,remaining=30000){clearChallengeTimer();state.challengeStarted=performance.now();state.challengeEnd=state.challengeStarted+remaining;const tick=()=>{if(state.mode!==kind)return;const sec=Math.max(0,(state.challengeEnd-performance.now())/1000),node=$(kind+'Timer'),bar=$(kind+'Timebar');node.textContent=String(Math.ceil(sec));bar.style.width=(sec/30*100).toFixed(2)+'%';bar.classList.toggle('low',sec<10);node.parentElement.classList.toggle('danger',sec<10);if(sec<=0)loseLife()};state.challengeTimer=setInterval(tick,100);tick()}
 
 function requestQuitChallenge(){if(state.mode!=='question'&&state.mode!=='repair')return;if($('quitChallengeDialog').open)return;state.quitRemaining=Math.max(1,state.challengeEnd-performance.now());clearChallengeTimer();$('quitChallengeDialog').showModal()}
 function cancelQuitChallenge(){if($('quitChallengeDialog').open)$('quitChallengeDialog').close();if(state.mode==='question'||state.mode==='repair')startTimer(state.mode,state.quitRemaining)}
 function confirmQuitChallenge(){if($('quitChallengeDialog').open)$('quitChallengeDialog').close();if(state.mode==='question'||state.mode==='repair')loseLife('Desafio abandonado: você perdeu uma vida.')}
 
-function pickQuestion(){if(state.testStep===1&&state.asked.length===0){state.asked.push(4);return 4}let eligible=questions.map((q,i)=>i).filter(i=>!state.questionsCorrect.has(i));if(!eligible.length)return null;const notLast=eligible.filter(i=>i!==state.asked.at(-1));if(notLast.length)eligible=notLast;const fresh=eligible.filter(i=>!state.asked.includes(i));const index=(fresh.length?fresh:eligible)[rand((fresh.length?fresh:eligible).length)];state.asked.push(index);return index}
+function pickQuestion(){let eligible=questions.map((q,i)=>i).filter(i=>!state.questionsCorrect.has(i));if(!eligible.length)return null;const notLast=eligible.filter(i=>i!==state.asked.at(-1));if(notLast.length)eligible=notLast;const fresh=eligible.filter(i=>!state.asked.includes(i));const index=(fresh.length?fresh:eligible)[rand((fresh.length?fresh:eligible).length)];state.asked.push(index);return index}
 function renderQuestion(){const i=pickQuestion();if(i===null){solveChallenge('Todas as perguntas foram respondidas!');return}state.activeQuestion=i;const q=questions[i];$('questionText').textContent=q[0];$('answers').replaceChildren();shuffled(q[1].map((txt,index)=>({txt,correct:index===q[2]}))).forEach((a,i)=>{const b=document.createElement('button');b.type='button';b.className='answer';const letter=document.createElement('span');letter.className='letter';letter.textContent='ABCD'[i];const label=document.createElement('span');label.textContent=a.txt;b.append(letter,label);b.addEventListener('click',()=>answer(a.correct));$('answers').append(b)});}
-function beginQuestion(){stopRobot();setMode('question');$('questionEyebrow').textContent=state.testStep===1?'RODADA DE TESTE · 1 DE 2':'PARADA DE CONHECIMENTO';$('questionResponse').textContent='Escolha a alternativa correta para continuar.';renderQuestion();startTimer('question')}
+function beginQuestion(){stopRobot();setMode('question');$('questionEyebrow').textContent='PARADA DE CONHECIMENTO';$('questionResponse').textContent='Escolha a alternativa correta para continuar.';renderQuestion();startTimer('question')}
 function answer(correct){if(state.mode!=='question')return;if(performance.now()>=state.challengeEnd){loseLife();return}if(correct){state.questionsCorrect.add(state.activeQuestion);state.scoreQuestions++;solveChallenge('Resposta correta! Continue a missão.');return}$('questionResponse').textContent='Resposta incorreta. Nova pergunta!';renderQuestion()}
-function newFault(){const available=faultPool.filter(f=>f.kind+f.id!==state.lastFault);const fault=available[rand(available.length)];state.lastFault=fault.kind+fault.id;return {...fault}}
-
-function beginDiagnosticTest(){
+function beginDiagnostic(){
  stopRobot();
- state.fault=diagnosticTests[(state.testRounds-1)%diagnosticTests.length];
- $('testDiagnosticPanel').hidden=false;$('fullRepairPanel').hidden=true;
- $('testDiagnosticQuestion').textContent=state.fault.prompt;
- $('testDiagnosticFeedback').textContent='Selecione o componente responsável.';
+ const fresh=diagnosticTests.filter(item=>item!==state.lastDiagnosis);
+ state.fault=fresh[rand(fresh.length)];
+ state.lastDiagnosis=state.fault;
+ $('diagnosticQuestion').textContent=state.fault.prompt;
+ $('diagnosticFeedback').textContent='Selecione o componente responsável.';
  const grid=$('diagnosticChoices');grid.replaceChildren();
  for(const key of shuffled(state.fault.options)){
-  const [name,file]=diagnosticParts[key],card=document.createElement('button');card.type='button';
-  card.className='diagnostic-card';card.dataset.diagnostic=key;card.setAttribute('aria-label','Selecionar '+name);
+  const [name,file]=diagnosticParts[key],card=document.createElement('button');
+  card.type='button';card.className='diagnostic-card';card.dataset.diagnostic=key;
+  card.setAttribute('aria-label','Selecionar '+name);
   const img=document.createElement('img');img.src='assets/component-preview/'+file;img.alt='';img.loading='eager';
   const label=document.createElement('span');label.textContent=name;card.append(img,label);grid.append(card);
  }
  setMode('repair');startTimer('repair');
 }
 function chooseDiagnostic(key,card){
- if(state.mode!=='repair'||state.testStep!==2||!state.fault)return;
+ if(state.mode!=='repair'||!state.fault)return;
  if(performance.now()>=state.challengeEnd){loseLife();return}
- if(key!==state.fault.answer){card.disabled=true;card.classList.add('wrong');$('testDiagnosticFeedback').textContent='Não é esse. Escolha outro componente.';return}
- state.scoreRepairs++;solveChallenge('Diagnóstico correto!');
+ if(key!==state.fault.answer){card.disabled=true;card.classList.add('wrong');$('diagnosticFeedback').textContent='Não é esse. Tente outro componente.';return}
+ state.scoreRepairs++;solveChallenge('Diagnóstico correto! Circuito restabelecido.');
 }
-
-function beginRepair(){if(state.testStep===2){beginDiagnosticTest();return} $('testDiagnosticPanel').hidden=true;$('fullRepairPanel').hidden=false;stopRobot();state.fault=newFault();$('repairEyebrow').textContent=state.testStep===2?'RODADA DE TESTE · 2 DE 2':'PETGAME · OFICINA';state.wires=Object.fromEntries(baseWires.map(w=>[w.id,true]));state.switches={switch1:true,switch2:true};state.gpios=Object.fromEntries(baseWires.filter(w=>w.kind==='gpio').map(w=>[w.id,w.correct]));if(state.fault.kind==='wire')state.wires[state.fault.id]=false;if(state.fault.kind==='switch')state.switches[state.fault.id]=false;if(state.fault.kind==='gpio')state.gpios[state.fault.id]=state.fault.wrong;state.repairTab='power';setMode('repair');const f=state.fault;const title=f.id==='ma'||f.id==='in1'||f.id==='in2'?'Motor esquerdo não responde':f.id==='mb'||f.id==='in3'||f.id==='in4'?'Motor direito não responde':f.id==='switch2'||f.id==='aa'||f.id==='aag'?'Os motores pararam':'Carrinho com falha elétrica';$('repairTitle').textContent=title;renderRepair();startTimer('repair')}
-function renderRepair(){
-for(const id of ['switch1','switch2']){const node=$('switch'+id.slice(-1)+'status');node.textContent=state.switches[id]?'LIGADA':'DESLIGADA';document.querySelector('[data-component="'+id+'"]').classList.toggle('off',!state.switches[id])}
-for(const tab of document.querySelectorAll('[data-repair-tab]')){const yes=tab.dataset.repairTab===state.repairTab;tab.classList.toggle('active',yes);tab.setAttribute('aria-selected',String(yes))}
-const groups={power:['p9','g9','v5','gn','aa','aag','commongnd'],gpio:['in1','in2','in3','in4'],motors:['ma','mb']};
-const shortLabels={p9:'9 V (+) → S1 → LM2596',g9:'9 V (−) → LM2596',v5:'LM2596 → VIN do ESP32',gn:'LM2596 → GND do ESP32',aa:'6 pilhas (+) → S2 → Ponte H',aag:'6 pilhas (−) → Ponte H',commongnd:'GND comum · ESP32 e Ponte H',in1:'Ponte H · IN1',in2:'Ponte H · IN2',in3:'Ponte H · IN3',in4:'Ponte H · IN4',ma:'Ponte H → Motor esquerdo',mb:'Ponte H → Motor direito'};
-const list=$('connectionList');list.replaceChildren();
-for(const id of groups[state.repairTab]){const wire=baseWires.find(w=>w.id===id),good=state.wires[id],row=document.createElement(wire.kind==='gpio'&&good?'div':'button');if(row.tagName==='BUTTON')row.type='button';row.className='wire-row';row.dataset.wire=id;const name=document.createElement('span');name.textContent=shortLabels[id];row.append(name);
-if(wire.kind==='gpio'&&good){const s=document.createElement('select');s.dataset.gpio=id;s.setAttribute('aria-label','GPIO conectado ao '+shortLabels[id]);for(const value of ['D18','D19','D26','D27','D32']){const o=document.createElement('option');o.value=value;o.textContent=value;s.append(o)}s.value=state.gpios[id];row.append(s)}
-else{const tag=document.createElement('span');tag.className='wire-status'+(good?'':' loose');tag.textContent=good?'✓':'Solto';row.classList.toggle('loose',!good);row.append(tag);row.disabled=good}
-list.append(row)}
-$('repairStatus').textContent='Confira energia, GPIOs e motores.'
+function beginRepair(){beginDiagnostic()}
+function solveChallenge(message){
+ clearChallengeTimer();setMode('drive');stopRobot();state.drive.collided=true;
+ state.skipUntil=performance.now()+9000;toast(message)
 }
-function checkRepair(){const good=baseWires.every(w=>state.wires[w.id]&&(w.kind!=='gpio'||state.gpios[w.id]===w.correct))&&Object.values(state.switches).every(Boolean);if(good){state.scoreRepairs++;solveChallenge('Circuito restabelecido! Volte à missão.')}}
-function solveChallenge(message){const was=state.mode;clearChallengeTimer();
-if(was==='question'&&state.testStep===1){state.testStep=2;beginRepair();return}
-if(was==='repair'&&state.testStep===2){state.testStep=3;finishTestRound();return}
-setMode('drive');stopRobot();state.drive.collided=true;state.skipUntil=performance.now()+9000;toast(message)}
-function triggerEvent(){if(!isDrive()||performance.now()<state.skipUntil||state.driveSeconds<state.nextEventTime||state.meters<state.nextEvent)return;state.nextEvent+=43+rand(13);state.nextEventTime=state.driveSeconds+29+rand(10);state.eventCount++;if(state.eventCount%2===1)beginQuestion();else beginRepair()}
-
-function beginTestRound(){if(!state.ready)return;resetGame();state.testRounds++;state.testStep=1;beginQuestion()}
-function finishTestRound(){
- stopRobot();$('testQuestions').textContent=String(state.scoreQuestions);
- $('testRepairs').textContent=String(state.scoreRepairs);
- $('testLives').textContent=String(state.lives);
- $('testSummaryDesc').textContent='Pergunta e diagnóstico apresentados. Você pode testar novamente ou dirigir pela cidade.';
- setMode('testSummary')
+function triggerEvent(){
+ if(!isDrive()||performance.now()<state.skipUntil||state.driveSeconds<state.nextEventTime||state.meters<state.nextEvent)return;
+ state.nextEvent+=43+rand(13);state.nextEventTime=state.driveSeconds+29+rand(10);
+ state.eventCount++;if(state.eventCount%2===1)beginQuestion();else beginRepair()
 }
 function completeMission(){
  const m=missions[state.mission];state.scoreMissions++;stopRobot();state.drive.collided=true;
@@ -228,18 +164,41 @@ function advanceMission(){if(state.mode!=='delivery')return;state.mission++;
 function boot(){installUI();updateLives();updateMission();if(sessionStorage.getItem('tinkerpet-missao-3d-acesso')==='ok')setMode('start');else setMode('auth');load3D()}
 async function load3D(){try{
  const THREE=await import('https://cdn.jsdelivr.net/npm/three@0.160.1/build/three.module.js');
- init3D(THREE);state.ready=true;$('startBtn').disabled=false;$('playBtn').disabled=false;
- }catch(error){console.error('Não foi possível carregar a cidade 3D',error);$('startBtn').disabled=true;$('startBtn').textContent='Não foi possível carregar o mapa 3D';$('playBtn').disabled=true;if(state.mode==='auth')$('authError').textContent='O mapa precisa de conexão para carregar. Verifique a internet.';toast('Não foi possível carregar o cenário 3D. Verifique a conexão.',true)}
+ init3D(THREE);state.ready=true;$('startBtn').disabled=false;
+ }catch(error){console.error('Não foi possível carregar a cidade 3D',error);$('startBtn').disabled=true;$('startBtn').textContent='Não foi possível carregar o mapa 3D';if(state.mode==='auth')$('authError').textContent='O mapa precisa de conexão para carregar. Verifique a internet.';toast('Não foi possível carregar o cenário 3D. Verifique a conexão.',true)}
 }
 function init3D(T){
 world.THREE=T;const scene=new T.Scene();scene.background=new T.Color(0xb4c9df);scene.fog=new T.Fog(0xb4c9df,110,205);world.scene=scene;
 const camera=new T.PerspectiveCamera(75,Math.max(1,$('scene').clientWidth)/Math.max(1,$('scene').clientHeight),.1,260);world.camera=camera;
 const renderer=new T.WebGLRenderer({antialias:true,alpha:false,powerPreference:'high-performance'});renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,window.matchMedia('(pointer: coarse)').matches?1.15:1.45));renderer.setSize(Math.max(1,$('scene').clientWidth),Math.max(1,$('scene').clientHeight));renderer.outputColorSpace=T.SRGBColorSpace;renderer.toneMapping=T.ACESFilmicToneMapping;renderer.toneMappingExposure=1.23;$('scene').append(renderer.domElement);world.renderer=renderer;
 scene.add(new T.HemisphereLight(0xf0f7ff,0xa79e82,2.25));const sun=new T.DirectionalLight(0xffedd6,2.15);sun.position.set(-35,65,25);scene.add(sun);
-const mats={grass:new T.MeshLambertMaterial({color:0xd0c6ac}),road:new T.MeshLambertMaterial({color:0x5b6773}),sidewalk:new T.MeshLambertMaterial({color:0xe3ded2}),line:new T.MeshBasicMaterial({color:0xf5f1e8}),yellow:new T.MeshLambertMaterial({color:0xf2c04b}),dark:new T.MeshLambertMaterial({color:0x303e4c}),teal:new T.MeshLambertMaterial({color:0x2d8ead}),white:new T.MeshLambertMaterial({color:0xfff9ed}),leaf:new T.MeshLambertMaterial({color:0x829366}),trunk:new T.MeshLambertMaterial({color:0x92755b}),red:new T.MeshLambertMaterial({color:0xe17968}),window:new T.MeshLambertMaterial({color:0xa7c5db}),board:new T.MeshLambertMaterial({color:0x326f91}),cone:new T.MeshLambertMaterial({color:0xf08e51})};
+function tileTexture(kind,base,seed,repeat){
+ const canvas=document.createElement('canvas');canvas.width=canvas.height=128;
+ const ctx=canvas.getContext('2d');ctx.fillStyle=base;ctx.fillRect(0,0,128,128);
+ let val=seed>>>0;const random=()=>{val=(1664525*val+1013904223)>>>0;return val/4294967296};
+ for(let i=0;i<(kind==='road'?520:kind==='brick'?140:380);i++){
+  const x=random()*128,y=random()*128,s=.6+random()*(kind==='road'?2.2:3.5);
+  ctx.fillStyle=random()>.5?'rgba(255,255,255,.13)':'rgba(17,34,42,.10)';
+  ctx.fillRect(x,y,s,s*(.5+random()))
+ }
+ if(kind==='brick'){
+  ctx.strokeStyle='rgba(38,62,63,.12)';ctx.lineWidth=2;
+  for(let y=0;y<=128;y+=32){ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(128,y);ctx.stroke();
+  for(let x=(y/32)%2?0:32;x<128;x+=64){ctx.beginPath();ctx.moveTo(x,y);ctx.lineTo(x,y+32);ctx.stroke()}}
+ }
+ if(kind==='grass')for(let i=0;i<115;i++){
+  const x=random()*128,y=random()*128;ctx.strokeStyle=random()>.5?'rgba(255,255,255,.21)':'rgba(38,75,51,.17)';
+  ctx.lineWidth=.65;ctx.beginPath();ctx.moveTo(x,y);ctx.lineTo(x+random()*2-1,y-2-random()*4);ctx.stroke()
+ }
+ const texture=new T.CanvasTexture(canvas);texture.colorSpace=T.SRGBColorSpace;
+ texture.wrapS=texture.wrapT=T.RepeatWrapping;texture.repeat.set(repeat,repeat);texture.anisotropy=4;return texture
+}
+const textured=(kind,color,seed,repeat=8)=>new T.MeshLambertMaterial({map:tileTexture(kind,color,seed,repeat),color:0xffffff});
+const mats={grass:textured('grass','#9dbc94',101,20),road:textured('road','#656c77',202,12),sidewalk:textured('road','#e2d9c6',303,7),zoneFactory:textured('grass','#d4a780',311,12),zoneLab:textured('grass','#84bebe',411,12),zoneSchool:textured('grass','#bad49b',511,12),zonePark:textured('grass','#7ca77e',611,12),factoryWall:textured('brick','#c88e75',711,3),labWall:textured('brick','#92bbcd',811,3),schoolWall:textured('brick','#f0d3a0',911,3),parkWall:textured('brick','#b9bba1',1011,3),line:new T.MeshBasicMaterial({color:0xf5f1e8}),yellow:new T.MeshLambertMaterial({color:0xf2c04b}),dark:new T.MeshLambertMaterial({color:0x303e4c}),teal:new T.MeshLambertMaterial({color:0x2d8ead}),white:new T.MeshLambertMaterial({color:0xfff9ed}),leaf:new T.MeshLambertMaterial({color:0x829366}),trunk:new T.MeshLambertMaterial({color:0x92755b}),red:new T.MeshLambertMaterial({color:0xe17968}),window:new T.MeshLambertMaterial({color:0xa7c5db}),board:new T.MeshLambertMaterial({color:0x326f91}),cone:new T.MeshLambertMaterial({color:0xf08e51})};
 const box=(parent,w,h,d,x,y,z,mat)=>{const o=new T.Mesh(new T.BoxGeometry(w,h,d),mat);o.position.set(x,y,z);parent.add(o);return o};
 const cyl=(parent,rt,rb,h,segments,x,y,z,mat)=>{const o=new T.Mesh(new T.CylinderGeometry(rt,rb,h,segments),mat);o.position.set(x,y,z);parent.add(o);return o};
 box(scene,152,.3,152,0,-.24,0,mats.grass);
+for(const [x,z,material] of [[-38,38,mats.zoneLab],[38,38,mats.zoneFactory],[38,-38,mats.zoneSchool],[-38,-38,mats.zonePark]])box(scene,75,.08,75,x,-.09,z,material);
 const dashedVertical=[],dashedHorizontal=[],crossV=[],crossH=[];
 for(const axis of ['x','z'])for(const pos of [-50,-30,-10,10,30,50]){if(axis==='x'){box(scene,10,.07,152,pos,-.025,0,mats.sidewalk);box(scene,8.1,.1,152,pos,.015,0,mats.road);for(let i=-72;i<=72;i+=9)dashedVertical.push([pos,.073,i])}
 else{box(scene,152,.07,10,0,-.024,pos,mats.sidewalk);box(scene,152,.1,8.1,0,.02,pos,mats.road);for(let i=-72;i<=72;i+=9)dashedHorizontal.push([i,.077,pos])}}
@@ -247,7 +206,7 @@ for(const x of [-50,-30,-10,10,30,50])for(const z of [-50,-30,-10,10,30,50])for(
 function batchCubes(positions,w,h,d){const mesh=new T.InstancedMesh(new T.BoxGeometry(w,h,d),mats.line,positions.length),dummy=new T.Object3D();positions.forEach((p,i)=>{dummy.position.set(...p);dummy.updateMatrix();mesh.setMatrixAt(i,dummy.matrix)});mesh.instanceMatrix.needsUpdate=true;mesh.frustumCulled=false;scene.add(mesh)}
 batchCubes(dashedVertical,.17,.11,3.3);batchCubes(dashedHorizontal,3.3,.11,.17);batchCubes(crossV,.68,.13,1.3);
 const makeLabel=(txt,w=170)=>{const c=document.createElement('canvas');c.width=512;c.height=116;const ctx=c.getContext('2d');ctx.fillStyle='#ffffffed';ctx.beginPath();ctx.roundRect(5,6,502,102,22);ctx.fill();ctx.fillStyle='#096f69';ctx.font='bold 45px Manrope, Arial';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(txt,256,59,480);const texture=new T.CanvasTexture(c);texture.colorSpace=T.SRGBColorSpace;const sprite=new T.Sprite(new T.SpriteMaterial({map:texture,depthWrite:false}));sprite.scale.set(w/25,1.7,1);return sprite};
-function building(x,z,kind,index){const scheme=[0xdcb9a6,0xe5d4b2,0xa9bed1,0xd1c2ba,0xd3ccae,0xb6c1bf];const mat=new T.MeshLambertMaterial({color:scheme[index%scheme.length]});const special={school:'ESCOLA',factory:'FÁBRICA',workshop:'OFICINA',lab:'LABORATÓRIO',park:'PARQUE'}[kind];
+function building(x,z,kind,index){const scheme=[0xdcb9a6,0xe5d4b2,0xa9bed1,0xd1c2ba,0xd3ccae,0xb6c1bf];const mat=kind==='factory'?mats.factoryWall:kind==='lab'?mats.labWall:kind==='school'?mats.schoolWall:kind==='park'?mats.parkWall:new T.MeshLambertMaterial({color:scheme[index%scheme.length]});const special={school:'ESCOLA',factory:'FÁBRICA',workshop:'OFICINA',lab:'LABORATÓRIO',park:'PARQUE'}[kind];
 if(kind==='park'){box(scene,11,.2,11,x,.02,z,new T.MeshLambertMaterial({color:0x9ab784}));for(const [dx,dz] of [[-3,-2],[2,2],[3,-3]])tree(x+dx,z+dz,.9);const tag=makeLabel(special);tag.position.set(x,4.9,z);scene.add(tag);world.walls.push({type:'rect',x,z,hw:5,hd:5,ghost:true});return}
 const height=kind==='factory'?7:kind==='school'?5:kind==='lab'?6.5:3.2+(index%4)*1.1,ww=kind==='factory'?12:10,dd=kind==='factory'?10:9.5;box(scene,ww,height,dd,x,height/2,z,mat);box(scene,ww+.7,.45,dd+.7,x,height+.23,z,mats.white);
 if(kind==='school'){box(scene,3,1.5,.12,x,1.6,z-dd/2-.07,mats.board);box(scene,2.5,1,.2,x,2.2,z-dd/2-.1,mats.white)}
@@ -275,7 +234,7 @@ function compactCity(){
   const geo=obj.geometry,p=geo?.parameters,type=geo?.type;
   if(!p||!(type==='BoxGeometry'||type==='CylinderGeometry'))continue;
   const nums=type==='BoxGeometry'?[p.width,p.height,p.depth]:[p.radiusTop,p.radiusBottom,p.height,p.radialSegments,p.heightSegments||1];
-  const key=type+'|'+nums.join(',')+'|'+obj.material.type+'|'+obj.material.color.getHexString();
+  const key=type+'|'+nums.join(',')+'|'+obj.material.type+'|'+obj.material.uuid;
   if(!groups.has(key))groups.set(key,{type,nums,material:obj.material,items:[]});
   groups.get(key).items.push(obj);
  }
@@ -308,7 +267,7 @@ function animate(now){
  }else accum=0;
  car.position.set(state.drive.x,0,state.drive.z);car.rotation.y=state.drive.angle;
  for(const wheel of world.wheels)wheel.mesh.rotation.y+=((wheel.side<0?state.drive.a:state.drive.b)/255)*dt*13;
- goal.children[0].rotation.z=world.clockTime*.5;marker.position.y=6.1+Math.sin(world.clockTime*2)*.3;marker.rotation.y=world.clockTime*.5;
+ goal.children[0].rotation.z=world.clockTime*.5;const glow=1+Math.sin(world.clockTime*3)*.10;goal.children[0].scale.set(glow,glow,glow);marker.position.y=6.1+Math.sin(world.clockTime*2)*.3;marker.rotation.y=world.clockTime*.5;
  const angle=state.drive.angle,external=state.cameraTop,px=state.drive.x,pz=state.drive.z,fx=-Math.sin(angle),fz=-Math.cos(angle);
  cameraTarget.set(px-fx*(external?9:.25),external?6.2:1.95,pz-fz*(external?9:.25));
  camera.position.lerp(cameraTarget,1-Math.exp(-11*dt));
@@ -374,7 +333,7 @@ function updateRoute(force=false){
 
 function collides(x,z){if(Math.abs(x)>73||Math.abs(z)>73)return true;for(const wall of world.walls){if(wall.ghost)continue;if(wall.type==='circle'){if(Math.hypot(x-wall.x,z-wall.z)<wall.r+1)return true}
 else{const dx=Math.max(Math.abs(x-wall.x)-wall.hw,0),dz=Math.max(Math.abs(z-wall.z)-wall.hd,0);if(Math.hypot(dx,dz)<1)return true}}return false}
-function physics(dt){const d=state.drive,cmd=commands();state.desired=cmd;state.driveSeconds+=dt;world.uiTimer+=dt;if(world.uiTimer>=.10){world.uiTimer=0;for(let i=0;i<2;i++)if(state.pointer[i]===null)setThumb(i,cmd[i]);updateReadout();updateDistance()}const prevA=d.a,prevB=d.b;for(const [key,i] of [['a',0],['b',1]]){const target=cmd[i],current=d[key],rate=Math.abs(target)>Math.abs(current)?570:1550;d[key]=current+clamp(target-current,-rate*dt,rate*dt);if(Math.abs(d[key])<.7)d[key]=0}
+function physics(dt){const d=state.drive,cmd=commands();state.desired=cmd;state.driveSeconds+=dt;world.uiTimer+=dt;if(world.uiTimer>=.10){world.uiTimer=0;for(let i=0;i<2;i++)if(state.pointer[i]===null)setThumb(i,cmd[i]);updateReadout();updateDistance();updateDistrict()}const prevA=d.a,prevB=d.b;for(const [key,i] of [['a',0],['b',1]]){const target=cmd[i],current=d[key],rate=Math.abs(target)>Math.abs(current)?570:1550;d[key]=current+clamp(target-current,-rate*dt,rate*dt);if(Math.abs(d[key])<.7)d[key]=0}
 const a=d.a/255,b=d.b/255;const v=(a+b)/2*9.2,omega=(b-a)*1.85;const angleNext=d.angle+omega*dt;const nx=d.x-Math.sin((d.angle+angleNext)/2)*v*dt,nz=d.z-Math.cos((d.angle+angleNext)/2)*v*dt;if((Math.abs(v)>.1||Math.abs(omega)>.1)&&collides(nx,nz)){d.a=0;d.b=0;state.desired=[0,0];d.collided=true;updateReadout();toast('Obstáculo! Solte os controles e acelere novamente.',true);return}
 d.angle=angleNext;d.x=nx;d.z=nz;state.meters+=Math.abs(v*dt);updateRoute();
 const goal=missions[Math.min(state.mission,3)].to;if(Math.hypot(d.x-goal[0],d.z-goal[1])<2.65){completeMission();return}
