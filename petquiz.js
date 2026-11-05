@@ -337,7 +337,7 @@
  const fresh=()=>({
   phase:'intro',idx:0,order:buildRound(),options:QUESTIONS.map(()=>shuffle([0,1,2,3])),
   bonusAt:scheduleBonus(),bonusOrder:shuffle(BONUS.map((_,i)=>i)),shownBonus:[],currentBonus:null,solvedBonus:0,
-  score:0,correct:0,wrong:0,timeout:0,last:null,deadline:0
+  score:0,correct:0,wrong:0,timeout:0,last:null,deadline:0,finishedReason:null
  });
  // A partida existe somente enquanto a página estiver aberta. Não salvar pontuação,
  // rodada, perguntas ou bônus: ao voltar, sempre abrir a tela inicial.
@@ -409,7 +409,7 @@
   if(phase==='read')sound('start');
   else if(phase==='answer')sound('reveal');
   else if(phase==='bonus')sound('bonus');
-  else if(phase==='finished')sound('finish');
+  else if(phase==='finished'&&state.finishedReason!=='quit')sound('finish');
  }
  function activeQuestion(){return QUESTIONS[state.order[state.idx]]}
  function activeOptions(){return state.options[state.order[state.idx]]}
@@ -512,16 +512,27 @@
   $('bonusMotorStatus').textContent=observation;
  }
  function drawFinal(){
+  const withdrew=state.finishedReason==='quit';
+  const answered=state.correct+state.wrong+state.timeout;
+  $('finalView').classList.toggle('is-abandoned',withdrew);
+  $('finalKicker').textContent=withdrew?'RESULTADO DA PARTIDA':'FIM DO PETQUIZ';
+  $('finalTitle').textContent=withdrew?'Partida encerrada':'Parabéns!';
+  $('finalDescription').textContent=withdrew?
+   'Este é seu placar até o momento da desistência.':'Você concluiu o desafio.';
+  $('finalScoreLabel').textContent=withdrew?'PONTOS ACUMULADOS':'SUA PONTUAÇÃO';
+  $('finalProgress').textContent=answered+' de '+state.order.length+' perguntas respondidas';
   $('finalScore').textContent=fmt(state.score);
   $('finalCorrect').textContent=state.correct;
   $('finalWrong').textContent=state.wrong;
   $('finalTimeout').textContent=state.timeout;
   $('finalBonus').textContent=state.shownBonus.length;
+  $('quitQuiz').hidden=true;
  }
  function draw(){
   const phase=state.phase;
   view(phase==='intro'?'introScreen':'gameScreen');
   $('resetQuiz').hidden=phase==='intro';
+  $('quitQuiz').hidden=phase==='intro'||phase==='finished';
   if(phase==='intro')return;
   updateHud();
   if(phase==='read'||phase==='answer'||phase==='result')renderQuestion();
@@ -623,10 +634,12 @@
   draw();
  }
  function abandonQuiz(){
-  reset();
-  if(document.fullscreenElement)document.exitFullscreen().catch(()=>{});
-  // A saída nunca abre outra página nem preserva o placar.
-  window.scrollTo({top:0,behavior:'instant'});
+  if(state.phase==='intro'||state.phase==='finished')return;
+  // Não reiniciar: conservar os pontos e respostas já registrados.
+  // Uma pergunta ainda sem resposta não vira erro nem tempo esgotado.
+  state.finishedReason='quit';
+  setPhase('finished',0);
+  // O resultado permanece visível e nenhuma contagem continua em segundo plano.
  }
  function bind(){
   $('startQuiz').addEventListener('click',start);
@@ -675,6 +688,7 @@
    phase:state.phase,index:state.idx,score:state.score,correct:state.correct,wrong:state.wrong,
    timeout:state.timeout,bonusCount:state.shownBonus.length,bonusSolved:state.solvedBonus,deadline:state.deadline,
    bonusAt:[...state.bonusAt],questionTotal:state.order.length,
+   finishedReason:state.finishedReason,answered:state.correct+state.wrong+state.timeout,
    plan:state.order.map(i=>({id:QUESTIONS[i].id,stage:QUESTIONS[i].stage,topic:QUESTIONS[i].topic||null,requires:QUESTIONS[i].requires||[]})),
    soundEnabled:soundOn,fullscreen:!!document.fullscreenElement
  }),version:'2.0'};
