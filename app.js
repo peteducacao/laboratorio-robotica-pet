@@ -539,7 +539,7 @@ function mistakes(){
 }
 function missing(){const wired=new Set(state.wires.filter(w=>!w.loose).map(w=>electricalKey(w.a,w.b)));return expectedConnections().filter(([a,b])=>!wired.has(electricalKey(a,b)));}
 function mistakeExplanation(w){
- if(w.loose)return 'O jumper tem uma ponta solta. Arraste a bolinha até o pino correto ou remova o fio.';
+ if(w.loose)return 'O jumper tem uma ponta solta. Arraste o quadradinho até o pino correto ou remova o fio.';
  if([w.a,w.b].some(p=>p==='s1.LEDG'||p==='s2.LEDG'))
   return 'O terceiro terminal LED− da gangorra é apenas da luz indicadora e não alimenta o ESP32. Use os contatos 1 e 2 para ligar ou desligar a alimentação.';
  return 'Revise o fio '+portName(w.a)+' → '+portName(w.b)+'. Os contatos 1 e 2 da gangorra podem ser invertidos, mas cada chave deve conectar o positivo de apenas uma fonte ao seu módulo.';
@@ -1601,7 +1601,7 @@ function leaveReconnectLoose(clientX,clientY){
  state.selectedWire=pending.index;state.selected=null;state.inspector='wires';state.completed=false;
  reconnectPending=null;pendingAlignment=null;wireAlignment=null;
  refresh();
- message('Ponta solta posicionada. Ela fica aqui até você arrastá-la para um pino.',true);
+ message('Ponta solta posicionada. Arraste o quadradinho para fazer curvas ou conectar a um pino.',true);
  return true;
 }
 function finishReconnect(newPort){
@@ -2490,7 +2490,7 @@ function pointerUp(e){
        previewPoint=null;previewSnapPort=null;pendingAlignment=null;
        state.selectedWire=state.wires.length-1;state.selected=null;state.inspector='wires';
        state.completed=false;refresh();
-       message('Ponta solta fixada na bancada. Arraste a bolinha para conectar a um pino.',true);
+       message('Ponta solta fixada na bancada. Arraste o quadradinho para curvar ou conectar.',true);
      }else{previewPoint=null;requestDraw();}
    }
   }
