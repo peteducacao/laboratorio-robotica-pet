@@ -1297,6 +1297,26 @@ function wireRoute(start,via,end,startPort,endPort){
 // Move uma extremidade sem reaproveitar o cotovelo antigo do terminal.
 // Preserva as curvas do restante do jumper e recria só a aproximação final.
 function reconnectRoute(pending,position){
+ // No toque, o caminho é desenhado pelo dedo e já possui todos os cotovelos.
+ // Não reconstruir a rota com o algoritmo antigo: isso apagava as curvas
+ // ao soltar o fio e retomar a ponta quadrada no celular.
+ if(pending.touchRoute?.length>=2){
+  const path=pending.touchRoute.map(p=>({x:Math.round(p.x),y:Math.round(p.y)}));
+  if(position){
+   const to={x:Math.round(position.x),y:Math.round(position.y)};
+   const tail=path.at(-1);
+   if(tail.x!==to.x||tail.y!==to.y){
+    if(tail.x!==to.x&&tail.y!==to.y){
+     const before=path.at(-2);
+     const wasHorizontal=before&&Math.abs(before.y-tail.y)<2;
+     path.push(wasHorizontal?{x:to.x,y:tail.y}:{x:tail.x,y:to.y});
+    }
+    path.push(to);
+   }
+  }
+  const normalized=mobileNormalizeRoute(path);
+  return pending.end==='b'?normalized:normalized.reverse();
+ }
  const w=state.wires[pending.index],all=pending.base|| (w&&wirePoints(w));
  if(!all||all.length<2||!position)return [];
  const round=point=>({x:Math.round(point.x),y:Math.round(point.y)});
@@ -2208,29 +2228,56 @@ function mobileFingerRoute(g,e){
 }
 // Arraste de um jumper já conectado: a bolinha acompanha o dedo e
 // as mudanças reais de direção geram novos pontos em pending.corners.
+// O MESMO traçado ortogonal utilizado ao criar um fio agora funciona
+// ao RETOMAR o quadradinho de uma ponta solta, inclusive após várias pausas.
+// A prévia e a gravação recebem exatamente a rota percorrida pelo dedo.
 function mobileReconnectFinger(g,e){
  if(e.pointerType!=='touch'||!g?.moved||!reconnectPending)return;
- const point=mobileRoundPoint(worldXY(e.clientX,e.clientY));
- if(!g.reconnectFingerLast){
-  g.reconnectFingerLast=mobileRoundPoint(worldXY(g.startX,g.startY));
+ const pending=reconnectPending;
+ const wire=state.wires[pending.index];
+ if(!wire)return;
+ const current=mobileRoundPoint(worldXY(e.clientX,e.clientY));
+ if(!g.reconnectFingerFixed){
+  const base=pending.base||wirePoints(wire);
+  if(base.length<2)return;
+  g.reconnectFingerFixed=(pending.end==='b'?base:[...base].reverse()).map(mobileRoundPoint);
+  g.reconnectFingerPrevious=mobileRoundPoint(worldXY(g.startX,g.startY));
+  g.reconnectFingerHead=g.reconnectFingerFixed.at(-1);
   g.reconnectFingerAxis=null;
-  return;
  }
- const prev=g.reconnectFingerLast,dx=point.x-prev.x,dy=point.y-prev.y;
- if(Math.hypot(dx,dy)<7/zoom)return;
- const axis=Math.abs(dx)>Math.abs(dy)*1.25?'x':
-   Math.abs(dy)>Math.abs(dx)*1.25?'y':null;
- if(axis&&!g.reconnectFingerAxis)g.reconnectFingerAxis=axis;
- else if(axis&&axis!==g.reconnectFingerAxis){
-  if(Math.abs(axis==='x'?dx:dy)*zoom>=8 &&
-     reconnectPending.corners.length<40){
-   const last=g.reconnectFingerLast,existing=reconnectPending.corners.at(-1);
-   if(!existing||Math.hypot(existing.x-last.x,existing.y-last.y)>7/zoom)
-    reconnectPending.corners.push({...last});
-   g.reconnectFingerAxis=axis;
+ const prev=g.reconnectFingerPrevious,dx=current.x-prev.x,dy=current.y-prev.y;
+ const dist=Math.hypot(dx,dy);
+ if(dist>=6/zoom){
+  const candidate=Math.abs(dx)>Math.abs(dy)*1.2?'x':
+   Math.abs(dy)>Math.abs(dx)*1.2?'y':null;
+  if(candidate&&!g.reconnectFingerAxis)g.reconnectFingerAxis=candidate;
+  else if(candidate&&candidate!==g.reconnectFingerAxis&&
+          Math.abs(candidate==='x'?dx:dy)*zoom>=7){
+   // Guarda a última virada ANTES de seguir o novo eixo.
+   const previousHead=mobileRoundPoint(g.reconnectFingerHead);
+   const last=g.reconnectFingerFixed.at(-1);
+   if(last&&Math.hypot(previousHead.x-last.x,previousHead.y-last.y)>=4/zoom&&
+      g.reconnectFingerFixed.length<46){
+    g.reconnectFingerFixed.push(previousHead);
+   }
+   g.reconnectFingerAxis=candidate;
   }
+  g.reconnectFingerPrevious=current;
  }
- g.reconnectFingerLast=point;
+ const anchor=g.reconnectFingerFixed.at(-1);
+ if(!anchor)return;
+ const axis=g.reconnectFingerAxis||
+  (Math.abs(current.x-anchor.x)>=Math.abs(current.y-anchor.y)?'x':'y');
+ const head=mobileRoundPoint(axis==='x'?
+  {x:current.x,y:anchor.y}:{x:anchor.x,y:current.y});
+ g.reconnectFingerHead=head;
+ const route=mobileNormalizeRoute([...g.reconnectFingerFixed,head,current]);
+ if(route.length<2)return;
+ pending.touchRoute=route;
+ pending.point=current;
+ pending.snapPort=null;
+ pendingAlignment=null;
+ requestDraw();
 }
 function mobileFinishFingerRoute(g,targetPort=null,looseTip=null){
  if(!g?.fingerFixed)return;
@@ -2291,8 +2338,8 @@ function pointerMove(e){
    }
   }else if(g.type==='wire-end'||g.type==='reconnect-bend'){
    // A ponta pode continuar pelo dedo mesmo quando foi selecionada com toque curto.
-   mobileReconnectFinger(g,e);
    moveReconnect(e.clientX,e.clientY);
+   mobileReconnectFinger(g,e);
   }else if(g.type==='wire-bend'){
    if(g.moved&&!g.saved){snapshot();g.saved=true;}
    if(g.moved)moveWireBend(g,e.clientX,e.clientY);
