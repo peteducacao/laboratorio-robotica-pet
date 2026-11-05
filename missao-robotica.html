@@ -10,11 +10,11 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&family=Manrope:wght@500;600;700;800&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="missao-robotica.css?v=25">
+<link rel="stylesheet" href="missao-robotica.css?v=27">
 <script defer src="petgame-world2.js?v=4"></script>
-<script defer src="petgame-circuit-board.js?v=1"></script>
-<script defer src="petgame-discovery.js?v=6"></script>
-<script defer src="missao-robotica.js?v=25"></script>
+
+<script defer src="petgame-discovery.js?v=7"></script>
+<script defer src="missao-robotica.js?v=26"></script>
 </head>
 <body>
 <div class="game" id="game">
@@ -43,7 +43,8 @@
  <div class="diagnostic-heading"><span class="eyebrow">PETGAME · OFICINA DE DESCOBERTAS</span><div class="challenge-actions"><div class="timer"><span>◷</span><b id="repairTimer">30</b><span>s</span></div></div></div>
  <h2 id="diagnosticTitle">Investigue o circuito</h2>
  <p class="diagnostic-prompt" id="diagnosticQuestion">Observe o que está acontecendo com o carrinho.</p>
- <div class="diagnostic-choices" id="diagnosticChoices" aria-label="Bancada interativa de investigação de circuitos"></div>
+ <div id="petgameWorkbenchHost" class="pet-workbench-host" hidden aria-label="Área de criação TinkerPET para a missão"></div>
+  <div class="diagnostic-choices" id="diagnosticChoices" aria-label="Bancada interativa de investigação de circuitos"></div>
  <p class="diagnostic-feedback" id="diagnosticFeedback" aria-live="polite">Investigue, teste e observe o que acontece.</p>
  <div class="timebar"><span id="repairTimebar"></span></div>
 </section></div>
