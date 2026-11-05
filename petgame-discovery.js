@@ -50,6 +50,17 @@ const operations=[
   effect:'IN4 da ponte H foi ligado ao D18 do ESP32, conforme o esquema do projeto.'}
 ];
 let active=null;
+let automaticProgress=null;
+function scheduleAutomaticProgress(){
+ if(automaticProgress!==null)clearTimeout(automaticProgress);
+ const session=active;
+ automaticProgress=setTimeout(()=>{
+  automaticProgress=null;
+  if(active!==session||!session||session.kind!=='repair'||!get()?.fixed)return;
+  const complete=session.finished;active=null;complete();
+ },1700);
+}
+
 const get=()=>active?.state.discovery;
 function ensure(state,preserve){
  if(!preserve||!state.discovery||!Array.isArray(state.discovery.inspected)){
@@ -67,6 +78,7 @@ function ensure(state,preserve){
 function begin(state,kind,index,finished,preserve=false){
  const table=kind==='repair'?investigations:experiments;
  if(!table[index])throw Error('Descoberta inválida '+kind+' '+index);
+ if(automaticProgress!==null){clearTimeout(automaticProgress);automaticProgress=null;}
  active={state,kind,index,finished};ensure(state,preserve);
  // Nas bancadas de fios, a criança deve conseguir mexer imediatamente.
  // A falha já foi detectada antes de abrir o editor: não bloquear a área de criação.
@@ -80,6 +92,7 @@ function begin(state,kind,index,finished,preserve=false){
   }
  }
  if(kind==='repair')renderRepair();else renderExperiment();
+ if(kind==='repair'&&isWiringChallenge(index)&&get()?.fixed)scheduleAutomaticProgress();
 }
 function componentCard(key,d){
  const [name,file]=parts[key],activeCard=d.selected===key;
@@ -168,8 +181,7 @@ function renderRepair(){
   (d.baseline?'Testar o circuito depois da mudança →':'Testar o circuito agora →')+'</button></div>';
  }
  const success=d.fixed?'<div class="pet-success" role="status"><strong>✓ Circuito funcionando!</strong>'+
-  '<p>'+esc(item.after)+'</p><button class="button primary block" data-finish="1" type="button">'+
-  'Continuar entrega →</button></div>':'';
+  '<p>'+esc(item.after)+'</p>'+(isWiring?'<strong>Retomando a entrega...</strong>':'<button class="button primary block" data-finish="1" type="button">Continuar entrega →</button>')+'</div>':'';
  const host=$('petgameWorkbenchHost');
  if(host){
   host.hidden=!isWiring;
@@ -189,12 +201,19 @@ function renderRepair(){
    host.dataset.locked='false'; // Nunca impedir a seleção ou o arrasto do fio.
   }else host.replaceChildren();
  }
- $('diagnosticChoices').innerHTML=(isWiring?'':circuitVisual(active.index,d))+
-  '<div class="pet-instruction">'+(isWiring?'Encontre o fio solto ou trocado na bancada original do TinkerPET.':'Observe as peças para compreender o circuito')+'</div>'+
-  (isWiring?'':'<div class="pet-parts">'+item.parts.map(k=>componentCard(k,d)).join('')+'</div>')+
-  observation+task+output(d)+clue(item,d)+success+
-  (!d.fixed?'<button class="pet-hint-button" data-hint="1" type="button">💡 '+
-   (d.hints>=1?'Mais uma pista':'Preciso de uma pista')+'</button>':'');
+ $('repairOverlay').classList.toggle('petgame-wiring-open',isWiring);
+ if(isWiring){
+  $('diagnosticChoices').innerHTML=d.fixed?success:
+   '<div class="petgame-guidance"><span>Encontre a ponta solta ou trocada e conecte no terminal correto.</span>'+
+   '<button class="pet-hint-button" data-hint="1" type="button">💡 '+(d.hints?'Outra pista':'Pista')+'</button></div>'+
+   clue(item,d);
+ }else{
+  $('diagnosticChoices').innerHTML=circuitVisual(active.index,d)+
+   '<div class="pet-instruction">Observe as peças para compreender o circuito</div>'+
+   '<div class="pet-parts">'+item.parts.map(k=>componentCard(k,d)).join('')+'</div>'+
+   observation+task+output(d)+clue(item,d)+success+
+   (!d.fixed?'<button class="pet-hint-button" data-hint="1" type="button">💡 '+(d.hints>=1?'Mais uma pista':'Preciso de uma pista')+'</button>':'');
+ }
 // O iframe permanece montado durante as pistas e testes para não perder os fios.
 }
 function renderExperiment(){
@@ -277,19 +296,27 @@ function isWiringChallenge(index){return [1,2,4,5].includes(index)}
 function handlePointerDown(){}
 function handlePointerMove(){}
 function handlePointerUp(){}
+/* No reparo com fios, o editor original informa o resultado do circuito.
+   A conexão correta confirma a missão e prossegue sem um segundo botão. */
 window.addEventListener('message',event=>{
  if(event.origin!==window.location.origin||event.data?.type!=='petgame-workbench-status')return;
  if(!active||active.kind!=='repair'||event.data.challenge!==active.index)return;
  const frame=$('petgameWorkbenchHost')?.querySelector('iframe');
  if(!frame||event.source!==frame.contentWindow)return;
- const d=get(),before=!!d.values.wireSolved,solved=event.data.solved===true;
+ const d=get(),solved=event.data.solved===true;
  d.values.wireSolved=solved;
  d.values.wireDestination=typeof event.data.chosenPort==='string'?event.data.chosenPort:'';
- if(before!==solved&&!d.fixed){
-  d.message=solved?'A ligação foi restaurada. Faça o novo teste para confirmar.':
-   'Você mexeu na fiação. Teste novamente para observar o resultado.';
+ if(d.fixed)return;
+ if(solved){
+  d.fixed=true;d.baseline=true;d.tests=Math.max(d.tests||0,2);
+  const operation=operations[active.index];
+  d.testResult={ok:true,title:'Ligação reconhecida!',text:operation.effect};
+  d.message='✓ Circuito corrigido! Retomando sua entrega.';
+  renderRepair();scheduleAutomaticProgress();
+ }else if(event.data.connected===true&&d.values.wireDestination){
+  d.message='A ligação ainda não resolveu a falha. Confira os terminais e tente outra conexão.';
+  d.testResult={ok:false,title:'Continue investigando',text:d.message};
   const feedback=$('diagnosticFeedback');if(feedback)feedback.textContent=d.message;
-  d.testResult=null;
  }
 });
 function handleInput(e){
