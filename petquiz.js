@@ -295,7 +295,7 @@
    check:(a,b)=>a>=30&&b>=30&&Math.abs(a-b)<=10,tip:'As duas rodas precisam avançar em velocidades semelhantes.'},
   {id:'curve',title:'Faça o carrinho virar à esquerda!',prompt:'Experimente deixar o Motor B mais rápido que o A, ambos para a frente.',voltage:false,
    check:(a,b)=>a>=0&&b>=30&&b-a>=20,tip:'A roda do lado direito precisa girar mais rápido.'},
-  {id:'regulator',title:'Regule o LM2596 para 5 V!',prompt:'A entrada recebe 9 V. Ajuste a saída simulada para 5 V e confirme a medição.',voltage:true,
+  {id:'regulator',title:'Regule o LM2596!',prompt:'Ajuste a saída do regulador e confira a medição.',voltage:true,
    check:v=>v===5,tip:'Observe o valor de saída no mostrador.'}
  ];
  const keys=['read','answer','result','bonus','bonusResult'];
