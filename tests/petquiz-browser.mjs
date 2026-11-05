@@ -24,7 +24,7 @@ assert(!bonusMarkup.includes('class="bonus-target"'),'O desafio não deve mostra
 const lmBonus=bonusScript.match(/id:'regulator',title:'([^']+)',prompt:'([^']+)',voltage:true/);
 assert(lmBonus,'O bônus LM2596 precisa existir');
 assert.equal(lmBonus[1],'Regule o LM2596!');
-assert(!/5\\s*V|5,0\\s*V/.test(lmBonus[1]+' '+lmBonus[2]),'O enunciado não pode entregar a regulagem');
+assert(!/5\s*V|5,0\\s*V/.test(lmBonus[1]+' '+lmBonus[2]),'O enunciado não pode entregar a regulagem');
 const browser=await chromium.launch({headless:true,args:['--disable-dev-shm-usage']});
 mkdirSync('test-results',{recursive:true});
 const screens=[
@@ -293,7 +293,7 @@ try{
      if(title.includes('lm2596')){
       assert.equal(await p.locator('.bonus-target').count(),0,'Sem objetivo visível no LM2596');
       assert.equal(await p.locator('#bonusTitle').textContent(),'Regule o LM2596!');
-      assert(!/5\\s*V/.test(await p.locator('#bonusPrompt').textContent()),'Sem resposta no enunciado');
+      assert(!/5\s*V/.test(await p.locator('#bonusPrompt').textContent()),'Sem resposta no enunciado');
       await fill(p,'bonusVoltage',5);
      }
      else if(title.includes('esquerda')){await fill(p,'bonusA',20);await fill(p,'bonusB',70)}
