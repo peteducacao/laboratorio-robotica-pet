@@ -393,3 +393,58 @@
  .pet-wheel.moving{animation:none}
  .pet-part,.pet-hint-button{transition:none}
 }
+
+
+/* PETGame 2.1 — legibilidade dos controles e das missões em tela horizontal. */
+@media(orientation:landscape) and (max-height:600px){
+ .mission-panel{
+  position:absolute!important;
+  left:50%!important;
+  right:auto!important;
+  transform:translateX(-50%);
+  top:54px!important;
+  width:min(350px,calc(100vw - 284px))!important;
+  max-width:none!important;
+  padding:7px 10px!important;
+  border-radius:12px;
+  z-index:3;
+ }
+ .mission-panel strong{font-size:clamp(11px,1.7vw,14px)!important;margin:2px 0!important}
+ .mission-panel p{display:none}
+ .mission-caption{font-size:8px!important;gap:5px;letter-spacing:.5px}
+ .mission-status{margin-top:3px!important;padding-top:4px!important;gap:4px 7px!important;font-size:9px!important}
+ .stage-progress{font-size:8px!important;padding:3px 5px}
+ .district-chip{font-size:7px}
+ .control-tray{z-index:4}
+ .motor-control{position:relative;z-index:1}
+ .minimap{z-index:4}
+}
+@media(orientation:landscape) and (max-height:600px) and (max-width:610px){
+ .mission-panel{width:calc(100vw - 232px)!important}
+ .mission-caption .district-chip{display:none}
+ .mission-status #missionDone{display:none}
+}
+/* Quando o documento inteiro entra em tela cheia, os desafios continuam visíveis. */
+:root:fullscreen,body:fullscreen{width:100%;height:100%;overflow:hidden}
+:root:fullscreen .overlay{z-index:50;inset:0;position:fixed}
+:root:fullscreen .dialog{max-height:min(93dvh,880px)}
+/* Nos desafios, não há saída nem ação de pular a investigação. */
+#questionOverlay .challenge-close,#repairOverlay .challenge-close{display:none!important}
+.pet-observation strong{color:#177c6a}
+.pet-task{background:#f0f8f8;border:1px solid #d3e9e2;padding:13px 15px;border-radius:13px;display:grid;gap:10px}
+.pet-task h3{margin:0;font-size:14px;color:#1e5962}
+.pet-task p{margin:0!important;font-size:12px!important;line-height:1.5!important}
+.pet-task-row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.pet-task label{display:grid;gap:5px;color:#355b65;font-size:12px;font-weight:800;min-width:0}
+.pet-task select{width:100%;min-height:43px;padding:8px 10px;border:1px solid #c7dcd8;border-radius:10px;background:white;color:#214b59;font-size:13px}
+.pet-task .pet-switch{min-height:47px;border-radius:12px;border:2px solid #a3b9b7;font-size:14px;font-weight:850;background:#e1e8e7;color:#36515a}
+.pet-task .pet-switch.on{border-color:#18b28a;background:#d5f5e6;color:#087958}
+.pet-test-output{border-radius:13px;padding:13px 15px;background:#ecf7fb;border:1px solid #c8e4e8}
+.pet-test-output strong{display:block;color:#197987;font-size:14px}
+.pet-test-output p{margin:6px 0 0!important;font-size:12px!important;color:#476b78!important}
+.pet-test-output.ok{background:#e8f9ee;border-color:#b7e2c8}
+.pet-test-output.ok strong{color:#13774c}
+.pet-step{font-size:11px;font-weight:800;color:#4e7779}
+.pet-switch-layout{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.pet-switch-layout .pet-switch{min-width:100px}
+@media(max-width:650px){.pet-task-row{gap:7px}.pet-task{padding:11px}.pet-task select{font-size:11px}}
