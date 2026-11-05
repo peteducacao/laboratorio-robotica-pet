@@ -5,43 +5,291 @@
  const FAST=window.__PETQUIZ_TEST_SPEED__===true;
  const DUR={read:FAST?180:5000,answer:FAST?1800:20000,result:FAST?160:4000,bonus:FAST?5000:35000,bonusResult:FAST?220:1900};
  const QUESTIONS=[
-  {prompt:'O ESP32 está ligado, mas a ponte H não recebe energia das pilhas AA. Qual é a primeira verificação mais adequada?',
-   choices:['Revisar os fios de sinal IN1 e IN2','Verificar o conjunto AA, a gangorra dos motores e a entrada de energia da ponte H','Trocar os terminais do Motor A','Aumentar a tensão do LM2596 para 9 V'],correct:1,
-   why:'O ESP32 e a ponte H têm alimentações distintas. Primeiro é preciso investigar o caminho das pilhas AA até a ponte H.'},
-  {prompt:'O Motor B gira, mas o Motor A não responde. Por onde começar a investigação?',
-   choices:['Conferir as duas conexões do Motor A na ponte H','Inverter os fios da bateria de 9 V','Alterar a gangorra do ESP32','Aumentar igualmente as velocidades dos motores'],correct:0,
-   why:'Como o Motor B responde, vale verificar primeiro os terminais e a fiação específicos do Motor A.'},
-  {prompt:'No nosso carrinho, qual caminho alimenta o ESP32 a partir da bateria de 9 V?',
-   choices:['Bateria 9 V → saída Motor A → GPIO','Bateria 9 V → ponte H → pino D27','Bateria 9 V → conjunto AA → GND','Bateria 9 V → gangorra → LM2596 ajustado → VIN e GND do ESP32'],correct:3,
-   why:'O LM2596 reduz e regula a tensão antes da alimentação do ESP32 pelo VIN e GND.'},
-  {prompt:'A ponte H recebe alimentação das pilhas, mas os comandos do ESP32 não são reconhecidos. O que pode estar faltando?',
-   choices:['Uma segunda bateria de 9 V nos motores','Ligar o negativo da ponte H a um GND do ESP32','Ligar a saída do Motor B ao VIN','Remover o fio GND do regulador'],correct:1,
-   why:'Os circuitos de controle precisam de uma referência de GND compartilhada para interpretar corretamente os sinais.'},
-  {prompt:'As duas rodas avançam, mas o carrinho precisa fazer uma curva para a esquerda. Qual ajuste tende a produzir essa curva?',
-   choices:['Fazer o Motor B girar para a frente mais rápido que o A','Aumentar igualmente A e B','Desligar a alimentação do ESP32','Aumentar o Motor A para a frente mais que o B'],correct:0,
-   why:'Em um carrinho diferencial, a roda do lado direito mais rápida faz o robô curvar para a esquerda.'},
-  {prompt:'A entrada do LM2596 recebe 9 V. Antes de ligá-lo ao VIN do ESP32 deste projeto, o que deve ser feito?',
-   choices:['Conectar a saída sem medi-la','Ligar a saída diretamente no pino D18','Ajustar e conferir a saída em aproximadamente 5 V','Juntar o OUT+ e o OUT−'],correct:2,
-   why:'No projeto, a saída do regulador deve ser ajustada e medida em torno de 5 V antes de conectar ao VIN.'},
-  {prompt:'Os suportes A (4 pilhas) e B (2 pilhas) serão ligados em série. Qual conexão entre eles está correta?',
-   choices:['A− com B−','A+ com B+','A− com B+ e também A+ com B−','A+ com B−, deixando as outras pontas para alimentar o circuito'],correct:3,
-   why:'Na ligação em série do projeto, A+ conecta-se ao B−. Os terminais livres formam a alimentação do conjunto.'},
-  {prompt:'O esquema do carrinho usa IN4 da ponte H no pino D18 do ESP32, mas o fio está em D19. Qual correção corresponde ao esquema?',
-   choices:['Mover IN4 para D18','Mover IN4 para VIN','Mover IN1 para D19','Unir IN4 à saída do Motor A'],correct:0,
-   why:'O sinal IN4 deve seguir para D18, conforme o esquema de ligações escolhido para esse carrinho.'},
-  {prompt:'O ESP32 acende quando sua gangorra é ligada, mas os motores seguem sem energia. Qual explicação é mais adequada?',
-   choices:['O regulador impede os motores de receber comandos','O motor só funciona com Wi-Fi','A alimentação dos motores depende de outra gangorra e das pilhas AA','O ESP32 não pode funcionar enquanto a ponte H está desligada'],correct:2,
-   why:'Existem duas alimentações e duas gangorras. Ligar somente a do ESP32 não liga a ponte H.'},
-  {prompt:'No projeto, qual é o papel principal da ponte H entre o ESP32 e os motores DC?',
-   choices:['Medir a qualidade da água','Receber sinais de controle e acionar os motores nos sentidos desejados','Carregar a bateria de 9 V','Substituir todas as pilhas AA'],correct:1,
-   why:'A ponte H usa os comandos do microcontrolador para controlar o acionamento e o sentido dos motores.'},
-  {prompt:'O carrinho deveria andar reto, mas uma roda gira bem mais devagar do que a outra. O que faz mais sentido verificar primeiro?',
-   choices:['Se as velocidades comandadas para os dois motores estão iguais','Se a bateria de 9 V está conectada a D27','Se o LM2596 está no máximo','Se as gangorras estão em posições opostas'],correct:0,
-   why:'Antes de mudar fios, compare os comandos e velocidades dos motores A e B: diferenças podem provocar curvas.'},
-  {prompt:'Uma criança quer fazer o carrinho girar no próprio lugar. Qual combinação de comandos para os motores é mais apropriada?',
-   choices:['Ambos parados','A e B para a frente, iguais','A mais lento e B mais rápido, ambos para a frente','Motor A para trás e Motor B para a frente'],correct:3,
-   why:'Rodas girando em sentidos opostos podem fazer o carrinho diferencial girar sobre o próprio eixo.'}
- ];
+ {
+  "id": "componente-fora",
+  "stage": "concept",
+  "topic": "outros",
+  "prompt": "Qual destes componentes não faz parte da montagem do nosso carrinho robótico?",
+  "choices": [
+   "ESP32",
+   "Sensor ultrassônico",
+   "Ponte H",
+   "Motor DC"
+  ],
+  "correct": 1,
+  "why": "O carrinho utiliza ESP32, ponte H e motores DC. O sensor ultrassônico não faz parte dessa montagem."
+ },
+ {
+  "id": "componente-ponte",
+  "stage": "concept",
+  "topic": "ponte",
+  "prompt": "Qual componente é responsável por controlar os motores do carrinho?",
+  "choices": [
+   "Regulador de tensão",
+   "Suporte de pilhas",
+   "Ponte H",
+   "Chave gangorra"
+  ],
+  "correct": 2,
+  "why": "A ponte H recebe os comandos do ESP32 e controla o acionamento dos motores."
+ },
+ {
+  "id": "componente-lm2596",
+  "stage": "concept",
+  "topic": "lm2596",
+  "prompt": "Qual componente utilizamos para regular a tensão que alimenta o ESP32?",
+  "choices": [
+   "Ponte H",
+   "Motor DC",
+   "Chave gangorra",
+   "LM2596"
+  ],
+  "correct": 3,
+  "why": "O LM2596 permite ajustar a tensão de saída para alimentar o ESP32 no projeto."
+ },
+ {
+  "id": "componente-gangorra",
+  "stage": "concept",
+  "topic": "gangorra",
+  "prompt": "Qual destes componentes é utilizado para ligar e desligar a alimentação do carrinho?",
+  "choices": [
+   "Chave gangorra",
+   "Jumper",
+   "Ponte H",
+   "ESP32"
+  ],
+  "correct": 0,
+  "why": "As chaves gangorra interrompem ou liberam a alimentação elétrica."
+ },
+ {
+  "id": "componente-jumper",
+  "stage": "concept",
+  "topic": "jumper",
+  "prompt": "Qual componente permite realizar as conexões elétricas entre as peças do carrinho?",
+  "choices": [
+   "Motor DC",
+   "Roda",
+   "Jumper",
+   "Suporte de pilhas"
+  ],
+  "correct": 2,
+  "why": "Os jumpers são fios usados para interligar os componentes do circuito."
+ },
+ {
+  "id": "componente-esp32",
+  "stage": "concept",
+  "topic": "esp32",
+  "prompt": "Qual componente funciona como o cérebro do nosso carrinho robótico?",
+  "choices": [
+   "Ponte H",
+   "ESP32",
+   "LM2596",
+   "Chave gangorra"
+  ],
+  "correct": 1,
+  "why": "O ESP32 executa os comandos que orientam o comportamento do carrinho."
+ },
+ {
+  "id": "componente-motor",
+  "stage": "concept",
+  "topic": "motor",
+  "prompt": "Qual componente é responsável por movimentar as rodas do carrinho?",
+  "choices": [
+   "Motor DC",
+   "Regulador de tensão",
+   "ESP32",
+   "Suporte de pilhas"
+  ],
+  "correct": 0,
+  "why": "Os motores DC giram seus eixos e movimentam as rodas."
+ },
+ {
+  "id": "componente-rodas",
+  "stage": "concept",
+  "topic": "rodas",
+  "prompt": "Qual é a função das rodas no carrinho robótico?",
+  "choices": [
+   "Controlar a tensão elétrica",
+   "Receber os comandos do ESP32",
+   "Permitir o deslocamento do carrinho",
+   "Armazenar energia"
+  ],
+  "correct": 2,
+  "why": "As rodas transformam o giro dos motores em deslocamento do carrinho."
+ },
+ {
+  "id": "componente-bateria",
+  "stage": "concept",
+  "topic": "bateria",
+  "prompt": "Qual fonte de alimentação utilizamos para o ESP32 no nosso projeto?",
+  "choices": [
+   "Uma pilha AA",
+   "Um painel solar",
+   "O suporte de seis pilhas AA",
+   "Uma bateria de 9 V"
+  ],
+  "correct": 3,
+  "why": "No projeto, a bateria de 9 V passa pela chave gangorra e pelo regulador antes de alimentar o ESP32."
+ },
+ {
+  "id": "componente-pilhas",
+  "stage": "concept",
+  "topic": "pilhas",
+  "prompt": "Para que utilizamos os suportes de pilhas AA no carrinho?",
+  "choices": [
+   "Para controlar a direção",
+   "Para alimentar os motores por meio da ponte H",
+   "Para transmitir comandos por Wi-Fi",
+   "Para regular a saída do LM2596"
+  ],
+  "correct": 1,
+  "why": "O conjunto de pilhas AA alimenta a ponte H, que fornece energia aos motores."
+ },
+ {
+  "id": "funcionamento-alimentacao-ponte",
+  "stage": "practice",
+  "requires": [
+   "pilhas"
+  ],
+  "prompt": "O ESP32 liga normalmente, mas a ponte H não recebe energia. O que verificar primeiro?",
+  "choices": [
+   "As conexões de controle entre ESP32 e ponte H",
+   "A alimentação das pilhas AA e a gangorra dos motores",
+   "As conexões do Motor A com a ponte H",
+   "A saída do regulador de tensão"
+  ],
+  "correct": 1,
+  "why": "O ESP32 e os motores possuem alimentações diferentes. Confira as pilhas AA e a gangorra dos motores."
+ },
+ {
+  "id": "funcionamento-motor-a",
+  "stage": "practice",
+  "requires": [
+   "motor"
+  ],
+  "prompt": "O Motor B funciona, mas o Motor A permanece parado. Qual conexão deve ser investigada primeiro?",
+  "choices": [
+   "A conexão entre o regulador e o ESP32",
+   "A conexão da bateria de 9 V",
+   "As conexões do Motor A na ponte H",
+   "A conexão da gangorra do ESP32"
+  ],
+  "correct": 2,
+  "why": "Se um motor responde e o outro não, vale começar pelas conexões do motor parado."
+ },
+ {
+  "id": "funcionamento-seguir-reto",
+  "stage": "practice",
+  "requires": [
+   "rodas"
+  ],
+  "prompt": "As duas rodas giram, mas o carrinho faz uma curva quando deveria seguir reto. O que ajustar?",
+  "choices": [
+   "Igualar as velocidades dos motores",
+   "Diminuir apenas a velocidade da roda esquerda",
+   "Inverter o sentido de uma das rodas",
+   "Aumentar apenas a velocidade da roda direita"
+  ],
+  "correct": 0,
+  "why": "Rodas que giram em velocidades diferentes podem fazer o carrinho virar."
+ },
+ {
+  "id": "funcionamento-lm",
+  "stage": "practice",
+  "requires": [
+   "lm2596"
+  ],
+  "prompt": "Durante a regulagem do LM2596, o medidor parou em 7 V. Qual ajuste devemos fazer?",
+  "choices": [
+   "Aumentar a saída até 9 V",
+   "Manter a saída em 7 V",
+   "Diminuir a saída até 3 V",
+   "Reduzir a saída até 5 V e conferir a medição"
+  ],
+  "correct": 3,
+  "why": "No projeto, regulamos e conferimos a saída do LM2596 em aproximadamente 5 V antes de alimentar o ESP32."
+ },
+ {
+  "id": "funcionamento-esquerda",
+  "stage": "practice",
+  "requires": [
+   "rodas"
+  ],
+  "prompt": "O carrinho precisa virar à esquerda. Como as rodas devem girar?",
+  "choices": [
+   "As duas para a frente, com a mesma velocidade",
+   "A esquerda mais rápida que a direita",
+   "A direita mais rápida que a esquerda",
+   "As duas para trás, com a mesma velocidade"
+  ],
+  "correct": 2,
+  "why": "Com ambas avançando, a roda direita mais rápida faz o carrinho tender a virar à esquerda."
+ },
+ {
+  "id": "funcionamento-duas-chaves",
+  "stage": "practice",
+  "requires": [
+   "gangorra"
+  ],
+  "prompt": "A gangorra do ESP32 está ligada, mas a dos motores está desligada. O que acontece?",
+  "choices": [
+   "O carrinho funciona normalmente",
+   "O ESP32 pode ligar, mas a ponte H fica sem alimentação das pilhas AA",
+   "A ponte H recebe energia diretamente do regulador",
+   "Os motores recebem energia pelos pinos do ESP32"
+  ],
+  "correct": 1,
+  "why": "Há chaves e fontes distintas: o ESP32 pode ligar sem que os motores estejam alimentados."
+ },
+ {
+  "id": "funcionamento-bateria-9v",
+  "stage": "practice",
+  "requires": [
+   "bateria"
+  ],
+  "prompt": "A bateria de 9 V será utilizada para alimentar o ESP32. Qual sequência corresponde ao projeto?",
+  "choices": [
+   "Bateria → ponte H → ESP32",
+   "Bateria → motor → regulador → ESP32",
+   "Bateria → ESP32 → regulador",
+   "Bateria → gangorra → LM2596 → ESP32"
+  ],
+  "correct": 3,
+  "why": "A bateria passa pela chave gangorra e pelo LM2596 ajustado antes de alimentar o ESP32."
+ },
+ {
+  "id": "funcionamento-chave-off",
+  "stage": "practice",
+  "requires": [
+   "gangorra"
+  ],
+  "prompt": "As pilhas AA estão conectadas, mas a ponte H continua desligada. A gangorra dos motores está em OFF. O que fazer?",
+  "choices": [
+   "Aumentar a velocidade dos motores",
+   "Trocar a conexão entre o ESP32 e o regulador",
+   "Ligar a gangorra responsável pela alimentação da ponte H",
+   "Ajustar o LM2596 para 9 V"
+  ],
+  "correct": 2,
+  "why": "Com a gangorra dos motores em OFF, a alimentação da ponte H fica interrompida."
+ },
+ {
+  "id": "funcionamento-curva-direita",
+  "stage": "practice",
+  "requires": [
+   "rodas"
+  ],
+  "prompt": "A roda esquerda gira mais rápido que a direita, com ambas avançando. Para que lado o carrinho tende a virar?",
+  "choices": [
+   "Para a direita",
+   "Para a esquerda",
+   "Segue reto",
+   "Gira no próprio lugar"
+  ],
+  "correct": 0,
+  "why": "Quando a roda esquerda avança mais rápido, o carrinho tende a virar para a direita."
+ }
+];
  const BONUS=[
   {id:'straight',title:'Faça as duas rodas avançarem juntas!',prompt:'Regule os motores A e B para a frente, na mesma velocidade. Observe as rodas girando.',voltage:false,
    check:(a,b)=>a>=30&&b>=30&&Math.abs(a-b)<=10,tip:'As duas rodas precisam avançar em velocidades semelhantes.'},
@@ -55,14 +303,36 @@
   const a=[...arr];for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a;
  }
  function scheduleBonus(){
-  const candidates=shuffle([2,3,4,5,6,7,8,9,10]);
+  const candidates=shuffle([2,3,4,5,6,7,8]);
   const chosen=[];
   for(const x of candidates){if(chosen.every(y=>Math.abs(x-y)>=2))chosen.push(x);if(chosen.length===3)break}
-  if(chosen.length<2)throw Error('Não foi possível distribuir os eventos bônus');
   return chosen.sort((a,b)=>a-b);
  }
+ // Cinco situações de aplicação e cinco perguntas sobre componentes.
+ // Cada situação precisa aparecer depois da apresentação de seu componente.
+ function buildRound(){
+  const practices=shuffle(QUESTIONS.map((q,i)=>({q,i})).filter(x=>x.q.stage==='practice')).slice(0,5);
+  const topics=new Set(practices.flatMap(x=>x.q.requires));
+  if(topics.size>5)throw Error('Mais pré-requisitos que perguntas introdutórias');
+  const concepts=shuffle(QUESTIONS.map((q,i)=>({q,i})).filter(x=>x.q.stage==='concept'&&!topics.has(x.q.topic)));
+  const needed=QUESTIONS.map((q,i)=>({q,i})).filter(x=>x.q.stage==='concept'&&topics.has(x.q.topic));
+  const selected=[...needed,...concepts.slice(0,5-needed.length),...practices];
+  const pool=[...selected],order=[],introduced=new Set();
+  while(pool.length){
+   const ready=pool.filter(x=>x.q.stage==='concept'||x.q.requires.every(t=>introduced.has(t)));
+   if(!ready.length)throw Error('Rodada sem ordem válida');
+   const introReady=ready.filter(x=>x.q.stage==='concept');
+   const practiceReady=ready.filter(x=>x.q.stage==='practice');
+   const choice=practiceReady.length&&(!introReady.length||Math.random()<.62)?
+    shuffle(practiceReady)[0]:shuffle(introReady)[0];
+   order.push(choice.i);
+   if(choice.q.stage==='concept')introduced.add(choice.q.topic);
+   pool.splice(pool.indexOf(choice),1);
+  }
+  return order;
+ }
  const fresh=()=>({
-  phase:'intro',idx:0,order:shuffle(QUESTIONS.map((_,i)=>i)),options:QUESTIONS.map(()=>shuffle([0,1,2,3])),
+  phase:'intro',idx:0,order:buildRound(),options:QUESTIONS.map(()=>shuffle([0,1,2,3])),
   bonusAt:scheduleBonus(),bonusOrder:shuffle(BONUS.map((_,i)=>i)),shownBonus:[],currentBonus:null,solvedBonus:0,
   score:0,correct:0,wrong:0,timeout:0,last:null,deadline:0
  });
@@ -72,10 +342,67 @@
  let state=fresh();
  let advancing=false;
  const fmt=n=>Math.round(n).toLocaleString('pt-BR');
+ let audio=null,soundOn=true,lastWarning=-1;
+ function audioReady(){
+  if(!soundOn)return null;
+  try{
+   const C=window.AudioContext||window.webkitAudioContext;
+   if(!C)return null;
+   audio ||=new C();
+   if(audio.state==='suspended')audio.resume().catch(()=>{});
+   return audio;
+  }catch{return null}
+ }
+ function tone(freq,duration=.09,type='sine',delay=0,volume=.024){
+  const a=audioReady();if(!a||a.state==='closed')return;
+  try{
+   const o=a.createOscillator(),g=a.createGain(),t=a.currentTime+delay;
+   o.type=type;o.frequency.setValueAtTime(freq,t);
+   g.gain.setValueAtTime(.0001,t);g.gain.exponentialRampToValueAtTime(volume,t+.012);
+   g.gain.exponentialRampToValueAtTime(.0001,t+duration);
+   o.connect(g);g.connect(a.destination);o.start(t);o.stop(t+duration+.018);
+  }catch{}
+ }
+ function sound(event){
+  if(!soundOn)return;
+  if(event==='start'){tone(520,.09);tone(740,.11,'sine',.10)}
+  if(event==='reveal'){tone(720,.08);tone(900,.1,'sine',.10)}
+  if(event==='correct'){tone(660,.1);tone(880,.14,'sine',.11);tone(1100,.23,'sine',.25)}
+  if(event==='wrong'){tone(380,.17,'triangle');tone(250,.22,'triangle',.17)}
+  if(event==='timeout'){tone(270,.14,'triangle');tone(210,.25,'triangle',.18)}
+  if(event==='warning')tone(670,.065,'square',0,.015);
+  if(event==='bonus'){tone(660,.1);tone(830,.11,'sine',.11);tone(1110,.3,'sine',.24)}
+  if(event==='finish'){tone(523,.12);tone(659,.12,'sine',.14);tone(784,.12,'sine',.28);tone(1047,.35,'sine',.43)}
+ }
+ function syncSoundButton(){
+  const b=$('soundToggle');b.setAttribute('aria-pressed',String(soundOn));
+  b.title=soundOn?'Silenciar sons':'Ativar sons';
+  b.innerHTML=soundOn?'♪ <span>Som ligado</span>':'♩ <span>Sem som</span>';
+ }
+ function syncFullscreenButton(){
+  const active=!!document.fullscreenElement;
+  const b=$('fullscreenToggle');b.setAttribute('aria-pressed',String(active));
+  b.title=active?'Sair da tela cheia':'Entrar em tela cheia';
+  b.innerHTML=active?'⊡ <span>Sair da tela cheia</span>':'⛶ <span>Tela cheia</span>';
+ }
+ async function toggleFullscreen(){
+  try{
+   if(document.fullscreenElement)await document.exitFullscreen();
+   else if($('main').requestFullscreen)await $('main').requestFullscreen();
+   else $('fullscreenToggle').title='Tela cheia não disponível neste navegador';
+  }catch{$('fullscreenToggle').title='Tela cheia não disponível neste navegador'}
+  syncFullscreenButton();
+ }
+
  function setPhase(phase,duration){
   state.phase=phase;
   state.deadline=duration?Date.now()+duration:0;
+  lastWarning=-1;
   draw();
+  if(phase==='read')sound('start');
+  else if(phase==='answer')sound('reveal');
+  else if(phase==='bonus')sound('bonus');
+  else if(phase==='finished')sound('finish');
  }
  function activeQuestion(){return QUESTIONS[state.order[state.idx]]}
  function activeOptions(){return state.options[state.order[state.idx]]}
@@ -89,12 +416,12 @@
  }
  function updateHud(){
   $('scoreValue').textContent=fmt(state.score);
-  $('questionCount').innerHTML=String(Math.min(state.idx+1,QUESTIONS.length)).padStart(2,'0')+' <small>/ '+QUESTIONS.length+'</small>';
+  $('questionCount').innerHTML=String(Math.min(state.idx+1,state.order.length)).padStart(2,'0')+' <small>/ '+state.order.length+'</small>';
   const bonus=state.phase==='bonus'||state.phase==='bonusResult';
   $('stageLabel').textContent=bonus?'BÔNUS':'PERGUNTA';
   $('phaseLabel').textContent=state.phase==='read'?'LEITURA':state.phase==='answer'?'RESPOSTAS':bonus?'EVENTO BÔNUS':state.phase==='finished'?'CONCLUÍDO':'RESULTADO';
   $('hudInfo').textContent=state.phase==='read'?'Só a pergunta por 5 segundos':state.phase==='answer'?'20 segundos para escolher':bonus?'Não vale pontos':state.phase==='result'?'Veja a explicação':'';
-  const total=QUESTIONS.length;
+  const total=state.order.length;
   $('runProgress').style.width=((state.idx+(state.phase==='result'?1:0))/total*100)+'%';
  }
  function renderQuestion(){
@@ -131,6 +458,7 @@
    $('answerSymbol').textContent=correct?'✓':last.status==='timeout'?'◷':'!';
    $('feedbackHeading').textContent=correct?'Resposta correta!':last.status==='timeout'?'Tempo encerrado!':'Boa tentativa!';
    $('feedbackPoints').textContent=correct?'+'+fmt(last.delta)+' pontos':'0 ponto nesta pergunta';
+   $('feedbackAdvance').textContent='A próxima atividade começa automaticamente.';
    $('feedbackExplanation').textContent=q.why;
   }
  }
@@ -201,7 +529,12 @@
   if(phase==='bonus'||phase==='bonusResult'){
    $('bonusTimerValue').textContent=Math.ceil(remaining/1000)+'s';
   }else if(phase==='read'||phase==='answer'||phase==='result'){
-   $('timerValue').textContent=Math.ceil(remaining/1000);
+   const sec=Math.ceil(remaining/1000);
+   $('timerValue').textContent=sec;
+   if(phase==='result')$('feedbackAdvance').textContent='Próxima atividade em '+sec+'s';
+   if(phase==='answer'&&sec<=5&&sec>0&&sec!==lastWarning){
+    lastWarning=sec;sound('warning');
+   }
    const circle=$('timerCircle');circle.classList.toggle('urgent',phase==='answer'&&remaining<=5000);
    circle.style.background=phase==='answer'&&remaining<=5000?
     'conic-gradient(#df5955 '+(frac*360)+'deg,#f5d7d4 0)':
@@ -209,27 +542,30 @@
   }
  }
  function start(){
-  if(state.phase==='intro')setPhase('read',DUR.read);
+  if(state.phase==='intro'){audioReady();setPhase('read',DUR.read);}
   else draw();
  }
  function answer(choice){
   if(state.phase!=='answer'||Date.now()>=state.deadline)return;
   const q=activeQuestion(),remaining=Math.max(0,state.deadline-Date.now()),correct=choice===q.correct;
-  const delta=correct?Math.max(250,Math.round(1000*remaining/DUR.answer)):0;
+  const elapsed=Math.max(0,DUR.answer-remaining);
+  const delta=correct?(elapsed<500?1000:Math.round(1000*(1-elapsed/(2*DUR.answer)))):0;
   if(correct){state.correct++;state.score+=delta}else state.wrong++;
   state.last={status:correct?'correct':'wrong',selected:choice,delta};
   setPhase('result',DUR.result);
+  sound(correct?'correct':'wrong');
  }
  function timeoutQuestion(){
   if(state.phase!=='answer')return;
   state.timeout++;state.last={status:'timeout',selected:null,delta:0};
   setPhase('result',DUR.result);
+  sound('timeout');
  }
  function next(){
   if(state.phase!=='result'||advancing)return;
   advancing=true;
   const completedCount=state.idx+1;
-  if(completedCount>=QUESTIONS.length){setPhase('finished',0);advancing=false;return}
+  if(completedCount>=state.order.length){setPhase('finished',0);advancing=false;return}
   if(state.bonusAt.includes(completedCount)&&!state.shownBonus.includes(completedCount)){
    state.shownBonus.push(completedCount);
    state.currentBonus=state.bonusOrder[(state.shownBonus.length-1)%state.bonusOrder.length];
@@ -281,12 +617,17 @@
  }
  function abandonQuiz(){
   reset();
+  if(document.fullscreenElement)document.exitFullscreen().catch(()=>{});
   // A saída nunca abre outra página nem preserva o placar.
   window.scrollTo({top:0,behavior:'instant'});
  }
  function bind(){
   $('startQuiz').addEventListener('click',start);
   $('quitQuiz').addEventListener('click',abandonQuiz);
+  $('soundToggle').addEventListener('click',()=>{soundOn=!soundOn;syncSoundButton();if(soundOn)sound('start')});
+  $('fullscreenToggle').addEventListener('click',toggleFullscreen);
+  document.addEventListener('fullscreenchange',syncFullscreenButton);
+  syncSoundButton();syncFullscreenButton();
   $('resetQuiz').addEventListener('click',reset);
   $('playAgain').addEventListener('click',()=>{reset();start()});
   $('nextQuestion').addEventListener('click',next);
@@ -316,6 +657,8 @@
  window.PetQuiz={getStatus:()=>({
    phase:state.phase,index:state.idx,score:state.score,correct:state.correct,wrong:state.wrong,
    timeout:state.timeout,bonusCount:state.shownBonus.length,bonusSolved:state.solvedBonus,deadline:state.deadline,
-   bonusAt:[...state.bonusAt]
- }),version:'1.1'};
+   bonusAt:[...state.bonusAt],questionTotal:state.order.length,
+   plan:state.order.map(i=>({id:QUESTIONS[i].id,stage:QUESTIONS[i].stage,topic:QUESTIONS[i].topic||null,requires:QUESTIONS[i].requires||[]})),
+   soundEnabled:soundOn,fullscreen:!!document.fullscreenElement
+ }),version:'2.0'};
 })();
