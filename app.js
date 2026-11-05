@@ -199,13 +199,14 @@ function seedPetgameWorkbench(){
 function petgameMissionStatus(){
  if(!IS_PETGAME_WORKBENCH)return;
  const scenario=PETGAME_CASES[PETGAME_CHALLENGE],wire=state.wires[petgameFaultWireIndex];
- const chosenPort=wire&&scenario?wire[scenario.end]:null;
+ const chosenPort=wire&&scenario&&!wire.loose?wire[scenario.end]:null;
  const expected=new Set(EXPECTED.map(([a,b])=>electricalKey(a,b)));
  const correct=!!wire&&!wire.loose&&
   state.wires.length===EXPECTED.length&&state.wires.every(w=>!w.loose&&expected.has(electricalKey(w.a,w.b)))&&
   state.wires.every(w=>!!getPortPos(w.a)&&!!getPortPos(w.b));
  window.parent?.postMessage({type:'petgame-workbench-status',challenge:PETGAME_CHALLENGE,
-  solved:correct,chosenPort,ready:true,wireCount:state.wires.length},window.location.origin);
+  solved:correct,connected:!!wire&&!wire.loose,chosenPort,ready:true,
+  wireCount:state.wires.length},window.location.origin);
 }
 function safeRestore(){
  if(IS_PETGAME_WORKBENCH){seedPetgameWorkbench();return;}
