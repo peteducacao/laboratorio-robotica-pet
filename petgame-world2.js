@@ -5,6 +5,7 @@ window.PetgameWorld2={enhance({T,scene,mats,box,cyl,world,renderer,daylight}) {
  let seed=734922;
  const rnd=()=>((seed=(Math.imul(seed,1664525)+1013904223)>>>0)/4294967296);
  const choose=a=>a[Math.floor(rnd()*a.length)];
+ const solid=(x,z,r)=>world.walls.push({type:'circle',x,z,r});
  const pal={
   grass:['#85ab68','#9abb76','#a2bd81','#769b60'],road:['#5c646e','#636973'],side:['#d8c9b5','#f0e2ce']
  };
@@ -99,6 +100,7 @@ window.PetgameWorld2={enhance({T,scene,mats,box,cyl,world,renderer,daylight}) {
  const foliageGeo=new T.DodecahedronGeometry(1,0),flowerGeo=new T.IcosahedronGeometry(1,0);
  let treeCount=0;
  function detailedTree(x,z,s=1,variant=0){
+  solid(x,z,.36*s);
   cyl(scene,.17*s,.25*s,2.15*s,7,x,1.1*s,z,wood);
   const heights=[2.85,3.4,2.95,3.2];
   const top=heights[variant%4]*s;
@@ -114,7 +116,7 @@ window.PetgameWorld2={enhance({T,scene,mats,box,cyl,world,renderer,daylight}) {
   if(isCenter)continue;
   // Rua viva: cada lote recebe composição própria, preservando faixa de rodagem.
   const s=.75+rnd()*.3;
-  for(const [dx,dz] of [[-7.5,-7.5],[7.5,7.5]]){
+  for(const [dx,dz] of [[-6.3,-6.3],[6.3,6.3]]){
    if(atPOI&&rnd()>.47)continue;
    detailedTree(x+dx,z+dz,s,Math.floor(rnd()*4));
   }
@@ -166,11 +168,13 @@ window.PetgameWorld2={enhance({T,scene,mats,box,cyl,world,renderer,daylight}) {
  scatter(flowerGeo,flowers,parkBlooms);
  // Bancos, lixeiras, hidrantes e flores: ruas vivas sem novos obstáculos.
  function bench(x,z,angle=0){
+  solid(x,z,1.05);
   const g=new T.Group();g.position.set(x,.1,z);g.rotation.y=angle;scene.add(g);
   box(g,2.7,.20,.63,0,.63,0,wood);box(g,2.7,.85,.15,0,1.06,.30,wood);
   for(const xx of [-1,1])for(const zz of [-.2,.2])box(g,.15,.56,.15,xx,.3,zz,dark);
  }
  function lamp(x,z){
+  solid(x,z,.28);
   cyl(scene,.075,.09,3.95,8,x,2,z,dark);
   cyl(scene,.3,.39,.32,10,x,4.05,z,iron);
   const bulb=new T.Mesh(new T.SphereGeometry(.27,10,8),mats.lampGlow);
@@ -196,13 +200,15 @@ window.PetgameWorld2={enhance({T,scene,mats,box,cyl,world,renderer,daylight}) {
  // Sinalização e pequenos detalhes industriais.
  const fx=40,fz=40;
  for(let i=0;i<5;i++){
-  box(scene,1.2,1,.9,fx-8+.0, .55,fz-6+i*2.5,choose([wood,dark,mats.awning]));
+  box(scene,1.2,1,.9,fx-5.6,.55,fz-6+i*2.5,choose([wood,dark,mats.awning]));
+  solid(fx-5.6,fz-6+i*2.5,.62);
  }
  for(let j=0;j<6;j++){
   box(scene,1.5,.055,.25,fx-5+j*1.3,.13,fz-7.7,mats.yellow);
  }
  // Uma sequência de placas nas vias principais.
  function sign(x,z,txt,color){
+  solid(x,z,.3);
   cyl(scene,.065,.075,2.45,6,x,1.26,z,iron);
   const c=document.createElement('canvas');c.width=256;c.height=128;
   const ctx=c.getContext('2d');ctx.fillStyle=color||'#26758c';ctx.fillRect(5,5,246,118);
