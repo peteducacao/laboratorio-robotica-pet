@@ -69,10 +69,16 @@ async function solveSlot(page,slot){
    await port.waitFor({state:'visible',timeout:30000});
    const a=await handle.boundingBox(),b=await port.boundingBox();
    assert(a&&b&&a.width>5&&b.width>1,'Ponta e pino devem ficar visíveis.');
-   await page.mouse.move(a.x+a.width/2,a.y+a.height/2);
-   await page.mouse.down();
-   await page.mouse.move(b.x+b.width/2,b.y+b.height/2,{steps:12});
-   await page.mouse.up();
+   if(page.viewportSize().width<900){
+    // No telefone, dois toques evitam arrastar o fio por uma bancada extensa.
+    await handle.tap();
+    await port.tap();
+   }else{
+    await page.mouse.move(a.x+a.width/2,a.y+a.height/2);
+    await page.mouse.down();
+    await page.mouse.move(b.x+b.width/2,b.y+b.height/2,{steps:12});
+    await page.mouse.up();
+   }
    await page.waitForFunction(()=>window.__TinkerpetMission.state.discovery.values.wireSolved===true,null,{timeout:20000});
    assert.equal(await page.locator('#diagnosticChoices [data-finish]').count(),0,
     'Só reconectar o fio não libera a entrega sem testar');
