@@ -34,3 +34,18 @@ html,body.petgame-embedded{height:100%;width:100%;margin:0;overflow:hidden!impor
 .petgame-embedded #wireHandles{pointer-events:none}
 .petgame-embedded #wireHandles .wire-end-handle{pointer-events:auto!important}
 .petgame-embedded .pin-btn{pointer-events:auto!important}
+
+/* Os contatos do editor original têm alvos maiores para montagem livre.
+   Em zoom baixo, esses alvos se sobrepõem. Na atividade de uma única falha,
+   alvos menores + aproximação da câmera dão seleção inequívoca. */
+.petgame-embedded #partsLayer .pin-btn,
+.petgame-embedded #partsLayer .part[data-kind="driver"] .pin-btn,
+.petgame-embedded #partsLayer .part[data-kind="esp"] .pin-btn,
+.petgame-embedded #partsLayer .part[data-kind="motor"] .pin-btn,
+.petgame-embedded #partsLayer .part[data-kind="switch"] .pin-btn{
+ width:18px!important;height:18px!important;min-height:18px!important;
+ max-width:18px!important;max-height:18px!important;
+ padding:0!important;border:0!important;border-radius:50%!important;
+ pointer-events:auto!important;z-index:8!important;
+}
+.petgame-embedded #partsLayer .pin-btn .pin-dot{pointer-events:none!important}
