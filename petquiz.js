@@ -292,13 +292,13 @@
 ];
  // A prévia e a validação usam a mesma regra para cada movimento.
  const isStraightMotion=(a,b)=>a>0&&b>0&&a===b;
- const isLeftCurveMotion=(a,b)=>a>=0&&b>0&&b>a;
- const isRightCurveMotion=(a,b)=>b>=0&&a>0&&a>b;
+ const isLeftCurveMotion=(a,b)=>b>a;
+ const isRightCurveMotion=(a,b)=>a>b;
  const BONUS=[
   {id:'straight',title:'Faça as duas rodas avançarem juntas!',prompt:'Regule os motores A e B para a frente, na mesma velocidade. Observe as rodas girando.',voltage:false,
    check:isStraightMotion,tip:'As duas rodas precisam avançar na mesma velocidade, acima de zero.'},
-  {id:'curve',title:'Faça o carrinho virar à esquerda!',prompt:'Faça o Motor B (direita) avançar mais rápido que o Motor A (esquerda).',voltage:false,
-   check:isLeftCurveMotion,tip:'O Motor B deve avançar mais rápido que o A; o A pode ficar parado.'},
+  {id:'curve',title:'Faça o carrinho virar à esquerda!',prompt:'Ajuste os dois motores e observe a direção do carrinho.',voltage:false,
+   check:isLeftCurveMotion,tip:'As velocidades dos motores precisam produzir uma curva à esquerda.'},
   {id:'regulator',title:'Regule o LM2596!',prompt:'Ajuste a saída do regulador e confira a medição.',voltage:true,
    check:v=>v===5,tip:'Observe o valor de saída no mostrador.'}
  ];
