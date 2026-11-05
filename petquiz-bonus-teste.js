@@ -24,12 +24,15 @@
  let index=0,loadId=0,solved=new Set(),currentWiring=null;
  const solvedMsg='Concluído! O desafio reconheceu a configuração.';
  const inspectMsg='Faça a regulagem e confira o resultado.';
+ function invalidateCurrent(){
+  if(solved.delete(tasks[index].id))renderNav();
+ }
  function updateMotion(){
   const a=Number($('motorA').value),b=Number($('motorB').value);
   $('motorAValue').value=a+'%';$('motorBValue').value=b+'%';
   for(const [id,value] of [['wheelA',a],['wheelB',b]]){
    const el=$(id);el.classList.toggle('spinning',value!==0);
-   el.style.animationDuration=Math.max(.18,1.1-Math.abs(value)/100)+'s';
+   el.style.setProperty('--wheel-duration',Math.max(.18,1.1-Math.abs(value)/100)+'s');
    el.dataset.direction=value<0?'reverse':'forward';
   }
   const angle=(a-b)*.2;
@@ -126,9 +129,9 @@
    renderNav();
   }
  });
- $('motorA').addEventListener('input',updateMotion);
- $('motorB').addEventListener('input',updateMotion);
- $('voltage').addEventListener('input',updateVoltage);
+ $('motorA').addEventListener('input',()=>{invalidateCurrent();feedback(inspectMsg);updateMotion()});
+ $('motorB').addEventListener('input',()=>{invalidateCurrent();feedback(inspectMsg);updateMotion()});
+ $('voltage').addEventListener('input',()=>{invalidateCurrent();feedback(inspectMsg);updateVoltage()});
  $('check').addEventListener('click',check);
  $('prev').addEventListener('click',()=>show(index-1));
  $('next').addEventListener('click',()=>{
