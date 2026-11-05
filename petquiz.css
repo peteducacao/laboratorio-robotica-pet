@@ -7,3 +7,16 @@
 @media(max-width:640px){.topbar{height:58px;padding:0 12px}.brand{font-size:13px}.brand img{height:34px;width:34px}.header-label{font-size:9px}.back-link{font-size:10px}.shell{padding:10px 10px 20px}.intro-screen{padding:24px 20px;border-radius:20px;min-height:calc(100dvh - 110px)}.intro-graphic{opacity:.1;right:-150px}.intro-eyebrow{margin-top:22px}.intro-screen h1{font-size:34px;letter-spacing:-1.3px}.intro-screen p{font-size:13px}.intro-rules{margin:20px 0;gap:8px}.intro-rules>div{min-width:0;width:calc(50% - 4px);min-height:95px}.intro-rules>div:last-child{width:100%}.game-screen{border-radius:18px;min-height:calc(100dvh - 110px)}.game-hud{padding:13px;gap:10px}.hud-box{min-width:74px}.hud-box strong{font-size:17px}.hud-box strong small{font-size:9px}.hud-label{font-size:8px}.hud-progress-meta{font-size:8px;gap:4px;margin-bottom:5px}.progress-track{height:7px}.game-body{padding:13px}.question-banner{min-height:236px;padding:21px 14px;border-radius:15px}.question-banner h2{font-size:clamp(19px,5vw,27px);line-height:1.38;letter-spacing:-.4px}.question-type{font-size:9px}.timer-wrap{top:9px;right:10px}.timer-wrap>span{display:none}.timer-circle{height:46px;width:46px;padding-top:11px;border-width:3px}.timer-circle span{font-size:18px}.timer-circle small{font-size:9px}.question-hint{font-size:11px}.reading-placeholder{min-height:170px}.reading-placeholder strong{font-size:12px}.answers-lead{align-items:flex-start;flex-direction:column;gap:4px}.answers-grid{gap:8px}.answer-btn{min-height:114px;padding:12px;gap:6px;flex-direction:column;align-items:flex-start;justify-content:space-around;font-size:13px;border-radius:13px}.answer-btn .answer-shape{font-size:20px;min-width:0}.answer-feedback{padding:14px}.feedback-actions{align-items:flex-start;flex-direction:column}.feedback-actions .secondary-btn{width:100%}.bonus-view{padding:15px}.bonus-label{gap:7px;font-size:9px;flex-wrap:wrap}.bonus-label span{font-size:8px}.bonus-stage{min-height:232px;padding:12px}.bonus-controls{min-height:0;padding:15px}.final-stats{gap:6px;grid-template-columns:repeat(4,minmax(0,1fr))}.final-stats>div{padding:10px 4px}.final-stats b{font-size:18px}.final-stats small{font-size:9px}.shell footer{font-size:9px}}
 @media(max-width:390px){.header-label{display:none}.answer-btn{min-height:123px;padding:10px;font-size:12px}.game-hud{gap:6px}.hud-box{min-width:63px}.question-banner h2{font-size:19px}.intro-rules>div b{font-size:11px}}
 @media(prefers-reduced-motion:reduce){.reading-dots span,.bonus-wheel.spinning{animation:none}.answer-btn{transition:none}.progress-track i{transition:none}}
+/* A saída da partida fica à vista em todas as perguntas e eventos bônus. */
+.quiz-actions{display:flex;justify-content:flex-end;padding:10px 17px 0;background:#0d374b}
+.quit-quiz{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:40px;
+ border:1px solid #eac7c378;border-radius:10px;background:#a6383b32;color:#fff3ef;
+ padding:9px 14px;font-size:12px;font-weight:900;letter-spacing:.1px}
+.quit-quiz:hover,.quit-quiz:focus-visible{background:#ba424f78;border-color:#f5b7b4}
+.quit-quiz span{font-size:14px;font-weight:900}
+.game-hud{padding-top:10px}
+@media(max-width:640px){
+ .quiz-actions{padding:8px 12px 0}
+ .quit-quiz{font-size:12px;min-height:42px;padding:9px 12px}
+ .game-hud{padding-top:9px}
+}
