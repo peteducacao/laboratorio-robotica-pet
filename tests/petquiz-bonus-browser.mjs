@@ -71,6 +71,41 @@ try{
    assert.equal((await frame.locator('body').evaluate(()=>window.PetQuizWiringTest())).success,true);
    assert(await page.locator('#feedback').evaluate(el=>el.classList.contains('ok')));
   }
+  if(device.name==='celular'){
+   // Gesto Android real: tirar um jumper de um pino, deixá-lo solto,
+   // reabrir pelo quadradinho e puxar a ponta até outra posição.
+   const pin=frame.locator('[data-port="drv.OUT1"]').first();
+   await pin.scrollIntoViewIfNeeded();
+   const b=await pin.boundingBox(),viewport=await frame.locator('#viewport').boundingBox();
+   assert(b&&viewport,'Bornes e bancada precisam estar disponíveis');
+   const sx=b.x+b.width/2,sy=b.y+b.height/2;
+   const ex=sx<viewport.x+viewport.width/2?viewport.x+viewport.width*.78:viewport.x+viewport.width*.22;
+   const ey=sy<viewport.y+viewport.height/2?viewport.y+viewport.height*.74:viewport.y+viewport.height*.26;
+   const session=await context.newCDPSession(page);
+   async function touchPath(points,id){
+    await session.send('Input.dispatchTouchEvent',{type:'touchStart',touchPoints:[{x:points[0][0],y:points[0][1],id}]});
+    for(const [x,y] of points.slice(1)){
+     await session.send('Input.dispatchTouchEvent',{type:'touchMove',touchPoints:[{x,y,id}]});
+     await new Promise(done=>setTimeout(done,45));
+    }
+    await session.send('Input.dispatchTouchEvent',{type:'touchEnd',touchPoints:[]});
+   }
+   await touchPath([[sx,sy],[sx+ (ex-sx)*.3,sy],[sx+(ex-sx)*.55,ey],[ex,ey]],21);
+   const loose=frame.locator('#wireHandles .wire-end-handle[data-loose="true"]').first();
+   await loose.waitFor({state:'visible',timeout:6500});
+   const radius=await loose.evaluate(el=>getComputedStyle(el,'::after').borderRadius);
+   assert.equal(radius,'2px','A ponta solta deve parecer um quadradinho no celular');
+   const before=await loose.boundingBox();
+   const nx=Math.max(viewport.x+30,Math.min(viewport.x+viewport.width-30,ex-65));
+   const ny=Math.max(viewport.y+30,Math.min(viewport.y+viewport.height-30,ey+55));
+   const mx=before.x+before.width/2,my=before.y+before.height/2;
+   await touchPath([[mx,my],[mx+(nx-mx)*.3,my],[mx+(nx-mx)*.65,ny],[nx,ny]],22);
+   await loose.waitFor({state:'visible',timeout:6500});
+   const after=await loose.boundingBox();
+   assert(Math.hypot(after.x-before.x,after.y-before.y)>13,
+    'O quadrado da ponta solta precisa seguir o dedo e permitir editar o fio');
+   console.log('✓ Android: ponta solta quadrada, selecionável e arrastável seguindo o dedo.');
+  }
   await page.locator('#next').click();
   assert.equal(await page.locator('#challengeTitle').textContent(),'Faça a ponte H funcionar!');
   await frame.locator('#viewport').waitFor({timeout:25000});
