@@ -222,7 +222,9 @@ try{
   assert.equal(final.correct+final.wrong+final.timeout,10);
   assert.equal(final.correct,correct);assert.equal(final.wrong,wrong);assert.equal(final.timeout,timeouts);
   assert(final.score<=10000&&final.score>=correct*500,'Pontuação de velocidade');
-  assert.equal(bonusCount,3,'Três eventos surpresa distribuídos');
+  assert.equal(bonusCount,2,'Exatamente dois bônus fora das dez perguntas');
+  assert.equal(final.bonusCount,2,'O placar deve confirmar dois bônus');
+  assert.equal(await p.locator('#finalBonus').textContent(),'2','Resumo final inclui os dois bônus');
   assert.equal(await p.locator('#finalCorrect').textContent(),String(correct));
   assert.equal(await p.locator('#finalWrong').textContent(),String(wrong));
   await layout(p,'final '+screen.name);
@@ -232,7 +234,7 @@ try{
   assert.equal(await p.evaluate(()=>window.PetQuiz.getStatus().score),0);
   assert.equal(await p.evaluate(()=>localStorage.getItem('petquiz-session-v1')),null);
   assert.equal(errors.length,0,'Erros JS: '+errors.join(' / '));
-  console.log('✓ '+screen.name+': 10 perguntas vinculadas, sons, fullscreen='+fullscreenSupported+', correção e avanço automáticos, 3 bônus, pódio e sem salvamento.');
+  console.log('✓ '+screen.name+': 10 perguntas vinculadas, sons, fullscreen='+fullscreenSupported+', correção e avanço automáticos, 2 bônus fixos em posições aleatórias, pódio e sem salvamento.');
   await ctx.close();
  }
  console.log('✓ PETQuiz: verificações aprovadas.');
