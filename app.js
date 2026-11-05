@@ -1490,7 +1490,7 @@ function renderWireHandles(){
    const button=document.createElement('button');button.type='button';
    button.className='wire-end-handle';button.dataset.wireEnd=end;
    button.setAttribute('aria-label','Soltar ponta '+(end==='a'?'inicial':'final')+' do fio e conectar a outro pino');
-   button.title='Arraste a bolinha até um pino, ou solte-a em qualquer lugar da bancada';
+   button.title='Arraste o quadrado até um pino ou faça curvas tocando na bancada';
    layer.append(button);
   }
   layer.dataset.index=selected;
@@ -1501,6 +1501,9 @@ function renderWireHandles(){
    button.hidden=true;continue; // Apenas a ponta que pode ser reconectada.
   }
   const active=reconnectPending&&reconnectPending.index===state.selectedWire&&reconnectPending.end===end;
+  // A ponta solta precisa continuar tocável no Android após ser posicionada.
+  // O estilo móvel utiliza data-loose para não bloquear o toque no quadrado.
+  button.dataset.loose=String(w.loose?.end===end);
   const point=active?reconnectPending.point:(w.loose?.end===end?w.loose.point:getPortPos(w[end]));
   if(!point){button.hidden=true;continue;}
   button.hidden=false;
@@ -2388,8 +2391,12 @@ function pointerUp(e){
    // No celular, o primeiro toque seleciona a ponta e aproxima a região,
    // sem informar o pino correto. O aluno ainda precisa identificá-lo.
    gesture=null;
-   petgameFocusFault(); // Mostra os dois componentes, não uma peça gigante.
+   petgameFocusFault();
    message('Ponta selecionada. Explore os pinos e toque no contato correto.',true);
+  }else if(reconnectPending&&state.wires[reconnectPending.index]?.loose){
+   // Um toque no quadrado ativa a edição contínua: o próximo gesto na
+   // bancada cria um cotovelo, ou um toque no pino conclui a ligação.
+   message('Ponta solta selecionada. Arraste o quadrado, toque na bancada para criar uma curva ou selecione um pino.',true);
   }else cancelReconnect();
   requestDraw();
  }else if(g.type==='catalog'){
