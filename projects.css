@@ -500,7 +500,7 @@
  }
  .sidebar .nav #openGate,
  .sidebar .nav #openCredits{grid-column:auto}
- .sidebar .nav #openHow{grid-column:1/-1}
+ .sidebar .nav #openHow,.sidebar .nav #openPetQuiz{grid-column:auto}
  .sidebar .nav a,.sidebar .nav button{
   display:flex;align-items:center;justify-content:flex-start;
   min-width:0;min-height:50px;padding:11px 13px;
@@ -551,21 +551,4 @@
 #openPetQuiz:hover .nav-petlab-label{background:#c8efde}
 
 
-/* PETQuiz isolado do grid de navegação para evitar botão solto no celular. */
-.sidebar .petquiz-launch{
- display:flex;align-items:center;gap:12px;min-width:0;width:100%;padding:13px 14px;
- border:1px solid #aee2d2;border-radius:15px;
- background:linear-gradient(120deg,#edfaf4,#e3f6eb);
- color:#174a51;box-shadow:0 3px 10px #125c4612;
- text-decoration:none;transition:background .15s,transform .15s;
-}
-.sidebar .petquiz-launch:hover{background:#d7f2e4;transform:translateY(-1px)}
-.petquiz-launch-icon{display:grid;place-items:center;flex:none;width:39px;height:39px;background:#129b82;border-radius:12px;color:white;font-size:22px}
-.petquiz-launch-copy{display:flex;flex-direction:column;gap:3px;min-width:0;flex:1}
-.petquiz-launch-copy strong{font:850 15px/1.2 Manrope,sans-serif}
-.petquiz-launch-copy small{font:600 10.5px/1.4 'DM Sans',sans-serif;color:#587d80}
-.petquiz-launch-arrow{font-size:27px;font-weight:600;color:#0a977c;flex:none}
-@media(max-width:810px){
- .sidebar .petquiz-launch{margin-top:0;min-height:64px}
-}
-@media(max-width:380px){.sidebar .petquiz-launch{padding:11px 12px;gap:9px}.petquiz-launch-copy small{font-size:10px}}
+/* PETQuiz integra a navegação comum, sem card ou destaque especial. */
