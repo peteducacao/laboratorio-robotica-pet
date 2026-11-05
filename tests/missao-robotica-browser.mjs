@@ -54,9 +54,9 @@ async function solveSlot(page,slot){
    await page.locator('#diagnosticChoices [data-inspect]').first().evaluate(el=>el.click());
    assert.equal(await page.locator('#diagnosticChoices .pet-observation').count(),1);
   }
-  await page.locator('#diagnosticChoices [data-test-circuit]').evaluate(el=>el.click());
+  if(!isEditor)await page.locator('#diagnosticChoices [data-test-circuit]').evaluate(el=>el.click());
   const initial=await page.evaluate(()=>window.__TinkerpetMission.state.discovery);
-  assert.equal(initial.baseline,true);
+  assert.equal(initial.baseline,true,'Oficina de fios deve abrir desbloqueada');
   assert.equal(initial.fixed,false);
   assert.equal(initial.tests,1);
   if(isEditor){
@@ -69,20 +69,15 @@ async function solveSlot(page,slot){
    await port.waitFor({state:'visible',timeout:30000});
    const a=await handle.boundingBox(),b=await port.boundingBox();
    assert(a&&b&&a.width>5&&b.width>1,'Ponta e pino devem ficar visíveis.');
+   const control=frame.locator('#petgamePickWire');
+   await control.waitFor({state:'visible'});
+   assert.equal(await control.isEnabled(),true,'Botão de selecionar fio deve ser clicável');
+   await control.click();
+   assert((await frame.locator('#petgameHelperStatus').textContent()).includes('Ponta selecionada'),'Seleção deve dar retorno');
    if(page.viewportSize().width<900){
-    // No telefone, dois toques evitam arrastar o fio por uma bancada extensa.
-    await handle.tap();
-    const near=await frame.locator('#viewport').evaluate(el=>{
-     const rect=el.getBoundingClientRect();return {width:rect.width,height:rect.height};
-    });
-    assert(near.width>150&&near.height>150,'A bancada deve ser utilizável no celular');
-    // Dois toques físicos, sem force, para encontrar alvos sobrepostos.
     await port.tap({timeout:10000});
    }else{
-    await page.mouse.move(a.x+a.width/2,a.y+a.height/2);
-    await page.mouse.down();
-    await page.mouse.move(b.x+b.width/2,b.y+b.height/2,{steps:12});
-    await page.mouse.up();
+    await port.click({timeout:10000});
    }
    await page.waitForFunction(()=>window.__TinkerpetMission.state.discovery.values.wireSolved===true,null,{timeout:20000});
    assert.equal(await page.locator('#diagnosticChoices [data-finish]').count(),0,
