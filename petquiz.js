@@ -66,25 +66,16 @@
   bonusAt:scheduleBonus(),bonusOrder:shuffle(BONUS.map((_,i)=>i)),shownBonus:[],currentBonus:null,solvedBonus:0,
   score:0,correct:0,wrong:0,timeout:0,last:null,deadline:0
  });
- function load(){
-  try{
-   const s=JSON.parse(localStorage.getItem(KEY)||'null');
-   if(!s||!keys.includes(s.phase)&&!['intro','finished'].includes(s.phase))return fresh();
-   if(!Array.isArray(s.order)||s.order.length!==QUESTIONS.length||!Array.isArray(s.bonusAt))return fresh();
-   if(!Array.isArray(s.options)||s.options.length!==QUESTIONS.length)return fresh();
-   if(!Array.isArray(s.shownBonus))s.shownBonus=[];
-   return s;
-  }catch{return fresh()}
- }
- let state=load();
- let timeoutHandle=null;
+ // A partida existe somente enquanto a página estiver aberta. Não salvar pontuação,
+ // rodada, perguntas ou bônus: ao voltar, sempre abrir a tela inicial.
+ try{localStorage.removeItem(KEY)}catch{}
+ let state=fresh();
  let advancing=false;
- const save=()=>{try{localStorage.setItem(KEY,JSON.stringify(state))}catch{}};
  const fmt=n=>Math.round(n).toLocaleString('pt-BR');
  function setPhase(phase,duration){
   state.phase=phase;
   state.deadline=duration?Date.now()+duration:0;
-  save();draw();
+  draw();
  }
  function activeQuestion(){return QUESTIONS[state.order[state.idx]]}
  function activeOptions(){return state.options[state.order[state.idx]]}
@@ -284,10 +275,18 @@
   else if(state.phase==='bonusResult')leaveBonus();
  }
  function reset(){
-  state=fresh();save();draw();
+  state=fresh();
+  advancing=false;
+  draw();
+ }
+ function abandonQuiz(){
+  reset();
+  // A saída nunca abre outra página nem preserva o placar.
+  window.scrollTo({top:0,behavior:'instant'});
  }
  function bind(){
   $('startQuiz').addEventListener('click',start);
+  $('quitQuiz').addEventListener('click',abandonQuiz);
   $('resetQuiz').addEventListener('click',reset);
   $('playAgain').addEventListener('click',()=>{reset();start()});
   $('nextQuestion').addEventListener('click',next);
@@ -300,13 +299,23 @@
    const idx=['1','2','3','4'].indexOf(e.key);
    if(idx>=0)answer(activeOptions()[idx]);
   });
-  document.addEventListener('visibilitychange',()=>{if(!document.hidden)clockTick()});
+  // Se sair da aba, trocar de aplicativo ou navegar para fora, encerrar a partida.
+  document.addEventListener('visibilitychange',()=>{
+   if(document.hidden&&state.phase!=='intro')reset();
+  });
+  window.addEventListener('pagehide',()=>{
+   if(state.phase!=='intro')reset();
+  });
+  // Ao voltar pelo histórico do navegador, inclusive pelo bfcache, recomeçar.
+  window.addEventListener('pageshow',event=>{
+   if(event.persisted&&state.phase!=='intro')reset();
+  });
  }
- // Resume a previously started quiz without changing the ongoing timer.
+ // Nenhum dado de partida é recuperado ou armazenado entre visitas.
  bind();draw();setInterval(clockTick,100);
  window.PetQuiz={getStatus:()=>({
    phase:state.phase,index:state.idx,score:state.score,correct:state.correct,wrong:state.wrong,
    timeout:state.timeout,bonusCount:state.shownBonus.length,bonusSolved:state.solvedBonus,deadline:state.deadline,
    bonusAt:[...state.bonusAt]
- }),version:'1.0'};
+ }),version:'1.1'};
 })();
