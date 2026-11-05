@@ -3,17 +3,17 @@
  const $=id=>document.getElementById(id);
  const tasks=[
   {id:'forward',title:'Faça o carrinho andar para a frente!',kind:'motor',
-   initial:[0,0],check:(a,b)=>a>0&&b>0&&Math.abs(a-b)<=10},
+   initial:[0,0],check:(a,b)=>a>0&&a===b},
   {id:'left',title:'Faça o carrinho virar à esquerda!',kind:'motor',
-   initial:[0,0],check:(a,b)=>a>=0&&b>0&&b>a},
+   initial:[0,0],check:(a,b)=>b>a},
   {id:'right',title:'Faça o carrinho virar à direita!',kind:'motor',
-   initial:[0,0],check:(a,b)=>b>=0&&a>0&&a>b},
+   initial:[0,0],check:(a,b)=>a>b},
   {id:'reverse',title:'Faça o carrinho andar para trás!',kind:'motor',
-   initial:[0,0],check:(a,b)=>a<0&&b<0&&Math.abs(a-b)<=10},
+   initial:[0,0],check:(a,b)=>a<0&&a===b},
   {id:'stop',title:'Pare o carrinho em movimento!',kind:'motor',
    initial:[60,60],check:(a,b)=>a===0&&b===0},
   {id:'straight',title:'Faça o carrinho seguir em linha reta!',kind:'motor',
-   initial:[80,40],check:(a,b)=>a>0&&b>0&&a===b},
+   initial:[80,40],check:(a,b)=>a!==0&&a===b},
   {id:'regulator',title:'Regule o LM2596!',kind:'voltage',
    initial:[9],check:v=>v===5},
   {id:'motor-a',title:'Faça o Motor A funcionar!',kind:'wiring',
@@ -32,7 +32,7 @@
    el.style.animationDuration=Math.max(.18,1.1-Math.abs(value)/100)+'s';
    el.dataset.direction=value<0?'reverse':'forward';
   }
-  const angle=a>=0&&b>=0?(a-b)*.2:a<=0&&b<=0?(b-a)*.2:(a-b)*.19;
+  const angle=(a-b)*.2;
   $('rover').style.transform='rotate('+Math.max(-20,Math.min(20,angle))+'deg)';
   if(!$('feedback').classList.contains('ok')){
    $('feedback').classList.remove('err');
