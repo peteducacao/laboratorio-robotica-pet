@@ -27,41 +27,69 @@ async function beginSlot(page){
 async function solveSlot(page,slot){
  if(slot.kind==='repair'){
   assert(await page.locator('#repairOverlay').isVisible(),'A bancada não abriu');
-  assert.equal(await page.locator('#repairTimer').isVisible(),false,'Cronômetro não pode pressionar a criança');
-  assert(await page.locator('#diagnosticChoices [data-inspect]').count()>=3,'Peças interativas ausentes');
+  assert.equal(await page.locator('#repairTimer').isVisible(),false,'Desafio sem contagem regressiva');
+  assert(await page.locator('#diagnosticChoices [data-inspect]').count()>=3,'Peças ausentes');
+  assert.equal(await page.locator('#diagnosticClose').count(),0,'X não pode sair do desafio');
+  assert.equal(await page.locator('#quitChallengeDialog').count(),0,'Não pode existir pulo de descoberta');
+  const slotBefore=await page.evaluate(()=>window.__TinkerpetMission.state.stageSlot);
+  await page.evaluate(()=>window.__TinkerpetMission.confirmQuitChallenge());
+  assert.equal(await page.evaluate(()=>window.__TinkerpetMission.state.stageSlot),slotBefore,'Não pode pular a etapa');
   if(slot.index===0){
-   await page.locator('#diagnosticChoices [data-hint]').evaluate(btn=>btn.click());
-   assert((await page.locator('.pet-clue').textContent()).includes('Pista 1'),'Dica não apareceu');
+   await page.locator('#diagnosticChoices [data-hint]').evaluate(el=>el.click());
+   assert((await page.locator('#diagnosticChoices .pet-clue').textContent()).includes('Pista 1'));
   }
-  const data=await page.evaluate(i=>window.PetGameDiscovery.investigations[i],slot.index);
-  await page.locator('[data-inspect="'+data.target+'"]').evaluate(el=>el.click());
-  assert(await page.locator('.pet-observation').count()>0,'A peça não pode ser observada');
-  if(data.kind==='voltage'){
-   await page.locator('#petVoltage').evaluate(el=>{el.value='5';el.dispatchEvent(new Event('input',{bubbles:true}))});
-   assert.equal(await page.locator('#petVoltageValue').textContent(),'5 V');
+  await page.locator('#diagnosticChoices [data-inspect]').first().evaluate(el=>el.click());
+  assert.equal(await page.locator('#diagnosticChoices .pet-observation').count(),1);
+  assert.equal(await page.locator('#diagnosticChoices [data-finish]').count(),0,'Tocar na peça não conclui investigação');
+  assert.equal(await page.locator('#diagnosticChoices [data-setting]').count(),0);
+  await page.locator('#diagnosticChoices [data-test-circuit]').evaluate(el=>el.click());
+  const baseline=await page.evaluate(()=>window.__TinkerpetMission.state.discovery);
+  assert.equal(baseline.baseline,true);
+  assert.equal(baseline.fixed,false);
+  assert.equal(baseline.tests,1);
+  assert.equal(await page.locator('#diagnosticChoices [data-finish]').count(),0,'Não pode avançar após detectar a falha');
+  async function setValue(key,value){
+   await page.locator('[data-setting="'+key+'"]').evaluate((el,v)=>{
+    el.value=v;el.dispatchEvent(new Event('input',{bubbles:true}));
+   },value);
   }
-  await page.locator('[data-repair]').evaluate(el=>el.click());
-  assert(await page.locator('#diagnosticChoices .pet-success').count()===1,'A correção precisa mostrar uma explicação');
+  switch(slot.index){
+   case 0: await page.locator('#diagnosticChoices [data-switch]').evaluate(el=>el.click()); break;
+   case 1: await setValue('source','A+');await setValue('dest','B-');break;
+   case 2: await setValue('positive','A+');await setValue('negative','A-');break;
+   case 3:
+    await page.locator('#petVoltage').evaluate(el=>{el.value='5';el.dispatchEvent(new Event('input',{bubbles:true}))});
+    assert.equal(await page.locator('#petVoltageValue').textContent(),'5 V');
+    break;
+   case 4: await setValue('source','Ponte H GND');await setValue('dest','ESP32 GND');break;
+   case 5: await setValue('pin','D18');break;
+   default:throw Error('Sem cenário para '+slot.index);
+  }
+  assert.equal(await page.locator('#diagnosticChoices [data-finish]').count(),0,'Mudar um controle não basta: precisa testar');
+  await page.locator('#diagnosticChoices [data-test-circuit]').evaluate(el=>el.click());
+  const result=await page.evaluate(()=>window.__TinkerpetMission.state.discovery);
+  assert(result.fixed&&result.tests>=2,'O teste do reparo deve passar antes do avanço: '+JSON.stringify(result));
+  assert.equal(await page.locator('#diagnosticChoices .pet-success').count(),1);
   await page.locator('#diagnosticChoices [data-finish]').evaluate(el=>el.click());
  }else{
   assert(await page.locator('#questionOverlay').isVisible(),'Experimento não abriu');
-  assert.equal(await page.locator('#questionTimer').isVisible(),false,'Experimento não pode ter relógio');
+  assert.equal(await page.locator('#questionClose').count(),0,'Experimento não pode ter X');
+  assert.equal(await page.locator('#questionTimer').isVisible(),false,'Experimento sem relógio');
   const motors=slot.index===0?[50,50]:[25,75];
   for(const [i,id] of ['A','B'].entries()){
    await page.locator('[data-experiment-motor="'+id+'"]').evaluate((el,value)=>{
     el.value=String(value);el.dispatchEvent(new Event('input',{bubbles:true}));
    },motors[i]);
   }
-  await page.locator('[data-try]').evaluate(el=>el.click());
-  const diagnostic=await page.evaluate(()=>({mode:window.__TinkerpetMission.state.mode, discovery:window.__TinkerpetMission.state.discovery,
-   text:document.querySelector('#questionResponse')?.textContent,
-   buttons:[...document.querySelectorAll('#answers button')].map(b=>b.dataset),
-   success:document.querySelectorAll('#answers .pet-success').length}));
-  assert(await page.locator('#answers .pet-success').count()===1,'Experimento não reconheceu a descoberta: '+JSON.stringify(diagnostic));
+  await page.locator('#answers [data-try]').evaluate(el=>el.click());
+  const outcome=await page.evaluate(()=>window.__TinkerpetMission.state.discovery);
+  assert.equal(outcome.fixed,true,'Motores não reconheceram a combinação '+JSON.stringify(outcome));
+  assert.equal(await page.locator('#answers .pet-success').count(),1);
   await page.locator('#answers [data-finish]').evaluate(el=>el.click());
  }
- assert.equal(await page.evaluate(()=>window.__TinkerpetMission.state.mode),'drive');
+ assert.equal(await page.evaluate(()=>window.__TinkerpetMission.state.mode),'drive','Depois de solucionar, deve voltar à direção');
 }
+
 try{
  await wait(700);
  const projects=readFileSync('projects.html','utf8');
@@ -105,12 +133,47 @@ try{
   assert.deepEqual(motors.one,[180,0]);
   assert.deepEqual(motors.two,[200,140]);
   assert(await page.locator('#minimap').isVisible());
+   const collision=await page.evaluate(()=>{
+    const a=window.__TinkerpetMission,s=a.state;
+    const points={road:a.collides(-50,-40),house:a.collides(-60,-60),edge:a.collides(0,0)};
+    const solids=a.world.walls.filter(w=>!w.ghost).length;
+    s.drive={x:-50,z:-40,angle:-Math.PI/2,a:0,b:0,collided:false};
+    s.keys.add('w');
+    for(let t=0;t<150;t++)a.physics(1/60);
+    s.keys.clear();
+    const stopped=s.drive.x;
+    a.resetGame();s.mode='drive';
+    return {...points,solids,stopped};
+   });
+   assert.equal(collision.road,false,'Pista deve permanecer livre');
+   assert.equal(collision.house,true,'Casa sólida não pode ser atravessada');
+   assert.equal(collision.edge,true,'Edificação central precisa colidir');
+   assert(collision.solids>150,'Árvores, bancos e postes precisam de colisão '+JSON.stringify(collision));
+   assert(collision.stopped>-50&&collision.stopped< -45,'Carrinho cruzou o meio-fio ou não se movimentou '+JSON.stringify(collision));
+   // Teste de tela cheia com investigação na camada superior.
+   await page.locator('#fullBtn').click();
+   const fsActive=await page.evaluate(()=>!!document.fullscreenElement);
+   if(view.name==='pc')assert(fsActive,'Tela cheia deve abrir no navegador desktop');
+   if(fsActive){
+    const root=await page.evaluate(()=>document.fullscreenElement===document.documentElement);
+    assert(root,'Tela cheia deve abranger os diálogos e não só o canvas');
+   }
   const before=await page.evaluate(()=>{const a=window.__TinkerpetMission;return{phase:a.state.mission,slot:a.state.stageSlot}});
   assert.equal(before.slot,0);
   // Salvar e recuperar durante investigação com a primeira peça examinada.
   const slot0=await beginSlot(page);
   assert.equal(slot0.kind,'repair');
-  await page.locator('#diagnosticChoices [data-inspect]').first().evaluate(el=>el.click());
+  if(fsActive){
+    assert(await page.locator('#repairOverlay').isVisible(),'Investigação sumiu na tela cheia');
+    const above=await page.evaluate(()=>{
+     const pane=document.querySelector('#repairOverlay'),box=pane.querySelector('.dialog').getBoundingClientRect();
+     const middle=document.elementFromPoint(Math.min(innerWidth-1,Math.max(0,box.left+box.width/2)),
+      Math.min(innerHeight-1,Math.max(0,box.top+Math.min(60,box.height/2))));
+     return pane.contains(middle);
+    });
+    assert(above,'Diálogo não está interativo sobre o canvas em tela cheia');
+   }
+   await page.locator('#diagnosticChoices [data-inspect]').first().evaluate(el=>el.click());
   await page.evaluate(()=>window.dispatchEvent(new Event('pagehide')));
   await page.reload({waitUntil:'domcontentloaded'});
   await page.waitForFunction(()=>window.__TinkerpetMission?.state.ready,{timeout:60000});
