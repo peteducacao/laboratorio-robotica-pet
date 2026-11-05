@@ -332,3 +332,25 @@
   -webkit-user-select:none!important;user-select:none!important;
  }
 }
+
+/* Ponta livre editável: quadradinho igual aos cotovelos, sem aro no celular. */
+@media(max-width:700px){
+ .preview-studio.editor-layout #wireHandles .wire-end-handle[data-loose="true"],
+ .preview-studio.editor-layout #wireHandles .wire-end-handle[data-loose="true"]:not(:disabled){
+  pointer-events:auto!important;
+  touch-action:none!important;
+  cursor:grab!important;
+ }
+ .preview-studio.editor-layout #wireHandles .wire-end-handle[data-loose="true"]::after{
+  content:""!important;
+  border-radius:2px!important;
+  width:var(--mobile-ring-size,13px)!important;
+  height:var(--mobile-ring-size,13px)!important;
+  background:#edfaff!important;
+  border:2px solid #148aa8!important;
+  box-shadow:0 0 0 1px #fff!important;
+ }
+ .preview-studio.editor-layout #wireHandles .wire-end-handle[data-loose="true"].reconnecting::after{
+  background:#fff1d6!important;border-color:#ce741e!important;
+ }
+}
