@@ -343,9 +343,14 @@
   }
   return order;
  }
+ function bonusOrderForGame(){
+  const order=shuffle(BONUS.map((_,i)=>i));
+  const forced=FAST?BONUS.findIndex(b=>b.id===window.__PETQUIZ_TEST_BONUS_ID__):-1;
+  return forced<0?order:[forced,...order.filter(i=>i!==forced)];
+ }
  const fresh=()=>({
   phase:'intro',idx:0,order:buildRound(),options:QUESTIONS.map(()=>shuffle([0,1,2,3])),
-  bonusAt:scheduleBonus(),bonusOrder:shuffle(BONUS.map((_,i)=>i)),shownBonus:[],currentBonus:null,solvedBonus:0,
+  bonusAt:scheduleBonus(),bonusOrder:bonusOrderForGame(),shownBonus:[],currentBonus:null,solvedBonus:0,
   bonusFeedback:null,
   score:0,correct:0,wrong:0,timeout:0,last:null,deadline:0,finishedReason:null
  });
@@ -562,7 +567,10 @@
   if(phase==='intro')return;
   updateHud();
   if(phase==='read'||phase==='answer'||phase==='result')renderQuestion();
-  if(phase==='bonusIntro')$('bonusIntroCount').textContent=String(state.shownBonus.length)+' de 2';
+  if(phase==='bonusIntro'){
+   $('bonusIntroCount').textContent=String(state.shownBonus.length)+' de 2';
+   $('bonusIntroView').style.setProperty('--intro-duration',DUR.bonusIntro+'ms');
+  }
   if(phase==='bonus'||phase==='bonusResult')paintBonus();
   if(phase==='finished')drawFinal();
   tickDisplay();
@@ -736,5 +744,21 @@
    activeBonusId:state.currentBonus===null?null:BONUS[state.currentBonus].id,
    bonusIds:BONUS.map(b=>b.id),
    soundEnabled:soundOn,fullscreen:!!document.fullscreenElement
- }),version:'2.0'};
+ }),version:'2.1'};
+ // Ferramenta de regressão disponível apenas no modo de teste automatizado.
+ // Não é exibida nem executável durante o uso normal do PETQuiz.
+ if(FAST)window.PetQuiz.testBonus=(id)=>{
+  const i=BONUS.findIndex(b=>b.id===id);
+  if(i<0)throw Error('Bônus de teste desconhecido: '+id);
+  state.currentBonus=i;
+  state.shownBonus=[2];
+  state.bonusSuccess=false;
+  state.bonusFeedback=null;
+  const config=BONUS[i];
+  $('bonusA').value=config.initial[0];
+  $('bonusB').value=config.initial[1]??config.initial[0];
+  $('bonusVoltage').value=config.voltage?config.initial[0]:9;
+  setBonusCarMood('idle');
+  setPhase('bonusIntro',DUR.bonusIntro);
+ };
 })();
