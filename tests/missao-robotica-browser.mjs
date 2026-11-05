@@ -26,7 +26,7 @@ async function beginSlot(page){
 }
 async function solveSlot(page,slot){
  if(slot.kind==='repair'){
-  assert(await page.locator('#diagnosticOverlay').isVisible(),'A bancada não abriu');
+  assert(await page.locator('#repairOverlay').isVisible(),'A bancada não abriu');
   assert.equal(await page.locator('#repairTimer').isVisible(),false,'Cronômetro não pode pressionar a criança');
   assert(await page.locator('#diagnosticChoices [data-inspect]').count()>=3,'Peças interativas ausentes');
   if(slot.index===0){
