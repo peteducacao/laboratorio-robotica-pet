@@ -42,7 +42,7 @@ async function solveSlot(page,slot){
   }
   await page.locator('[data-repair]').evaluate(el=>el.click());
   assert(await page.locator('#diagnosticChoices .pet-success').count()===1,'A correção precisa mostrar uma explicação');
-  await page.locator('[data-finish]').evaluate(el=>el.click());
+  await page.locator('#diagnosticChoices [data-finish]').evaluate(el=>el.click());
  }else{
   assert(await page.locator('#questionOverlay').isVisible(),'Experimento não abriu');
   assert.equal(await page.locator('#questionTimer').isVisible(),false,'Experimento não pode ter relógio');
@@ -58,7 +58,7 @@ async function solveSlot(page,slot){
    buttons:[...document.querySelectorAll('#answers button')].map(b=>b.dataset),
    success:document.querySelectorAll('#answers .pet-success').length}));
   assert(await page.locator('#answers .pet-success').count()===1,'Experimento não reconheceu a descoberta: '+JSON.stringify(diagnostic));
-  await page.locator('[data-finish]').evaluate(el=>el.click());
+  await page.locator('#answers [data-finish]').evaluate(el=>el.click());
  }
  assert.equal(await page.evaluate(()=>window.__TinkerpetMission.state.mode),'drive');
 }
