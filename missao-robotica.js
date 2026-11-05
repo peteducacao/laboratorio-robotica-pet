@@ -285,45 +285,30 @@ $('resumeBtn').addEventListener('click',()=>{setMode('drive');stopRobot()});
 $('pauseClose').addEventListener('click',()=>{setMode('drive');stopRobot()});
 $('restartBtn').addEventListener('click',()=>{unlockAudio();resetGame();setMode('drive');toast('Nova aventura iniciada!')});
 $('viewBtn').addEventListener('click',()=>{state.cameraTop=!state.cameraTop;$('viewBtn').setAttribute('aria-label',state.cameraTop?'Ativar visão do motorista':'Ativar câmera externa');toast(state.cameraTop?'Câmera atrás do carrinho':'Visão do motorista')});
-$('fullBtn').addEventListener('click',async()=>{try{if(document.fullscreenElement)await document.exitFullscreen();else await $('game').requestFullscreen()}catch{toast('Tela cheia não está disponível neste navegador.')}});
+$('fullBtn').addEventListener('click',async()=>{try{if(document.fullscreenElement)await document.exitFullscreen();else await document.documentElement.requestFullscreen()}catch{toast('Tela cheia não está disponível neste navegador.')}});
 $('exitGameBtn').addEventListener('click',()=>{window.location.href='projects.html'});
-$('questionClose').addEventListener('click',requestQuitChallenge);
-$('diagnosticClose').addEventListener('click',requestQuitChallenge);
+// Desafios sem botão de fechar: apenas as ações solucionadas permitem continuar.
 $('diagnosticChoices').addEventListener('click',e=>window.PetGameDiscovery?.handleClick(e));
  $('diagnosticChoices').addEventListener('input',e=>window.PetGameDiscovery?.handleInput(e));
  $('answers').addEventListener('click',e=>window.PetGameDiscovery?.handleClick(e));
  $('answers').addEventListener('input',e=>window.PetGameDiscovery?.handleInput(e));
-$('quitCancel').addEventListener('click',cancelQuitChallenge);
-$('quitConfirm').addEventListener('click',confirmQuitChallenge);
-$('quitChallengeDialog').addEventListener('cancel',e=>{e.preventDefault();cancelQuitChallenge()});
 document.addEventListener('keydown',e=>{
  if(e.key!=='Escape')return;
- if($('quitChallengeDialog').open){e.preventDefault();cancelQuitChallenge();return}
- if(state.mode==='question'||state.mode==='repair'){e.preventDefault();requestQuitChallenge();return}
- if(state.mode==='drive'){e.preventDefault();stopRobot();setMode('pause');return}
- if(state.mode==='pause'){e.preventDefault();setMode('drive');stopRobot();return}
- if(state.mode==='delivery'){e.preventDefault();advanceMission();return}
- if(state.mode==='start'||state.mode==='end'){e.preventDefault();window.location.href='projects.html'}
+ if(state.mode==='question'||state.mode==='repair')return;
+ if(document.fullscreenElement)return;
+ if(state.mode==='drive'){e.preventDefault();stopRobot();setMode('pause')}
+ else if(state.mode==='pause'){e.preventDefault();setMode('drive');stopRobot()}
+ else if(state.mode==='delivery'){e.preventDefault();advanceMission()}
 });
 installControl(0);installControl(1);installKeys();
 window.addEventListener('resize',()=>{if(world.renderer&&world.camera){const w=$('scene').clientWidth,h=$('scene').clientHeight;world.camera.aspect=Math.max(1,w)/Math.max(1,h);world.camera.updateProjectionMatrix();world.renderer.setSize(w,h)}})}
 function resetGame(){clearSavedRun();clearChallengeTimer();state.mission=0;state.scoreMissions=0;state.scoreQuestions=0;state.scoreRepairs=0;state.scoreCorrect=0;state.scoreWrong=0;state.elapsedMs=0;state.activeSince=null;state.timerStarted=true;state.questionsCorrect=new Set();state.asked=[];state.meters=0;state.nextEvent=26;state.nextEventTime=20;state.driveSeconds=0;state.eventCount=0;state.lastFault=null;state.lastDiagnosis=null;state.completed=false;state.drive={x:-50,z:50,angle:-Math.PI/2,a:0,b:0,collided:false};state.desired=[0,0];state.pointer=[null,null];state.pointerValue=[0,0];state.keys.clear();state.skipUntil=0;state.recordsSaved=false;state.stageChallenges=createStageChallenges();state.stageSlot=0;state.stageMeters=0;state.stageLastEventMeters=0;state.stageLastEventSeconds=0;state.stageGateToastAt=0;state.rejectedAnswers=[];state.rejectedDiagnostics=[];state.discovery=null;state.cameraTop=true;state.repairTab='power';$('viewBtn').setAttribute('aria-label','Ativar visão do motorista');setThumb(0,0);setThumb(1,0);updateReadout();updateMission();updateClock();if(world.car){world.car.position.set(-50,0,50);world.car.rotation.y=-Math.PI/2;for(const wheel of world.wheels)wheel.pivot.rotation.x=0}updateGoal();updateRoute(true)}
 /* Ajudas e experimentações não provocam erros ou punições. */
-function recordFailure(reason,{abandon=false}={}){
- if(state.mode!=='question'&&state.mode!=='repair')return;
- if(abandon){confirmSkipChallenge();return}
- toast(reason||'Você pode investigar novamente.');
-}
-function confirmSkipChallenge(){
- const slot=currentStageSlot();
- if(!slot)return;
- state.stageSlot++;updateStageProgress();
- state.stageLastEventMeters=state.stageMeters;
- state.stageLastEventSeconds=state.driveSeconds;
- clearChallengeTimer();setMode('drive');stopRobot();
- state.drive.collided=true;state.skipUntil=performance.now()+2100;
- toast('Tudo bem! Você pode explorar outra descoberta na próxima parada.');
-}
+/* Nunca pular desafios: o avanço exige solução, sem contagem de erros. */
+function recordFailure(reason){toast(reason||'Continue investigando, no seu ritmo.')}
+function requestQuitChallenge(){return false}
+function cancelQuitChallenge(){return false}
+function confirmQuitChallenge(){return false}
 function endGame(won){
  clearSavedRun();stopRobot();clearChallengeTimer();setMode('end');state.completed=true;
  storeRunRecord(won);if(won)playSound('finish');
@@ -345,25 +330,6 @@ function endGame(won){
 /* O jogo agora respeita o ritmo das crianças; não há contagem regressiva. */
 function startTimer(){clearChallengeTimer();state.challengeEnd=0;}
 window.addEventListener('pagehide',saveRun);
-function requestQuitChallenge(){
- if(state.mode!=='question'&&state.mode!=='repair')return;
- if($('quitChallengeDialog').open)return;
- if(state.activeSince!==null){
-  state.elapsedMs+=Math.max(0,performance.now()-state.activeSince);
-  state.activeSince=null;
- }
- $('quitChallengeDialog').showModal();
-}
-function cancelQuitChallenge(){
- if($('quitChallengeDialog').open)$('quitChallengeDialog').close();
- if((state.mode==='question'||state.mode==='repair')&&state.timerStarted&&!state.completed){
-  state.activeSince=performance.now();
- }
-}
-function confirmQuitChallenge(){
- if($('quitChallengeDialog').open)$('quitChallengeDialog').close();
- if(state.mode==='question'||state.mode==='repair')confirmSkipChallenge();
-}
 /* Em vez de perguntas A/B/C/D, a criança manipula os motores ou observa
    e repara um circuito com pistas progressivas. */
 function beginQuestion(assignedIndex=null,preserve=false){
@@ -605,7 +571,7 @@ if(kind==='school'){
 if(special){const tag=makeLabel(special);tag.position.set(x,height+2.1,z);scene.add(tag)}
 world.walls.push({type:'rect',x,z,hw:ww/2+.2,hd:dd/2+.2});
 }
-function tree(x,z,scale=1){cyl(scene,.23*scale,.3*scale,2*scale,7,x,1.08*scale,z,mats.trunk);cyl(scene,1.33*scale,1.6*scale,3*scale,7,x,3.1*scale,z,mats.leaf);world.walls.push({type:'circle',x,z,r:.83*scale,ghost:true})}
+function tree(x,z,scale=1){cyl(scene,.23*scale,.3*scale,2*scale,7,x,1.08*scale,z,mats.trunk);cyl(scene,1.33*scale,1.6*scale,3*scale,7,x,3.1*scale,z,mats.leaf);world.walls.push({type:'circle',x,z,r:.44*scale})}
 const specials={'40,-40':'school','40,40':'factory','-40,40':'lab','-40,-40':'park','0,0':'workshop'};
 /* Todas as zonas têm silhuetas reconhecíveis, não só blocos de cores.
    Detalhes dentro dos lotes para não obstruir a via. */
@@ -875,13 +841,36 @@ function updateRoute(force=false){
  updateCompass();
 }
 
-function collides(x,z){if(Math.abs(x)>73||Math.abs(z)>73)return true;for(const wall of world.walls){if(wall.ghost)continue;if(wall.type==='circle'){if(Math.hypot(x-wall.x,z-wall.z)<wall.r+1)return true}
-else{const dx=Math.max(Math.abs(x-wall.x)-wall.hw,0),dz=Math.max(Math.abs(z-wall.z)-wall.hd,0);if(Math.hypot(dx,dz)<1)return true}}return false}
+/* A carroceria (comprimento e largura) encontra os obstáculos, não só o centro.
+   Colisões simples e determinísticas funcionam em PC e celular. */
+const COLLISION_ROADS=[-50,-30,-10,10,30,50];
+function collides(x,z,angle=state.drive.angle){
+ const fx=-Math.sin(angle),fz=-Math.cos(angle),radius=.72;
+ for(const t of [-1.08,0,1.08]){
+  const px=x+fx*t,pz=z+fz*t;
+  if(Math.abs(px)>72.2||Math.abs(pz)>72.2)return true;
+  const dx=Math.min(...COLLISION_ROADS.map(n=>Math.abs(px-n)));
+  const dz=Math.min(...COLLISION_ROADS.map(n=>Math.abs(pz-n)));
+  if(dx>4.28&&dz>4.28)return true;
+  for(const wall of world.walls){
+   if(wall.ghost)continue;
+   if(wall.type==='circle'){
+    if(Math.hypot(px-wall.x,pz-wall.z)<wall.r+radius)return true;
+   }else{
+    const ex=Math.max(Math.abs(px-wall.x)-wall.hw,0);
+    const ez=Math.max(Math.abs(pz-wall.z)-wall.hd,0);
+    if(Math.hypot(ex,ez)<radius)return true;
+   }
+  }
+ }
+ return false;
+}
 function physics(dt){const d=state.drive,cmd=commands();state.desired=cmd;state.driveSeconds+=dt;world.uiTimer+=dt;if(world.uiTimer>=.10){world.uiTimer=0;for(let i=0;i<2;i++)if(state.pointer[i]===null)setThumb(i,cmd[i]);updateReadout();updateDistance();updateDistrict()}const prevA=d.a,prevB=d.b;for(const [key,i] of [['a',0],['b',1]]){const target=cmd[i],current=d[key],rate=Math.abs(target)>Math.abs(current)?570:1550;d[key]=current+clamp(target-current,-rate*dt,rate*dt);if(Math.abs(d[key])<.7)d[key]=0}
-const a=d.a/255,b=d.b/255;const v=(a+b)/2*9.2,omega=(b-a)*1.68;const angleNext=d.angle+omega*dt;const nx=d.x-Math.sin((d.angle+angleNext)/2)*v*dt,nz=d.z-Math.cos((d.angle+angleNext)/2)*v*dt;if((Math.abs(v)>.1||Math.abs(omega)>.1)&&collides(nx,nz)){
+const a=d.a/255,b=d.b/255;const v=(a+b)/2*9.2,omega=(b-a)*1.68;const angleNext=d.angle+omega*dt;const nx=d.x-Math.sin((d.angle+angleNext)/2)*v*dt,nz=d.z-Math.cos((d.angle+angleNext)/2)*v*dt;if((Math.abs(v)>.1||Math.abs(omega)>.1)&&collides(nx,nz,angleNext)){
+  if(!collides(d.x,d.z,angleNext))d.angle=angleNext;
  d.a=0;d.b=0;updateReadout();
  const now=performance.now();
- if(now-world.collisionToastAt>1800){world.collisionToastAt=now;toast('Borda da via. Faça a curva ou dê ré para continuar.',true)}
+ if(now-world.collisionToastAt>1800){world.collisionToastAt=now;toast('Obstáculo à frente. Faça a curva ou dê ré para continuar.',true)}
  return
 }
 d.angle=angleNext;d.x=nx;d.z=nz;state.meters+=Math.abs(v*dt);state.stageMeters+=Math.abs(v*dt);updateRoute();
