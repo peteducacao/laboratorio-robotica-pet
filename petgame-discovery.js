@@ -15,7 +15,7 @@ const parts={
 };
 const investigations=[
  {title:'Sem energia nas rodas',prompt:'O ESP32 está ligado, mas as rodas não respondem. Veja como a energia chega aos motores.',parts:['esp','switch2','bridge'],target:'switch2',action:'Ligar a gangorra dos motores',before:'A gangorra dos motores está desligada. As pilhas não estão alimentando a ponte H.',after:'A gangorra permite a passagem de energia das pilhas AA até a ponte H. Agora os motores podem funcionar.',hints:['O ESP32 está aceso. Investigue a alimentação separada dos motores.','Procure a chave que fica entre as pilhas AA e a ponte H.']},
- {title:'De onde vem a energia?',prompt:'Na fábrica, as pilhas foram trocadas. Falta completar a ligação entre os suportes.',parts:['pack','battery','bridge'],target:'pack',action:'Unir A+ ao B− (ligação em série)',before:'O suporte de 4 pilhas e o de 2 precisam formar um conjunto de 6 pilhas em série.',after:'A ligação em série conecta o positivo do suporte A ao negativo do suporte B. O conjunto alimenta a ponte H, passando pela gangorra.',hints:['As pilhas do ESP32 e dos motores usam fontes diferentes.','Os suportes de 4 e 2 pilhas ficam juntos na alimentação dos motores.']},
+ {title:'A ponte H está sem alimentação',prompt:'Na fábrica, o circuito está quase pronto, mas a ponte H não recebe energia do suporte AA. Encontre a ponta solta.',parts:['pack','switch2','bridge'],target:'switch2',action:'Conectar suporte AA à gangorra',before:'O fio positivo do conjunto AA está solto antes da gangorra que alimenta a ponte H.',after:'Você ligou o positivo do suporte AA à gangorra. Agora a energia pode seguir para a ponte H.',hints:['O ESP32 usa outra fonte. Observe o caminho das pilhas dos motores.','Procure uma ponta solta entre o suporte AA e a gangorra dos motores.']},
  {title:'Uma roda ficou parada',prompt:'Um motor gira, mas o Motor A não. Observe o caminho entre a ponte H e os motores.',parts:['motor','bridge','lm'],target:'motor',action:'Reconectar os dois fios do Motor A',before:'O Motor A está com uma conexão solta na saída MOTOR A da ponte H.',after:'O Motor A voltou a receber energia pela ponte H. Cada motor pode girar independentemente.',hints:['A ponte H controla os dois motores por saídas diferentes.','Olhe os dois fios que vão da saída MOTOR A até o motor.']},
  {title:'Energia na medida certa',prompt:'No parque, a alimentação do ESP32 precisa passar pelo regulador. Observe a tensão de saída.',parts:['lm','battery','esp'],target:'lm',action:'Testar tensão de saída',before:'Antes de alimentar o VIN, ajuste a saída do LM2596 para aproximadamente 5 V.',after:'O regulador ajustou a tensão para 5 V, adequada à entrada VIN do ESP32 neste circuito.',hints:['A bateria de 9 V não deve ir diretamente ao VIN neste projeto.','Selecione o LM2596 e ajuste o controle até 5 V.'],kind:'voltage'},
  {title:'Todo circuito precisa de referência',prompt:'No laboratório, os módulos recebem energia, mas os comandos aos motores falham. Investigue o GND comum.',parts:['jumper','bridge','esp'],target:'jumper',action:'Ligar GND da ponte H ao GND do ESP32',before:'A ponte H e o ESP32 ainda não compartilham a mesma referência elétrica (GND).',after:'A ponte H e o ESP32 agora compartilham o GND. Os sinais de controle podem ser interpretados corretamente.',hints:['Os sinais precisam de uma referência elétrica comum.','Observe o fio de GND entre a ponte H e o ESP32.']},
@@ -33,19 +33,19 @@ const operations=[
  {kind:'switch',check:v=>v.switchOn===true,
   fail:'O ESP32 está ligado, mas as pilhas não alimentam a ponte H. Observe o estado da gangorra.',
   effect:'A gangorra abriu ou fechou o caminho das pilhas AA até a ponte H.'},
- {kind:'series',check:v=>v.wireDestination==='pack2.NEG',
-  fail:'Os suportes ainda não formam uma série. Observe o positivo do suporte A e o negativo do B.',
-  effect:'A ligação em série foi formada: A+ conectado a B−.'},
- {kind:'motor',check:v=>v.wireDestination==='motorA.POS',
+ {kind:'series',check:v=>v.wireSolved===true,
+  fail:'A ponte H ainda não recebe energia das pilhas AA.',
+  effect:'O positivo do conjunto AA foi reconectado à gangorra dos motores.'},
+ {kind:'motor',check:v=>v.wireSolved===true,
   fail:'O Motor A não está conectado aos dois terminais da saída MOTOR A da ponte H.',
   effect:'Os fios do Motor A estão conectados às duas saídas MOTOR A da ponte H.'},
  {kind:'voltage',check:v=>Number(v.voltage)===5,
   fail:'O medidor ainda não indica 5 V. Ajuste o LM2596 e teste novamente.',
   effect:'A saída do regulador está ajustada para 5 V, conforme o esquema deste carrinho.'},
- {kind:'ground',check:v=>v.wireDestination==='esp.GND',
+ {kind:'ground',check:v=>v.wireSolved===true,
   fail:'Os módulos ainda não compartilham a referência GND. Confira as duas extremidades do jumper.',
   effect:'O negativo da ponte H agora está ligado ao GND do ESP32.'},
- {kind:'gpio',check:v=>v.wireDestination==='esp.D18',
+ {kind:'gpio',check:v=>v.wireSolved===true,
   fail:'A entrada IN4 continua no pino errado. Consulte o esquema e tente outra porta.',
   effect:'IN4 da ponte H foi ligado ao D18 do ESP32, conforme o esquema do projeto.'}
 ];
@@ -142,7 +142,7 @@ function output(d){
 }
 function renderRepair(){
  if(!active||active.kind!=='repair')return;
- const item=investigations[active.index],d=get(),isWiring=!!window.PetGameCircuitBoard?.isWiring(active.index);
+ const item=investigations[active.index],d=get(),isWiring=isWiringChallenge(active.index);
  $('diagnosticTitle').textContent=item.title;
  $('diagnosticQuestion').textContent=item.prompt;
  $('diagnosticFeedback').textContent=d.message||'Observe o circuito, faça o teste inicial e experimente uma correção.';
@@ -159,15 +159,32 @@ function renderRepair(){
  const success=d.fixed?'<div class="pet-success" role="status"><strong>✓ Circuito funcionando!</strong>'+
   '<p>'+esc(item.after)+'</p><button class="button primary block" data-finish="1" type="button">'+
   'Continuar entrega →</button></div>':'';
- const boardScroll=$('diagnosticChoices').querySelector('.pg-board-scroll')?.scrollLeft||0;
- $('diagnosticChoices').innerHTML=(isWiring?window.PetGameCircuitBoard.render(active.index,d):circuitVisual(active.index,d))+
-  '<div class="pet-instruction">Observe as peças para compreender o circuito</div>'+
+ const host=$('petgameWorkbenchHost');
+ if(host){
+  host.hidden=!isWiring;
+  if(isWiring){
+   const existing=host.querySelector('iframe');
+   const index=String(active.index);
+   if(!existing||existing.dataset.challenge!==index){
+    host.replaceChildren();
+    const frame=document.createElement('iframe');
+    frame.id='petgameWorkbenchFrame';frame.dataset.challenge=index;
+    frame.title='Bancada original TinkerPET com todos os componentes e uma ligação para corrigir';
+    frame.loading='eager';frame.allow='fullscreen';
+    frame.src='petgame-workbench.html?challenge='+encodeURIComponent(index)+
+      (d.values?.wireSolved?'&solved=1':'')+'&v=2';
+    host.append(frame);
+   }
+   host.dataset.locked=String(!d.baseline&&!d.fixed);
+  }else host.replaceChildren();
+ }
+ $('diagnosticChoices').innerHTML=(isWiring?'':circuitVisual(active.index,d))+
+  '<div class="pet-instruction">'+(isWiring?'Encontre o fio solto ou trocado na bancada original do TinkerPET.':'Observe as peças para compreender o circuito')+'</div>'+
   (isWiring?'':'<div class="pet-parts">'+item.parts.map(k=>componentCard(k,d)).join('')+'</div>')+
   observation+task+output(d)+clue(item,d)+success+
   (!d.fixed?'<button class="pet-hint-button" data-hint="1" type="button">💡 '+
    (d.hints>=1?'Mais uma pista':'Preciso de uma pista')+'</button>':'');
- const boardViewport=$('diagnosticChoices').querySelector('.pg-board-scroll');
- if(boardViewport)boardViewport.scrollLeft=boardScroll;
+// O iframe permanece montado durante as pistas e testes para não perder os fios.
 }
 function renderExperiment(){
  if(!active||active.kind!=='question')return;
@@ -201,20 +218,6 @@ function paintWheels(){
 function handleClick(e){
  if(!active)return false;
  const d=get();
- if(active.kind==='repair'&&window.PetGameCircuitBoard?.isWiring(active.index)){
-  const component=e.target.closest('[data-component]');
-  if(component){
-   const key={battery9:'battery',switch1:'switch1',buck:'lm',esp:'esp',pack4:'pack',pack2:'pack',
-    switch2:'switch2',driver:'bridge',motorA:'motor',motorB:'motor'}[component.dataset.component];
-   if(key){
-    d.selected=key;
-    if(!d.inspected.includes(key))d.inspected.push(key);
-    d.message='Observe a função desse componente antes de mudar a conexão.';
-    renderRepair();return true;
-   }
-  }
-  if(window.PetGameCircuitBoard.handleClick(e,active.index,d,renderRepair))return true;
- }
  const button=e.target.closest('button');if(!button)return false;
  if(button.dataset.inspect){
   const key=button.dataset.inspect;if(!parts[key])return true;
@@ -259,16 +262,25 @@ function handleClick(e){
  }
  return false;
 }
-function isWiringChallenge(index){return !!window.PetGameCircuitBoard?.isWiring(index)}
-function handlePointerDown(e){
- if(active?.kind==='repair')window.PetGameCircuitBoard?.handlePointerDown(e,active.index,get());
-}
-function handlePointerMove(e){
- if(active?.kind==='repair')window.PetGameCircuitBoard?.handlePointerMove(e,active.index,get());
-}
-function handlePointerUp(e){
- if(active?.kind==='repair')window.PetGameCircuitBoard?.handlePointerUp(e,active.index,get(),renderRepair);
-}
+function isWiringChallenge(index){return [1,2,4,5].includes(index)}
+function handlePointerDown(){}
+function handlePointerMove(){}
+function handlePointerUp(){}
+window.addEventListener('message',event=>{
+ if(event.origin!==window.location.origin||event.data?.type!=='petgame-workbench-status')return;
+ if(!active||active.kind!=='repair'||event.data.challenge!==active.index)return;
+ const frame=$('petgameWorkbenchHost')?.querySelector('iframe');
+ if(!frame||event.source!==frame.contentWindow)return;
+ const d=get(),before=!!d.values.wireSolved,solved=event.data.solved===true;
+ d.values.wireSolved=solved;
+ d.values.wireDestination=typeof event.data.chosenPort==='string'?event.data.chosenPort:'';
+ if(before!==solved&&!d.fixed){
+  d.message=solved?'A ligação foi restaurada. Faça o novo teste para confirmar.':
+   'Você mexeu na fiação. Teste novamente para observar o resultado.';
+  const feedback=$('diagnosticFeedback');if(feedback)feedback.textContent=d.message;
+  d.testResult=null;
+ }
+});
 function handleInput(e){
  if(!active)return false;
  const d=get();
