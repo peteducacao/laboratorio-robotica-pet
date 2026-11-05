@@ -6,6 +6,14 @@ on:
       - 'petquiz.html'
       - 'petquiz.css'
       - 'petquiz.js'
+      - 'petquiz-bonus-teste.html'
+      - 'petquiz-bonus-teste.js'
+      - 'petquiz-bonus-bancada.html'
+      - 'app.js'
+      - 'app-mobile.js'
+      - 'mobile-editor.css'
+      - 'editor.html'
+      - 'tests/petquiz-bonus-browser.mjs'
       - 'projects.html'
       - 'projects.css'
       - 'tests/petquiz-browser.mjs'
@@ -25,13 +33,19 @@ jobs:
       - name: Conferir sintaxe
         run: |
           node --check petquiz.js
+          node --check petquiz-bonus-teste.js
+          node --check app.js
+          node --check app-mobile.js
           node --check tests/petquiz-browser.mjs
+          node --check tests/petquiz-bonus-browser.mjs
       - name: Instalar navegador
         run: |
           npm install --no-save --ignore-scripts playwright@1.56.1
           npx playwright install --with-deps chromium
       - name: Jogar PETQuiz em quatro telas
         run: node tests/petquiz-browser.mjs
+      - name: Testar bônus isolados e bancadas no computador e no celular
+        run: node tests/petquiz-bonus-browser.mjs
       - name: Capturas de teste
         if: always()
         uses: actions/upload-artifact@v4
