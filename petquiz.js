@@ -303,10 +303,13 @@
   const a=[...arr];for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a;
  }
  function scheduleBonus(){
+  // Exatamente dois bônus, fora das dez perguntas. A posição varia a cada partida,
+  // sempre entre questões e com ao menos uma pergunta de intervalo entre bônus.
   const candidates=shuffle([2,3,4,5,6,7,8]);
-  const chosen=[];
-  for(const x of candidates){if(chosen.every(y=>Math.abs(x-y)>=2))chosen.push(x);if(chosen.length===3)break}
-  return chosen.sort((a,b)=>a-b);
+  const first=candidates[0];
+  const second=candidates.find(x=>Math.abs(x-first)>=2);
+  if(second===undefined)throw Error('Não foi possível distribuir dois bônus');
+  return [first,second].sort((a,b)=>a-b);
  }
  // Cinco situações de aplicação e cinco perguntas sobre componentes.
  // Cada situação precisa aparecer depois da apresentação de seu componente.
