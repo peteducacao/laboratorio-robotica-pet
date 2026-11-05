@@ -290,6 +290,7 @@ $('exitGameBtn').addEventListener('click',()=>{window.location.href='projects.ht
 // Desafios sem botão de fechar: apenas as ações solucionadas permitem continuar.
 $('diagnosticChoices').addEventListener('click',e=>window.PetGameDiscovery?.handleClick(e));
  $('diagnosticChoices').addEventListener('input',e=>window.PetGameDiscovery?.handleInput(e));
+ $('diagnosticChoices').addEventListener('change',e=>window.PetGameDiscovery?.handleInput(e));
  $('answers').addEventListener('click',e=>window.PetGameDiscovery?.handleClick(e));
  $('answers').addEventListener('input',e=>window.PetGameDiscovery?.handleInput(e));
 document.addEventListener('keydown',e=>{
