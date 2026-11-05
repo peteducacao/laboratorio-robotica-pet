@@ -289,6 +289,9 @@ $('fullBtn').addEventListener('click',async()=>{try{if(document.fullscreenElemen
 $('exitGameBtn').addEventListener('click',()=>{window.location.href='projects.html'});
 // Desafios sem botão de fechar: apenas as ações solucionadas permitem continuar.
 $('diagnosticChoices').addEventListener('click',e=>window.PetGameDiscovery?.handleClick(e));
+ $('diagnosticChoices').addEventListener('pointerdown',e=>window.PetGameDiscovery?.handlePointerDown(e));
+ $('diagnosticChoices').addEventListener('pointermove',e=>window.PetGameDiscovery?.handlePointerMove(e));
+ $('diagnosticChoices').addEventListener('pointerup',e=>window.PetGameDiscovery?.handlePointerUp(e));
  $('diagnosticChoices').addEventListener('input',e=>window.PetGameDiscovery?.handleInput(e));
  $('diagnosticChoices').addEventListener('change',e=>window.PetGameDiscovery?.handleInput(e));
  $('answers').addEventListener('click',e=>window.PetGameDiscovery?.handleClick(e));
