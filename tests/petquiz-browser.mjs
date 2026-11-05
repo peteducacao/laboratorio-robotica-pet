@@ -18,6 +18,13 @@ const server=createServer((req,res)=>{
 });
 await new Promise(ok=>server.listen(0,'127.0.0.1',ok));
 const base='http://127.0.0.1:'+server.address().port;
+const bonusMarkup=readFileSync(resolve(root,'petquiz.html'),'utf8');
+const bonusScript=readFileSync(resolve(root,'petquiz.js'),'utf8');
+assert(!bonusMarkup.includes('class="bonus-target"'),'O desafio não deve mostrar objetivo de 5 V');
+const lmBonus=bonusScript.match(/id:'regulator',title:'([^']+)',prompt:'([^']+)',voltage:true/);
+assert(lmBonus,'O bônus LM2596 precisa existir');
+assert.equal(lmBonus[1],'Regule o LM2596!');
+assert(!/5\\s*V|5,0\\s*V/.test(lmBonus[1]+' '+lmBonus[2]),'O enunciado não pode entregar a regulagem');
 const browser=await chromium.launch({headless:true,args:['--disable-dev-shm-usage']});
 mkdirSync('test-results',{recursive:true});
 const screens=[
@@ -283,7 +290,12 @@ try{
     if(bonusCount===2){await p.locator('#bonusSkip').click();}
     else{
      const title=(await p.locator('#bonusTitle').textContent()).toLowerCase();
-     if(title.includes('lm2596'))await fill(p,'bonusVoltage',5);
+     if(title.includes('lm2596')){
+      assert.equal(await p.locator('.bonus-target').count(),0,'Sem objetivo visível no LM2596');
+      assert.equal(await p.locator('#bonusTitle').textContent(),'Regule o LM2596!');
+      assert(!/5\\s*V/.test(await p.locator('#bonusPrompt').textContent()),'Sem resposta no enunciado');
+      await fill(p,'bonusVoltage',5);
+     }
      else if(title.includes('esquerda')){await fill(p,'bonusA',20);await fill(p,'bonusB',70)}
      else{await fill(p,'bonusA',50);await fill(p,'bonusB',50)}
      await p.locator('#bonusTry').click();
