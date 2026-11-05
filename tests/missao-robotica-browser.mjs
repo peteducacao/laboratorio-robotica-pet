@@ -41,7 +41,7 @@ async function solveSlot(page,slot){
    assert.equal(await page.locator('#petVoltageValue').textContent(),'5 V');
   }
   await page.locator('[data-repair]').evaluate(el=>el.click());
-  assert(await page.locator('.pet-success').count()===1,'A correção precisa mostrar uma explicação');
+  assert(await page.locator('#diagnosticChoices .pet-success').count()===1,'A correção precisa mostrar uma explicação');
   await page.locator('[data-finish]').evaluate(el=>el.click());
  }else{
   assert(await page.locator('#questionOverlay').isVisible(),'Experimento não abriu');
@@ -57,7 +57,7 @@ async function solveSlot(page,slot){
    text:document.querySelector('#questionResponse')?.textContent,
    buttons:[...document.querySelectorAll('#answers button')].map(b=>b.dataset),
    success:document.querySelectorAll('#answers .pet-success').length}));
-  assert(await page.locator('.pet-success').count()===1,'Experimento não reconheceu a descoberta: '+JSON.stringify(diagnostic));
+  assert(await page.locator('#answers .pet-success').count()===1,'Experimento não reconheceu a descoberta: '+JSON.stringify(diagnostic));
   await page.locator('[data-finish]').evaluate(el=>el.click());
  }
  assert.equal(await page.evaluate(()=>window.__TinkerpetMission.state.mode),'drive');
