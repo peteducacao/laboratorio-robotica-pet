@@ -21,10 +21,13 @@ const base='http://127.0.0.1:'+server.address().port;
 const bonusMarkup=readFileSync(resolve(root,'petquiz.html'),'utf8');
 const bonusScript=readFileSync(resolve(root,'petquiz.js'),'utf8');
 assert(!bonusMarkup.includes('class="bonus-target"'),'O desafio não deve mostrar objetivo de 5 V');
-const lmBonus=bonusScript.match(/id:'regulator',title:'([^']+)',prompt:'([^']+)',voltage:true/);
-assert(lmBonus,'O bônus LM2596 precisa existir');
-assert.equal(lmBonus[1],'Regule o LM2596!');
-assert(!/5\s*V|5,0\\s*V/.test(lmBonus[1]+' '+lmBonus[2]),'O enunciado não pode entregar a regulagem');
+const ids=['forward','left','right','reverse','stop','straight','regulator'];
+const bonusTitles=[...bonusScript.matchAll(/\{id:'([^']+)',title:'([^']+)',voltage:(?:true|false),initial:/g)];
+assert.deepEqual(bonusTitles.map(x=>x[1]),ids,'Somente os sete bônus aprovados devem aparecer');
+assert.equal(bonusTitles[6][2],'Regule o LM2596!');
+assert(!/5\s*V/.test(bonusTitles[6][2]),'O enunciado não pode entregar a regulagem');
+assert(!bonusMarkup.includes('bonus-test-link'),'Não deve existir botão de teste temporário');
+assert(bonusMarkup.includes('id="bonusIntroView"'),'O anúncio da rodada bônus precisa existir');
 const browser=await chromium.launch({headless:true,args:['--disable-dev-shm-usage']});
 mkdirSync('test-results',{recursive:true});
 const screens=[
@@ -129,6 +132,67 @@ async function validateIntro(page,label){
 }
 
 try{
+ // Rodar TODOS os sete bônus no mesmo jogo isolado, forçando apenas no teste.
+ {
+  const ctx=await browser.newContext({viewport:{width:390,height:844},hasTouch:true,isMobile:true});
+  const p=await ctx.newPage();
+  await p.addInitScript(()=>{window.__PETQUIZ_TEST_SPEED__=true;});
+  await p.goto(base+'/petquiz.html',{waitUntil:'domcontentloaded'});
+  const samples=[
+   {id:'forward',bad:[40,50],good:[50,50]},
+   {id:'left',bad:[50,20],good:[-10,100]},
+   {id:'right',bad:[20,50],good:[100,-10]},
+   {id:'reverse',bad:[-50,-40],good:[-50,-50]},
+   {id:'stop',bad:[20,0],good:[0,0]},
+   {id:'straight',bad:[20,-20],good:[-50,-50]},
+   {id:'regulator',bad:[7],good:[5]}
+  ];
+  for(const test of samples){
+   await p.evaluate(id=>window.PetQuiz.testBonus(id),test.id);
+   assert.equal(await p.locator('#bonusIntroView').isVisible(),true,'Antes do bônus deve aparecer o popup');
+   assert.equal(await p.locator('#bonusView').isVisible(),false,'Desafio oculto durante o anúncio');
+   assert.match(await p.locator('#bonusIntroView h2').textContent(),/RODADA BÔNUS!/);
+   await phase(p,'bonus',2200);
+   assert.equal(await p.locator('#bonusIntroView').isVisible(),false);
+   assert.equal(await p.locator('#bonusTitle').textContent(),
+    ({forward:'Faça o carrinho andar para a frente!',left:'Faça o carrinho virar à esquerda!',
+      right:'Faça o carrinho virar à direita!',reverse:'Faça o carrinho andar para trás!',
+      stop:'Pare o carrinho em movimento!',straight:'Faça o carrinho seguir em linha reta!',
+      regulator:'Regule o LM2596!'})[test.id]);
+   const setValues=async values=>{
+    if(test.id==='regulator')await fill(p,'bonusVoltage',values[0]);
+    else{await fill(p,'bonusA',values[0]);await fill(p,'bonusB',values[1]);}
+   };
+   await setValues(test.bad);
+   await p.locator('#bonusTry').click();
+   assert.equal(await p.evaluate(()=>window.PetQuiz.getStatus().phase),'bonus',
+    'Erro não pode completar o bônus '+test.id);
+   if(test.id!=='regulator')
+    assert.equal(await p.locator('#bonusCar').getAttribute('data-mood'),'fail',
+     'O rosto deve reagir ao erro');
+   await setValues(test.good);
+   if(test.good[0]<0&&test.id!=='regulator'){
+    const wheel=p.locator('#bonusWheelA');
+    assert.equal(await wheel.getAttribute('data-direction'),'reverse','Ré exige roda inversa');
+    assert.equal(await wheel.evaluate(el=>getComputedStyle(el).animationName),'bonusWheelReverse',
+     'Animação da roda deve girar no sentido de ré');
+   }
+   if(test.id==='left'||test.id==='right'){
+    const expectedA=test.good[0]<0?'reverse':'forward';
+    const expectedB=test.good[1]<0?'reverse':'forward';
+    assert.equal(await p.locator('#bonusWheelA').getAttribute('data-direction'),expectedA);
+    assert.equal(await p.locator('#bonusWheelB').getAttribute('data-direction'),expectedB);
+   }
+   await p.locator('#bonusTry').click();
+   await phase(p,'bonusResult',1200);
+   assert.equal(await p.evaluate(()=>window.PetQuiz.getStatus().bonusSolved)>0,true);
+   if(test.id!=='regulator')
+    assert.equal(await p.locator('#bonusCar').getAttribute('data-mood'),'success',
+     'O rosto precisa comemorar o acerto');
+  }
+  await ctx.close();
+  console.log('✓ Sete bônus aprovados: entrada surpresa, curva com ré, parada, LM2596, rosto e rodas animadas.');
+ }
  // Testar tempos REAIS uma vez, sem acelerar.
  const context=await browser.newContext({viewport:{width:1280,height:760}});
  const page=await context.newPage();
@@ -284,20 +348,26 @@ try{
      const x=window.PetQuiz.getStatus();
      return x.index>previous||['bonus','bonusResult','finished'].includes(x.phase);
     },st.index,{timeout:4500});
+   }else if(st.phase==='bonusIntro'){
+    assert.equal(await p.locator('#bonusIntroView').isVisible(),true);
+    assert.equal(await p.locator('#bonusView').isVisible(),false);
+    await phase(p,'bonus',2200);
    }else if(st.phase==='bonus'){
     bonusCount++;
     assert.equal(await p.locator('#quitQuiz').isVisible(),true,'Desistir no bônus');
     if(bonusCount===2){await p.locator('#bonusSkip').click();}
     else{
-     const title=(await p.locator('#bonusTitle').textContent()).toLowerCase();
-     if(title.includes('lm2596')){
-      assert.equal(await p.locator('.bonus-target').count(),0,'Sem objetivo visível no LM2596');
+     const id=(await p.evaluate(()=>window.PetQuiz.getStatus())).activeBonusId;
+     if(id==='regulator'){
+      assert.equal(await p.locator('.bonus-target').count(),0);
       assert.equal(await p.locator('#bonusTitle').textContent(),'Regule o LM2596!');
-      assert(!/5\s*V/.test(await p.locator('#bonusPrompt').textContent()),'Sem resposta no enunciado');
       await fill(p,'bonusVoltage',5);
+     }else{
+      const configs={forward:[50,50],left:[-10,100],right:[100,-10],
+       reverse:[-50,-50],stop:[0,0],straight:[-50,-50]};
+      assert(configs[id],'Bônus inesperado '+id);
+      await fill(p,'bonusA',configs[id][0]);await fill(p,'bonusB',configs[id][1]);
      }
-     else if(title.includes('esquerda')){await fill(p,'bonusA',20);await fill(p,'bonusB',70)}
-     else{await fill(p,'bonusA',50);await fill(p,'bonusB',50)}
      await p.locator('#bonusTry').click();
      await phase(p,'bonusResult',2000);
     }
