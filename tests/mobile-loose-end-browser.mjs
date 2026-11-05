@@ -81,6 +81,54 @@ try{
   'Ponta não seguiu a segunda passada do dedo: '+JSON.stringify(changed));
  assert(changed.via.length>=1,'A curva deve formar ao menos um cotovelo ortogonal');
  assert.equal(changed.wireCount,1,'Não duplicar o jumper ao curvar a ponta');
+ // Reproduz a falha real: parar, pegar a ponta quadrada DE NOVO e
+ // fazer várias viradas horizontais/verticais com o dedo no Android.
+ const box2=await handle.boundingBox();
+ assert(box2,'O quadrado da ponta deve permanecer disponível após a primeira soltura');
+ const x2=box2.x+box2.width/2,y2=box2.y+box2.height/2;
+ const touchSteps=async(path,id)=>{
+  await cdp.send('Input.dispatchTouchEvent',{type:'touchStart',
+   touchPoints:[{x:path[0][0],y:path[0][1],id,force:1}]});
+  for(let i=1;i<path.length;i++){
+   await cdp.send('Input.dispatchTouchEvent',{type:'touchMove',
+    touchPoints:[{x:path[i][0],y:path[i][1],id,force:1}]});
+   await page.waitForTimeout(35);
+  }
+  await cdp.send('Input.dispatchTouchEvent',{type:'touchEnd',touchPoints:[]});
+ };
+ const path=[
+  [x2,y2],[x2+17,y2],[x2+38,y2],[x2+58,y2],
+  [x2+58,y2-20],[x2+58,y2-43],[x2+58,y2-70],
+  [x2+76,y2-70],[x2+99,y2-70],
+  [x2+99,y2-47],[x2+99,y2-22]
+ ];
+ const vp=await page.locator('#viewport').boundingBox();
+ assert(vp,'Bancada precisa existir');
+ assert(path.every(([px,py])=>px>vp.x+8&&px<vp.x+vp.width-8&&py>vp.y+8&&py<vp.y+vp.height-8),
+  'O teste tem de criar as curvas dentro da bancada: '+JSON.stringify({x2,y2,vp}));
+ await touchSteps(path,92);
+ await page.waitForTimeout(150);
+ const changedTwice=await page.evaluate(()=>{
+  const p=JSON.parse(localStorage.getItem('tinkerpet-library-v1')).projects[0];
+  return {wire:p.circuit.wires[0],count:p.circuit.wires.length,
+   path:document.querySelector('#wireSvg .wire-line')?.getAttribute('d')||''};
+ });
+ assert.equal(changedTwice.count,1,'Repetir a edição nunca duplica o fio');
+ assert.equal(changedTwice.wire.loose?.end,'b','A ponta permanece solta após fazer mais curvas');
+ assert(changedTwice.wire.via.length>=3,
+  'A retomada precisa guardar várias curvas do dedo: '+JSON.stringify(changedTwice));
+ assert(changedTwice.wire.loose.point.x>changed.loose.point.x+50,
+  'O quadrado não acompanhou o segundo gesto: '+JSON.stringify(changedTwice));
+ const stateBeforeReload=JSON.stringify(changedTwice.wire);
+ await page.reload({waitUntil:'domcontentloaded'});
+ await page.locator('#wireSvg .wire-line').first().waitFor({timeout:15000});
+ const stateAfterReload=await page.evaluate(()=>{
+  const p=JSON.parse(localStorage.getItem('tinkerpet-library-v1')).projects[0];
+  return p.circuit.wires[0];
+ });
+ assert.equal(JSON.stringify(stateAfterReload),stateBeforeReload,
+  'As curvas refeitas devem continuar salvas após atualizar a página');
+ console.log('PASS Android: segunda retomada registra várias curvas, sem duplicar fio, e persiste após F5');
  assert(changed.stillSelected,'Ponta continua selecionável para conectar ao pino');
  assert.deepEqual(errors,[],'Erros Javascript: '+errors.join('; '));
  console.log('PASS Android touch: ponta livre ativada por toque, acompanha arraste, salva a curva sem duplicar o fio');
