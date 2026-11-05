@@ -72,7 +72,11 @@ async function solveSlot(page,slot){
    if(page.viewportSize().width<900){
     // No telefone, dois toques evitam arrastar o fio por uma bancada extensa.
     await handle.tap();
-    await port.tap();
+    // Primeiro toque aproxima automaticamente os pinos em telas pequenas.
+    // O segundo, se necessário, encaixa o jumper no contato preciso.
+    await port.tap({force:true});
+    const completed=await page.evaluate(()=>window.__TinkerpetMission.state.discovery.values.wireSolved===true);
+    if(!completed)await port.tap({force:true});
    }else{
     await page.mouse.move(a.x+a.width/2,a.y+a.height/2);
     await page.mouse.down();
