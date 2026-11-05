@@ -68,6 +68,17 @@ function begin(state,kind,index,finished,preserve=false){
  const table=kind==='repair'?investigations:experiments;
  if(!table[index])throw Error('Descoberta inválida '+kind+' '+index);
  active={state,kind,index,finished};ensure(state,preserve);
+ // Nas bancadas de fios, a criança deve conseguir mexer imediatamente.
+ // A falha já foi detectada antes de abrir o editor: não bloquear a área de criação.
+ if(kind==='repair'&&[1,2,4,5].includes(index)){
+  const d=get();
+  if(!d.baseline){
+   d.baseline=true;
+   d.tests=Math.max(1,d.tests||0);
+   d.testResult={ok:false,title:'O carrinho apresentou uma falha',text:investigations[index].before};
+   d.message='Um fio está solto ou trocado. Selecione a ponta, conecte ao terminal e teste o circuito.';
+  }
+ }
  if(kind==='repair')renderRepair();else renderExperiment();
 }
 function componentCard(key,d){
@@ -175,7 +186,7 @@ function renderRepair(){
       (d.values?.wireSolved?'&solved=1':'')+'&v=3';
     host.append(frame);
    }
-   host.dataset.locked=String(!d.baseline&&!d.fixed);
+   host.dataset.locked='false'; // Nunca impedir a seleção ou o arrasto do fio.
   }else host.replaceChildren();
  }
  $('diagnosticChoices').innerHTML=(isWiring?'':circuitVisual(active.index,d))+
