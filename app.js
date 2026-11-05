@@ -224,8 +224,25 @@ function seedPetQuizBonusWorkbench(){
  state.startPort=null;state.bends=[];state.completed=false;
 }
 function petQuizBonusExpected(){
- return PETQUIZ_BONUS_CASE==='motor-a'?
-  [['drv.OUT1','ml.A'],['drv.OUT2','ml.B']]:EXPECTED;
+ if(PETQUIZ_BONUS_CASE==='motor-a'){
+  // Dois contatos da saída A: inverter a polaridade apenas muda o giro.
+  const routes=[
+   [['drv.OUT1','ml.A'],['drv.OUT2','ml.B']],
+   [['drv.OUT1','ml.B'],['drv.OUT2','ml.A']]
+  ];
+  const actual=new Set(state.wires.filter(w=>!w.loose).map(w=>electricalKey(w.a,w.b)));
+  return routes.sort((a,b)=>
+   b.filter(([x,y])=>actual.has(electricalKey(x,y))).length-
+   a.filter(([x,y])=>actual.has(electricalKey(x,y))).length)[0];
+ }
+ // Mesmas regras flexíveis do TinkerPET: contato 1/2 da gangorra reversível,
+ // GNDs equivalentes e motores com polaridade reversível. Os GPIOs de
+ // controle preservam o esquema real 27/26/32/18 do carrinho.
+ return [
+  ...COMMON_CONNECTIONS.filter(([a])=>!a.startsWith('drv.OUT')),
+  ...selectedSwitchConnections().pairs,
+  ...selectedMotorConnections()
+ ];
 }
 function petQuizBonusReport(){
  if(!IS_PETQUIZ_BONUS_WORKBENCH)return;
@@ -233,7 +250,7 @@ function petQuizBonusReport(){
  const wired=new Set(state.wires.filter(w=>!w.loose).map(w=>electricalKey(w.a,w.b)));
  const good=expected.filter(([a,b])=>wired.has(electricalKey(a,b))).length;
  const errors=state.wires.filter(w=>w.loose||!expected.some(([a,b])=>electricalKey(a,b)===electricalKey(w.a,w.b))).length;
- const success=good===expected.length&&errors===0;
+ const success=good===expected.length&&errors===0&&state.wires.length===expected.length;
  const data={source:'petquiz-bancada',challenge:PETQUIZ_BONUS_CASE,good,total:expected.length,errors,success};
  try{if(window.parent!==window)window.parent.postMessage(data,window.location.origin)}catch{}
  window.PetQuizWiringTest=()=>data;
