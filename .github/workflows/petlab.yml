@@ -1,0 +1,41 @@
+name: PETLab 2D · testes de experiências
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'petlab.html'
+      - 'petlab.css'
+      - 'petlab.js'
+      - 'projects.html'
+      - 'projects.css'
+      - 'tests/petlab-browser.mjs'
+      - '.github/workflows/petlab.yml'
+  workflow_dispatch:
+jobs:
+  petlab:
+    runs-on: ubuntu-latest
+    timeout-minutes: 18
+    steps:
+      - name: Baixar o repositório
+        uses: actions/checkout@v4
+      - name: Preparar Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Validar JavaScript
+        run: |
+          node --check petlab.js
+          node --check tests/petlab-browser.mjs
+      - name: Preparar Chromium
+        run: |
+          npm install --no-save --ignore-scripts playwright@1.56.1
+          npx playwright install --with-deps chromium
+      - name: Jogar as cinco experiências nos navegadores
+        run: node tests/petlab-browser.mjs
+      - name: Guardar capturas
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: petlab-capturas
+          path: test-results/petlab-*.png
+          if-no-files-found: ignore
