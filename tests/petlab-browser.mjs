@@ -37,7 +37,7 @@ try{
   assert.equal(await page.locator('[data-panel]').count(),5);
   assert.equal(await page.locator('#overallProgress').textContent(),'0 de 5');
   const linkPage=await context.newPage();await linkPage.goto(url+'/projects.html',{waitUntil:'domcontentloaded'});
-  assert.equal(await linkPage.locator('#openPetLab').count(),1,'PETLab deve estar no menu Meus circuitos');
+  assert.equal(await linkPage.locator('#openPetQuiz').count(),1,'PETQuiz deve estar no menu Meus circuitos');
   await linkPage.close();
   // Motor speeds, three different outcomes.
   await setRange(page,'motorA',50);await setRange(page,'motorB',50);
