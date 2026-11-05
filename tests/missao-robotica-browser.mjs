@@ -72,11 +72,12 @@ async function solveSlot(page,slot){
    if(page.viewportSize().width<900){
     // No telefone, dois toques evitam arrastar o fio por uma bancada extensa.
     await handle.tap();
-    // Primeiro toque aproxima automaticamente os pinos em telas pequenas.
-    // O segundo, se necessário, encaixa o jumper no contato preciso.
-    await port.tap({force:true});
-    const completed=await page.evaluate(()=>window.__TinkerpetMission.state.discovery.values.wireSolved===true);
-    if(!completed)await port.tap({force:true});
+    const near=await frame.locator('#viewport').evaluate(el=>{
+     const rect=el.getBoundingClientRect();return {width:rect.width,height:rect.height};
+    });
+    assert(near.width>150&&near.height>150,'A bancada deve ser utilizável no celular');
+    // Dois toques físicos, sem force, para encontrar alvos sobrepostos.
+    await port.tap({timeout:10000});
    }else{
     await page.mouse.move(a.x+a.width/2,a.y+a.height/2);
     await page.mouse.down();
