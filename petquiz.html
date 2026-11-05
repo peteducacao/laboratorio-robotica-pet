@@ -10,8 +10,8 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&family=Manrope:wght@500;600;700;800&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="petquiz.css?v=7">
-<script defer src="petquiz.js?v=7"></script>
+<link rel="stylesheet" href="petquiz.css?v=8">
+<script defer src="petquiz.js?v=8"></script>
 </head>
 <body>
 <header class="topbar">
@@ -41,7 +41,7 @@
    <div class="game-tools">
     <button id="soundToggle" class="tool-btn" type="button" aria-pressed="true" title="Silenciar sons">♪ <span>Som ligado</span></button>
     <button id="fullscreenToggle" class="tool-btn" type="button" aria-pressed="false" title="Alternar tela cheia">⛶ <span>Tela cheia</span></button>
-    <button id="quitQuiz" class="quit-quiz" type="button" aria-label="Desistir da partida e voltar ao início"><span aria-hidden="true">✕</span> Desistir</button>
+    <button id="quitQuiz" class="quit-quiz" type="button" aria-label="Desistir da partida e ver o placar acumulado"><span aria-hidden="true">✕</span> Desistir</button>
    </div>
   </div>
   <div class="game-hud">
@@ -107,10 +107,11 @@
    <div class="final-hero">
     <div class="final-robot" aria-hidden="true"><span class="final-confetti">✦ ✧ ✦</span><svg class="pet-rover-svg" viewBox="0 0 380 250" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><defs><linearGradient id="roverBody" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#a3e1bc"/><stop offset="1" stop-color="#27a78f"/></linearGradient><linearGradient id="roverWheels" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#476779"/><stop offset="1" stop-color="#142a45"/></linearGradient></defs><ellipse cx="191" cy="228" rx="146" ry="15" fill="#0b6657" opacity=".17"/><g class="rover-float"><path d="M100 162L78 182M284 162l19 20" stroke="#14566c" stroke-width="12" stroke-linecap="round"/><rect x="53" y="146" width="64" height="74" rx="26" fill="url(#roverWheels)" stroke="#12344c" stroke-width="8"/><rect x="266" y="146" width="64" height="74" rx="26" fill="url(#roverWheels)" stroke="#12344c" stroke-width="8"/><circle cx="84" cy="182" r="18" fill="#6f8391"/><circle cx="298" cy="182" r="18" fill="#6f8391"/><rect x="96" y="61" width="192" height="142" rx="48" fill="url(#roverBody)" stroke="#186a76" stroke-width="11"/><rect x="115" y="92" width="154" height="74" rx="28" fill="#1c4c68"/><circle cx="159" cy="127" r="17" fill="#e7fff2"/><circle cx="228" cy="127" r="17" fill="#e7fff2"/><circle cx="164" cy="127" r="7" fill="#15344b"/><circle cx="223" cy="127" r="7" fill="#15344b"/><path d="M170 148q22 18 46 0" fill="none" stroke="#97f2cd" stroke-width="6" stroke-linecap="round"/><path d="M190 61V43" stroke="#1b5c74" stroke-width="8" stroke-linecap="round"/><circle cx="190" cy="34" r="12" fill="#ffd06d"/><rect x="169" y="180" width="51" height="12" rx="6" fill="#dffae7" opacity=".8"/><circle cx="111" cy="183" r="9" fill="#ffd577"/><circle cx="274" cy="183" r="9" fill="#ffd577"/></g></svg><div class="robot-arm-trophy">🏆</div><div class="podium"><div class="podium-side">2</div><div class="podium-first">1º</div><div class="podium-side bronze">3</div></div></div>
     <div class="final-summary">
-     <div class="final-kicker">FIM DO PETQUIZ</div>
+     <div class="final-kicker" id="finalKicker">FIM DO PETQUIZ</div>
      <h2 id="finalTitle">Parabéns!</h2>
-     <p class="final-description">Você concluiu o desafio.</p>
-     <div class="final-score"><small>SUA PONTUAÇÃO</small><strong id="finalScore">0</strong><span>pontos</span></div>
+     <p class="final-description" id="finalDescription">Você concluiu o desafio.</p>
+     <p class="final-progress" id="finalProgress">10 de 10 perguntas respondidas</p>
+     <div class="final-score"><small id="finalScoreLabel">SUA PONTUAÇÃO</small><strong id="finalScore">0</strong><span>pontos</span></div>
      <div class="final-stats"><div><b id="finalCorrect">0</b><small>Acertos</small></div><div><b id="finalWrong">0</b><small>Erros</small></div><div><b id="finalTimeout">0</b><small>Sem resposta</small></div><div><b id="finalBonus">0</b><small>Bônus jogados</small></div></div>
      <button id="playAgain" class="primary-btn large" type="button">Jogar novamente ↻</button>
      <a href="projects.html" class="end-link">Meus circuitos</a>
