@@ -89,6 +89,7 @@ try{
  const box2=await handle.boundingBox();
  assert(box2,'O quadrado da ponta deve permanecer disponível após a primeira soltura');
  const x2=box2.x+box2.width/2,y2=box2.y+box2.height/2;
+ const previewSamples=[];
  const touchSteps=async(path,id)=>{
   await cdp.send('Input.dispatchTouchEvent',{type:'touchStart',
    touchPoints:[{x:path[0][0],y:path[0][1],id,force:1}]});
@@ -96,6 +97,9 @@ try{
    await cdp.send('Input.dispatchTouchEvent',{type:'touchMove',
     touchPoints:[{x:path[i][0],y:path[i][1],id,force:1}]});
    await page.waitForTimeout(35);
+   if([3,6,8,10].includes(i)){
+    previewSamples.push(await page.locator('#wireSvg .wire-reconnect-preview').first().getAttribute('d'));
+   }
   }
   await cdp.send('Input.dispatchTouchEvent',{type:'touchEnd',touchPoints:[]});
  };
@@ -112,6 +116,8 @@ try{
  assert(path.every(([px,py])=>px>vp.x+8&&px<vp.x+vp.width-8&&py>vp.y+8&&py<vp.y+vp.height-8),
   'O teste tem de criar as curvas dentro da bancada: '+JSON.stringify({x2,y2,vp}));
  await touchSteps(path,92);
+ assert(previewSamples.every(Boolean)&&new Set(previewSamples).size>=3,
+  'A curva precisa acompanhar o dedo EM TEMPO REAL antes de soltar: '+JSON.stringify(previewSamples));
  await page.waitForTimeout(150);
  const changedTwice=await page.evaluate(()=>{
   const p=JSON.parse(localStorage.getItem('tinkerpet-library-v1')).projects[0];
