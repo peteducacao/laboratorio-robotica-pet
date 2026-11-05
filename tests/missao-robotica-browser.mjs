@@ -48,23 +48,40 @@ async function solveSlot(page,slot){
   assert.equal(baseline.fixed,false);
   assert.equal(baseline.tests,1);
   assert.equal(await page.locator('#diagnosticChoices [data-finish]').count(),0,'Não pode avançar após detectar a falha');
-  async function setValue(key,value){
-   await page.locator('[data-setting="'+key+'"]').evaluate((el,v)=>{
-    el.value=v;el.dispatchEvent(new Event('input',{bubbles:true}));
-   },value);
-  }
-  switch(slot.index){
-   case 0: await page.locator('#diagnosticChoices [data-switch]').evaluate(el=>el.click()); break;
-   case 1: await setValue('source','A+');await setValue('dest','B-');break;
-   case 2: await setValue('positive','A+');await setValue('negative','A-');break;
-   case 3:
-    await page.locator('#petVoltage').evaluate(el=>{el.value='5';el.dispatchEvent(new Event('input',{bubbles:true}))});
-    assert.equal(await page.locator('#petVoltageValue').textContent(),'5 V');
-    break;
-   case 4: await setValue('source','Ponte H GND');await setValue('dest','ESP32 GND');break;
-   case 5: await setValue('pin','D18');break;
-   default:throw Error('Sem cenário para '+slot.index);
-  }
+  if([1,2,4,5].includes(slot.index)){
+   assert.equal(await page.locator('#diagnosticChoices .pg-component').count(),10,'O circuito deve mostrar dez componentes.');
+   assert.equal(await page.locator('#diagnosticChoices .pg-wire').count(),18,'O circuito deve mostrar todas as dezoito ligações.');
+   assert.equal(await page.locator('#diagnosticChoices .pg-fault-wire').count(),1,'Apenas uma ligação deve estar com defeito.');
+   const wire=await page.evaluate(i=>{
+    const board=window.PetGameCircuitBoard,fault=board.FAULTS[i];
+    return{target:fault.target,loose:fault.wire};
+   },slot.index);
+   assert.equal(await page.locator('#diagnosticChoices [data-finish]').count(),0,'Não basta observar o fio.');
+   // A mesma interação funciona por toque em dois pontos ou por arrasto.
+   await page.locator('#diagnosticChoices [data-wire-handle]').dispatchEvent('click');
+   assert.equal(await page.evaluate(()=>window.__TinkerpetMission.state.discovery.values.wireSelected),true,'A ponta solta deve ser selecionável.');
+   if(slot.index===1){
+    // Tentar o pino errado nunca pode resolver o defeito.
+    await page.locator('#diagnosticChoices [data-pin="pack2.POS"]').dispatchEvent('click');
+    await page.locator('#diagnosticChoices [data-test-circuit]').dispatchEvent('click');
+    const failed=await page.evaluate(()=>window.__TinkerpetMission.state.discovery);
+    assert.equal(failed.fixed,false,'A conexão no terminal errado não pode liberar a criança.');
+    await page.locator('#diagnosticChoices [data-wire-handle]').dispatchEvent('click');
+   }
+   await page.locator('#diagnosticChoices [data-pin="'+wire.target+'"]').dispatchEvent('click');
+   assert.equal(await page.evaluate(()=>window.__TinkerpetMission.state.discovery.values.wireDestination),wire.target,
+    'O fio precisa conectar ao terminal correto: '+wire.target);
+  }else if(slot.index===0){
+   assert.equal(await page.locator('#diagnosticChoices [data-switch]').count(),1,'Gangorra deve manter experimento físico.');
+   await page.locator('#diagnosticChoices [data-switch]').dispatchEvent('click');
+   assert.equal(await page.evaluate(()=>window.__TinkerpetMission.state.discovery.values.switchOn),true);
+  }else if(slot.index===3){
+   assert.equal(await page.locator('#petVoltage').count(),1,'LM2596 deve manter controle de tensão.');
+   await page.locator('#petVoltage').evaluate(el=>{
+    el.value='5';el.dispatchEvent(new Event('input',{bubbles:true}));
+   });
+   assert.equal(await page.locator('#petVoltageValue').textContent(),'5 V');
+  }else throw Error('Cenário de descoberta desconhecido: '+slot.index);
   assert.equal(await page.locator('#diagnosticChoices [data-finish]').count(),0,'Mudar um controle não basta: precisa testar');
   await page.locator('#diagnosticChoices [data-test-circuit]').evaluate(el=>el.click());
   const result=await page.evaluate(()=>window.__TinkerpetMission.state.discovery);
