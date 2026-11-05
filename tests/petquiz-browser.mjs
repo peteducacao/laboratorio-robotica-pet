@@ -198,14 +198,48 @@ try{
    await p.waitForTimeout(80);
    assert.equal(await p.evaluate(()=>document.fullscreenElement),null);
   }
+  // Desistir logo no início: mostrar um placar parcial de zero, sem reiniciar.
   await p.locator('#quitQuiz').click();
-  assert.equal(await p.evaluate(()=>window.PetQuiz.getStatus().phase),'intro');
+  assert.equal(await p.evaluate(()=>window.PetQuiz.getStatus().phase),'finished');
+  assert.equal(await p.evaluate(()=>window.PetQuiz.getStatus().finishedReason),'quit');
   assert.equal(await p.evaluate(()=>window.PetQuiz.getStatus().score),0);
+  assert.equal(await p.locator('#finalView').isVisible(),true);
+  assert.equal(await p.locator('#finalTitle').textContent(),'Partida encerrada');
+  assert.equal(await p.locator('#finalScore').textContent(),'0');
+  assert.match(await p.locator('#finalProgress').textContent(),/0 de 10/);
+  assert.equal(await p.locator('#quitQuiz').isVisible(),false);
   assert.equal(await p.evaluate(()=>localStorage.getItem('petquiz-session-v1')),null);
-  await p.locator('#startQuiz').click();
+  // Recomeçar limpa a partida anterior e permite acumular pontos de novo.
+  await p.locator('#playAgain').click();
+  assert.equal(await p.evaluate(()=>window.PetQuiz.getStatus().phase),'read');
+  assert.equal(await p.evaluate(()=>window.PetQuiz.getStatus().score),0);
+  await phase(p,'answer',3500);
+  const first=(await p.evaluate(()=>window.PetQuiz.getStatus())).plan[0];
+  const gabarito=answers[first.id];
+  const firstOptions=await p.locator('.answer-btn').allTextContents();
+  const rightIndex=firstOptions.findIndex(t=>t.includes(gabarito));
+  assert(rightIndex>=0,'Gabarito da primeira questão não encontrado');
+  await p.locator('.answer-btn').nth(rightIndex).click();
+  await phase(p,'result',1200);
+  const earned=(await p.evaluate(()=>window.PetQuiz.getStatus())).score;
+  assert(earned>0,'Uma resposta correta deve somar pontos antes da desistência');
+  await p.locator('#quitQuiz').click();
+  const partial=await p.evaluate(()=>window.PetQuiz.getStatus());
+  assert.equal(partial.phase,'finished','Ao desistir deve mostrar o resultado parcial');
+  assert.equal(partial.finishedReason,'quit');
+  assert.equal(partial.score,earned,'Não perder a pontuação acumulada');
+  assert.equal(partial.correct,1,'Um acerto deve permanecer no placar');
+  assert.equal(partial.answered,1,'Pergunta não terminada não deve ser contabilizada');
+  assert.equal(await p.locator('#finalScore').textContent(),earned.toLocaleString('pt-BR'));
+  assert.equal(await p.locator('#finalCorrect').textContent(),'1');
+  assert.match(await p.locator('#finalProgress').textContent(),/1 de 10/);
+  await p.waitForTimeout(1200); // O avanço automático anterior não pode voltar a agir.
+  assert.equal(await p.evaluate(()=>window.PetQuiz.getStatus().phase),'finished');
+  assert.equal(await p.evaluate(()=>window.PetQuiz.getStatus().score),earned);
   await p.locator('.back-link').click();
   await p.goBack({waitUntil:'domcontentloaded'});
-  assert.equal(await p.evaluate(()=>window.PetQuiz.getStatus().phase),'intro');
+  assert.equal(await p.evaluate(()=>window.PetQuiz.getStatus().phase),'intro',
+   'Navegar para fora continua sem salvar progresso');
   await p.locator('#startQuiz').click();
   const plan=(await p.evaluate(()=>window.PetQuiz.getStatus())).plan;
   validatePlan(plan);
@@ -267,6 +301,9 @@ try{
   assert(iterations<130,'Partida não chegou ao resultado');
   const final=await p.evaluate(()=>window.PetQuiz.getStatus());
   assert.equal(final.phase,'finished');
+  assert.equal(final.finishedReason,null,'Concluir as dez questões não é desistência');
+  assert.equal(await p.locator('#finalTitle').textContent(),'Parabéns!');
+  assert.match(await p.locator('#finalProgress').textContent(),/10 de 10/);
   assert.equal(final.questionTotal,10);
   assert.equal(final.correct+final.wrong+final.timeout,10);
   assert.equal(final.correct,correct);assert.equal(final.wrong,wrong);assert.equal(final.timeout,timeouts);
