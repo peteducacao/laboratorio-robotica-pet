@@ -49,3 +49,10 @@ html,body.petgame-embedded{height:100%;width:100%;margin:0;overflow:hidden!impor
  pointer-events:auto!important;z-index:8!important;
 }
 .petgame-embedded #partsLayer .pin-btn .pin-dot{pointer-events:none!important}
+
+/* Após tocar a ponta do jumper, a alça se torna apenas indicação visual.
+   Ela não pode cobrir o borne para onde o aluno está tentando conectá-la.
+   Durante um arrasto, a alça continua interativa. */
+.petgame-embedded #wireHandles .wire-end-handle.awaiting-target{
+ pointer-events:none!important;
+}
