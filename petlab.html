@@ -1,0 +1,167 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#eff7f4">
+<meta name="description" content="PETLab: cinco experiências 2D de robótica com carrinho ESP32, motores, interruptores, tensão e investigações. Sem cronômetro ou vidas.">
+<title>PETLab • Experiências de Robótica | TinkerPET</title>
+<link rel="icon" href="assets/logo-pet.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&family=Manrope:wght@500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="petlab.css?v=1">
+<script defer src="petlab.js?v=1"></script>
+</head>
+<body>
+<header class="topbar">
+ <a class="brand" href="projects.html" aria-label="Voltar aos meus circuitos"><img src="assets/logo-pet.svg" alt=""><span>TinkerPET <strong>Studio</strong></span></a>
+ <div class="right-top"><span class="eyebrow-pill">PETLab · versão experimental</span><a class="back-link" href="projects.html">← Meus circuitos</a></div>
+</header>
+<main class="shell">
+ <section class="hero" aria-labelledby="introTitle">
+  <div class="hero-copy"><span class="kicker"><i></i> APRENDER EXPERIMENTANDO</span>
+   <h1 id="introTitle">Pequenas descobertas, <em>grandes ideias.</em></h1>
+   <p>Teste motores, explore a energia e resolva situações do carrinho ESP32. Sem relógio, sem perder vidas e no seu ritmo.</p>
+   <div class="hero-bottom"><span class="learn-label">Laboratório de robótica · 5 experiências</span><button class="reset-button" id="resetLab" type="button" title="Reiniciar apenas o PETLab">↺ Recomeçar PETLab</button></div>
+  </div>
+  <div class="hero-decor" aria-hidden="true">
+   <div class="orbit orbit-one"></div><div class="orbit orbit-two"></div>
+   <div class="floating-chip chip-a">ESP32</div><div class="floating-chip chip-b">A · B</div>
+   <div class="hero-robot"><span class="hero-wheel left"></span><div class="hero-body"><span class="hero-board"><b>ESP32</b><small>PET</small></span><span class="hero-light"></span></div><span class="hero-wheel right"></span></div>
+  </div>
+ </section>
+ <section class="lab-main" aria-label="Escolha uma experiência">
+  <div class="heading-line"><div><span class="section-eyebrow">SUAS DESCOBERTAS</span><h2>Laboratório interativo</h2></div><div class="progress-box"><strong id="overallProgress">0 de 5</strong><span>experiências concluídas</span><div class="meter"><i id="progressBar"></i></div></div></div>
+  <nav class="lab-tabs" id="labTabs" aria-label="Minijogos PETLab">
+   <button type="button" class="lab-tab active" data-tab="motors" aria-current="page"><span class="tab-num">01</span><span>Os motores</span><small data-done="motors" aria-hidden="true"></small></button>
+   <button type="button" class="lab-tab" data-tab="energy"><span class="tab-num">02</span><span>Caminho da energia</span><small data-done="energy" aria-hidden="true"></small></button>
+   <button type="button" class="lab-tab" data-tab="voltage"><span class="tab-num">03</span><span>Acerte a tensão</span><small data-done="voltage" aria-hidden="true"></small></button>
+   <button type="button" class="lab-tab" data-tab="diagnosis"><span class="tab-num">04</span><span>Investigação</span><small data-done="diagnosis" aria-hidden="true"></small></button>
+   <button type="button" class="lab-tab" data-tab="track"><span class="tab-num">05</span><span>Pequeno percurso</span><small data-done="track" aria-hidden="true"></small></button>
+  </nav>
+  <div class="activity" id="activity">
+   <section class="game-panel" id="panelMotors" data-panel="motors" aria-labelledby="motorTitle">
+    <div class="activity-title"><div><span class="section-eyebrow">EXPERIÊNCIA 01 · CONTROLE DE MOVIMENTO</span><h3 id="motorTitle">Dois motores, muitas possibilidades.</h3><p id="motorPrompt">Experimente as velocidades dos motores A e B para descobrir como o carrinho se movimenta.</p></div><span class="task-counter" id="motorCounter">Etapa 1 de 3</span></div>
+    <div class="activity-grid">
+     <div class="experiment-card motors-canvas">
+      <div class="monitor-top"><span><i class="online-dot"></i> SIMULAÇÃO EM TEMPO REAL</span><strong id="motorDirection">Parado</strong></div>
+      <div class="car-simulator" aria-label="Carrinho e rodas que giram conforme a velocidade escolhida">
+       <div class="motion-lines"><i></i><i></i><i></i></div>
+       <div class="simulation-car" id="simulationCar"><span class="wheel wheel-left" id="wheelLeft"></span><span class="car-shell"><span class="car-cap">ESP32</span><span class="car-led" id="motorLed"></span><span class="car-chip">PET</span></span><span class="wheel wheel-right" id="wheelRight"></span></div>
+      </div>
+      <div class="monitor-footer"><span id="motorObservation">As rodas estão paradas.</span><span class="no-race">SEM CRONÔMETRO</span></div>
+     </div>
+     <div class="controls-card">
+      <div class="control-heading"><span class="control-icon">⤢</span><div><strong>Controle das rodas</strong><small>Arraste e observe o movimento.</small></div></div>
+      <label class="range-label" for="motorA"><span>Motor A <small>lado esquerdo</small></span><output id="motorAValue" for="motorA">0%</output></label>
+      <input id="motorA" type="range" min="-100" max="100" step="10" value="0" aria-label="Velocidade do motor A">
+      <div class="range-ends"><span>Ré</span><span>Parado</span><span>Frente</span></div>
+      <label class="range-label" for="motorB"><span>Motor B <small>lado direito</small></span><output id="motorBValue" for="motorB">0%</output></label>
+      <input id="motorB" type="range" min="-100" max="100" step="10" value="0" aria-label="Velocidade do motor B">
+      <div class="range-ends"><span>Ré</span><span>Parado</span><span>Frente</span></div>
+      <div class="quick-actions" aria-label="Experimente combinações"><button type="button" data-motor-preset="straight">Reto</button><button type="button" data-motor-preset="left">Curva</button><button type="button" data-motor-preset="stop">Parar</button></div>
+      <button class="primary-action" id="motorTest" type="button">Testar meu movimento <span>→</span></button>
+      <button class="secondary-action" id="motorNext" type="button" hidden>Próximo desafio →</button>
+     </div>
+    </div>
+    <div class="feedback" id="motorFeedback" role="status" aria-live="polite"><span class="feedback-icon">✦</span><p>Comece ajustando os dois controles. O movimento do carrinho muda na hora.</p></div>
+   </section>
+   <section class="game-panel" id="panelEnergy" data-panel="energy" aria-labelledby="energyTitle" hidden>
+    <div class="activity-title"><div><span class="section-eyebrow">EXPERIÊNCIA 02 · ALIMENTAÇÃO ELÉTRICA</span><h3 id="energyTitle">Quem recebe energia?</h3><p id="energyPrompt">Descubra por que o ESP32 e os motores têm alimentações independentes.</p></div><span class="task-counter" id="energyCounter">Etapa 1 de 2</span></div>
+    <div class="activity-grid">
+     <div class="experiment-card energy-canvas">
+      <div class="energy-path"><div class="battery-card"><b>9 V</b><small>Bateria do ESP32</small></div><div class="energy-line" id="lineEsp"></div><div class="energy-target" id="espVisual"><span class="target-led" id="espLed"></span><strong>ESP32</strong><small id="espStatus">Desligado</small></div></div>
+      <div class="energy-path"><div class="battery-card aa"><b>6 AA</b><small>Pilhas dos motores</small></div><div class="energy-line" id="lineBridge"></div><div class="energy-target" id="bridgeVisual"><span class="target-led" id="bridgeLed"></span><strong>Ponte H</strong><small id="bridgeStatus">Sem alimentação</small></div></div>
+      <div class="energy-note">Os motores só giram quando recebem energia <strong>e</strong> comandos do ESP32.</div>
+     </div>
+     <div class="controls-card">
+      <div class="control-heading"><span class="control-icon">⏻</span><div><strong>Interruptores do carrinho</strong><small>Ative cada alimentação separadamente.</small></div></div>
+      <div class="switch-row"><div><strong>Gangorra do ESP32</strong><small>Bateria 9 V → regulador → ESP32</small></div><button id="switchEsp" class="switch-button" type="button" role="switch" aria-checked="false" aria-label="Gangorra do ESP32"><span class="toggle-dot"></span><b>OFF</b></button></div>
+      <div class="switch-row"><div><strong>Gangorra dos motores</strong><small>Pilhas AA → ponte H</small></div><button id="switchMotors" class="switch-button" type="button" role="switch" aria-checked="false" aria-label="Gangorra dos motores"><span class="toggle-dot"></span><b>OFF</b></button></div>
+      <button class="primary-action" id="energyTest" type="button">Observar o circuito <span>→</span></button>
+      <button class="secondary-action" id="energyNext" type="button" hidden>Próxima situação →</button>
+     </div>
+    </div>
+    <div class="feedback" id="energyFeedback" role="status" aria-live="polite">Observe as duas linhas de alimentação. Nenhuma chave liga tudo sozinha.</div>
+   </section>
+   <section class="game-panel" id="panelVoltage" data-panel="voltage" aria-labelledby="voltageTitle" hidden>
+    <div class="activity-title"><div><span class="section-eyebrow">EXPERIÊNCIA 03 · REGULADOR DE TENSÃO</span><h3 id="voltageTitle">Acerte a tensão.</h3><p>A bateria fornece 9 V. No nosso projeto, ajuste a saída do LM2596 para aproximadamente <strong>5 V</strong> antes de alimentar o VIN do ESP32.</p></div><span class="task-counter">Uma descoberta</span></div>
+    <div class="activity-grid">
+     <div class="experiment-card voltage-canvas">
+      <div class="voltage-chain"><div class="volt-node battery-volt"><strong>9,0 V</strong><span>Entrada</span></div><div class="volt-wire"></div><div class="buck-model"><span class="buck-label">LM2596</span><div class="buck-coil">470</div><div class="buck-screw">✦</div><small>Regulador</small></div><div class="volt-wire output-wire" id="voltWire"></div><div class="volt-node output-volt"><strong id="voltageScreen">9,0 V</strong><span>Saída</span></div></div>
+      <div class="voltage-meter" id="voltageMeter"><span>MEDIDOR DE TENSÃO</span><strong id="voltageBig">9,0 <small>V</small></strong><span id="voltageState">Ainda não ajustada</span></div>
+     </div>
+     <div class="controls-card">
+      <div class="control-heading"><span class="control-icon">↻</span><div><strong>Regulagem simulada</strong><small>Mova o controle até 5,0 V.</small></div></div>
+      <label class="range-label" for="voltageRange"><span>Saída do LM2596</span><output id="voltageRangeValue">9,0 V</output></label>
+      <input id="voltageRange" type="range" min="3" max="9" step=".5" value="9" aria-label="Tensão de saída do regulador">
+      <div class="range-ends"><span>3 V</span><span>5 V (objetivo)</span><span>9 V</span></div>
+      <div class="measure-target"><span>Valor de referência</span><strong>5,0 V</strong></div>
+      <button class="primary-action" id="voltageTest" type="button">Conferir medição <span>→</span></button>
+     </div>
+    </div>
+    <div class="feedback" id="voltageFeedback" role="status" aria-live="polite">Observe o medidor enquanto ajusta o regulador.</div>
+    <p class="safety-note">Simulação educativa. Na montagem real, confirme a tensão com um multímetro antes de conectar o ESP32.</p>
+   </section>
+   <section class="game-panel" id="panelDiagnosis" data-panel="diagnosis" aria-labelledby="diagnosisTitle" hidden>
+    <div class="activity-title"><div><span class="section-eyebrow">EXPERIÊNCIA 04 · INVESTIGAÇÃO</span><h3 id="diagnosisTitle">O que aconteceu com o carrinho?</h3><p id="diagPrompt">O ESP32 acende, mas as rodas não se movem. Investigue os componentes antes de realizar um reparo.</p></div><span class="task-counter" id="diagCounter">Situação 1 de 2</span></div>
+    <div class="activity-grid">
+     <div class="experiment-card diagnosis-canvas">
+      <div class="diagnosis-robot"><span class="diag-light on" id="diagEspLed"></span><span class="diag-robot-name">ESP32</span><div class="diag-robot-wheels"><span id="diagWheelA">MOTOR A</span><span id="diagWheelB">MOTOR B</span></div></div>
+      <p class="investigate-label">Toque nos componentes para testá-los.</p>
+      <div class="probe-grid">
+       <button class="probe" type="button" data-probe="esp"><span>▣</span> ESP32</button>
+       <button class="probe" type="button" data-probe="battery"><span>▤</span> Pilhas AA</button>
+       <button class="probe" type="button" data-probe="switch"><span>⏻</span> Gangorra</button>
+       <button class="probe" type="button" data-probe="bridge"><span>▣</span> Ponte H</button>
+       <button class="probe" type="button" data-probe="motor"><span>◉</span> Motor A</button>
+      </div>
+      <div class="probe-report" id="probeReport" role="status">Escolha um componente e observe o resultado do teste.</div>
+     </div>
+     <div class="controls-card">
+      <div class="control-heading"><span class="control-icon">⌕</span><div><strong>Bancada de investigação</strong><small>Descubra a causa por meio dos testes.</small></div></div>
+      <div class="observation-count"><span>Componentes investigados</span><strong id="probeCount">0 de 5</strong></div>
+      <p class="diagnosis-description" id="diagGuidance">Explore pelo menos dois componentes e procure o que não está funcionando.</p>
+      <div class="repair-control" id="repairControl" hidden><div class="repair-illustration" id="repairIllustration"></div><button class="primary-action" id="diagRepair" type="button">Fazer reparo <span>→</span></button></div>
+      <button class="primary-action" id="diagTest" type="button" hidden>Testar o carrinho <span>→</span></button>
+      <button class="secondary-action" id="diagNext" type="button" hidden>Próxima investigação →</button>
+     </div>
+    </div>
+    <div class="feedback" id="diagFeedback" role="status" aria-live="polite">Não precisa adivinhar uma resposta. Teste os componentes e observe as evidências.</div>
+   </section>
+   <section class="game-panel" id="panelTrack" data-panel="track" aria-labelledby="trackTitle" hidden>
+    <div class="activity-title"><div><span class="section-eyebrow">EXPERIÊNCIA 05 · PERCURSO 2D</span><h3 id="trackTitle">Leve o carrinho até a escola.</h3><p>Experimente a diferença entre os motores para seguir a reta, fazer uma curva à esquerda e outra à direita. O percurso é guiado, sem obstáculos nem colisões.</p></div><span class="task-counter" id="trackCounter">Trecho 1 de 3</span></div>
+    <div class="activity-grid">
+     <div class="experiment-card track-canvas">
+      <div class="monitor-top"><span><i class="online-dot"></i> PERCURSO GUIADO</span><strong id="trackSectionLabel">Reta</strong></div>
+      <svg class="track-map" id="trackMap" viewBox="0 0 600 365" role="img" aria-label="Pista vista de cima, com reta e curvas até uma escola">
+       <defs><pattern id="grassDots" width="35" height="35" patternUnits="userSpaceOnUse"><circle cx="4" cy="5" r="2" fill="#8ebc97" opacity=".35"/></pattern></defs>
+       <rect width="600" height="365" rx="17" fill="#dceedd"/><rect width="600" height="365" rx="17" fill="url(#grassDots)"/>
+       <g class="park-trees"><circle cx="71" cy="71" r="24" fill="#7fbf81"/><circle cx="120" cy="85" r="18" fill="#a5cf85"/><circle cx="453" cy="292" r="24" fill="#8ac59a"/><circle cx="514" cy="281" r="28" fill="#74b591"/></g>
+       <path d="M 79 286 H 220 Q 265 286 265 244 V 129 Q 265 94 310 94 H 518" stroke="#f3e8d2" stroke-width="94" stroke-linecap="round" fill="none"/>
+       <path d="M 79 286 H 220 Q 265 286 265 244 V 129 Q 265 94 310 94 H 518" stroke="#63717a" stroke-width="74" stroke-linecap="round" fill="none"/>
+       <path d="M 79 286 H 220 Q 265 286 265 244 V 129 Q 265 94 310 94 H 518" stroke="#f3e7bd" stroke-width="3" stroke-dasharray="13 13" fill="none"/>
+       <g class="finish-school" transform="translate(484 33)"><rect x="-22" y="-20" width="67" height="42" rx="5" fill="#f4bf64" stroke="#d18e54" stroke-width="3"/><path d="M -27 -21 L 10 -45 L 50 -21 Z" fill="#cb7460"/><rect x="2" y="1" width="17" height="21" fill="#dff2f1"/><rect x="25" y="-12" width="12" height="12" fill="#a4d9e1"/><text x="11" y="39" text-anchor="middle">ESCOLA</text></g>
+       <circle cx="80" cy="286" r="6" fill="#f2d15b"/><circle cx="518" cy="94" r="8" fill="#3ab798" stroke="#fff" stroke-width="5"/>
+       <g id="trackCar" transform="translate(80 286) rotate(90)"><rect x="-19" y="-25" width="38" height="50" rx="10" fill="#183e4e"/><rect x="-15" y="-24" width="30" height="36" rx="7" fill="#f1c85f"/><rect x="-24" y="-16" width="9" height="30" rx="4" fill="#273947"/><rect x="15" y="-16" width="9" height="30" rx="4" fill="#273947"/><rect x="-10" y="-18" width="20" height="10" rx="2" fill="#2b7891"/></g>
+      </svg>
+      <div class="monitor-footer"><span id="trackNote">O carrinho está na largada.</span><span id="trackProgressLabel">0/3 trechos</span></div>
+     </div>
+     <div class="controls-card">
+      <div class="control-heading"><span class="control-icon">⌁</span><div><strong>Controle do percurso</strong><small id="trackHint">Comece pela reta: as duas rodas devem avançar juntas.</small></div></div>
+      <label class="range-label" for="trackMotorA"><span>Motor A</span><output id="trackAValue">50%</output></label>
+      <input id="trackMotorA" type="range" min="0" max="100" value="50" step="10">
+      <label class="range-label" for="trackMotorB"><span>Motor B</span><output id="trackBValue">50%</output></label>
+      <input id="trackMotorB" type="range" min="0" max="100" value="50" step="10">
+      <div class="quick-actions" aria-label="Combinações de velocidade"><button type="button" data-track-preset="equal">Reto</button><button type="button" data-track-preset="left">Esquerda</button><button type="button" data-track-preset="right">Direita</button></div>
+      <button class="primary-action" id="trackMove" type="button">Percorrer trecho <span>→</span></button>
+      <button class="secondary-action" id="trackRestart" type="button" hidden>Repetir percurso ↺</button>
+     </div>
+    </div>
+    <div class="feedback" id="trackFeedback" role="status" aria-live="polite">Ajuste as duas rodas e experimente avançar.</div>
+   </section>
+  </div>
+  <div class="bottom-note"><img src="assets/logo-pet.svg" alt="" loading="lazy"><p>As atividades são simulações educativas simplificadas do carrinho ESP32. A montagem prática deve seguir as orientações de segurança e o esquema real.</p></div>
+ </section>
+</main>
+</body></html>
