@@ -3,7 +3,7 @@
  const $=id=>document.getElementById(id);
  const KEY='petquiz-session-v1';
  const FAST=window.__PETQUIZ_TEST_SPEED__===true;
- const DUR={read:FAST?180:5000,answer:FAST?1800:20000,result:FAST?160:4000,bonus:FAST?5000:35000,bonusResult:FAST?220:1900};
+ const DUR={read:FAST?300:5000,answer:FAST?2500:20000,result:FAST?850:4000,bonus:FAST?5000:35000,bonusResult:FAST?450:1900};
  const QUESTIONS=[
  {
   "id": "componente-fora",
@@ -399,6 +399,10 @@
   state.deadline=duration?Date.now()+duration:0;
   lastWarning=-1;
   draw();
+  if(['read','bonus','finished'].includes(phase)){
+   if(document.fullscreenElement)$('main').scrollTo({top:0,behavior:'instant'});
+   else window.scrollTo({top:0,behavior:'instant'});
+  }
   if(phase==='read')sound('start');
   else if(phase==='answer')sound('reveal');
   else if(phase==='bonus')sound('bonus');
