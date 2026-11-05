@@ -74,6 +74,7 @@ try{
   assert.equal(await page.locator('#runTimer').isVisible(),false,'Tempo deve ficar oculto');
   assert.equal(await page.locator('#stageProgress').textContent(),'Descobertas nesta região: 0/2');
   assert.equal(await page.locator('#questionTimer').isVisible(),false);
+  await page.locator('#startBtn').evaluate(el=>el.click());
   const ready=await page.evaluate(()=>{
    const a=window.__TinkerpetMission;
    return{
@@ -88,7 +89,6 @@ try{
   assert.deepEqual(ready.stages.map(x=>x.repair),[1,2,1,2]);
   assert.deepEqual(ready.stages.map(x=>x.question),[1,0,1,0]);
   await page.screenshot({path:'artifacts/petgame-mapa-'+view.name+'.png'});
-  await page.locator('#startBtn').evaluate(el=>el.click());
   const motors=await page.evaluate(()=>{
    const a=window.__TinkerpetMission,s=a.state;
    s.pointer=['touch-A',null];s.pointerValue=[180,0];
