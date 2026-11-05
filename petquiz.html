@@ -1,0 +1,116 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#0a3242">
+<meta name="description" content="PETQuiz de robótica: situações-problema com 5 segundos de leitura, respostas cronometradas e eventos bônus práticos surpresa sem pontos.">
+<title>PETQuiz · Desafios de Robótica | TinkerPET</title>
+<link rel="icon" href="assets/logo-pet.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&family=Manrope:wght@500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="petquiz.css?v=1">
+<script defer src="petquiz.js?v=1"></script>
+</head>
+<body>
+<header class="topbar">
+ <a class="brand" href="projects.html" aria-label="Voltar ao TinkerPET"><img src="assets/logo-pet.svg" alt=""><span>TinkerPET <b>Studio</b></span></a>
+ <span class="header-label">PETQUIZ <span class="header-dot"></span> ROBÓTICA</span>
+ <a class="back-link" href="projects.html">← Meus circuitos</a>
+</header>
+<main class="shell" id="main">
+ <section class="intro-screen" id="introScreen" aria-labelledby="introTitle">
+  <div class="intro-tag"><span></span> DESAFIO DE ROBÓTICA</div>
+  <div class="intro-graphic" aria-hidden="true">
+   <div class="intro-orbit ring-one"></div><div class="intro-orbit ring-two"></div>
+   <div class="intro-chip chip-top">ESP32</div><div class="intro-chip chip-bottom">PET</div>
+   <div class="car-mini"><div class="car-wheel"></div><div class="car-center"><strong>ESP32</strong><span>•</span></div><div class="car-wheel"></div></div>
+  </div>
+  <div class="intro-content"><div class="intro-eyebrow">PET EDUCAÇÃO APRESENTA</div>
+   <h1 id="introTitle">Pense, escolha, <em>descubra!</em></h1>
+   <p>Situações-problema inspiradas no nosso carrinho ESP32. Responda antes que o tempo acabe e participe de desafios práticos surpresa.</p>
+   <div class="intro-rules">
+    <div><span class="rule-icon">◷</span><b>5 segundos</b><small>para ler a situação</small></div>
+    <div><span class="rule-icon">⏱</span><b>20 segundos</b><small>para responder</small></div>
+    <div><span class="rule-icon">✦</span><b>Bônus surpresa</b><small>sem pontos ou penalidade</small></div>
+   </div>
+   <button id="startQuiz" class="primary-btn large" type="button">Começar PETQuiz <span aria-hidden="true">→</span></button>
+   <p class="intro-foot">12 perguntas · Quatro alternativas · Pontuação só nas questões</p>
+   <button id="resetQuiz" class="text-action" type="button" hidden>Recomeçar do zero</button>
+  </div>
+ </section>
+ <section id="gameScreen" class="game-screen" hidden aria-label="PETQuiz em andamento">
+  <div class="game-hud">
+   <div class="hud-box"><span class="hud-label" id="stageLabel">PERGUNTA</span><strong id="questionCount">01 <small>/ 12</small></strong></div>
+   <div class="hud-progress"><div class="hud-progress-meta"><span id="phaseLabel">LEITURA</span><span id="hudInfo">Leia com atenção</span></div><div class="progress-track"><i id="runProgress"></i></div></div>
+   <div class="hud-box score-box"><span class="hud-label">PONTOS</span><strong id="scoreValue" aria-live="polite">0</strong></div>
+  </div>
+  <div class="game-body">
+   <div id="questionView" class="question-view" aria-live="off">
+    <div class="question-banner">
+     <div class="question-type"><span>⌁</span> SITUAÇÃO-PROBLEMA</div>
+     <div class="timer-wrap"><span id="timerCaption">LEITURA</span><div class="timer-circle" id="timerCircle" aria-label="Tempo restante"><span id="timerValue">5</span><small>s</small></div></div>
+     <h2 id="questionText">Prepare-se para uma situação-problema.</h2>
+     <div class="question-hint" id="readHint">Leia com atenção. As alternativas aparecerão em instantes.</div>
+    </div>
+    <div class="answers-wrap" id="answersWrap" hidden>
+     <div class="answers-lead"><b>Escolha uma alternativa</b><span>Toque na resposta antes que o tempo termine</span></div>
+     <div class="answers-grid" id="answersGrid"></div>
+    </div>
+    <div class="reading-placeholder" id="readingPlaceholder" aria-hidden="true">
+     <div class="reading-dots"><span></span><span></span><span></span></div><strong>As alternativas aparecem em 5 segundos</strong><small>Primeiro leia a situação.</small>
+    </div>
+    <div id="answerFeedback" class="answer-feedback" role="status" aria-live="polite" hidden>
+     <div class="feedback-top"><span id="answerSymbol">✓</span><div><strong id="feedbackHeading">Muito bem!</strong><span id="feedbackPoints"></span></div></div>
+     <p id="feedbackExplanation"></p>
+     <div class="feedback-actions"><span id="feedbackAdvance">A próxima atividade aparece automaticamente.</span><button class="secondary-btn" id="nextQuestion" type="button">Continuar →</button></div>
+    </div>
+   </div>
+   <section id="bonusView" class="bonus-view" hidden aria-label="Evento bônus surpresa">
+    <div class="bonus-label">✦ EVENTO BÔNUS SURPRESA <span>0 PONTO · SEM PENALIDADE</span></div>
+    <h2 id="bonusTitle">Missão prática!</h2>
+    <p id="bonusPrompt">Experimente os controles e observe o carrinho.</p>
+    <div class="bonus-timer"><span>Tempo para experimentar</span><strong id="bonusTimerValue">35s</strong></div>
+    <div class="bonus-grid">
+     <div id="bonusMotorView" class="bonus-stage">
+      <div class="bonus-car-space"><div id="bonusCar" class="bonus-car"><div class="bonus-wheel" id="bonusWheelA"></div><div class="bonus-car-body"><strong>ESP32</strong><span class="bonus-car-led" id="bonusCarLed"></span><small>PET</small></div><div class="bonus-wheel" id="bonusWheelB"></div></div></div>
+      <p id="bonusMotorStatus">Altere a velocidade e observe as rodas.</p>
+     </div>
+     <div id="bonusVoltageView" class="bonus-stage" hidden>
+      <div class="bonus-voltage-circuit"><div class="bonus-battery">9 V<small>ENTRADA</small></div><span class="circuit-link"></span><div class="bonus-regulator"><strong>LM2596</strong><div>470</div></div><span class="circuit-link"></span><div class="bonus-display" id="bonusVoltageDisplay">9,0 <small>V</small></div></div>
+      <p>O valor mostrado é a saída simulada do regulador.</p>
+     </div>
+     <div class="bonus-controls">
+      <div id="bonusMotorControls">
+       <label for="bonusA">Motor A <output id="bonusAValue">0%</output></label>
+       <input type="range" id="bonusA" min="-100" max="100" step="10" value="0">
+       <label for="bonusB">Motor B <output id="bonusBValue">0%</output></label>
+       <input type="range" id="bonusB" min="-100" max="100" step="10" value="0">
+      </div>
+      <div id="bonusVoltageControls" hidden>
+       <label for="bonusVoltage">Saída do LM2596 <output id="bonusVoltageValue">9,0 V</output></label>
+       <input type="range" id="bonusVoltage" min="3" max="9" step=".5" value="9">
+       <div class="bonus-target">Objetivo: <strong>5,0 V</strong></div>
+      </div>
+      <button type="button" class="primary-btn" id="bonusTry">Testar movimento →</button>
+      <div class="bonus-message" id="bonusMessage" role="status">A prática é um desafio extra. Ela não altera seus pontos.</div>
+      <button class="text-action" id="bonusSkip" type="button">Continuar sem concluir bônus →</button>
+     </div>
+    </div>
+  </section>
+  <section id="finalView" class="final-view" hidden aria-labelledby="finalTitle">
+   <div class="final-icon">✦</div><div class="final-kicker">FIM DO PETQUIZ</div><h2 id="finalTitle">Desafio concluído!</h2>
+   <p>Você testou seus conhecimentos sobre as ligações, os componentes e os movimentos do carrinho ESP32.</p>
+   <div class="final-score"><small>PONTUAÇÃO TOTAL</small><strong id="finalScore">0</strong><span>pontos nas perguntas</span></div>
+   <div class="final-stats"><div><b id="finalCorrect">0</b><small>Acertos</small></div><div><b id="finalWrong">0</b><small>Erros</small></div><div><b id="finalTimeout">0</b><small>Sem resposta</small></div><div><b id="finalBonus">0</b><small>Eventos bônus</small></div></div>
+   <p class="final-note">Os eventos bônus não somam nem retiram pontos.</p>
+   <button id="playAgain" class="primary-btn large" type="button">Jogar novamente ↻</button>
+   <a href="projects.html" class="end-link">Voltar ao TinkerPET</a>
+  </section>
+  </div>
+ </section>
+ <footer><span>PET Educação · Laboratório de Robótica</span><span>Jogue, investigue e aprenda.</span></footer>
+</main>
+</body>
+</html>
