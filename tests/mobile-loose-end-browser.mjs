@@ -113,6 +113,7 @@ try{
   return {wire:p.circuit.wires[0],count:p.circuit.wires.length,
    path:document.querySelector('#wireSvg .wire-line')?.getAttribute('d')||''};
  });
+ console.log('DEBUG retomada fio:',JSON.stringify({x2,y2,path,changedTwice}));
  assert.equal(changedTwice.count,1,'Repetir a edição nunca duplica o fio');
  assert.equal(changedTwice.wire.loose?.end,'b','A ponta permanece solta após fazer mais curvas');
  assert(changedTwice.wire.via.length>=3,
