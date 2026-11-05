@@ -54,7 +54,7 @@ try{
   assert.equal(await page.locator('#challengeTitle').textContent(),'Faça o Motor A funcionar!');
   const frame=page.frameLocator('#wiringFrame');
   await frame.locator('#viewport').waitFor({timeout:25000});
-  await frame.locator('#connectionsCount').waitFor();
+  await frame.locator('#connectionsCount').waitFor({state:'attached'});
   await page.waitForFunction(()=>document.getElementById('wiringCount').textContent.includes('0/2'),{timeout:18000});
   const status=await frame.locator('body').evaluate(()=>window.PetQuizWiringTest?.());
   assert.equal(status.total,2,'No Motor A, conectar os dois bornes');
