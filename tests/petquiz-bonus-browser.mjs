@@ -153,8 +153,14 @@ try{
     const dest=frame.locator('[data-port="'+b+'"]').first();
     await src.evaluate(el=>el.click());await dest.evaluate(el=>el.click());
    }
-   await page.waitForFunction(()=>document.getElementById('wiringCount').textContent.includes('17/17'),{timeout:15000});
-   assert.equal((await frame.locator('body').evaluate(()=>window.PetQuizWiringTest())).success,true,
+   const snapshot=await frame.locator('body').evaluate(()=>{
+    const keys=[...document.querySelectorAll('#wireSvg .wire-line')].length;
+    const status=window.PetQuizWiringTest?.();
+    return {status,wireLines:keys,progress:document.getElementById('connectionsCount')?.textContent};
+   });
+   console.log('DEBUG montagem ponte H:',JSON.stringify(snapshot));
+   assert.equal(snapshot.status.good,17,'A montagem completa precisa reconhecer todas as ligações: '+JSON.stringify(snapshot));
+   assert.equal(snapshot.status.success,true,
     'Montagem completa deve validar com Motor A invertido');
   }
   const finalState=await frame.locator('body').evaluate(()=>({s:localStorage.getItem('tinkerpet-v2'),lib:localStorage.getItem('tinkerpet-library-v1')}));
