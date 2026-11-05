@@ -159,7 +159,7 @@ function petgameClosestPort(e){
 }
 function petgameTakePortByProximity(e){
  if(!IS_PETGAME_WORKBENCH||!reconnectPending||e.button>0)return;
- if(e.target.closest('#petgamePickWire,#petgameFocusWire,#petgameOverview,.wire-end-handle'))return;
+ if(e.target.closest('#petgamePickWire,#petgameFocusWire,#petgameOverview'))return;
  const port=petgameClosestPort(e);
  if(!port)return;
  e.preventDefault();e.stopImmediatePropagation();suppressPortClickUntil=Date.now()+450;
@@ -1497,6 +1497,9 @@ function renderWireHandles(){
  }
  for(const button of layer.children){
   const end=button.dataset.wireEnd;
+  if(IS_PETGAME_WORKBENCH&&end!==PETGAME_CASES[PETGAME_CHALLENGE]?.end){
+   button.hidden=true;continue; // Apenas a ponta que pode ser reconectada.
+  }
   const active=reconnectPending&&reconnectPending.index===state.selectedWire&&reconnectPending.end===end;
   const point=active?reconnectPending.point:(w.loose?.end===end?w.loose.point:getPortPos(w[end]));
   if(!point){button.hidden=true;continue;}
