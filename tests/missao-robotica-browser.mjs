@@ -39,7 +39,14 @@ async function solveSlot(page,slot){
    const frame=page.frameLocator('#petgameWorkbenchFrame');
    await frame.locator('#partsLayer [data-part="esp"]').waitFor({state:'visible',timeout:30000});
    assert.equal(await frame.locator('#partsLayer .part').count(),9,'Usar os nove componentes do TinkerPET original');
-   assert.equal(await frame.locator('#wireSvg .wire-line').count(),17,'Circuito deve ter 17 fios reais');
+   await frame.locator('#wireSvg .wire-line').first().waitFor({state:'attached',timeout:4500}).catch(()=>{});
+   const visual=await frame.locator('#wireSvg').evaluate(el=>({
+    count:el.children.length,svg:el.outerHTML.slice(0,230),classes:el.getAttribute('class'),
+    visible:el.getBoundingClientRect().width,
+    footer:document.querySelector('#statusText')?.textContent
+   }));
+   assert.equal(await frame.locator('#wireSvg .wire-line').count(),17,
+    'Circuito deve ter 17 fios reais: '+JSON.stringify(visual)+' / JS errors: '+errors.join(' | '));
    assert.equal(await page.locator('#diagnosticChoices [data-finish]').count(),0);
    await page.screenshot({path:'artifacts/petgame-oficina-'+slot.index+'-'+page.viewportSize().width+'.png'});
   }else{
