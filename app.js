@@ -1127,6 +1127,24 @@ function actualMotorPort(e,id){
  }
  return winner;
 }
+/* O editor original mantém os pinos físicos; no modo infantil o terminal
+   selecionado é o contato MAIS PRÓXIMO do toque, não a caixa de clique
+   (que pode se sobrepor ao pino vizinho quando a câmera está afastada). */
+function actualPetgamePort(e,id){
+ if(!IS_PETGAME_WORKBENCH||!reconnectPending)return id;
+ const partId=id.split('.')[0],part=byPart(partId),kind=part&&byKind[part.kind];
+ if(!kind)return id;
+ const bounds=Q('viewport').getBoundingClientRect();
+ let nearest=id,minimum=Infinity;
+ for(const [code] of kind.pins){
+  const candidate=partId+'.'+code,pos=getPortPos(candidate);
+  if(!pos)continue;
+  const x=bounds.left+panX+pos.x*zoom,y=bounds.top+panY+pos.y*zoom;
+  const dist=Math.hypot(x-e.clientX,y-e.clientY);
+  if(dist<minimum){minimum=dist;nearest=candidate}
+ }
+ return nearest;
+}
 function portDirection(id){
  if(!id)return {x:0,y:-1};
  const [partId,code]=id.split('.');
@@ -2734,10 +2752,18 @@ function bind(){
    // A ferramenta mão não deve desativar o seletor de tensão ou as teclas das gangorras.
    if((spaceHeld||e.button===1)&&!e.target.closest('input,select,[data-toggle],[data-remove]')){startPan(e);return;}
    const port=e.target.closest('[data-port]');
-   const exactPort=port?actualMotorPort(e,port.dataset.port):null;
+   const exactPort=port?actualPetgamePort(e,actualMotorPort(e,port.dataset.port)):null;
    if(reconnectPending&&port){
     // No toque, finalizar aqui (o preventDefault pode suprimir o click).
-    if(e.pointerType==='touch'){e.preventDefault();suppressPortClickUntil=Date.now()+450;finishReconnect(exactPort);}
+    if(e.pointerType==='touch'){
+     e.preventDefault();suppressPortClickUntil=Date.now()+450;
+     if(IS_PETGAME_WORKBENCH&&zoom<.85){
+      cameraZoom(1.0,e.clientX,e.clientY);
+      message('Pinos ampliados: toque novamente no terminal desejado.',true);
+      return;
+     }
+     finishReconnect(exactPort);
+    }
     return;
    }
    if(port&&e.button!==2){
@@ -2763,7 +2789,7 @@ function bind(){
  window.addEventListener('pointercancel',pointerUp);
  Q('partsLayer').addEventListener('click',e=>{
   const pin=e.target.closest('[data-port]');if(pin){
-    const exactPort=actualMotorPort(e,pin.dataset.port);
+    const exactPort=actualPetgamePort(e,actualMotorPort(e,pin.dataset.port));
     e.stopPropagation();
     if(spaceHeld||Date.now()<suppressPortClickUntil)return;
     // Em telas pequenas o espaçamento físico dos 30 contatos diminui bastante.
