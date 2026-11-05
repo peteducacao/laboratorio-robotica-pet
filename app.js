@@ -2313,10 +2313,18 @@ function pointerUp(e){
    if(destination){suppressPortClickUntil=Date.now()+380;finishReconnect(destination);}
    else leaveReconnectLoose(e.clientX,e.clientY);
   }else if(IS_PETGAME_WORKBENCH){
-   // Na oficina infantil, um toque seleciona a ponta: o próximo toque no pino conclui.
-   // No editor principal a interação original é preservada.
+   // No celular, o primeiro toque seleciona a ponta e aproxima a região,
+   // sem informar o pino correto. O aluno ainda precisa identificá-lo.
    gesture=null;
-   message('Agora toque no terminal onde o fio deve ser conectado.',true);
+   if(zoom<.94&&reconnectPending?.point){
+    const pt=reconnectPending.point,v=Q('viewport').getBoundingClientRect();
+    zoom=.98;
+    panX=v.width/2-pt.x*zoom;
+    panY=v.height/2-pt.y*zoom;
+    camera();
+    Q('zoomSlider').value=String(Math.round(zoom*100));
+   }
+   message('Ponta selecionada. Explore os pinos e toque no contato correto.',true);
   }else cancelReconnect();
   requestDraw();
  }else if(g.type==='catalog'){
