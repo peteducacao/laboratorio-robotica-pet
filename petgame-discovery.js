@@ -159,12 +159,15 @@ function renderRepair(){
  const success=d.fixed?'<div class="pet-success" role="status"><strong>✓ Circuito funcionando!</strong>'+
   '<p>'+esc(item.after)+'</p><button class="button primary block" data-finish="1" type="button">'+
   'Continuar entrega →</button></div>':'';
+ const boardScroll=$('diagnosticChoices').querySelector('.pg-board-scroll')?.scrollLeft||0;
  $('diagnosticChoices').innerHTML=(isWiring?window.PetGameCircuitBoard.render(active.index,d):circuitVisual(active.index,d))+
   '<div class="pet-instruction">Observe as peças para compreender o circuito</div>'+
   (isWiring?'':'<div class="pet-parts">'+item.parts.map(k=>componentCard(k,d)).join('')+'</div>')+
   observation+task+output(d)+clue(item,d)+success+
   (!d.fixed?'<button class="pet-hint-button" data-hint="1" type="button">💡 '+
    (d.hints>=1?'Mais uma pista':'Preciso de uma pista')+'</button>':'');
+ const boardViewport=$('diagnosticChoices').querySelector('.pg-board-scroll');
+ if(boardViewport)boardViewport.scrollLeft=boardScroll;
 }
 function renderExperiment(){
  if(!active||active.kind!=='question')return;
