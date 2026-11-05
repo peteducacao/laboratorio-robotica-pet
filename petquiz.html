@@ -10,38 +10,40 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&family=Manrope:wght@500;600;700;800&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="petquiz.css?v=2">
-<script defer src="petquiz.js?v=2"></script>
+<link rel="stylesheet" href="petquiz.css?v=6">
+<script defer src="petquiz.js?v=6"></script>
 </head>
 <body>
 <header class="topbar">
  <a class="brand" href="projects.html" aria-label="Voltar ao TinkerPET"><img src="assets/logo-pet.svg" alt=""><span>TinkerPET <b>Studio</b></span></a>
- <span class="header-label">PETQUIZ <span class="header-dot"></span> ROBÓTICA</span>
  <a class="back-link" href="projects.html">← Meus circuitos</a>
 </header>
 <main class="shell" id="main">
  <section class="intro-screen" id="introScreen" aria-labelledby="introTitle">
-  <div class="intro-tag"><span></span> DESAFIO DE ROBÓTICA</div>
-  <div class="intro-graphic" aria-hidden="true">
-   <div class="intro-orbit ring-one"></div><div class="intro-orbit ring-two"></div>
-   <div class="intro-chip chip-top">ESP32</div><div class="intro-chip chip-bottom">PET</div>
-   <div class="car-mini"><div class="car-wheel"></div><div class="car-center"><strong>ESP32</strong><span>•</span></div><div class="car-wheel"></div></div>
-  </div>
-  <div class="intro-content"><div class="intro-eyebrow">PET EDUCAÇÃO APRESENTA</div>
-   <h1 id="introTitle">Pense, escolha, <em>descubra!</em></h1>
-   <p>Situações-problema inspiradas no nosso carrinho ESP32. Responda antes que o tempo acabe e participe de desafios práticos surpresa.</p>
+  <div class="intro-content">
+   <div class="intro-micro">DESAFIO DE ROBÓTICA</div>
+   <h1 id="introTitle">PET<span>Quiz</span></h1>
+   <p class="intro-subtitle">Teste seus conhecimentos sobre o carrinho ESP32 em desafios rápidos e interativos.</p>
    <div class="intro-rules">
-    <div><span class="rule-icon">◷</span><b>5 segundos</b><small>para ler a situação</small></div>
+    <div><span class="rule-icon">◷</span><b>5 segundos</b><small>para ler a pergunta</small></div>
     <div><span class="rule-icon">⏱</span><b>20 segundos</b><small>para responder</small></div>
-    <div><span class="rule-icon">✦</span><b>Bônus surpresa</b><small>sem pontos ou penalidade</small></div>
+    <div><span class="rule-icon">✦</span><b>Rodada bônus</b><small>surpresas pelo caminho</small></div>
    </div>
-   <button id="startQuiz" class="primary-btn large" type="button">Começar PETQuiz <span aria-hidden="true">→</span></button>
-   <p class="intro-foot">12 perguntas · Quatro alternativas · Pontuação só nas questões</p>
+   <button id="startQuiz" class="primary-btn large" type="button">Começar PETQuiz <span aria-hidden="true">➜</span></button>
+   <p class="intro-foot">10 perguntas por partida · Alternativas sorteadas</p>
    <button id="resetQuiz" class="text-action" type="button" hidden>Recomeçar do zero</button>
   </div>
+  <div class="intro-scene" aria-hidden="true"><span class="scene-spark s1">✦</span><span class="scene-spark s2">✧</span><span class="scene-spark s3">✦</span><div class="scene-orbit"></div><svg class="pet-rover-svg" viewBox="0 0 380 250" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><defs><linearGradient id="roverBody" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#a3e1bc"/><stop offset="1" stop-color="#27a78f"/></linearGradient><linearGradient id="roverWheels" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#476779"/><stop offset="1" stop-color="#142a45"/></linearGradient></defs><ellipse cx="191" cy="228" rx="146" ry="15" fill="#0b6657" opacity=".17"/><g class="rover-float"><path d="M100 162L78 182M284 162l19 20" stroke="#14566c" stroke-width="12" stroke-linecap="round"/><rect x="53" y="146" width="64" height="74" rx="26" fill="url(#roverWheels)" stroke="#12344c" stroke-width="8"/><rect x="266" y="146" width="64" height="74" rx="26" fill="url(#roverWheels)" stroke="#12344c" stroke-width="8"/><circle cx="84" cy="182" r="18" fill="#6f8391"/><circle cx="298" cy="182" r="18" fill="#6f8391"/><rect x="96" y="61" width="192" height="142" rx="48" fill="url(#roverBody)" stroke="#186a76" stroke-width="11"/><rect x="115" y="92" width="154" height="74" rx="28" fill="#1c4c68"/><circle cx="159" cy="127" r="17" fill="#e7fff2"/><circle cx="228" cy="127" r="17" fill="#e7fff2"/><circle cx="164" cy="127" r="7" fill="#15344b"/><circle cx="223" cy="127" r="7" fill="#15344b"/><path d="M170 148q22 18 46 0" fill="none" stroke="#97f2cd" stroke-width="6" stroke-linecap="round"/><path d="M190 61V43" stroke="#1b5c74" stroke-width="8" stroke-linecap="round"/><circle cx="190" cy="34" r="12" fill="#ffd06d"/><rect x="169" y="180" width="51" height="12" rx="6" fill="#dffae7" opacity=".8"/><circle cx="111" cy="183" r="9" fill="#ffd577"/><circle cx="274" cy="183" r="9" fill="#ffd577"/></g></svg><div class="scene-ground"></div></div>
  </section>
  <section id="gameScreen" class="game-screen" hidden aria-label="PETQuiz em andamento">
-  <div class="quiz-actions"><button id="quitQuiz" class="quit-quiz" type="button" aria-label="Desistir da partida e voltar ao início"><span aria-hidden="true">✕</span> Desistir do quiz</button></div>
+  <div class="quiz-actions">
+   <span class="game-brand">PET<span>Quiz</span></span>
+   <div class="game-tools">
+    <button id="soundToggle" class="tool-btn" type="button" aria-pressed="true" title="Silenciar sons">♪ <span>Som ligado</span></button>
+    <button id="fullscreenToggle" class="tool-btn" type="button" aria-pressed="false" title="Alternar tela cheia">⛶ <span>Tela cheia</span></button>
+    <button id="quitQuiz" class="quit-quiz" type="button" aria-label="Desistir da partida e voltar ao início"><span aria-hidden="true">✕</span> Desistir</button>
+   </div>
+  </div>
   <div class="game-hud">
    <div class="hud-box"><span class="hud-label" id="stageLabel">PERGUNTA</span><strong id="questionCount">01 <small>/ 12</small></strong></div>
    <div class="hud-progress"><div class="hud-progress-meta"><span id="phaseLabel">LEITURA</span><span id="hudInfo">Leia com atenção</span></div><div class="progress-track"><i id="runProgress"></i></div></div>
@@ -50,13 +52,14 @@
   <div class="game-body">
    <div id="questionView" class="question-view" aria-live="off">
     <div class="question-banner">
-     <div class="question-type"><span>⌁</span> SITUAÇÃO-PROBLEMA</div>
+     <div class="question-type"><span>✧</span> SITUAÇÃO-PROBLEMA</div>
+     <div class="question-decor" aria-hidden="true">⚙</div>
      <div class="timer-wrap"><span id="timerCaption">LEITURA</span><div class="timer-circle" id="timerCircle" aria-label="Tempo restante"><span id="timerValue">5</span><small>s</small></div></div>
      <h2 id="questionText">Prepare-se para uma situação-problema.</h2>
      <div class="question-hint" id="readHint">Leia com atenção. As alternativas aparecerão em instantes.</div>
     </div>
     <div class="answers-wrap" id="answersWrap" hidden>
-     <div class="answers-lead"><b>Escolha uma alternativa</b><span>Toque na resposta antes que o tempo termine</span></div>
+     <div class="answers-lead"><b>Escolha a resposta</b><span>Marque antes do tempo acabar</span></div>
      <div class="answers-grid" id="answersGrid"></div>
     </div>
     <div class="reading-placeholder" id="readingPlaceholder" aria-hidden="true">
@@ -65,7 +68,7 @@
     <div id="answerFeedback" class="answer-feedback" role="status" aria-live="polite" hidden>
      <div class="feedback-top"><span id="answerSymbol">✓</span><div><strong id="feedbackHeading">Muito bem!</strong><span id="feedbackPoints"></span></div></div>
      <p id="feedbackExplanation"></p>
-     <div class="feedback-actions"><span id="feedbackAdvance">A próxima atividade aparece automaticamente.</span><button class="secondary-btn" id="nextQuestion" type="button">Continuar →</button></div>
+     <div class="feedback-actions"><span id="feedbackAdvance">Próxima pergunta em 4 segundos…</span><button class="secondary-btn" id="nextQuestion" type="button" hidden>Continuar →</button></div>
     </div>
    </div>
    <section id="bonusView" class="bonus-view" hidden aria-label="Evento bônus surpresa">
@@ -101,13 +104,18 @@
     </div>
   </section>
   <section id="finalView" class="final-view" hidden aria-labelledby="finalTitle">
-   <div class="final-icon">✦</div><div class="final-kicker">FIM DO PETQUIZ</div><h2 id="finalTitle">Desafio concluído!</h2>
-   <p>Você testou seus conhecimentos sobre as ligações, os componentes e os movimentos do carrinho ESP32.</p>
-   <div class="final-score"><small>PONTUAÇÃO TOTAL</small><strong id="finalScore">0</strong><span>pontos nas perguntas</span></div>
-   <div class="final-stats"><div><b id="finalCorrect">0</b><small>Acertos</small></div><div><b id="finalWrong">0</b><small>Erros</small></div><div><b id="finalTimeout">0</b><small>Sem resposta</small></div><div><b id="finalBonus">0</b><small>Eventos bônus</small></div></div>
-   <p class="final-note">Os eventos bônus não somam nem retiram pontos.</p>
-   <button id="playAgain" class="primary-btn large" type="button">Jogar novamente ↻</button>
-   <a href="projects.html" class="end-link">Voltar ao TinkerPET</a>
+   <div class="final-hero">
+    <div class="final-robot" aria-hidden="true"><span class="final-confetti">✦ ✧ ✦</span><svg class="pet-rover-svg" viewBox="0 0 380 250" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><defs><linearGradient id="roverBody" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#a3e1bc"/><stop offset="1" stop-color="#27a78f"/></linearGradient><linearGradient id="roverWheels" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#476779"/><stop offset="1" stop-color="#142a45"/></linearGradient></defs><ellipse cx="191" cy="228" rx="146" ry="15" fill="#0b6657" opacity=".17"/><g class="rover-float"><path d="M100 162L78 182M284 162l19 20" stroke="#14566c" stroke-width="12" stroke-linecap="round"/><rect x="53" y="146" width="64" height="74" rx="26" fill="url(#roverWheels)" stroke="#12344c" stroke-width="8"/><rect x="266" y="146" width="64" height="74" rx="26" fill="url(#roverWheels)" stroke="#12344c" stroke-width="8"/><circle cx="84" cy="182" r="18" fill="#6f8391"/><circle cx="298" cy="182" r="18" fill="#6f8391"/><rect x="96" y="61" width="192" height="142" rx="48" fill="url(#roverBody)" stroke="#186a76" stroke-width="11"/><rect x="115" y="92" width="154" height="74" rx="28" fill="#1c4c68"/><circle cx="159" cy="127" r="17" fill="#e7fff2"/><circle cx="228" cy="127" r="17" fill="#e7fff2"/><circle cx="164" cy="127" r="7" fill="#15344b"/><circle cx="223" cy="127" r="7" fill="#15344b"/><path d="M170 148q22 18 46 0" fill="none" stroke="#97f2cd" stroke-width="6" stroke-linecap="round"/><path d="M190 61V43" stroke="#1b5c74" stroke-width="8" stroke-linecap="round"/><circle cx="190" cy="34" r="12" fill="#ffd06d"/><rect x="169" y="180" width="51" height="12" rx="6" fill="#dffae7" opacity=".8"/><circle cx="111" cy="183" r="9" fill="#ffd577"/><circle cx="274" cy="183" r="9" fill="#ffd577"/></g></svg><div class="robot-arm-trophy">🏆</div><div class="podium"><div class="podium-side">2</div><div class="podium-first">1º</div><div class="podium-side bronze">3</div></div></div>
+    <div class="final-summary">
+     <div class="final-kicker">FIM DO PETQUIZ</div>
+     <h2 id="finalTitle">Parabéns!</h2>
+     <p class="final-description">Você concluiu o desafio.</p>
+     <div class="final-score"><small>SUA PONTUAÇÃO</small><strong id="finalScore">0</strong><span>pontos</span></div>
+     <div class="final-stats"><div><b id="finalCorrect">0</b><small>Acertos</small></div><div><b id="finalWrong">0</b><small>Erros</small></div><div><b id="finalTimeout">0</b><small>Sem resposta</small></div><div><b id="finalBonus">0</b><small>Bônus jogados</small></div></div>
+     <button id="playAgain" class="primary-btn large" type="button">Jogar novamente ↻</button>
+     <a href="projects.html" class="end-link">Meus circuitos</a>
+    </div>
+   </div>
   </section>
   </div>
  </section>
