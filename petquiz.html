@@ -11,7 +11,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&family=Manrope:wght@500;600;700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="petquiz.css?v=8">
-<script defer src="petquiz.js?v=8"></script>
+<script defer src="petquiz.js?v=10"></script>
 </head>
 <body>
 <header class="topbar">
@@ -95,7 +95,6 @@
       <div id="bonusVoltageControls" hidden>
        <label for="bonusVoltage">Saída do LM2596 <output id="bonusVoltageValue">9,0 V</output></label>
        <input type="range" id="bonusVoltage" min="3" max="9" step=".5" value="9">
-       <div class="bonus-target">Objetivo: <strong>5,0 V</strong></div>
       </div>
       <button type="button" class="primary-btn" id="bonusTry">Testar movimento →</button>
       <div class="bonus-message" id="bonusMessage" role="status">A prática é um desafio extra. Ela não altera seus pontos.</div>
