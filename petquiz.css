@@ -218,3 +218,9 @@ body{background:#ecf8f2}
  .intro-rules>div b{font-size:11px}
  .intro-scene{height:175px}
 }
+
+
+/* Resultado parcial: informar claramente o que foi acumulado antes de desistir. */
+.final-summary .final-progress{display:inline-flex;align-self:flex-start;margin:0;padding:7px 11px;border-radius:999px;background:#e8f7ef;color:#35776e;font-size:12px;font-weight:850;line-height:1.35}
+.final-view.is-abandoned .final-confetti,.final-view.is-abandoned .robot-arm-trophy{animation:none}
+@media(max-width:750px){.final-summary .final-progress{font-size:11px}}
