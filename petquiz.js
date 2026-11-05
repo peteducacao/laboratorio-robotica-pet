@@ -3,7 +3,7 @@
  const $=id=>document.getElementById(id);
  const KEY='petquiz-session-v1';
  const FAST=window.__PETQUIZ_TEST_SPEED__===true;
- const DUR={read:FAST?300:5000,answer:FAST?2500:20000,result:FAST?850:4000,bonus:FAST?5000:35000,bonusResult:FAST?450:1900};
+ const DUR={read:FAST?300:5000,answer:FAST?2500:20000,result:FAST?850:4000,bonusIntro:FAST?420:2500,bonus:FAST?5000:35000,bonusResult:FAST?450:1900};
  const QUESTIONS=[
  {
   "id": "componente-fora",
@@ -290,17 +290,22 @@
   "why": "Quando a roda esquerda avança mais rápido, o carrinho tende a virar para a direita."
  }
 ];
- // A prévia e a validação usam a mesma regra para cada movimento.
- const isStraightMotion=(a,b)=>a>0&&b>0&&a===b;
+ // Valores negativos representam ré, positivos representam avanço.
+ // O movimento reto exige a mesma velocidade nas duas rodas.
+ const isForward=(a,b)=>a>0&&a===b;
  const isLeftCurveMotion=(a,b)=>b>a;
  const isRightCurveMotion=(a,b)=>a>b;
+ const isReverse=(a,b)=>a<0&&a===b;
+ const isStopped=(a,b)=>a===0&&b===0;
+ const isStraightMotion=(a,b)=>a!==0&&a===b;
  const BONUS=[
-  {id:'straight',title:'Faça as duas rodas avançarem juntas!',prompt:'Regule os motores A e B para a frente, na mesma velocidade. Observe as rodas girando.',voltage:false,
-   check:isStraightMotion,tip:'As duas rodas precisam avançar na mesma velocidade, acima de zero.'},
-  {id:'curve',title:'Faça o carrinho virar à esquerda!',prompt:'Ajuste os dois motores e observe a direção do carrinho.',voltage:false,
-   check:isLeftCurveMotion,tip:'As velocidades dos motores precisam produzir uma curva à esquerda.'},
-  {id:'regulator',title:'Regule o LM2596!',prompt:'Ajuste a saída do regulador e confira a medição.',voltage:true,
-   check:v=>v===5,tip:'Observe o valor de saída no mostrador.'}
+  {id:'forward',title:'Faça o carrinho andar para a frente!',voltage:false,initial:[0,0],check:isForward},
+  {id:'left',title:'Faça o carrinho virar à esquerda!',voltage:false,initial:[0,0],check:isLeftCurveMotion},
+  {id:'right',title:'Faça o carrinho virar à direita!',voltage:false,initial:[0,0],check:isRightCurveMotion},
+  {id:'reverse',title:'Faça o carrinho andar para trás!',voltage:false,initial:[0,0],check:isReverse},
+  {id:'stop',title:'Pare o carrinho em movimento!',voltage:false,initial:[60,60],check:isStopped},
+  {id:'straight',title:'Faça o carrinho seguir em linha reta!',voltage:false,initial:[80,40],check:isStraightMotion},
+  {id:'regulator',title:'Regule o LM2596!',voltage:true,initial:[9],check:v=>v===5}
  ];
  const keys=['read','answer','result','bonus','bonusResult'];
  function shuffle(arr){
@@ -341,6 +346,7 @@
  const fresh=()=>({
   phase:'intro',idx:0,order:buildRound(),options:QUESTIONS.map(()=>shuffle([0,1,2,3])),
   bonusAt:scheduleBonus(),bonusOrder:shuffle(BONUS.map((_,i)=>i)),shownBonus:[],currentBonus:null,solvedBonus:0,
+  bonusFeedback:null,
   score:0,correct:0,wrong:0,timeout:0,last:null,deadline:0,finishedReason:null
  });
  // A partida existe somente enquanto a página estiver aberta. Não salvar pontuação,
@@ -406,13 +412,13 @@
   state.deadline=duration?Date.now()+duration:0;
   lastWarning=-1;
   draw();
-  if(['read','bonus','finished'].includes(phase)){
+  if(['read','bonusIntro','bonus','finished'].includes(phase)){
    if(document.fullscreenElement)$('main').scrollTo({top:0,behavior:'instant'});
    else window.scrollTo({top:0,behavior:'instant'});
   }
   if(phase==='read')sound('start');
   else if(phase==='answer')sound('reveal');
-  else if(phase==='bonus')sound('bonus');
+  else if(phase==='bonusIntro')sound('bonus');
   else if(phase==='finished'&&state.finishedReason!=='quit')sound('finish');
  }
  function activeQuestion(){return QUESTIONS[state.order[state.idx]]}
@@ -420,7 +426,8 @@
  function view(id){
   ['introScreen','gameScreen'].forEach(x=>$(x).hidden=x!==id);
   if(id==='gameScreen'){
-   $('questionView').hidden=state.phase==='bonus'||state.phase==='bonusResult'||state.phase==='finished';
+   $('questionView').hidden=state.phase==='bonusIntro'||state.phase==='bonus'||state.phase==='bonusResult'||state.phase==='finished';
+   $('bonusIntroView').hidden=state.phase!=='bonusIntro';
    $('bonusView').hidden=state.phase!=='bonus'&&state.phase!=='bonusResult';
    $('finalView').hidden=state.phase!=='finished';
   }
@@ -428,7 +435,7 @@
  function updateHud(){
   $('scoreValue').textContent=fmt(state.score);
   $('questionCount').innerHTML=String(Math.min(state.idx+1,state.order.length)).padStart(2,'0')+' <small>/ '+state.order.length+'</small>';
-  const bonus=state.phase==='bonus'||state.phase==='bonusResult';
+  const bonus=state.phase==='bonusIntro'||state.phase==='bonus'||state.phase==='bonusResult';
   $('stageLabel').textContent=bonus?'BÔNUS':'PERGUNTA';
   $('phaseLabel').textContent=state.phase==='read'?'LEITURA':state.phase==='answer'?'RESPOSTAS':bonus?'EVENTO BÔNUS':state.phase==='finished'?'CONCLUÍDO':'RESULTADO';
   $('hudInfo').textContent=state.phase==='read'?'Só a pergunta por 5 segundos':state.phase==='answer'?'20 segundos para escolher':bonus?'Não vale pontos':state.phase==='result'?'Veja a explicação':'';
@@ -476,7 +483,7 @@
  function paintBonus(){
   const type=BONUS[state.currentBonus];if(!type)return;
   $('bonusTitle').textContent=type.title;
-  $('bonusPrompt').textContent=type.prompt;
+  $('bonusPrompt').textContent='';
   $('bonusMotorView').hidden=type.voltage;
   $('bonusVoltageView').hidden=!type.voltage;
   $('bonusMotorControls').hidden=type.voltage;
@@ -488,13 +495,19 @@
   if(finished){
    $('bonusMessage').classList.add('ok');
    $('bonusMessage').textContent=state.bonusSuccess?
-    'Experimento concluído! Você descobriu o resultado. +0 ponto, porque é bônus.':
+    'Experimento concluído! Movimento reconhecido.':
     'O evento bônus terminou. Seus pontos permanecem iguais.';
   }else{
    $('bonusMessage').classList.remove('ok');
    $('bonusMessage').textContent='Desafio extra: sem pontos e sem penalidade.';
   }
   drawBonusControls();
+  if(finished)setBonusCarMood(state.bonusSuccess?'success':'fail');
+ }
+ function setBonusCarMood(mood){
+  const car=$('bonusCar');
+  car.dataset.mood=mood;
+  car.classList.toggle('reacting',mood==='success'||mood==='fail');
  }
  function drawBonusControls(){
   const a=Number($('bonusA').value),b=Number($('bonusB').value),v=Number($('bonusVoltage').value);
@@ -502,18 +515,27 @@
   $('bonusVoltageValue').textContent=v.toFixed(1).replace('.',',')+' V';
   $('bonusVoltageDisplay').innerHTML=v.toFixed(1).replace('.',',')+' <small>V</small>';
   $('bonusCarLed').classList.toggle('active',a!==0||b!==0);
-  const angle=a<0&&b>0?-23:a>0&&b<0?23:Math.max(-16,Math.min(16,(a-b)*.20));
+  const angle=Math.max(-20,Math.min(20,(a-b)*.20));
   $('bonusCar').style.transform='rotate('+angle+'deg)';
   for(const [id,val] of [['bonusWheelA',a],['bonusWheelB',b]]){
-   const wheel=$(id);wheel.classList.toggle('spinning',val!==0);wheel.classList.toggle('backward',val<0);
-   wheel.style.setProperty('--speed',Math.max(.14,1.18-.95*Math.abs(val)/100)+'s');
+   const wheel=$(id);
+   wheel.classList.toggle('spinning',val!==0);
+   wheel.classList.toggle('backward',val<0);
+   wheel.dataset.direction=val>0?'forward':val<0?'reverse':'stopped';
+   wheel.dataset.arrow=val>0?'↑':val<0?'↓':'·';
+   wheel.style.setProperty('--speed',Math.max(.25,1.5-1.12*Math.abs(val)/100)+'s');
   }
-  let observation=a===0&&b===0?'As rodas estão paradas.':
-   isStraightMotion(a,b)?'As duas rodas avançam juntas.':
-   isLeftCurveMotion(a,b)?'O motor direito gira mais rápido: tendência de curva à esquerda.':
-   isRightCurveMotion(a,b)?'O motor esquerdo gira mais rápido: tendência de curva à direita.':
-   'As rodas estão se movendo com velocidades ou sentidos diferentes.';
-  $('bonusMotorStatus').textContent=observation;
+  const motion=a===0&&b===0?'As rodas estão paradas.':
+   isForward(a,b)?'O carrinho avança em linha reta.':
+   isReverse(a,b)?'O carrinho está andando de ré.':
+   isLeftCurveMotion(a,b)?'O carrinho está virando à esquerda.':
+   isRightCurveMotion(a,b)?'O carrinho está virando à direita.':
+   'Os motores estão ajustados.';
+  $('bonusMotorStatus').textContent=motion;
+  const mood=state.bonusFeedback==='wrong'?'fail':
+   a===0&&b===0?'idle':a<0&&b<0?'reverse':
+   b>a?'left':a>b?'right':'forward';
+  if(state.phase==='bonus')setBonusCarMood(mood);
  }
  function drawFinal(){
   const withdrew=state.finishedReason==='quit';
@@ -540,6 +562,7 @@
   if(phase==='intro')return;
   updateHud();
   if(phase==='read'||phase==='answer'||phase==='result')renderQuestion();
+  if(phase==='bonusIntro')$('bonusIntroCount').textContent=String(state.shownBonus.length)+' de 2';
   if(phase==='bonus'||phase==='bonusResult')paintBonus();
   if(phase==='finished')drawFinal();
   tickDisplay();
@@ -591,9 +614,14 @@
   if(state.bonusAt.includes(completedCount)&&!state.shownBonus.includes(completedCount)){
    state.shownBonus.push(completedCount);
    state.currentBonus=state.bonusOrder[(state.shownBonus.length-1)%state.bonusOrder.length];
-   $('bonusA').value=0;$('bonusB').value=0;$('bonusVoltage').value=9;
+   const selected=BONUS[state.currentBonus];
+   $('bonusA').value=selected.initial[0];
+   $('bonusB').value=selected.initial[1]??selected.initial[0];
+   $('bonusVoltage').value=selected.voltage?selected.initial[0]:9;
+   state.bonusFeedback=null;
    state.bonusSuccess=false;
-   setPhase('bonus',DUR.bonus);
+   setBonusCarMood('idle');
+   setPhase('bonusIntro',DUR.bonusIntro);
   }else{
    state.idx++;
    state.last=null;
@@ -613,7 +641,11 @@
   const a=Number($('bonusA').value),b=Number($('bonusB').value),v=Number($('bonusVoltage').value);
   const ok=type.voltage?type.check(v):type.check(a,b);
   if(ok)completeBonus(true);
-  else $('bonusMessage').textContent='Ainda não deu certo. '+type.tip+' Você pode tentar novamente.';
+  else{
+   state.bonusFeedback='wrong';
+   setBonusCarMood('fail');
+   $('bonusMessage').textContent='Ainda não deu certo. Tente novamente.';
+  }
  }
  function leaveBonus(){
   if(state.phase!=='bonus'&&state.phase!=='bonusResult')return;
@@ -627,6 +659,7 @@
   const remaining=state.deadline-Date.now();
   if(remaining>0){tickDisplay();return}
   if(state.phase==='read')setPhase('answer',DUR.answer);
+  else if(state.phase==='bonusIntro')setPhase('bonus',DUR.bonus);
   else if(state.phase==='answer')timeoutQuestion();
   else if(state.phase==='result')next();
   else if(state.phase==='bonus')completeBonus(false);
@@ -657,7 +690,13 @@
   $('nextQuestion').addEventListener('click',next);
   $('bonusTry').addEventListener('click',bonusTry);
   $('bonusSkip').addEventListener('click',leaveBonus);
-  ['bonusA','bonusB','bonusVoltage'].forEach(id=>$(id).addEventListener('input',drawBonusControls));
+  ['bonusA','bonusB','bonusVoltage'].forEach(id=>$(id).addEventListener('input',()=>{
+   if(state.phase!=='bonus')return;
+   state.bonusFeedback=null;
+   $('bonusMessage').classList.remove('ok');
+   $('bonusMessage').textContent='Ajuste os controles e teste o resultado.';
+   drawBonusControls();
+  }));
   document.addEventListener('keydown',e=>{
    if(e.target instanceof HTMLInputElement)return;
    if(state.phase!=='answer')return;
@@ -694,6 +733,8 @@
    bonusAt:[...state.bonusAt],questionTotal:state.order.length,
    finishedReason:state.finishedReason,answered:state.correct+state.wrong+state.timeout,
    plan:state.order.map(i=>({id:QUESTIONS[i].id,stage:QUESTIONS[i].stage,topic:QUESTIONS[i].topic||null,requires:QUESTIONS[i].requires||[]})),
+   activeBonusId:state.currentBonus===null?null:BONUS[state.currentBonus].id,
+   bonusIds:BONUS.map(b=>b.id),
    soundEnabled:soundOn,fullscreen:!!document.fullscreenElement
  }),version:'2.0'};
 })();
