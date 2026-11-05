@@ -647,6 +647,16 @@
    const idx=['1','2','3','4'].indexOf(e.key);
    if(idx>=0)answer(activeOptions()[idx]);
   });
+  // Ao girar o telefone na abertura, voltar ao topo para não mostrar
+  // o início cortado pela posição de rolagem da orientação anterior.
+  let lastOrientation=window.innerWidth>window.innerHeight;
+  window.addEventListener('resize',()=>{
+   const landscape=window.innerWidth>window.innerHeight;
+   if(landscape!==lastOrientation){
+    lastOrientation=landscape;
+    if(state.phase==='intro')requestAnimationFrame(()=>window.scrollTo({top:0,behavior:'instant'}));
+   }
+  });
   // Se sair da aba, trocar de aplicativo ou navegar para fora, encerrar a partida.
   document.addEventListener('visibilitychange',()=>{
    if(document.hidden&&state.phase!=='intro')reset();
