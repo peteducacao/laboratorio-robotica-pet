@@ -545,9 +545,3 @@
  letter-spacing:.015em;color:#99a8b1;
 }
 @media(max-width:810px){.main{padding-bottom:22px}.site-credit-projects{padding-top:32px}}
-
-/* Missão Robótica 3D — link na navegação, sem alterar Meus circuitos */
-.nav .nav-game{background:#edf8f5;border:1px solid #d6eee7;color:#087b72}
-.nav .nav-game:hover{background:#dcf6ed}
-.nav-game>span{display:flex;align-items:center;gap:7px;min-width:0;flex-wrap:wrap}
-.nav-game-tag{border-radius:6px;background:#087e74;color:#fff;font-size:9px;font-weight:800;letter-spacing:.45px;padding:3px 6px;white-space:nowrap}
