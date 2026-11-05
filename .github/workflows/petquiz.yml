@@ -1,0 +1,41 @@
+name: PETQuiz · navegador e eventos surpresa
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'petquiz.html'
+      - 'petquiz.css'
+      - 'petquiz.js'
+      - 'projects.html'
+      - 'projects.css'
+      - 'tests/petquiz-browser.mjs'
+      - '.github/workflows/petquiz.yml'
+  workflow_dispatch:
+jobs:
+  quiz:
+    runs-on: ubuntu-latest
+    timeout-minutes: 18
+    steps:
+      - name: Baixar o repositório
+        uses: actions/checkout@v4
+      - name: Preparar Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Conferir sintaxe
+        run: |
+          node --check petquiz.js
+          node --check tests/petquiz-browser.mjs
+      - name: Instalar navegador
+        run: |
+          npm install --no-save --ignore-scripts playwright@1.56.1
+          npx playwright install --with-deps chromium
+      - name: Jogar PETQuiz em quatro telas
+        run: node tests/petquiz-browser.mjs
+      - name: Capturas de teste
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: petquiz-capturas
+          path: test-results/petquiz-*.png
+          if-no-files-found: ignore
