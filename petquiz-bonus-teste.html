@@ -36,7 +36,7 @@ h2{font-size:clamp(25px,6vw,35px);line-height:1.15;margin:14px 0 20px;color:#153
 .rover .wheel{position:absolute;bottom:8px;width:57px;height:68px;border-radius:20px;background:#1d384f;border:7px solid #112b45;z-index:-1;transform-origin:center}
 .rover .wheel.a{left:4px}.rover .wheel.b{right:4px}
 .rover .wheel:after{content:"";position:absolute;inset:10px;border-radius:14px;background:#748d9e}
-.rover .wheel.spinning:after{animation:rotate .6s linear infinite}
+.rover .wheel.spinning:after{animation:rotate var(--wheel-duration,.6s) linear infinite}.rover .wheel.spinning[data-direction="reverse"]:after{animation-direction:reverse}
 @keyframes rotate{to{transform:rotate(360deg)}}
 .controls{display:grid;gap:15px;margin:18px 0}
 .control{background:#f6faf8;border:1px solid #e1eeeb;border-radius:17px;padding:18px}
@@ -103,5 +103,5 @@ small.note{display:block;color:#6f9293;margin:14px 0;font-size:12px;line-height:
   <small class="note">Modo de avaliação sem cronômetro. Os bônus só entram na partida principal após a sua aprovação.</small>
  </section>
 </main>
-<script defer src="petquiz-bonus-teste.js?v=1"></script>
+<script defer src="petquiz-bonus-teste.js?v=2"></script>
 </body></html>
