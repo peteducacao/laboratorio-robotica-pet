@@ -10,8 +10,8 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&family=Manrope:wght@500;600;700;800&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="petquiz.css?v=1">
-<script defer src="petquiz.js?v=1"></script>
+<link rel="stylesheet" href="petquiz.css?v=2">
+<script defer src="petquiz.js?v=2"></script>
 </head>
 <body>
 <header class="topbar">
@@ -41,6 +41,7 @@
   </div>
  </section>
  <section id="gameScreen" class="game-screen" hidden aria-label="PETQuiz em andamento">
+  <div class="quiz-actions"><button id="quitQuiz" class="quit-quiz" type="button" aria-label="Desistir da partida e voltar ao início"><span aria-hidden="true">✕</span> Desistir do quiz</button></div>
   <div class="game-hud">
    <div class="hud-box"><span class="hud-label" id="stageLabel">PERGUNTA</span><strong id="questionCount">01 <small>/ 12</small></strong></div>
    <div class="hud-progress"><div class="hud-progress-meta"><span id="phaseLabel">LEITURA</span><span id="hudInfo">Leia com atenção</span></div><div class="progress-track"><i id="runProgress"></i></div></div>
