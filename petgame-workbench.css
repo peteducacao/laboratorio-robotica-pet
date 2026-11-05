@@ -25,3 +25,12 @@ html,body.petgame-embedded{height:100%;width:100%;margin:0;overflow:hidden!impor
 .petgame-embedded .part-remove{display:none!important}
 .petgame-embedded #zoomTool{display:grid!important;z-index:26}
 .petgame-embedded #zoomPopover{z-index:30}
+
+/* Durante a missão, só a alça do fio com defeito é editável.
+   As áreas invisíveis dos demais fios não podem roubar toques nos terminais. */
+.petgame-embedded #wireSvg,
+.petgame-embedded #wireSvg .wire-target,
+.petgame-embedded #wireSvg .wire-line{pointer-events:none!important}
+.petgame-embedded #wireHandles{pointer-events:none}
+.petgame-embedded #wireHandles .wire-end-handle{pointer-events:auto!important}
+.petgame-embedded .pin-btn{pointer-events:auto!important}
