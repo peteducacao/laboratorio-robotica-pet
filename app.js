@@ -5,7 +5,17 @@
 // A aparência Studio também está na página principal: não trocar o progresso salvo.
 const IS_VISUAL_PREVIEW=/(?:^|\/)studio-preview\.html$/.test(window.location.pathname);
 const IS_PROJECT_EDITOR=/(?:^|\/)editor\.html$/.test(window.location.pathname);
-const STORAGE_KEY=IS_VISUAL_PREVIEW?'tinkerpet-studio-preview-v1':'tinkerpet-v2';
+const IS_PETGAME_WORKBENCH=/(?:^|\/)petgame-workbench\.html$/.test(window.location.pathname);
+const PETGAME_CHALLENGE=IS_PETGAME_WORKBENCH?Number(new URLSearchParams(window.location.search).get('challenge')):-1;
+const PETGAME_SOLVED=IS_PETGAME_WORKBENCH&&new URLSearchParams(window.location.search).get('solved')==='1';
+const PETGAME_CASES={
+ 1:{a:'b2.POS',b:'s2.IN',end:'b'},
+ 2:{a:'drv.OUT1',b:'ml.A',end:'b'},
+ 4:{a:'esp.GND',b:'drv.GND',end:'b'},
+ 5:{a:'esp.D18',b:'drv.IN4',end:'a',wrong:'esp.D19'}
+};
+let petgameFaultWireIndex=-1;
+const STORAGE_KEY=IS_PETGAME_WORKBENCH?'petgame-workbench-isolated':IS_VISUAL_PREVIEW?'tinkerpet-studio-preview-v1':'tinkerpet-v2';
 const LIBRARY_KEY='tinkerpet-library-v1';
 // Um editor sem ID não deve adivinhar o circuito pelo ACTIVE global,
 // pois esse valor é alterado por outras abas. Peça a escolha segura na lista.
@@ -94,7 +104,52 @@ let lastFrame=0;
 const $port=id=>[...Q('partsLayer').querySelectorAll('[data-port]')].find(el=>el.dataset.port===id);
 const exists=id=>state.parts.some(p=>p.id===id);
 const byPart=id=>state.parts.find(p=>p.id===id);
+/* Reutiliza o estado e os pinos da bancada principal, sem copiar seu desenho.
+   O PETGame não lê nem escreve os circuitos reais do visitante. */
+function seedPetgameWorkbench(){
+ const coords={
+  b1:[60,150],s1:[345,180],lm:[685,160],esp:[1080,130],
+  b2:[90,760],s2:[438,800],drv:[795,785],ml:[1220,685],mr:[1580,685]
+ };
+ state.parts=Object.entries(coords).map(([id,[x,y]])=>({
+  id,kind:byId[id].kind,x,y,view:'front',rotation:0,flipped:false
+ }));
+ state.wires=EXPECTED.map(([a,b],i)=>({
+  a,b,color:i<5?'#df9c3b':i<9?'#d95757':i<13?'#6482cb':i<15?'#b478cc':'#38b6a2',
+  via:[],manual:false,loose:null
+ }));
+ state.voltage=5;state.switches={s1:true,s2:true};
+ const issue=PETGAME_CASES[PETGAME_CHALLENGE];
+ if(!issue){petgameFaultWireIndex=-1;return}
+ petgameFaultWireIndex=state.wires.findIndex(w=>electricalKey(w.a,w.b)===electricalKey(issue.a,issue.b));
+ const w=state.wires[petgameFaultWireIndex];if(!w)return;
+ w.petgame=true;
+ if(!PETGAME_SOLVED){
+  if(issue.wrong)w[issue.end]=issue.wrong;
+  else{
+   const intended=getPortPos(w[issue.end]);
+   const other=getPortPos(w[issue.end==='a'?'b':'a']);
+   const sign=other&&intended&&other.x>intended.x?-1:1;
+   w.loose={end:issue.end,point:{x:Math.round(intended.x+sign*50),
+    y:Math.round(intended.y+(PETGAME_CHALLENGE===4?55:-45))}};
+  }
+ }
+ state.selectedWire=petgameFaultWireIndex;
+ state.selected=null;state.inspector='wires';
+}
+function petgameMissionStatus(){
+ if(!IS_PETGAME_WORKBENCH)return;
+ const scenario=PETGAME_CASES[PETGAME_CHALLENGE],wire=state.wires[petgameFaultWireIndex];
+ const chosenPort=wire&&scenario?wire[scenario.end]:null;
+ const expected=new Set(EXPECTED.map(([a,b])=>electricalKey(a,b)));
+ const correct=!!wire&&!wire.loose&&
+  state.wires.length===EXPECTED.length&&state.wires.every(w=>!w.loose&&expected.has(electricalKey(w.a,w.b)))&&
+  state.wires.every(w=>!!getPortPos(w.a)&&!!getPortPos(w.b));
+ window.parent?.postMessage({type:'petgame-workbench-status',challenge:PETGAME_CHALLENGE,
+  solved:correct,chosenPort,ready:true,wireCount:state.wires.length},window.location.origin);
+}
 function safeRestore(){
+ if(IS_PETGAME_WORKBENCH){seedPetgameWorkbench();return;}
  try{
   // Clone the existing circuit only once, for visual comparison.
   // All subsequent edits made on the preview remain in its own storage key.
@@ -152,6 +207,7 @@ function savedIndicator(message,temporary=false){
  },3000);
 }
 function persist(){
+ if(IS_PETGAME_WORKBENCH)return;
  const circuit={parts:state.parts,wires:state.wires,voltage:state.voltage,switches:state.switches,wireColor:state.wireColor};
  try{
   if(IS_PROJECT_EDITOR){
@@ -807,9 +863,11 @@ function syncCompletionCelebration(){
 function refresh(){
  renderCatalog();renderParts();renderColors();renderInspector();renderProgress();
  persist();updateTrackLock();syncCompletionCelebration();
+ if(IS_PETGAME_WORKBENCH)petgameMissionStatus();
 }
 function renderAll(){refresh();}
 function addPart(kind,x,y){
+ if(IS_PETGAME_WORKBENCH)return false;
  if(reconnectPending)cancelReconnect();
  const t=byKind[kind];if(!t)return false;
  const id=t.ids.find(id=>!exists(id));if(!id){message('Você já colocou todas as peças deste tipo.',true);return false;}
@@ -890,6 +948,7 @@ function flipSelectedPart(){
  return flipPart(p.id);
 }
 function removePart(id,skipSnapshot=false){
+ if(IS_PETGAME_WORKBENCH)return;
  if(!exists(id))return;
  if(reconnectPending)cancelReconnect();
  if(!skipSnapshot)snapshot();
@@ -976,6 +1035,7 @@ function addCorner(x,y){
  message('Curva fixada. Continue movimentando o cursor até a próxima curva ou pino.');
 }
 function connect(id){
+ if(IS_PETGAME_WORKBENCH){message('Nesta missão, mova a ponta destacada do fio solto.',true);return;}
  if(reconnectPending){finishReconnect(id);return;}
  const part=id.split('.')[0];if(!exists(part))return;
  state.selected=part;state.selectedWire=null;state.inspector='parts';
@@ -1044,7 +1104,7 @@ function removeSelectedBend(){
  message(route.length<points.length?'Ponto removido. Fio e conexões preservados.':'Ponto removido e curva ajustada para manter o fio reto.',true);
  return true;
 }
-function removeWire(i){if(!state.wires[i])return;snapshot();reconnectPending=null;selectedBend=null;state.wires.splice(i,1);state.selectedWire=null;state.completed=false;refresh();message('Fio removido.');}
+function removeWire(i){if(IS_PETGAME_WORKBENCH)return;if(!state.wires[i])return;snapshot();reconnectPending=null;selectedBend=null;state.wires.splice(i,1);state.selectedWire=null;state.completed=false;refresh();message('Fio removido.');}
 function getPortPos(id){
  const [partId,pinId]=id.split('.');
  const p=byPart(partId);if(!p)return null;
@@ -1373,6 +1433,7 @@ function renderWireHandles(){
  }
 }
 function beginReconnect(e,index,end){
+ if(IS_PETGAME_WORKBENCH&&index!==petgameFaultWireIndex){message('Nesta missão, reconecte somente o fio com a ponta solta.',true);return;}
  if(e.button!==undefined&&e.button!==0)return;
  const wire=state.wires[index];if(!wire||state.startPort||!['a','b'].includes(end))return;
  if(wire.loose&&wire.loose.end!==end){message('Reconecte primeiro a ponta solta deste jumper.',true);return;}
@@ -1424,6 +1485,7 @@ function leaveReconnectLoose(clientX,clientY){
  return true;
 }
 function finishReconnect(newPort){
+ if(IS_PETGAME_WORKBENCH&&reconnectPending?.index!==petgameFaultWireIndex)return false;
  const pending=reconnectPending;
  if(!pending)return false;
  const wire=state.wires[pending.index];if(!wire){cancelReconnect();return false;}
