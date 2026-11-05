@@ -66,6 +66,19 @@ try{
   assert((await menu.locator('#openPetQuiz').getAttribute('href')).includes('petquiz.html'));
   await menu.close();
   await page.locator('#startQuiz').click();
+  // O quiz deve poder ser abandonado em qualquer fase, mesmo antes das opções.
+  assert.equal(await page.locator('#quitQuiz').isVisible(),true,'Desistir precisa aparecer na partida');
+  await page.locator('#quitQuiz').click();
+  assert.equal(await page.evaluate(()=>window.PetQuiz.getStatus().phase),'intro','Desistir deve encerrar a partida');
+  assert.equal(await page.evaluate(()=>window.PetQuiz.getStatus().score),0,'Desistir deve apagar pontos');
+  assert.equal(await page.locator('#introScreen').isVisible(),true,'Desistir deve voltar para o início');
+  assert.equal(await page.evaluate(()=>localStorage.getItem('petquiz-session-v1')),null,'Não pode existir salvamento da partida');
+  // Mesmo saindo por um link e voltando pelo histórico, a partida não é restaurada.
+  await page.locator('#startQuiz').click();
+  await page.locator('.back-link').click();
+  await page.goBack({waitUntil:'domcontentloaded'});
+  assert.equal(await page.evaluate(()=>window.PetQuiz.getStatus().phase),'intro','Voltar à página deve reabrir início');
+  await page.locator('#startQuiz').click();
   let questionResults=0,bonusCount=0,timeoutCount=0,bonusSuccess=0,loop=0;
   while(loop++<100){
    const data=await page.evaluate(()=>window.PetQuiz.getStatus());
@@ -91,6 +104,7 @@ try{
    }else if(data.phase==='bonus'){
     bonusCount++;
     assert.equal((await page.locator('#bonusView').isVisible()),true,'Evento surpresa precisa aparecer');
+    assert.equal(await page.locator('#quitQuiz').isVisible(),true,'Desistir também precisa aparecer no bônus');
     assert((await page.locator('.bonus-label').textContent()).includes('0 PONTO'));
     const beforeScore=data.score;
     if(bonusCount===2){
@@ -125,10 +139,12 @@ try{
   assert(sizes.doc<=sizes.viewport+3,'Não pode haver rolagem horizontal: '+JSON.stringify(sizes));
   await page.screenshot({path:'test-results/petquiz-'+screen.name+'.png',fullPage:true});
   await page.reload({waitUntil:'domcontentloaded'});
-  assert.equal(await page.evaluate(()=>window.PetQuiz.getStatus().phase),'finished','Resultado deve persistir ao atualizar');
-  assert.equal(await page.locator('#finalScore').textContent(),result.score.toLocaleString('pt-BR'));
+  assert.equal(await page.evaluate(()=>window.PetQuiz.getStatus().phase),'intro','O quiz não deve guardar progresso após atualizar');
+  assert.equal(await page.locator('#introScreen').isVisible(),true);
+  assert.equal(await page.evaluate(()=>window.PetQuiz.getStatus().score),0);
+  assert.equal(await page.evaluate(()=>localStorage.getItem('petquiz-session-v1')),null);
   assert.equal(errors.length,0,'Erros JavaScript: '+errors.join('; '));
-  console.log('✓ '+screen.name+': 12 perguntas, 5s leitura, bônus sem pontos, resultado e persistência.');
+  console.log('✓ '+screen.name+': 12 perguntas, 5s leitura, bônus sem pontos, resultado e retorno ao início sem salvamento.');
   await context.close();
  }
  console.log('✓ PETQuiz: verificação concluída.');
