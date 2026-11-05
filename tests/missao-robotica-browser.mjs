@@ -84,8 +84,13 @@ async function solveSlot(page,slot){
    assert.equal(await frame.locator('#petgameOverview').isVisible(),true);
    const port=frame.locator('#partsLayer [data-port="'+target+'"]');
    await port.waitFor({state:'visible'});
-   if(page.viewportSize().width<900)await port.tap({timeout:15000});
-   else await port.click({timeout:15000});
+   // Toque físico no centro do borne: se outra caixa invisível estiver por cima,
+   // o PETGame deve reconhecer o contato correto pela posição real do dedo.
+   const point=await port.boundingBox();
+   assert(point&&point.width>0&&point.height>0,'O borne precisa ocupar área visível');
+   const cx=point.x+point.width/2,cy=point.y+point.height/2;
+   if(page.viewportSize().width<900)await page.touchscreen.tap(cx,cy);
+   else await page.mouse.click(cx,cy);
    await page.waitForFunction(()=>window.__TinkerpetMission.state.discovery.fixed===true,null,{timeout:15000});
    assert.equal(await page.locator('#diagnosticChoices [data-test-circuit]').count(),0,
     'Não pode exigir botão de teste depois de conectar fio certo');
