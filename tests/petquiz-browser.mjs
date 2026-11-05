@@ -1,11 +1,11 @@
-/* Teste do PETQuiz: 5s leitura, 20s respostas, bônus surpresa sem pontos.
-   Exercita a partida inteira em desktop, tablet e celulares. */
+/* PETQuiz v2: banco vinculado, 10 questões, sons, avanço automático, fullscreen e responsividade. */
 import assert from 'node:assert/strict';
 import {createServer} from 'node:http';
 import {readFileSync,mkdirSync} from 'node:fs';
 import {resolve,extname} from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {chromium} from 'playwright';
+
 const root=resolve(fileURLToPath(new URL('..',import.meta.url)));
 const types={'.html':'text/html; charset=utf-8','.css':'text/css; charset=utf-8','.js':'text/javascript; charset=utf-8','.svg':'image/svg+xml'};
 const server=createServer((req,res)=>{
@@ -21,131 +21,219 @@ const base='http://127.0.0.1:'+server.address().port;
 const browser=await chromium.launch({headless:true,args:['--disable-dev-shm-usage']});
 mkdirSync('test-results',{recursive:true});
 const screens=[
- {name:'pc',width:1366,height:800,touch:false},
+ {name:'desktop',width:1366,height:800,touch:false},
  {name:'tablet',width:1024,height:768,touch:true},
  {name:'celular-vertical',width:390,height:844,touch:true},
  {name:'celular-horizontal',width:844,height:390,touch:true}
 ];
-async function phase(page,name,timeout=8000){
- await page.waitForFunction(n=>window.PetQuiz?.getStatus().phase===n,name,{timeout});
+const answers={
+ 'componente-fora':'Sensor ultrassônico',
+ 'componente-ponte':'Ponte H',
+ 'componente-lm2596':'LM2596',
+ 'componente-gangorra':'Chave gangorra',
+ 'componente-jumper':'Jumper',
+ 'componente-esp32':'ESP32',
+ 'componente-motor':'Motor DC',
+ 'componente-rodas':'Permitir o deslocamento',
+ 'componente-bateria':'Uma bateria de 9 V',
+ 'componente-pilhas':'Para alimentar os motores',
+ 'funcionamento-alimentacao-ponte':'A alimentação das pilhas AA',
+ 'funcionamento-motor-a':'As conexões do Motor A',
+ 'funcionamento-seguir-reto':'Igualar as velocidades',
+ 'funcionamento-lm':'Reduzir a saída até 5 V',
+ 'funcionamento-esquerda':'A direita mais rápida',
+ 'funcionamento-duas-chaves':'O ESP32 pode ligar',
+ 'funcionamento-bateria-9v':'Bateria → gangorra → LM2596',
+ 'funcionamento-chave-off':'Ligar a gangorra responsável',
+ 'funcionamento-curva-direita':'Para a direita'
+};
+function validatePlan(plan){
+ assert.equal(plan.length,10,'Uma rodada tem exatamente 10 questões');
+ assert.equal(new Set(plan.map(x=>x.id)).size,10,'Sem perguntas duplicadas');
+ assert.equal(plan.filter(x=>x.stage==='concept').length,5);
+ assert.equal(plan.filter(x=>x.stage==='practice').length,5);
+ const introduced=new Set();
+ for(const q of plan){
+  if(q.stage==='practice')for(const required of q.requires)
+   assert(introduced.has(required),q.id+' veio antes de '+required);
+  if(q.stage==='concept')introduced.add(q.topic);
+ }
 }
-async function fill(page,id,v){
- await page.locator('#'+id).evaluate((el,value)=>{
-  el.value=String(value);
-  el.dispatchEvent(new Event('input',{bubbles:true}));
- },v);
+async function phase(page,expected,timeout=9000){
+ await page.waitForFunction(p=>window.PetQuiz?.getStatus().phase===p,expected,{timeout});
 }
+async function fill(page,id,value){
+ await page.locator('#'+id).evaluate((el,v)=>{el.value=String(v);el.dispatchEvent(new Event('input',{bubbles:true}))},value);
+}
+async function layout(page,label){
+ const v=await page.evaluate(()=>{
+  const vp=innerWidth,doc=document.documentElement.scrollWidth;
+  const objects=['#gameScreen','.question-banner','.game-hud','.answers-grid','#introScreen'];
+  return {vp,doc,items:objects.map(x=>{
+   const el=document.querySelector(x);if(!el||el.hidden||el.getClientRects().length===0)return null;
+   const r=el.getBoundingClientRect();
+   return {name:x,left:r.left,right:r.right,width:r.width};
+  }).filter(Boolean),fullscreen:!!document.fullscreenElement,
+   fullScroll:document.querySelector('#main').scrollHeight,
+   fullHeight:document.querySelector('#main').clientHeight,
+   fullOverflow:getComputedStyle(document.querySelector('#main')).overflowY};
+ });
+ assert(v.doc<=v.vp+4,label+' scroll horizontal '+JSON.stringify(v));
+ for(const item of v.items){
+  assert(item.left>=-4&&item.right<=v.vp+4,label+' lateral cortada: '+JSON.stringify(item));
+ }
+ if(v.fullscreen&&v.fullScroll>v.fullHeight+6)
+  assert(['auto','scroll'].includes(v.fullOverflow),'Fullscreen deve permitir rolar conteúdo alto: '+JSON.stringify(v));
+}
+
 try{
- // Uma verificação com o TEMPO REAL, sem aceleração de testes.
- const real=await browser.newContext({viewport:{width:1280,height:760}});
- const realPage=await real.newPage();
- await realPage.goto(base+'/petquiz.html',{waitUntil:'domcontentloaded'});
- assert(await realPage.locator('#introScreen').isVisible());
- await realPage.locator('#startQuiz').click();
- assert.equal(await realPage.locator('#answersWrap').isVisible(),false,'As alternativas não podem aparecer junto com a pergunta');
- assert.equal(await realPage.locator('#timerValue').textContent(),'5','Contagem inicial deve ser 5 segundos');
- await realPage.waitForTimeout(1700);
- assert.equal(await realPage.locator('#answersWrap').isVisible(),false,'As alternativas devem esperar 5 segundos');
- await phase(realPage,'answer',6000);
- assert.equal(await realPage.locator('.answer-btn').count(),4,'Quatro alternativas devem aparecer depois de 5s');
- const readElapsed=await realPage.evaluate(()=>({phase:window.PetQuiz.getStatus().phase,limit:document.querySelector('#timerValue').textContent}));
- assert(Number(readElapsed.limit)<=20&&Number(readElapsed.limit)>=18,'A contagem de resposta deveria começar em 20s');
- await real.close();
- console.log('✓ PETQuiz tempos reais: leitura de 5s antes das alternativas, depois resposta de 20s.');
+ // Testar tempos REAIS uma vez, sem acelerar.
+ const context=await browser.newContext({viewport:{width:1280,height:760}});
+ const page=await context.newPage();
+ await page.goto(base+'/petquiz.html',{waitUntil:'domcontentloaded'});
+ assert.match(await page.locator('#introTitle').textContent(),/PETQuiz/);
+ assert.equal(await page.locator('.header-label').count(),0,'Sem título PETQuiz duplicado no topo');
+ await page.locator('#startQuiz').click();
+ assert.equal(await page.locator('#answersWrap').isVisible(),false,'Alternativas ficam escondidas durante leitura');
+ assert.equal(await page.locator('#timerValue').textContent(),'5');
+ await page.waitForTimeout(1400);
+ assert.equal(await page.locator('#answersWrap').isVisible(),false);
+ await phase(page,'answer',6000);
+ assert.equal(await page.locator('.answer-btn').count(),4);
+ const t=Number(await page.locator('#timerValue').textContent());
+ assert(t>=18&&t<=20,'A resposta tem 20 segundos: '+t);
+ const status=await page.evaluate(()=>window.PetQuiz.getStatus());
+ validatePlan(status.plan);
+ await context.close();
+ console.log('✓ Tempos reais: 5 s apenas pergunta, depois 20 s com quatro alternativas.');
 
  for(const screen of screens){
-  const context=await browser.newContext({viewport:{width:screen.width,height:screen.height},
+  const ctx=await browser.newContext({viewport:{width:screen.width,height:screen.height},
    isMobile:screen.touch,hasTouch:screen.touch,deviceScaleFactor:1});
-  await context.addInitScript(()=>{window.__PETQUIZ_TEST_SPEED__=true});
-  const page=await context.newPage(),errors=[];
-  page.on('pageerror',e=>errors.push(e.message));
-  await page.goto(base+'/petquiz.html',{waitUntil:'domcontentloaded'});
-  assert(await page.locator('#introScreen').isVisible());
-  const menu=await context.newPage();await menu.goto(base+'/projects.html',{waitUntil:'domcontentloaded'});
-  assert.equal(await menu.locator('#openPetQuiz').count(),1,'PETQuiz deve estar no menu Meus circuitos');
-  assert((await menu.locator('#openPetQuiz').getAttribute('href')).includes('petquiz.html'));
-  await menu.close();
-  await page.locator('#startQuiz').click();
-  // O quiz deve poder ser abandonado em qualquer fase, mesmo antes das opções.
-  assert.equal(await page.locator('#quitQuiz').isVisible(),true,'Desistir precisa aparecer na partida');
-  await page.locator('#quitQuiz').click();
-  assert.equal(await page.evaluate(()=>window.PetQuiz.getStatus().phase),'intro','Desistir deve encerrar a partida');
-  assert.equal(await page.evaluate(()=>window.PetQuiz.getStatus().score),0,'Desistir deve apagar pontos');
-  assert.equal(await page.locator('#introScreen').isVisible(),true,'Desistir deve voltar para o início');
-  assert.equal(await page.evaluate(()=>localStorage.getItem('petquiz-session-v1')),null,'Não pode existir salvamento da partida');
-  // Mesmo saindo por um link e voltando pelo histórico, a partida não é restaurada.
-  await page.locator('#startQuiz').click();
-  await page.locator('.back-link').click();
-  await page.goBack({waitUntil:'domcontentloaded'});
-  assert.equal(await page.evaluate(()=>window.PetQuiz.getStatus().phase),'intro','Voltar à página deve reabrir início');
-  await page.locator('#startQuiz').click();
-  let questionResults=0,bonusCount=0,timeoutCount=0,bonusSuccess=0,loop=0;
-  while(loop++<100){
-   const data=await page.evaluate(()=>window.PetQuiz.getStatus());
-   if(data.phase==='finished')break;
-   if(data.phase==='read'){
-    assert.equal(await page.locator('#answersWrap').isVisible(),false,'Leitura deve ocultar alternativas');
-    await phase(page,'answer',4000);
-   }else if(data.phase==='answer'){
-    if(questionResults===3){
-     // Uma resposta sem marcar também deve ser contabilizada ao final do tempo.
-     await phase(page,'result',5000);timeoutCount++;
-    }else{
-     await page.locator('.answer-btn').first().click();
-     await phase(page,'result',3500);
-    }
-   }else if(data.phase==='result'){
-    const scoreBefore=await page.evaluate(()=>window.PetQuiz.getStatus().score);
-    assert(scoreBefore>=0,'Pontuação nunca é negativa');
-    assert(await page.locator('#answerFeedback').isVisible(),'Feedback precisa explicar a resposta');
-    assert((await page.locator('#feedbackExplanation').textContent()).length>=25,'Uma explicação deve acompanhar a alternativa');
-    questionResults++;
-    await page.locator('#nextQuestion').click();
-   }else if(data.phase==='bonus'){
-    bonusCount++;
-    assert.equal((await page.locator('#bonusView').isVisible()),true,'Evento surpresa precisa aparecer');
-    assert.equal(await page.locator('#quitQuiz').isVisible(),true,'Desistir também precisa aparecer no bônus');
-    assert((await page.locator('.bonus-label').textContent()).includes('0 PONTO'));
-    const beforeScore=data.score;
-    if(bonusCount===2){
-     await page.locator('#bonusSkip').click();
-    }else{
-     const title=(await page.locator('#bonusTitle').textContent()).toLowerCase();
-     if(title.includes('lm2596'))await fill(page,'bonusVoltage',5);
-     else if(title.includes('esquerda')){await fill(page,'bonusA',20);await fill(page,'bonusB',70)}
-     else{await fill(page,'bonusA',50);await fill(page,'bonusB',50)}
-     await page.locator('#bonusTry').click();
-     await phase(page,'bonusResult',2000);
-     bonusSuccess++;
-     assert.equal(await page.evaluate(()=>window.PetQuiz.getStatus().score),beforeScore,'Bônus não pode pontuar');
-     await phase(page,'read',5000);
-    }
-    assert.equal(await page.evaluate(()=>window.PetQuiz.getStatus().score),beforeScore,'Bônus não muda a pontuação');
-   }else if(data.phase==='bonusResult'){
-    await phase(page,'read',5000);
-   }else throw new Error('Fase inesperada '+data.phase);
+  await ctx.addInitScript(()=>{window.__PETQUIZ_TEST_SPEED__=true});
+  const p=await ctx.newPage(),errors=[];
+  p.on('pageerror',e=>errors.push(e.message));
+  await p.goto(base+'/petquiz.html',{waitUntil:'domcontentloaded'});
+  assert.equal(await p.locator('.intro-rules>div').count(),3);
+  await layout(p,'abertura '+screen.name);
+  await p.screenshot({path:'test-results/petquiz-'+screen.name+'-abertura.png',fullPage:true});
+  if(screen.name==='desktop'){
+   // Repetir a seleção confirma variações de combinação e dependências.
+   const layouts=new Set();
+   for(let k=0;k<22;k++){
+    const plan=(await p.evaluate(()=>window.PetQuiz.getStatus())).plan;
+    validatePlan(plan);layouts.add(plan.map(x=>x.id).join('|'));
+    await p.reload({waitUntil:'domcontentloaded'});
+   }
+   assert(layouts.size>=12,'O sorteio das perguntas não pode ser fixo');
   }
-  assert(loop<100,'Quiz não terminou após 12 questões');
-  const result=await page.evaluate(()=>window.PetQuiz.getStatus());
-  assert.equal(result.phase,'finished');
-  assert.equal(result.correct+result.wrong+result.timeout,12,'Todas as perguntas precisam ser contabilizadas');
-  assert.equal(result.timeout,1,'Pergunta sem resposta deveria contar como timeout');
-  assert(bonusCount>=2&&bonusCount<=3,'Devem existir dois ou três bônus aleatórios');
-  assert.equal(result.bonusCount,bonusCount,'Todos os eventos devem aparecer na contagem final');
-  assert.equal(result.bonusSolved,bonusSuccess);
-  assert.equal(await page.locator('#finalBonus').textContent(),String(bonusCount));
-  assert.equal(await page.locator('#finalScore').textContent(),result.score.toLocaleString('pt-BR'));
-  const sizes=await page.evaluate(()=>({doc:document.documentElement.scrollWidth,viewport:innerWidth}));
-  assert(sizes.doc<=sizes.viewport+3,'Não pode haver rolagem horizontal: '+JSON.stringify(sizes));
-  await page.screenshot({path:'test-results/petquiz-'+screen.name+'.png',fullPage:true});
-  await page.reload({waitUntil:'domcontentloaded'});
-  assert.equal(await page.evaluate(()=>window.PetQuiz.getStatus().phase),'intro','O quiz não deve guardar progresso após atualizar');
-  assert.equal(await page.locator('#introScreen').isVisible(),true);
-  assert.equal(await page.evaluate(()=>window.PetQuiz.getStatus().score),0);
-  assert.equal(await page.evaluate(()=>localStorage.getItem('petquiz-session-v1')),null);
-  assert.equal(errors.length,0,'Erros JavaScript: '+errors.join('; '));
-  console.log('✓ '+screen.name+': 12 perguntas, 5s leitura, bônus sem pontos, resultado e retorno ao início sem salvamento.');
-  await context.close();
+
+  const menu=await ctx.newPage();await menu.goto(base+'/projects.html',{waitUntil:'domcontentloaded'});
+  assert.equal(await menu.locator('#openPetQuiz').count(),1);
+  assert.equal(await menu.locator('#openPetQuiz').isVisible(),true);
+  await menu.close();
+
+  await p.locator('#startQuiz').click();
+  assert.equal(await p.locator('#quitQuiz').isVisible(),true);
+  await p.locator('#soundToggle').click();
+  assert.equal(await p.evaluate(()=>window.PetQuiz.getStatus().soundEnabled),false);
+  await p.locator('#soundToggle').click();
+  assert.equal(await p.evaluate(()=>window.PetQuiz.getStatus().soundEnabled),true);
+  await p.locator('#fullscreenToggle').click();
+  await p.waitForTimeout(100);
+  await layout(p,'tela cheia '+screen.name);
+  const fullscreenSupported=await p.evaluate(()=>!!document.fullscreenElement);
+  if(fullscreenSupported){
+   assert.equal(await p.locator('#fullscreenToggle').getAttribute('aria-pressed'),'true');
+   await p.locator('#fullscreenToggle').click();
+   await p.waitForTimeout(80);
+   assert.equal(await p.evaluate(()=>document.fullscreenElement),null);
+  }
+  await p.locator('#quitQuiz').click();
+  assert.equal(await p.evaluate(()=>window.PetQuiz.getStatus().phase),'intro');
+  assert.equal(await p.evaluate(()=>window.PetQuiz.getStatus().score),0);
+  assert.equal(await p.evaluate(()=>localStorage.getItem('petquiz-session-v1')),null);
+  await p.locator('#startQuiz').click();
+  await p.locator('.back-link').click();
+  await p.goBack({waitUntil:'domcontentloaded'});
+  assert.equal(await p.evaluate(()=>window.PetQuiz.getStatus().phase),'intro');
+  await p.locator('#startQuiz').click();
+  const plan=(await p.evaluate(()=>window.PetQuiz.getStatus())).plan;
+  validatePlan(plan);
+  let answered=0,bonusCount=0,wrong=0,correct=0,timeouts=0;
+  let iterations=0;
+  while(iterations++<130){
+   const st=await p.evaluate(()=>window.PetQuiz.getStatus());
+   if(st.phase==='finished')break;
+   if(st.phase==='read'){
+    assert.equal(await p.locator('#answersWrap').isVisible(),false);
+    await phase(p,'answer',3500);
+   }else if(st.phase==='answer'){
+    const q=plan[st.index],key=answers[q.id];
+    assert(key,'Faltou gabarito para '+q.id);
+    if(answered===3){await phase(p,'result',4500);timeouts++;}
+    else{
+     const buttons=p.locator('.answer-btn');
+     const count=await buttons.count();assert.equal(count,4);
+     const labels=await buttons.allTextContents();
+     let correctIndex=labels.findIndex(t=>t.includes(key));
+     assert(correctIndex>=0,'Gabarito não encontrado: '+q.id+' '+JSON.stringify(labels));
+     const intentionallyWrong=answered===1;
+     const target=intentionallyWrong?(correctIndex+1)%4:correctIndex;
+     await buttons.nth(target).click();
+     await phase(p,'result',1500);
+     if(intentionallyWrong)wrong++;else correct++;
+    }
+    assert.equal(await p.locator('#answerFeedback').isVisible(),true,'Feedback após resposta');
+    assert.equal(await p.locator('#nextQuestion').isVisible(),false,'Avanço automático sem botão');
+    assert((await p.locator('#feedbackExplanation').textContent()).length>20);
+    assert.equal(await p.locator('.answer-btn.correct').count(),1,'Marcar resposta correta no resultado');
+    if(answered===0)await p.screenshot({path:'test-results/petquiz-'+screen.name+'-correcao.png',fullPage:true});
+    answered++;
+    await p.waitForFunction((previous)=>{
+     const x=window.PetQuiz.getStatus();
+     return x.index>previous||['bonus','bonusResult','finished'].includes(x.phase);
+    },st.index,{timeout:4500});
+   }else if(st.phase==='bonus'){
+    bonusCount++;
+    assert.equal(await p.locator('#quitQuiz').isVisible(),true,'Desistir no bônus');
+    if(bonusCount===2){await p.locator('#bonusSkip').click();}
+    else{
+     const title=(await p.locator('#bonusTitle').textContent()).toLowerCase();
+     if(title.includes('lm2596'))await fill(p,'bonusVoltage',5);
+     else if(title.includes('esquerda')){await fill(p,'bonusA',20);await fill(p,'bonusB',70)}
+     else{await fill(p,'bonusA',50);await fill(p,'bonusB',50)}
+     await p.locator('#bonusTry').click();
+     await phase(p,'bonusResult',2000);
+    }
+   }else if(st.phase==='bonusResult')await phase(p,'read',3000);
+   else if(st.phase==='result'){
+    // Phase de resultado é avançada automaticamente, mesmo após erro/timeout.
+    await p.waitForFunction((previous)=>{
+     const x=window.PetQuiz.getStatus();
+     return x.index>previous||['bonus','bonusResult','finished'].includes(x.phase);
+    },st.index,{timeout:4500});
+   }else throw Error('Fase inesperada '+st.phase);
+  }
+  assert(iterations<130,'Partida não chegou ao resultado');
+  const final=await p.evaluate(()=>window.PetQuiz.getStatus());
+  assert.equal(final.phase,'finished');
+  assert.equal(final.questionTotal,10);
+  assert.equal(final.correct+final.wrong+final.timeout,10);
+  assert.equal(final.correct,correct);assert.equal(final.wrong,wrong);assert.equal(final.timeout,timeouts);
+  assert(final.score<=10000&&final.score>=correct*500,'Pontuação de velocidade');
+  assert.equal(bonusCount,3,'Três eventos surpresa distribuídos');
+  assert.equal(await p.locator('#finalCorrect').textContent(),String(correct));
+  assert.equal(await p.locator('#finalWrong').textContent(),String(wrong));
+  await layout(p,'final '+screen.name);
+  await p.screenshot({path:'test-results/petquiz-'+screen.name+'-final.png',fullPage:true});
+  await p.reload({waitUntil:'domcontentloaded'});
+  assert.equal(await p.evaluate(()=>window.PetQuiz.getStatus().phase),'intro');
+  assert.equal(await p.evaluate(()=>window.PetQuiz.getStatus().score),0);
+  assert.equal(await p.evaluate(()=>localStorage.getItem('petquiz-session-v1')),null);
+  assert.equal(errors.length,0,'Erros JS: '+errors.join(' / '));
+  console.log('✓ '+screen.name+': 10 perguntas vinculadas, sons, fullscreen='+fullscreenSupported+', correção e avanço automáticos, 3 bônus, pódio e sem salvamento.');
+  await ctx.close();
  }
- console.log('✓ PETQuiz: verificação concluída.');
+ console.log('✓ PETQuiz: verificações aprovadas.');
 }finally{await browser.close();await new Promise(ok=>server.close(ok))}
