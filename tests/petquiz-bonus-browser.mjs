@@ -151,7 +151,14 @@ try{
    for(const [a,b] of all){
     const src=frame.locator('[data-port="'+a+'"]').first();
     const dest=frame.locator('[data-port="'+b+'"]').first();
-    await src.evaluate(el=>el.click());await dest.evaluate(el=>el.click());
+    // O TinkerPET escolhe os terminais do motor pela coordenada real do toque.
+    // Um element.click() sintético usa (0,0) e escolhe o borne errado.
+    const tap=async locator=>locator.evaluate(el=>{
+     const rect=el.getBoundingClientRect();
+     el.dispatchEvent(new MouseEvent('click',{bubbles:true,cancelable:true,
+      clientX:rect.left+rect.width/2,clientY:rect.top+rect.height/2}));
+    });
+    await tap(src);await tap(dest);
    }
    const snapshot=await frame.locator('body').evaluate(()=>{
     const keys=[...document.querySelectorAll('#wireSvg .wire-line')].length;
