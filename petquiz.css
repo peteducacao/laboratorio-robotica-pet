@@ -31,7 +31,8 @@ body{background:#ecf8f2}
 .back-link{color:#c8e8df;font-size:12px}
 .shell{max-width:1080px;padding:18px 16px 20px}
 .intro-screen{min-height:min(750px,calc(100dvh - 110px));background:linear-gradient(155deg,#f8faec 0%,#f6f8e8 65%,#e6f8e8 100%);color:#173e43;box-shadow:0 14px 45px #104b4030;border:1px solid #d8e9dc;border-radius:28px;padding:46px;display:grid;grid-template-columns:minmax(0,1fr) minmax(250px,.82fr);gap:12px;align-items:center;isolation:isolate}
-.intro-screen:after{width:520px;height:520px;right:-240px;top:auto;bottom:-380px;background:#b6ebc770}
+/* A antiga bolha gigante ficava sobre o robô, formando uma faixa verde no Android. */
+.intro-screen::after{content:none}
 .intro-content{max-width:560px;z-index:2}
 .intro-micro{font-weight:900;font-size:11px;letter-spacing:1.75px;color:#178577;margin-bottom:15px}
 .intro-screen h1{font:900 clamp(54px,8vw,100px)/1.08 Manrope,sans-serif;letter-spacing:-4px;color:#134455;margin:0 0 16px;max-width:none}
