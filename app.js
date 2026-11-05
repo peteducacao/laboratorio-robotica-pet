@@ -106,26 +106,32 @@ const exists=id=>state.parts.some(p=>p.id===id);
 const byPart=id=>state.parts.find(p=>p.id===id);
 /* Reutiliza o estado e os pinos da bancada principal, sem copiar seu desenho.
    O PETGame não lê nem escreve os circuitos reais do visitante. */
+/* The PETGame uses the original TinkerPET editor, but frames the WHOLE
+   repair area rather than zooming to an unusable extreme close-up. */
+function petgameFaultRegion(){
+ const issue=PETGAME_CASES[PETGAME_CHALLENGE],wire=state.wires[petgameFaultWireIndex];
+ if(!issue||!wire)return null;
+ const linked=[issue.a,issue.b].map(port=>byPart(port.split('.')[0])).filter(Boolean);
+ const regions=linked.map(partBounds);
+ const points=[wire.loose?.point,reconnectPending?.point].filter(Boolean);
+ const xs=regions.map(v=>v.x),ys=regions.map(v=>v.y),xe=regions.map(v=>v.x+v.w),ye=regions.map(v=>v.y+v.h);
+ for(const p of points){xs.push(p.x);xe.push(p.x);ys.push(p.y);ye.push(p.y)}
+ const minX=Math.min(...xs),minY=Math.min(...ys),maxX=Math.max(...xe),maxY=Math.max(...ye);
+ const pad=60;
+ return {x:minX-pad,y:minY-pad,w:maxX-minX+pad*2,h:maxY-minY+pad*2};
+}
 function petgameFocusFault(){
  if(!IS_PETGAME_WORKBENCH)return;
- const issue=PETGAME_CASES[PETGAME_CHALLENGE],wire=state.wires[petgameFaultWireIndex];
- if(!wire||!issue)return;
- const point=reconnectPending?.point||wire.loose?.point||getPortPos(wire[issue.end]);
- const view=Q('viewport')?.getBoundingClientRect();
- if(!point||!view)return;
- zoom=limit(view.width<640?1.0:.85,MIN_ZOOM,MAX_ZOOM);
- panX=view.width/2-point.x*zoom;
- panY=view.height/2-point.y*zoom;
- camera();
- Q('zoomSlider').value=String(Math.round(zoom*100));
+ const region=petgameFaultRegion();if(!region)return;
+ fitRegion(region);
  requestDraw();
+ const note=Q('petgameHelperStatus');
+ if(note&&!reconnectPending)note.textContent='Observe os componentes desta ligação. Selecione a ponta solta e toque no terminal.';
 }
 function petgameSelectLooseWire(){
  if(!IS_PETGAME_WORKBENCH)return;
- const issue=PETGAME_CASES[PETGAME_CHALLENGE];
- if(!issue)return;
- const wire=state.wires[petgameFaultWireIndex];
- if(!wire)return;
+ const issue=PETGAME_CASES[PETGAME_CHALLENGE],wire=state.wires[petgameFaultWireIndex];
+ if(!issue||!wire)return;
  if(!reconnectPending){
   beginReconnect({button:0,pointerId:-7,clientX:0,clientY:0,
    cancelable:false,stopPropagation(){}},petgameFaultWireIndex,issue.end);
@@ -133,8 +139,31 @@ function petgameSelectLooseWire(){
  }
  petgameFocusFault();
  const note=Q('petgameHelperStatus');
- if(note)note.textContent='Ponta selecionada! Deslize a bancada até o pino desejado e toque nele.';
+ if(note)note.textContent='Ponta selecionada. Toque no terminal para conectar ou arraste até ele.';
  requestDraw();
+}
+function petgameClosestPort(e){
+ if(!IS_PETGAME_WORKBENCH||!reconnectPending)return null;
+ const rect=Q('viewport').getBoundingClientRect();
+ let nearest=null,distance=Infinity;
+ for(const part of state.parts){
+  const kind=byKind[part.kind];if(!kind)continue;
+  for(const [pin] of kind.pins){
+   const id=part.id+'.'+pin,pos=getPortPos(id);
+   if(!pos)continue;
+   const dist=Math.hypot(rect.left+panX+pos.x*zoom-e.clientX,rect.top+panY+pos.y*zoom-e.clientY);
+   if(dist<distance){nearest=id;distance=dist}
+  }
+ }
+ return distance<=(e.pointerType==='touch'?26:20)?nearest:null;
+}
+function petgameTakePortByProximity(e){
+ if(!IS_PETGAME_WORKBENCH||!reconnectPending||e.button>0)return;
+ if(e.target.closest('#petgamePickWire,#petgameFocusWire,#petgameOverview,.wire-end-handle'))return;
+ const port=petgameClosestPort(e);
+ if(!port)return;
+ e.preventDefault();e.stopImmediatePropagation();suppressPortClickUntil=Date.now()+450;
+ finishReconnect(port);
 }
 function seedPetgameWorkbench(){
  const coords={
@@ -2782,6 +2811,8 @@ function bind(){
  if(IS_PETGAME_WORKBENCH){
   Q('petgamePickWire')?.addEventListener('click',petgameSelectLooseWire);
   Q('petgameFocusWire')?.addEventListener('click',petgameFocusFault);
+  Q('petgameOverview')?.addEventListener('click',fitCamera);
+  Q('viewport').addEventListener('pointerdown',petgameTakePortByProximity,true);
  }
  Q('menuBtn').addEventListener('click',()=>libraryOpen(!Q('library').classList.contains('open')));
  Q('drawerHandle').addEventListener('click',()=>libraryOpen(!Q('library').classList.contains('open')));
@@ -2805,11 +2836,6 @@ function bind(){
     // No toque, finalizar aqui (o preventDefault pode suprimir o click).
     if(e.pointerType==='touch'){
      e.preventDefault();suppressPortClickUntil=Date.now()+450;
-     if(IS_PETGAME_WORKBENCH&&zoom<.85){
-      cameraZoom(1.0,e.clientX,e.clientY);
-      message('Pinos ampliados: toque novamente no terminal desejado.',true);
-      return;
-     }
      finishReconnect(exactPort);
     }
     return;
@@ -3094,6 +3120,6 @@ function bind(){
  window.addEventListener('resize',()=>{syncDrawerTop();fitCamera();requestDraw();});
  if(typeof ResizeObserver!=='undefined')new ResizeObserver(requestDraw).observe(Q('viewport'));
 }
-safeRestore();bind();syncDrawerTop();renderAll();fitCamera();drawTrack();requestAnimationFrame(drive);
+safeRestore();bind();syncDrawerTop();renderAll();fitCamera();if(IS_PETGAME_WORKBENCH)petgameFocusFault();drawTrack();requestAnimationFrame(drive);
 if(document.fonts)document.fonts.ready.then(requestDraw);
 })();
