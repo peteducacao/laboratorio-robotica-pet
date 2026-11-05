@@ -32,7 +32,10 @@ try{
       loose:{end:'b',point:{x:325,y:225}}}],
     voltage:5,switches:{s1:false},wireColor:'#df1724'
    }};
-  localStorage.setItem('tinkerpet-library-v1',JSON.stringify({version:1,projects:[project]}));
+  // Só preparar o projeto na primeira visita: ao recarregar, não substituir
+  // o circuito que acabou de ser editado pelo modelo inicial.
+  if(!localStorage.getItem('tinkerpet-library-v1'))
+   localStorage.setItem('tinkerpet-library-v1',JSON.stringify({version:1,projects:[project]}));
  });
  const url='http://127.0.0.1:'+server.address().port+'/editor.html?project=loose-touch-test';
  await page.goto(url,{waitUntil:'domcontentloaded'});
