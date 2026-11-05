@@ -106,6 +106,36 @@ const exists=id=>state.parts.some(p=>p.id===id);
 const byPart=id=>state.parts.find(p=>p.id===id);
 /* Reutiliza o estado e os pinos da bancada principal, sem copiar seu desenho.
    O PETGame não lê nem escreve os circuitos reais do visitante. */
+function petgameFocusFault(){
+ if(!IS_PETGAME_WORKBENCH)return;
+ const issue=PETGAME_CASES[PETGAME_CHALLENGE],wire=state.wires[petgameFaultWireIndex];
+ if(!wire||!issue)return;
+ const point=reconnectPending?.point||wire.loose?.point||getPortPos(wire[issue.end]);
+ const view=Q('viewport')?.getBoundingClientRect();
+ if(!point||!view)return;
+ zoom=limit(view.width<640?1.0:.85,MIN_ZOOM,MAX_ZOOM);
+ panX=view.width/2-point.x*zoom;
+ panY=view.height/2-point.y*zoom;
+ camera();
+ Q('zoomSlider').value=String(Math.round(zoom*100));
+ requestDraw();
+}
+function petgameSelectLooseWire(){
+ if(!IS_PETGAME_WORKBENCH)return;
+ const issue=PETGAME_CASES[PETGAME_CHALLENGE];
+ if(!issue)return;
+ const wire=state.wires[petgameFaultWireIndex];
+ if(!wire)return;
+ if(!reconnectPending){
+  beginReconnect({button:0,pointerId:-7,clientX:0,clientY:0,
+   cancelable:false,stopPropagation(){}},petgameFaultWireIndex,issue.end);
+  gesture=null;
+ }
+ petgameFocusFault();
+ const note=Q('petgameHelperStatus');
+ if(note)note.textContent='Ponta selecionada! Deslize a bancada até o pino desejado e toque nele.';
+ requestDraw();
+}
 function seedPetgameWorkbench(){
  const coords={
   b1:[60,150],s1:[345,180],lm:[685,160],esp:[1080,130],
@@ -2069,6 +2099,7 @@ function translateGroup(group,dx,dy){
  }
 }
 function partDown(e){
+ if(IS_PETGAME_WORKBENCH){startPan(e);return;}
  if(pinch||activeTouches.size>=2||Date.now()<gestureBlockedUntil)return;
  if(e.button!==undefined&&e.button!==0)return;
  if(e.target.closest('button,input,label'))return;
@@ -2119,6 +2150,11 @@ function viewportDown(e){
  if(e.button!==undefined&&e.button!==0&&e.button!==1)return;
  if(e.target.closest('.canvas-zoom-button,.canvas-zoom-panel,button,input'))return;
  if(reconnectPending){
+  if(IS_PETGAME_WORKBENCH){
+   if(e.target.closest('[data-port],.wire-end-handle'))return;
+   startPan(e);
+   return;
+  }
   if(e.target.closest('.part,.wire-end-handle'))return;
   e.preventDefault();gesture={type:'reconnect-bend',pointer:e.pointerId,startX:e.clientX,startY:e.clientY,moved:false};
   return;
@@ -2743,6 +2779,10 @@ function downloadExportVector(){
 }
 
 function bind(){
+ if(IS_PETGAME_WORKBENCH){
+  Q('petgamePickWire')?.addEventListener('click',petgameSelectLooseWire);
+  Q('petgameFocusWire')?.addEventListener('click',petgameFocusFault);
+ }
  Q('menuBtn').addEventListener('click',()=>libraryOpen(!Q('library').classList.contains('open')));
  Q('drawerHandle').addEventListener('click',()=>libraryOpen(!Q('library').classList.contains('open')));
  Q('openComponentPicker').addEventListener('click',()=>libraryOpen(true));
