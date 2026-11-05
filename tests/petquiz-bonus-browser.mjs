@@ -64,7 +64,7 @@ try{
   await checkMotor(50,-50,false);await checkMotor(-50,-50);
   await page.locator('#next').click();
   assert.equal(await page.locator('#challengeTitle').textContent(),'Regule o LM2596!');
-  assert(!/5\\s*V/.test(await page.locator('#challengeTitle').textContent()));
+  assert(!/5\s*V/.test(await page.locator('#challengeTitle').textContent()));
   const setVoltage=async value=>page.evaluate(value=>{
    const el=document.getElementById('voltage');el.value=String(value);el.dispatchEvent(new Event('input',{bubbles:true}));
   },value);
