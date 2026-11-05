@@ -42,10 +42,10 @@ jobs:
         run: |
           npm install --no-save --ignore-scripts playwright@1.56.1
           npx playwright install --with-deps chromium
-      - name: Jogar PETQuiz em quatro telas
-        run: node tests/petquiz-browser.mjs
       - name: Testar bônus isolados e bancadas no computador e no celular
         run: node tests/petquiz-bonus-browser.mjs
+      - name: Jogar PETQuiz em quatro telas
+        run: node tests/petquiz-browser.mjs
       - name: Capturas de teste
         if: always()
         uses: actions/upload-artifact@v4
