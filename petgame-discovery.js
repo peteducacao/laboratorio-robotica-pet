@@ -33,19 +33,19 @@ const operations=[
  {kind:'switch',check:v=>v.switchOn===true,
   fail:'O ESP32 está ligado, mas as pilhas não alimentam a ponte H. Observe o estado da gangorra.',
   effect:'A gangorra abriu ou fechou o caminho das pilhas AA até a ponte H.'},
- {kind:'series',check:v=>v.source==='A+'&&v.dest==='B-',
+ {kind:'series',check:v=>v.wireDestination==='pack2.NEG',
   fail:'Os suportes ainda não formam uma série. Observe o positivo do suporte A e o negativo do B.',
   effect:'A ligação em série foi formada: A+ conectado a B−.'},
- {kind:'motor',check:v=>v.positive==='A+'&&v.negative==='A-',
+ {kind:'motor',check:v=>v.wireDestination==='motorA.POS',
   fail:'O Motor A não está conectado aos dois terminais da saída MOTOR A da ponte H.',
   effect:'Os fios do Motor A estão conectados às duas saídas MOTOR A da ponte H.'},
  {kind:'voltage',check:v=>Number(v.voltage)===5,
   fail:'O medidor ainda não indica 5 V. Ajuste o LM2596 e teste novamente.',
   effect:'A saída do regulador está ajustada para 5 V, conforme o esquema deste carrinho.'},
- {kind:'ground',check:v=>v.source==='Ponte H GND'&&v.dest==='ESP32 GND',
+ {kind:'ground',check:v=>v.wireDestination==='esp.GND',
   fail:'Os módulos ainda não compartilham a referência GND. Confira as duas extremidades do jumper.',
   effect:'O negativo da ponte H agora está ligado ao GND do ESP32.'},
- {kind:'gpio',check:v=>v.pin==='D18',
+ {kind:'gpio',check:v=>v.wireDestination==='esp.D18',
   fail:'A entrada IN4 continua no pino errado. Consulte o esquema e tente outra porta.',
   effect:'IN4 da ponte H foi ligado ao D18 do ESP32, conforme o esquema do projeto.'}
 ];
@@ -142,26 +142,26 @@ function output(d){
 }
 function renderRepair(){
  if(!active||active.kind!=='repair')return;
- const item=investigations[active.index],d=get();
+ const item=investigations[active.index],d=get(),isWiring=!!window.PetGameCircuitBoard?.isWiring(active.index);
  $('diagnosticTitle').textContent=item.title;
  $('diagnosticQuestion').textContent=item.prompt;
  $('diagnosticFeedback').textContent=d.message||'Observe o circuito, faça o teste inicial e experimente uma correção.';
- const observation=d.selected?'<div class="pet-observation"><strong>Você observou: '+esc(parts[d.selected][0])+'</strong>'+
+ const observation=d.selected&&parts[d.selected]?'<div class="pet-observation"><strong>Você observou: '+esc(parts[d.selected][0])+'</strong>'+
  '<p>'+esc(parts[d.selected][2])+'</p></div>':'';
  let task='';
  if(!d.fixed){
   task='<div class="pet-task"><h3>'+(d.baseline?'2. Experimente e teste novamente':'1. Teste o circuito antes de alterar')+'</h3>'+
-  (d.baseline?'<p>O teste mostrou o problema. Altere a ligação ou o ajuste e observe o resultado.</p>'+
-   operationControl(active.index,d):'<p>Verifique como o circuito se comporta com a falha. Depois você poderá alterar seus componentes.</p>')+
+  (d.baseline?'<p>O teste mostrou o problema. '+(isWiring?'Arraste a ponta destacada para um terminal ou toque na ponta e depois no pino.':'Altere o ajuste e observe o resultado.')+'</p>'+
+   (isWiring?'':operationControl(active.index,d)):'<p>Verifique como o circuito se comporta com a falha. Depois você poderá alterar seus componentes.</p>')+
   '<button class="button primary block" data-test-circuit="1" type="button">'+
   (d.baseline?'Testar o circuito depois da mudança →':'Testar o circuito agora →')+'</button></div>';
  }
  const success=d.fixed?'<div class="pet-success" role="status"><strong>✓ Circuito funcionando!</strong>'+
   '<p>'+esc(item.after)+'</p><button class="button primary block" data-finish="1" type="button">'+
   'Continuar entrega →</button></div>':'';
- $('diagnosticChoices').innerHTML=circuitVisual(active.index,d)+
+ $('diagnosticChoices').innerHTML=(isWiring?window.PetGameCircuitBoard.render(active.index,d):circuitVisual(active.index,d))+
   '<div class="pet-instruction">Observe as peças para compreender o circuito</div>'+
-  '<div class="pet-parts">'+item.parts.map(k=>componentCard(k,d)).join('')+'</div>'+
+  (isWiring?'':'<div class="pet-parts">'+item.parts.map(k=>componentCard(k,d)).join('')+'</div>')+
   observation+task+output(d)+clue(item,d)+success+
   (!d.fixed?'<button class="pet-hint-button" data-hint="1" type="button">💡 '+
    (d.hints>=1?'Mais uma pista':'Preciso de uma pista')+'</button>':'');
@@ -197,8 +197,22 @@ function paintWheels(){
 }
 function handleClick(e){
  if(!active)return false;
- const button=e.target.closest('button');if(!button)return false;
  const d=get();
+ if(active.kind==='repair'&&window.PetGameCircuitBoard?.isWiring(active.index)){
+  const component=e.target.closest('[data-component]');
+  if(component){
+   const key={battery9:'battery',switch1:'switch1',buck:'lm',esp:'esp',pack4:'pack',pack2:'pack',
+    switch2:'switch2',driver:'bridge',motorA:'motor',motorB:'motor'}[component.dataset.component];
+   if(key){
+    d.selected=key;
+    if(!d.inspected.includes(key))d.inspected.push(key);
+    d.message='Observe a função desse componente antes de mudar a conexão.';
+    renderRepair();return true;
+   }
+  }
+  if(window.PetGameCircuitBoard.handleClick(e,active.index,d,renderRepair))return true;
+ }
+ const button=e.target.closest('button');if(!button)return false;
  if(button.dataset.inspect){
   const key=button.dataset.inspect;if(!parts[key])return true;
   if(!d.inspected.includes(key))d.inspected.push(key);
@@ -220,13 +234,13 @@ function handleClick(e){
   if(!d.baseline){
    d.baseline=true;
    d.testResult={ok:false,title:'O teste encontrou um problema',text:item.before};
-   d.message='Agora experimente uma mudança na bancada e faça outro teste.';
+   d.message='Agora investigue uma conexão e faça outro teste para conferir sua hipótese.';
   }else if(operation.check(d.values)){
    d.fixed=true;
    d.testResult={ok:true,title:'O novo teste funcionou!',text:operation.effect};
    d.message='Compare o antes e o depois: a alteração resolveu a falha.';
   }else{
-   d.testResult={ok:false,title:'Ainda não funcionou',text:operation.fail};
+   d.testResult={ok:false,title:'Ainda não funcionou',text:isWiringChallenge(active.index)?'O fio ainda não está no terminal que resolve o defeito. Observe as ligações e experimente novamente.':operation.fail};
    d.message='Confira o que a medição mostrou e continue experimentando.';
   }
   renderRepair();return true;
@@ -241,6 +255,16 @@ function handleClick(e){
   const finish=active.finished;active=null;finish();return true;
  }
  return false;
+}
+function isWiringChallenge(index){return !!window.PetGameCircuitBoard?.isWiring(index)}
+function handlePointerDown(e){
+ if(active?.kind==='repair')window.PetGameCircuitBoard?.handlePointerDown(e,active.index,get());
+}
+function handlePointerMove(e){
+ if(active?.kind==='repair')window.PetGameCircuitBoard?.handlePointerMove(e,active.index,get());
+}
+function handlePointerUp(e){
+ if(active?.kind==='repair')window.PetGameCircuitBoard?.handlePointerUp(e,active.index,get(),renderRepair);
 }
 function handleInput(e){
  if(!active)return false;
@@ -260,5 +284,5 @@ function handleInput(e){
  }
  return false;
 }
-window.PetGameDiscovery={begin,handleClick,handleInput,investigations,experiments,operations,parts};
+window.PetGameDiscovery={begin,handleClick,handleInput,handlePointerDown,handlePointerMove,handlePointerUp,investigations,experiments,operations,parts};
 })();
