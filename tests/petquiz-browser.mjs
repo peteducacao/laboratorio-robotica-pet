@@ -86,6 +86,40 @@ async function layout(page,label){
   assert(['auto','scroll'].includes(v.fullOverflow),'Fullscreen deve permitir rolar conteúdo alto: '+JSON.stringify(v));
 }
 
+
+/* Verificação visual: largura real dos cards, títulos e rotação da abertura. */
+async function validateIntro(page,label){
+ const v=await page.evaluate(()=>{
+  const intro=document.querySelector('#introScreen'),grid=document.querySelector('.intro-rules');
+  const cards=[...grid.children].map(el=>{
+   const r=el.getBoundingClientRect(),b=el.querySelector('b');
+   return {width:r.width,left:r.left,right:r.right,
+    boldScroll:b.scrollWidth,boldClient:b.clientWidth};
+  });
+  const g=grid.getBoundingClientRect(),gap=parseFloat(getComputedStyle(grid).columnGap);
+  const btn=document.querySelector('#startQuiz').getBoundingClientRect();
+  const title=document.querySelector('#introTitle').getBoundingClientRect();
+  return {vp:innerWidth,vh:innerHeight,bodyScroll:getComputedStyle(document.body).overflowY,
+   intro:{width:intro.getBoundingClientRect().width,scrollWidth:intro.scrollWidth},
+   gridWidth:g.width,gap,cards,btn:{width:btn.width,left:btn.left,right:btn.right},
+   title:{left:title.left,right:title.right},pageHeight:document.documentElement.scrollHeight};
+ });
+ const expected=(v.gridWidth-v.gap)/2;
+ assert.equal(v.cards.length,3,label+' exige três cards');
+ for(const [i,c] of v.cards.entries()){
+  const min=i===2?v.gridWidth*.92:expected*.92;
+  assert(c.width>=min,label+' card '+i+' estreito: '+JSON.stringify({min,actual:c.width,all:v}));
+  assert(c.boldScroll<=c.boldClient+2,label+' texto do card '+i+' cortado: '+JSON.stringify(v));
+  assert(c.left>=-3&&c.right<=v.vp+3,label+' card '+i+' extrapola a tela');
+ }
+ assert(v.btn.width>=Math.min(v.gridWidth*.8,260),label+' botão estreito');
+ assert(v.btn.left>=-3&&v.btn.right<=v.vp+3,label+' botão fora da tela');
+ assert(v.title.left>=-3&&v.title.right<=v.vp+3,label+' título fora da tela');
+ assert(v.pageHeight<=v.vh+5||v.bodyScroll!=='hidden',label+' rolagem vertical indisponível');
+ assert(v.intro.scrollWidth<=v.intro.width+5,label+' conteúdo cortado horizontalmente');
+ return v;
+}
+
 try{
  // Testar tempos REAIS uma vez, sem acelerar.
  const context=await browser.newContext({viewport:{width:1280,height:760}});
@@ -116,7 +150,21 @@ try{
   await p.goto(base+'/petquiz.html',{waitUntil:'domcontentloaded'});
   assert.equal(await p.locator('.intro-rules>div').count(),3);
   await layout(p,'abertura '+screen.name);
+  await validateIntro(p,'abertura '+screen.name);
   await p.screenshot({path:'test-results/petquiz-'+screen.name+'-abertura.png',fullPage:true});
+  if(screen.name==='celular-vertical'){
+   // A mesma página deve sobreviver à rotação Android sem preservar scroll antigo.
+   await p.evaluate(()=>window.scrollTo(0,350));
+   await p.setViewportSize({width:844,height:390});
+   await p.waitForTimeout(360);
+   await validateIntro(p,'rotação para horizontal');
+   assert.equal(await p.evaluate(()=>scrollY),0,'Ao girar para horizontal deve voltar ao topo');
+   await p.screenshot({path:'test-results/petquiz-girado-horizontal.png',fullPage:true});
+   await p.setViewportSize({width:390,height:844});
+   await p.waitForTimeout(360);
+   await validateIntro(p,'rotação de volta para vertical');
+   await p.screenshot({path:'test-results/petquiz-girado-vertical.png',fullPage:true});
+  }
   if(screen.name==='desktop'){
    // Repetir a seleção confirma variações de combinação e dependências.
    const layouts=new Set();
