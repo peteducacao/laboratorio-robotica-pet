@@ -5,7 +5,9 @@
 // A aparência Studio também está na página principal: não trocar o progresso salvo.
 const IS_VISUAL_PREVIEW=/(?:^|\/)studio-preview\.html$/.test(window.location.pathname);
 const IS_PROJECT_EDITOR=/(?:^|\/)editor\.html$/.test(window.location.pathname);
-const STORAGE_KEY=IS_VISUAL_PREVIEW?'tinkerpet-studio-preview-v1':'tinkerpet-v2';
+const IS_PETQUIZ_BONUS_WORKBENCH=/(?:^|\/)petquiz-bonus-bancada\.html$/.test(window.location.pathname);
+const PETQUIZ_BONUS_CASE=IS_PETQUIZ_BONUS_WORKBENCH?(new URLSearchParams(window.location.search).get('challenge')==='motor-a'?'motor-a':'ponte-h'):null;
+const STORAGE_KEY=IS_PETQUIZ_BONUS_WORKBENCH?'petquiz-bonus-isolated':IS_VISUAL_PREVIEW?'tinkerpet-studio-preview-v1':'tinkerpet-v2';
 const LIBRARY_KEY='tinkerpet-library-v1';
 // Um editor sem ID não deve adivinhar o circuito pelo ACTIVE global,
 // pois esse valor é alterado por outras abas. Peça a escolha segura na lista.
@@ -94,7 +96,36 @@ let lastFrame=0;
 const $port=id=>[...Q('partsLayer').querySelectorAll('[data-port]')].find(el=>el.dataset.port===id);
 const exists=id=>state.parts.some(p=>p.id===id);
 const byPart=id=>state.parts.find(p=>p.id===id);
+function seedPetQuizBonusWorkbench(){
+ const coords=PETQUIZ_BONUS_CASE==='motor-a'?
+  {drv:[420,410],ml:[930,445]}:
+  {b1:[60,150],s1:[345,180],lm:[685,160],esp:[1080,130],
+   b2:[90,760],s2:[438,800],drv:[795,785],ml:[1220,685],mr:[1580,685]};
+ state.parts=Object.entries(coords).map(([id,[x,y]])=>({
+  id,kind:byId[id].kind,x,y,view:'front',rotation:0,flipped:false
+ }));
+ state.wires=[];
+ state.voltage=5;state.switches={s1:true,s2:true};
+ state.selected=null;state.selectedWire=null;
+ state.startPort=null;state.bends=[];state.completed=false;
+}
+function petQuizBonusExpected(){
+ return PETQUIZ_BONUS_CASE==='motor-a'?
+  [['drv.OUT1','ml.A'],['drv.OUT2','ml.B']]:EXPECTED;
+}
+function petQuizBonusReport(){
+ if(!IS_PETQUIZ_BONUS_WORKBENCH)return;
+ const expected=petQuizBonusExpected();
+ const wired=new Set(state.wires.filter(w=>!w.loose).map(w=>electricalKey(w.a,w.b)));
+ const good=expected.filter(([a,b])=>wired.has(electricalKey(a,b))).length;
+ const errors=state.wires.filter(w=>w.loose||!expected.some(([a,b])=>electricalKey(a,b)===electricalKey(w.a,w.b))).length;
+ const success=good===expected.length&&errors===0;
+ const data={source:'petquiz-bancada',challenge:PETQUIZ_BONUS_CASE,good,total:expected.length,errors,success};
+ try{if(window.parent!==window)window.parent.postMessage(data,window.location.origin)}catch{}
+ window.PetQuizWiringTest=()=>data;
+}
 function safeRestore(){
+ if(IS_PETQUIZ_BONUS_WORKBENCH){seedPetQuizBonusWorkbench();return;}
  try{
   // Clone the existing circuit only once, for visual comparison.
   // All subsequent edits made on the preview remain in its own storage key.
@@ -152,6 +183,7 @@ function savedIndicator(message,temporary=false){
  },3000);
 }
 function persist(){
+ if(IS_PETQUIZ_BONUS_WORKBENCH)return;
  const circuit={parts:state.parts,wires:state.wires,voltage:state.voltage,switches:state.switches,wireColor:state.wireColor};
  try{
   if(IS_PROJECT_EDITOR){
@@ -254,7 +286,7 @@ function partBounds(p){
 }
 function message(msg,toast=false){Q('statusText').textContent=msg;if(toast){const el=Q('toast');el.textContent=msg;el.classList.add('show');clearTimeout(toastTimer);toastTimer=setTimeout(()=>el.classList.remove('show'),2600);}}
 function assemblyMode(){return exists('s1')||exists('s2')?'switched':'direct';}
-function requiredParts(){return assemblyMode()==='switched'?9:7;}
+function requiredParts(){return IS_PETQUIZ_BONUS_WORKBENCH?state.parts.length:assemblyMode()==='switched'?9:7;}
 // Gabarito com gangorras: cada fonte interrompe SOMENTE seu positivo.
 // Chave 1: bateria 9 V (+) → terminal 1 → terminal 2 → IN+ do LM2596.
 // Chave 2: suporte AA (+) → terminal 1 → terminal 2 → + da MX1508.
@@ -351,6 +383,7 @@ function selectedControlConnections(){
  });
 }
 function expectedConnections(){
+ if(IS_PETQUIZ_BONUS_WORKBENCH)return petQuizBonusExpected();
  const baseline=assemblyMode()==='switched'
   ?[...COMMON_CONNECTIONS,...selectedSwitchConnections().pairs]:DIRECT_CONNECTIONS;
  return baseline.filter(([a,b])=>!a.startsWith('drv.OUT')&&!CONTROL_INPUTS.some(pin=>b==='drv.'+pin))
@@ -398,6 +431,7 @@ function mistakeExplanation(w){
  return 'Revise o fio '+portName(w.a)+' → '+portName(w.b)+'. Cada gangorra deve ligar somente uma fonte ao módulo correspondente; os contatos 1 e 2 são reversíveis.';
 }
 function ready(){
+ if(IS_PETQUIZ_BONUS_WORKBENCH)return state.parts.length===requiredParts()&&missing().length===0&&mistakes().length===0&&state.wires.length===petQuizBonusExpected().length;
  const switched=assemblyMode()==='switched';
  return state.parts.length===requiredParts()&&missing().length===0&&mistakes().length===0&&
  Math.abs(state.voltage-5)<.01&&!voltageAdjusting&&(!switched||(state.switches.s1&&state.switches.s2));
@@ -810,9 +844,11 @@ function syncCompletionCelebration(){
 function refresh(){
  renderCatalog();renderParts();renderColors();renderInspector();renderProgress();
  persist();updateTrackLock();syncCompletionCelebration();
+ if(IS_PETQUIZ_BONUS_WORKBENCH)petQuizBonusReport();
 }
 function renderAll(){refresh();}
 function addPart(kind,x,y){
+ if(IS_PETQUIZ_BONUS_WORKBENCH)return false;
  if(reconnectPending)cancelReconnect();
  const t=byKind[kind];if(!t)return false;
  const id=t.ids.find(id=>!exists(id));if(!id){message('Você já colocou todas as peças deste tipo.',true);return false;}
