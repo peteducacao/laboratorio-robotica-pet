@@ -96,11 +96,13 @@ try{
   }
   await cdp.send('Input.dispatchTouchEvent',{type:'touchEnd',touchPoints:[]});
  };
+ // Fica longe de qualquer contato da gangorra, para não acionar
+ // a conexão automática durante um teste da edição livre.
  const path=[
   [x2,y2],[x2+17,y2],[x2+38,y2],[x2+58,y2],
-  [x2+58,y2-20],[x2+58,y2-43],[x2+58,y2-70],
-  [x2+76,y2-70],[x2+99,y2-70],
-  [x2+99,y2-47],[x2+99,y2-22]
+  [x2+58,y2-20],[x2+58,y2-45],[x2+58,y2-75],
+  [x2+38,y2-75],[x2+15,y2-75],
+  [x2+15,y2-55],[x2+15,y2-30]
  ];
  const vp=await page.locator('#viewport').boundingBox();
  assert(vp,'Bancada precisa existir');
@@ -118,7 +120,8 @@ try{
  assert.equal(changedTwice.wire.loose?.end,'b','A ponta permanece solta após fazer mais curvas');
  assert(changedTwice.wire.via.length>=3,
   'A retomada precisa guardar várias curvas do dedo: '+JSON.stringify(changedTwice));
- assert(changedTwice.wire.loose.point.x>changed.loose.point.x+50,
+ assert(Math.hypot(changedTwice.wire.loose.point.x-changed.loose.point.x,
+   changedTwice.wire.loose.point.y-changed.loose.point.y)>18,
   'O quadrado não acompanhou o segundo gesto: '+JSON.stringify(changedTwice));
  const stateBeforeReload=JSON.stringify(changedTwice.wire);
  await page.reload({waitUntil:'domcontentloaded'});
