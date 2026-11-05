@@ -76,7 +76,18 @@ async function solveSlot(page,slot){
     assert.equal(failed.fixed,false,'A conexão no terminal errado não pode liberar a criança.');
     await page.locator('#diagnosticChoices [data-wire-handle]').dispatchEvent('click');
    }
-   await page.locator('#diagnosticChoices [data-pin="'+wire.target+'"]').dispatchEvent('click');
+   if(slot.index===1&&page.viewportSize().width>1200){
+    // Um arrasto real de mouse, além da alternativa por dois toques.
+    const handle=await page.locator('#diagnosticChoices [data-wire-handle] circle').first().boundingBox();
+    const terminal=await page.locator('#diagnosticChoices [data-pin="'+wire.target+'"] circle').first().boundingBox();
+    assert(handle&&terminal,'As pontas do fio precisam ser alcançáveis.');
+    await page.mouse.move(handle.x+handle.width/2,handle.y+handle.height/2);
+    await page.mouse.down();
+    await page.mouse.move(terminal.x+terminal.width/2,terminal.y+terminal.height/2,{steps:12});
+    await page.mouse.up();
+   }else{
+    await page.locator('#diagnosticChoices [data-pin="'+wire.target+'"]').dispatchEvent('click');
+   }
    assert.equal(await page.evaluate(()=>window.__TinkerpetMission.state.discovery.values.wireDestination),wire.target,
     'O fio precisa conectar ao terminal correto: '+wire.target);
   }else if(slot.index===0){
