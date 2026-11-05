@@ -1731,9 +1731,12 @@ function cameraZoom(nextZoom,clientX,clientY){
 }
 function fitRegion(box){
  const v=Q('viewport'),w=v.clientWidth,h=v.clientHeight;
- zoom=limit(Math.min((w-28)/(box.w+90),(h-28)/(box.h+90)),MIN_ZOOM,1.35);
+ // A barra de ferramentas fixa da oficina não pode cobrir os pinos e peças.
+ const toolbarHeight=IS_PETGAME_WORKBENCH?Math.ceil(Q('petgamePickWire')?.closest('.petgame-wire-tools')?.getBoundingClientRect().height||98):0;
+ const visibleHeight=Math.max(150,h-toolbarHeight-16);
+ zoom=limit(Math.min((w-28)/(box.w+90),(visibleHeight-28)/(box.h+90)),MIN_ZOOM,1.35);
  panX=w/2-(box.x+box.w/2)*zoom;
- panY=h/2-(box.y+box.h/2)*zoom;
+ panY=visibleHeight/2-(box.y+box.h/2)*zoom;
  camera();Q('zoomSlider').value=String(Math.round(zoom*100));
 }
 function focusPart(id){
