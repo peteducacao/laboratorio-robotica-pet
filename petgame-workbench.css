@@ -1,0 +1,25 @@
+/* PETGame challenge: embedded TinkerPET editor. Uses its original models,
+   pin coordinates, routing and reconnection behavior. No separate SVG mockup. */
+html,body.petgame-embedded{height:100%;width:100%;margin:0;overflow:hidden!important;background:#edf5f3}
+.petgame-embedded .app-header,.petgame-embedded .studio-topbar,
+.petgame-embedded .library,.petgame-embedded .side-backdrop,
+.petgame-embedded #drawerHandle,.petgame-embedded .mission-strip,
+.petgame-embedded .bottom-controls,.petgame-embedded #playPanel,
+.petgame-embedded .play-panel,.petgame-embedded #liveCircuitStatus,
+.petgame-embedded #worldNote,.petgame-embedded .preview-inspector,
+.petgame-embedded .preview-inspector-overlay,
+.petgame-embedded .floating-controls,
+.petgame-embedded .toast,
+.petgame-embedded .guide-dialog,
+.petgame-embedded #zoomPopover,
+.petgame-embedded #zoomTool,
+.petgame-embedded .track-entry,
+.petgame-embedded .inspector{display:none!important}
+.petgame-embedded .studio{height:100dvh!important;max-height:100dvh!important;min-height:0!important;display:block!important;padding:0!important;margin:0!important}
+.petgame-embedded .main-work{height:100%!important;min-height:0!important;width:100%!important;max-width:none!important;margin:0!important;padding:0!important;display:block!important}
+.petgame-embedded #buildPanel{height:100%!important;min-height:0!important;max-width:none!important;padding:0!important;display:block!important}
+.petgame-embedded #viewport{height:100%!important;width:100%!important;max-width:none!important;min-height:0!important;margin:0!important;border:0!important;border-radius:0!important;touch-action:none}
+.petgame-embedded #world{pointer-events:auto}
+.petgame-embedded .wire-end-handle{z-index:20}
+.petgame-embedded .part{touch-action:none}
+@media(max-height:440px){.petgame-embedded #viewport{height:100dvh!important}}
