@@ -183,7 +183,7 @@ function renderRepair(){
     frame.title='Bancada original TinkerPET com todos os componentes e uma ligação para corrigir';
     frame.loading='eager';frame.allow='fullscreen';
     frame.src='petgame-workbench.html?challenge='+encodeURIComponent(index)+
-      (d.values?.wireSolved?'&solved=1':'')+'&v=3';
+      (d.values?.wireSolved?'&solved=1':'')+'&v=4';
     host.append(frame);
    }
    host.dataset.locked='false'; // Nunca impedir a seleção ou o arrasto do fio.
