@@ -290,11 +290,15 @@
   "why": "Quando a roda esquerda avança mais rápido, o carrinho tende a virar para a direita."
  }
 ];
+ // A prévia e a validação usam a mesma regra para cada movimento.
+ const isStraightMotion=(a,b)=>a>0&&b>0&&a===b;
+ const isLeftCurveMotion=(a,b)=>a>=0&&b>0&&b>a;
+ const isRightCurveMotion=(a,b)=>b>=0&&a>0&&a>b;
  const BONUS=[
   {id:'straight',title:'Faça as duas rodas avançarem juntas!',prompt:'Regule os motores A e B para a frente, na mesma velocidade. Observe as rodas girando.',voltage:false,
-   check:(a,b)=>a>=30&&b>=30&&Math.abs(a-b)<=10,tip:'As duas rodas precisam avançar em velocidades semelhantes.'},
-  {id:'curve',title:'Faça o carrinho virar à esquerda!',prompt:'Experimente deixar o Motor B mais rápido que o A, ambos para a frente.',voltage:false,
-   check:(a,b)=>a>=0&&b>=30&&b-a>=20,tip:'A roda do lado direito precisa girar mais rápido.'},
+   check:isStraightMotion,tip:'As duas rodas precisam avançar na mesma velocidade, acima de zero.'},
+  {id:'curve',title:'Faça o carrinho virar à esquerda!',prompt:'Faça o Motor B (direita) avançar mais rápido que o Motor A (esquerda).',voltage:false,
+   check:isLeftCurveMotion,tip:'O Motor B deve avançar mais rápido que o A; o A pode ficar parado.'},
   {id:'regulator',title:'Regule o LM2596!',prompt:'Ajuste a saída do regulador e confira a medição.',voltage:true,
    check:v=>v===5,tip:'Observe o valor de saída no mostrador.'}
  ];
@@ -505,9 +509,9 @@
    wheel.style.setProperty('--speed',Math.max(.14,1.18-.95*Math.abs(val)/100)+'s');
   }
   let observation=a===0&&b===0?'As rodas estão paradas.':
-   a>0&&b>0&&Math.abs(a-b)<=10?'As duas rodas avançam juntas.':
-   a>=0&&b>a?'O motor direito gira mais rápido: tendência de curva à esquerda.':
-   b>=0&&a>b?'O motor esquerdo gira mais rápido: tendência de curva à direita.':
+   isStraightMotion(a,b)?'As duas rodas avançam juntas.':
+   isLeftCurveMotion(a,b)?'O motor direito gira mais rápido: tendência de curva à esquerda.':
+   isRightCurveMotion(a,b)?'O motor esquerdo gira mais rápido: tendência de curva à direita.':
    'As rodas estão se movendo com velocidades ou sentidos diferentes.';
   $('bonusMotorStatus').textContent=observation;
  }
