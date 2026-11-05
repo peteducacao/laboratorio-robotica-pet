@@ -862,8 +862,9 @@ function syncCompletionCelebration(){
 }
 function refresh(){
  renderCatalog();renderParts();renderColors();renderInspector();renderProgress();
- persist();updateTrackLock();syncCompletionCelebration();
+ persist();updateTrackLock();
  if(IS_PETGAME_WORKBENCH)petgameMissionStatus();
+ else syncCompletionCelebration();
 }
 function renderAll(){refresh();}
 function addPart(kind,x,y){
