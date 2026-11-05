@@ -1,0 +1,107 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#0c3445">
+<title>Testar rodadas bônus | PETQuiz</title>
+<link rel="icon" href="assets/logo-pet.svg" type="image/svg+xml">
+<style>
+:root{font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;color:#123949;background:#eaf7f2;font-synthesis:none}
+*{box-sizing:border-box}
+body{margin:0;min-height:100dvh}
+header{background:#103b4b;color:#fff;padding:16px max(15px,calc((100vw - 1080px)/2));display:flex;align-items:center;justify-content:space-between;gap:14px}
+header strong{font-size:19px}header strong span{color:#85e2bc}header a{color:#e2faf0;font-weight:700;font-size:13px;text-decoration:none}
+main{width:min(100% - 28px,1080px);margin:22px auto 50px}
+h1{font-size:clamp(24px,5.8vw,38px);margin:4px 0 8px;letter-spacing:-1px}h1 span{color:#169c83}
+.intro{color:#4f727b;font-size:14px;line-height:1.5;margin:0 0 18px}
+.top{display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap}
+.chip{display:inline-flex;background:#d6f5e9;color:#126b61;font-size:11px;font-weight:900;letter-spacing:.11em;border-radius:30px;padding:7px 12px}
+.progress{color:#2c6f6c;font-size:14px;font-weight:800}
+.track{background:#d3e9e1;height:7px;border-radius:50px;overflow:hidden;margin:12px 0 20px}
+.track>div{background:#13a78c;height:100%;width:0;transition:width .2s}
+.selector{display:flex;gap:7px;overflow:auto;padding:3px 0 16px}
+.selector button{min-width:36px;height:36px;border:1px solid #c4ded8;border-radius:11px;background:#fff;color:#325866;font-weight:850;cursor:pointer}
+.selector button.current{background:#0d826f;color:#fff;border-color:#0d826f}
+.selector button.solved{border-color:#119a76;box-shadow:inset 0 -3px #33b78f}
+.panel{background:#fff;border:1px solid #d3e7e2;border-radius:25px;padding:clamp(16px,3.8vw,30px);box-shadow:0 18px 42px #2d5e5220}
+.heading{display:flex;align-items:center;gap:12px;justify-content:space-between;flex-wrap:wrap}
+.type{color:#188a79;font-weight:900;letter-spacing:.09em;font-size:11px;text-transform:uppercase}
+h2{font-size:clamp(25px,6vw,35px);line-height:1.15;margin:14px 0 20px;color:#153c50}
+.motor-stage{position:relative;min-height:245px;display:flex;align-items:center;justify-content:center;overflow:hidden;border:1px solid #d5e5e5;border-radius:22px;background:radial-gradient(circle at 50% 35%,#e0f9e7,#f2f9fa 75%)}
+.motor-stage:after{content:"";position:absolute;width:320px;height:23px;background:#0c725321;border-radius:50%;bottom:40px}
+.rover{position:relative;z-index:1;width:225px;height:150px;display:flex;align-items:center;justify-content:center;transition:transform .3s}
+.rover .chassis{width:168px;height:105px;background:linear-gradient(140deg,#9de0b5,#30a88f);border:8px solid #176676;border-radius:38px;position:absolute;top:10px;left:28px;display:flex;justify-content:center;align-items:center;box-shadow:0 14px 20px #23746927}
+.rover .face{width:112px;height:63px;background:#174761;border-radius:23px;display:flex;align-items:center;justify-content:space-evenly}
+.rover .eye{width:23px;height:23px;border:7px solid #e4faef;border-radius:50%}
+.rover .wheel{position:absolute;bottom:8px;width:57px;height:68px;border-radius:20px;background:#1d384f;border:7px solid #112b45;z-index:-1;transform-origin:center}
+.rover .wheel.a{left:4px}.rover .wheel.b{right:4px}
+.rover .wheel:after{content:"";position:absolute;inset:10px;border-radius:14px;background:#748d9e}
+.rover .wheel.spinning:after{animation:rotate .6s linear infinite}
+@keyframes rotate{to{transform:rotate(360deg)}}
+.controls{display:grid;gap:15px;margin:18px 0}
+.control{background:#f6faf8;border:1px solid #e1eeeb;border-radius:17px;padding:18px}
+.control label{display:flex;justify-content:space-between;font-weight:850;margin-bottom:12px;gap:8px}
+.control output{color:#087f70;font-variant-numeric:tabular-nums}
+input[type=range]{width:100%;accent-color:#119d87;cursor:pointer;min-height:25px;touch-action:pan-y}
+.voltage-stage{min-height:230px;border:1px solid #d8e8e5;background:#eff9f4;border-radius:20px;display:flex;justify-content:center;align-items:center;gap:10px;padding:18px}
+.voltage-stage .module{width:133px;min-height:115px;border-radius:19px;border:8px solid #2a8aa2;background:#176582;color:#fff;display:flex;align-items:center;justify-content:center;flex-direction:column;font-weight:900}
+.voltage-stage .meter{border:3px solid #508499;border-radius:18px;background:#123e50;color:#b6f7de;padding:20px 15px;font-size:28px;font-weight:900;font-variant-numeric:tabular-nums}
+.wiring-stage{display:grid;gap:10px}
+iframe{width:100%;height:clamp(510px,70vh,730px);border:1px solid #c8e4df;border-radius:18px;background:#eef8f6}
+.wiring-line{background:#eaf8f2;border-radius:14px;padding:12px 15px;font-weight:850;color:#206d60;display:flex;justify-content:space-between;gap:12px}
+.feedback{border-radius:15px;padding:13px 15px;background:#e8f5f1;color:#365f60;font-size:14px;line-height:1.4;margin-top:15px}
+.feedback.ok{background:#d2f7e2;color:#0a735c;font-weight:850}.feedback.err{background:#fff1dc;color:#946222}
+.actions{display:flex;flex-wrap:wrap;gap:10px;margin-top:17px}
+button{font:inherit}
+.actions button{border-radius:15px;padding:14px 18px;border:1px solid #c3d9d2;background:#fff;color:#174c54;font-weight:850;cursor:pointer}
+.actions .primary{background:#0eaa8e;border-color:#0eaa8e;color:#fff;box-shadow:0 5px 0 #0b7d6a}
+.actions button:disabled{opacity:.4;cursor:not-allowed;box-shadow:none}
+small.note{display:block;color:#6f9293;margin:14px 0;font-size:12px;line-height:1.4}
+[hidden]{display:none!important}
+@media(min-width:760px){.bonus-grid{display:grid;grid-template-columns:1fr 1fr;gap:18px}.motor-stage{min-height:310px}.controls{margin:0}.voltage-stage{min-height:290px}}
+@media(max-width:480px){header strong{font-size:15px}header a{font-size:11px}.panel{border-radius:19px}.rover{transform:scale(.92)}.actions button{flex:1}iframe{height:620px}.wiring-line{font-size:12px}}
+</style>
+</head>
+<body>
+<header><strong>Tinker<span>PET</span> Studio · Bônus</strong><a href="petquiz.html?v=12">← Voltar ao PETQuiz</a></header>
+<main>
+ <div class="top"><span class="chip">ÁREA TEMPORÁRIA DE TESTES</span><span class="progress" id="progressText">Bônus 1 de 9</span></div>
+ <h1>Laboratório de <span>bônus</span></h1>
+ <p class="intro">Teste as atividades uma por vez. Esta área não interfere nas dez perguntas nem nos seus circuitos salvos.</p>
+ <div class="track"><div id="trackBar"></div></div>
+ <nav class="selector" aria-label="Escolher rodada para testar" id="selector"></nav>
+ <section class="panel">
+  <div class="heading"><span class="type" id="typeLabel">MOVIMENTO</span><span id="testCount" class="progress">1 / 9</span></div>
+  <h2 id="challengeTitle">Faça o carrinho andar para a frente!</h2>
+  <div class="bonus-grid" id="motorGrid">
+   <div class="motor-stage">
+    <div class="rover" id="rover" aria-label="Prévia animada do carrinho">
+     <div class="wheel a" id="wheelA"></div><div class="wheel b" id="wheelB"></div>
+     <div class="chassis"><div class="face"><div class="eye"></div><div class="eye"></div></div></div>
+    </div>
+   </div>
+   <div class="controls" id="motorControls">
+    <div class="control"><label for="motorA">Motor A <output id="motorAValue">0%</output></label><input id="motorA" type="range" min="-100" max="100" step="10" value="0"></div>
+    <div class="control"><label for="motorB">Motor B <output id="motorBValue">0%</output></label><input id="motorB" type="range" min="-100" max="100" step="10" value="0"></div>
+   </div>
+  </div>
+  <div class="bonus-grid" id="voltageGrid" hidden>
+   <div class="voltage-stage"><div class="module">LM2596</div><span aria-hidden="true">➜</span><div class="meter" id="voltageDisplay">9,0 V</div></div>
+   <div class="controls"><div class="control"><label for="voltage">Saída do LM2596 <output id="voltageValue">9,0 V</output></label><input id="voltage" type="range" min="3" max="9" step=".5" value="9"></div></div>
+  </div>
+  <div id="wiringGrid" class="wiring-stage" hidden>
+   <div class="wiring-line"><span id="wiringCount">Conexões 0/2</span><span id="wiringErrors">Sem fios errados</span></div>
+   <iframe id="wiringFrame" title="Bancada interativa do desafio de conexão" loading="eager"></iframe>
+  </div>
+  <div class="feedback" id="feedback" role="status">Ajuste os controles e teste o resultado.</div>
+  <div class="actions">
+   <button id="prev" type="button">← Anterior</button>
+   <button class="primary" id="check" type="button">Testar movimento</button>
+   <button class="primary" id="next" type="button">Próximo bônus →</button>
+   <button id="restart" type="button">Reiniciar desafio</button>
+  </div>
+  <small class="note">Modo de avaliação sem cronômetro. Os bônus só entram na partida principal após a sua aprovação.</small>
+ </section>
+</main>
+<script defer src="petquiz-bonus-teste.js?v=1"></script>
+</body></html>
