@@ -61,37 +61,49 @@ async function solveSlot(page,slot){
   assert.equal(initial.tests,1);
   if(isEditor){
    const frame=page.frameLocator('#petgameWorkbenchFrame');
-   const mapping={1:['b','s2.IN'],2:['b','ml.A'],4:['b','drv.GND'],5:['a','esp.D18']};
-   const [end,target]=mapping[slot.index];
-   const handle=frame.locator('#wireHandles .wire-end-handle[data-wire-end="'+end+'"]');
-   const port=frame.locator('#partsLayer [data-port="'+target+'"]');
-   await handle.waitFor({state:'visible',timeout:30000});
-   await port.waitFor({state:'visible',timeout:30000});
-   const a=await handle.boundingBox(),b=await port.boundingBox();
-   assert(a&&b&&a.width>5&&b.width>1,'Ponta e pino devem ficar visíveis.');
+   const targets={1:'s2.IN',2:'ml.A',4:'drv.GND',5:'esp.D18'};
+   const origin={1:'b2',2:'drv',4:'esp',5:'drv'}[slot.index];
+   const target=targets[slot.index],destination=target.split('.')[0];
    const control=frame.locator('#petgamePickWire');
    await control.waitFor({state:'visible'});
-   assert.equal(await control.isEnabled(),true,'Botão de selecionar fio deve ser clicável');
    await control.click();
-   assert((await frame.locator('#petgameHelperStatus').textContent()).includes('Ponta selecionada'),'Seleção deve dar retorno');
-   if(page.viewportSize().width<900){
-    await port.tap({timeout:10000});
-   }else{
-    await port.click({timeout:10000});
-   }
-   await page.waitForFunction(()=>window.__TinkerpetMission.state.discovery.values.wireSolved===true,null,{timeout:20000});
+   assert((await frame.locator('#petgameHelperStatus').textContent()).includes('Ponta selecionada'),
+    'Seleção do fio deve dar retorno');
+   const framing=await frame.locator('#viewport').evaluate((root,ids)=>{
+    const vp=root.getBoundingClientRect();
+    const boxes=ids.map(id=>document.querySelector('#partsLayer [data-part="'+id+'"]')?.getBoundingClientRect()).filter(Boolean);
+    return{viewport:[vp.width,vp.height],objects:boxes.map(box=>({
+     width:box.width,x:box.x-vp.x,y:box.y-vp.y,
+     inside:box.right>vp.left&&box.left<vp.right&&box.bottom>vp.top&&box.top<vp.bottom
+    }))};
+   },[origin,destination]);
+   assert(framing.objects.length===2&&framing.objects.every(box=>box.inside),
+    'Visualização deve mostrar origem e destino: '+JSON.stringify(framing));
+   assert(framing.objects.every(box=>box.width<framing.viewport[0]*.85),
+    'Peças não podem ocupar a tela toda: '+JSON.stringify(framing));
+   assert.equal(await frame.locator('#petgameOverview').isVisible(),true);
+   const port=frame.locator('#partsLayer [data-port="'+target+'"]');
+   await port.waitFor({state:'visible'});
+   if(page.viewportSize().width<900)await port.tap({timeout:15000});
+   else await port.click({timeout:15000});
+   await page.waitForFunction(()=>window.__TinkerpetMission.state.discovery.fixed===true,null,{timeout:15000});
+   assert.equal(await page.locator('#diagnosticChoices [data-test-circuit]').count(),0,
+    'Não pode exigir botão de teste depois de conectar fio certo');
    assert.equal(await page.locator('#diagnosticChoices [data-finish]').count(),0,
-    'Só reconectar o fio não libera a entrega sem testar');
+    'Não pode exigir botão de continuar depois de conectar fio certo');
+   await page.waitForFunction(()=>window.__TinkerpetMission.state.mode==='drive',null,{timeout:10000});
   }else if(slot.index===0){
    await page.locator('#diagnosticChoices [data-switch]').evaluate(el=>el.click());
   }else if(slot.index===3){
    await page.locator('#petVoltage').evaluate(el=>{el.value='5';el.dispatchEvent(new Event('input',{bubbles:true}))});
   }
-  await page.locator('#diagnosticChoices [data-test-circuit]').evaluate(el=>el.click());
-  const result=await page.evaluate(()=>window.__TinkerpetMission.state.discovery);
-  assert(result.fixed&&result.tests>=2,'Reparo não foi verificado: '+JSON.stringify(result));
-  assert.equal(await page.locator('#diagnosticChoices .pet-success').count(),1);
-  await page.locator('#diagnosticChoices [data-finish]').evaluate(el=>el.click());
+  if(!isEditor){
+   await page.locator('#diagnosticChoices [data-test-circuit]').evaluate(el=>el.click());
+   const result=await page.evaluate(()=>window.__TinkerpetMission.state.discovery);
+   assert(result.fixed&&result.tests>=2,'Reparo não foi verificado: '+JSON.stringify(result));
+   assert.equal(await page.locator('#diagnosticChoices .pet-success').count(),1);
+   await page.locator('#diagnosticChoices [data-finish]').evaluate(el=>el.click());
+  }
  }else{
   assert(await page.locator('#questionOverlay').isVisible(),'Experimento não abriu');
   assert.equal(await page.locator('#questionClose').count(),0,'Experimento não pode ter X');
