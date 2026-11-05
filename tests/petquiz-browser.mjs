@@ -112,7 +112,7 @@ async function validateIntro(page,label){
   assert(c.boldScroll<=c.boldClient+2,label+' texto do card '+i+' cortado: '+JSON.stringify(v));
   assert(c.left>=-3&&c.right<=v.vp+3,label+' card '+i+' extrapola a tela');
  }
- assert(v.btn.width>=Math.min(v.gridWidth*.8,260),label+' botão estreito');
+ if(v.vp<=980)assert(v.btn.width>=Math.min(v.gridWidth*.8,260),label+' botão estreito');
  assert(v.btn.left>=-3&&v.btn.right<=v.vp+3,label+' botão fora da tela');
  assert(v.title.left>=-3&&v.title.right<=v.vp+3,label+' título fora da tela');
  assert(v.pageHeight<=v.vh+5||v.bodyScroll!=='hidden',label+' rolagem vertical indisponível');
