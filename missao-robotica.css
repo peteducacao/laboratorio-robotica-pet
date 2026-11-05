@@ -448,3 +448,43 @@
 .pet-switch-layout{display:flex;align-items:center;justify-content:space-between;gap:12px}
 .pet-switch-layout .pet-switch{min-width:100px}
 @media(max-width:650px){.pet-task-row{gap:7px}.pet-task{padding:11px}.pet-task select{font-size:11px}}
+
+/* PETGame 2.1 — bancada do circuito completo com fio solto ou trocado.
+   Visual SVG permanece nítido em qualquer escala; alvos são grandes para toque. */
+.pg-assembly{display:grid;gap:7px;min-width:0;border-radius:17px;border:1px solid #d2e5de;
+ background:linear-gradient(160deg,#f6fbf8,#e9f4f0);padding:12px}
+.pg-assembly-top{display:flex;align-items:flex-start;justify-content:space-between;gap:14px;flex-wrap:wrap}
+.pg-assembly-top strong{font-family:Manrope,sans-serif;color:#205667;font-size:14px}
+.pg-assembly-top span{font-size:10px;color:#5c7b84;font-weight:800}
+.pg-board-scroll{max-width:100%;overflow:auto;overscroll-behavior-x:contain;border:1px solid #cce1d9;border-radius:13px;
+ background:#f2faf5;scrollbar-color:#9dc6bc transparent;touch-action:pan-x pan-y}
+.pg-board-inner{position:relative;width:100%;min-width:850px;aspect-ratio:1180 / 675;}
+.pg-real-circuit{width:100%;height:100%;display:block;user-select:none;-webkit-user-select:none}
+.pg-real-circuit .pg-component-label{font:900 11px Manrope,Arial,sans-serif;fill:#2b5467;pointer-events:none}
+.pg-real-circuit .pg-pin-label{font:800 11px 'DM Sans',Arial,sans-serif;fill:#286578;pointer-events:none;paint-order:stroke fill;stroke:#f4faf7;stroke-width:3px;stroke-linejoin:round}
+.pg-real-circuit .pg-zone-label{font:900 13px Manrope,Arial,sans-serif;letter-spacing:1.2px;fill:#4f7c78}
+.pg-component{cursor:help}
+.pg-component:hover rect:first-child{stroke:#169780;stroke-width:4}
+.pg-pin{cursor:pointer}
+.pg-pin:hover>circle:nth-child(2),.pg-pin.ready:hover>circle:nth-child(2){stroke:#19a989;stroke-width:5;fill:#e9fff0}
+.pg-wire{pointer-events:none;opacity:.84;filter:drop-shadow(0 1px 1px #172c3840)}
+.pg-fault-wire{opacity:1;stroke-dasharray:0;filter:drop-shadow(0 0 3px #e5a44c80)}
+.pg-wire-handle{cursor:grab;touch-action:none;outline:none}
+.pg-wire-handle:hover circle:first-child,.pg-wire-handle.selected circle:first-child{stroke:#058b7a;stroke-width:4;fill:#e4faf0}
+.pg-wire-handle:active{cursor:grabbing}
+.pg-assembly-status{display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:11px;background:#fff;
+ border:1px solid #d3e6dd;color:#365e6b;font-size:12px;font-weight:800;line-height:1.35}
+.pg-signal{flex:none;width:9px;height:9px;border-radius:50%;background:#e5a94b;box-shadow:0 0 0 4px #e5a94b22}
+.pg-assembly-note{margin:0!important;font-size:11px!important;color:#658287!important;line-height:1.35!important}
+@media(max-width:850px){
+ .pg-board-inner{min-width:815px}
+ .pg-assembly{padding:8px;gap:5px}
+ .pg-assembly-top strong{font-size:12px}
+ .pg-assembly-top span{font-size:9px}
+ .pg-assembly-status{font-size:11px}
+}
+@media(orientation:landscape) and (max-height:540px){
+ .pg-board-inner{min-width:730px}
+ .pg-assembly{padding:6px}
+ .pg-assembly-top span{font-size:9px}
+}
