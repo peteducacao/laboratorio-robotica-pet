@@ -423,7 +423,7 @@ function mistakes(){
 }
 function missing(){const wired=new Set(state.wires.filter(w=>!w.loose).map(w=>electricalKey(w.a,w.b)));return expectedConnections().filter(([a,b])=>!wired.has(electricalKey(a,b)));}
 function mistakeExplanation(w){
- if(w.loose)return 'O jumper tem uma ponta solta. Arraste a bolinha até o pino correto ou remova o fio.';
+ if(w.loose)return 'O jumper tem uma ponta solta. Arraste o quadradinho até o pino correto ou remova o fio.';
  if([w.a,w.b].some(p=>p==='s1.LEDG'||p==='s2.LEDG'))
   return 'O terceiro terminal LED− da gangorra é apenas da luz indicadora e não alimenta o ESP32. Use os contatos 1 e 2 para ligar ou desligar a alimentação.';
  if(CONTROL_INPUTS.some(input=>w.a==='drv.'+input||w.b==='drv.'+input))
@@ -1390,7 +1390,7 @@ function renderWireHandles(){
    const button=document.createElement('button');button.type='button';
    button.className='wire-end-handle';button.dataset.wireEnd=end;
    button.setAttribute('aria-label','Soltar ponta '+(end==='a'?'inicial':'final')+' do fio e conectar a outro pino');
-   button.title='Arraste a bolinha até um pino, ou solte-a em qualquer lugar da bancada';
+   button.title='Arraste o quadradinho até um pino ou mova para criar curvas';
    layer.append(button);
   }
   layer.dataset.index=selected;
@@ -1475,7 +1475,7 @@ function leaveReconnectLoose(clientX,clientY){
  state.selectedWire=pending.index;state.selected=null;state.inspector='wires';state.completed=false;
  reconnectPending=null;pendingAlignment=null;wireAlignment=null;
  refresh();
- message('Ponta solta posicionada. Ela fica aqui até você arrastá-la para um pino.',true);
+ message('Ponta solta posicionada. Arraste o quadradinho para fazer curvas ou conectar a um pino.',true);
  return true;
 }
 function finishReconnect(newPort){
@@ -2484,7 +2484,7 @@ function pointerUp(e){
        previewPoint=null;previewSnapPort=null;pendingAlignment=null;
        state.selectedWire=state.wires.length-1;state.selected=null;state.inspector='wires';
        state.completed=false;refresh();
-       message('Ponta solta fixada na bancada. Arraste a bolinha para conectar a um pino.',true);
+       message('Ponta solta fixada na bancada. Arraste o quadradinho para curvar ou conectar.',true);
      }else{previewPoint=null;requestDraw();}
    }
   }
