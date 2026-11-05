@@ -28,7 +28,11 @@ async function solveSlot(page,slot){
  if(slot.kind==='repair'){
   assert(await page.locator('#repairOverlay').isVisible(),'A bancada não abriu');
   assert.equal(await page.locator('#repairTimer').isVisible(),false,'Desafio sem contagem regressiva');
-  assert(await page.locator('#diagnosticChoices [data-inspect]').count()>=3,'Peças ausentes');
+  if([1,2,4,5].includes(slot.index)){
+   assert.equal(await page.locator('#diagnosticChoices .pg-component').count(),10,'Bancada completa precisa ter dez componentes');
+  }else{
+   assert(await page.locator('#diagnosticChoices [data-inspect]').count()>=3,'Peças de observação ausentes');
+  }
   assert.equal(await page.locator('#diagnosticClose').count(),0,'X não pode sair do desafio');
   assert.equal(await page.locator('#quitChallengeDialog').count(),0,'Não pode existir pulo de descoberta');
   const slotBefore=await page.evaluate(()=>window.__TinkerpetMission.state.stageSlot);
@@ -38,7 +42,11 @@ async function solveSlot(page,slot){
    await page.locator('#diagnosticChoices [data-hint]').evaluate(el=>el.click());
    assert((await page.locator('#diagnosticChoices .pet-clue').textContent()).includes('Pista 1'));
   }
-  await page.locator('#diagnosticChoices [data-inspect]').first().evaluate(el=>el.click());
+  if(![1,2,4,5].includes(slot.index)){
+   await page.locator('#diagnosticChoices [data-inspect]').first().evaluate(el=>el.click());
+  }else{
+   await page.locator('#diagnosticChoices [data-component="driver"]').dispatchEvent('click');
+  }
   assert.equal(await page.locator('#diagnosticChoices .pet-observation').count(),1);
   assert.equal(await page.locator('#diagnosticChoices [data-finish]').count(),0,'Tocar na peça não conclui investigação');
   assert.equal(await page.locator('#diagnosticChoices [data-setting]').count(),0);
