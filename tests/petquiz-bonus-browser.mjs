@@ -27,28 +27,54 @@ try{
   await page.locator('#selector button').first().waitFor();
   assert.equal(await page.locator('#selector button').count(),9,'Nove bônus na área de testes');
   assert.equal(await page.locator('#challengeTitle').textContent(),'Faça o carrinho andar para a frente!');
-  const solveMotor=async(a,b)=>{
+  const setMotor=async(a,b)=>{
    await page.evaluate(([a,b])=>{
     for(const [id,value] of [['motorA',a],['motorB',b]]){
      const el=document.getElementById(id);el.value=String(value);el.dispatchEvent(new Event('input',{bubbles:true}));
     }
    },[a,b]);
-   await page.locator('#check').click();
-   assert(await page.locator('#feedback').evaluate(el=>el.classList.contains('ok')),
-    'Bônus de movimento correto não validou: '+await page.locator('#challengeTitle').textContent());
   };
-  await solveMotor(40,40);await page.locator('#next').click();
-  await solveMotor(40,50);await page.locator('#next').click();
-  await solveMotor(50,40);await page.locator('#next').click();
-  await solveMotor(-50,-50);await page.locator('#next').click();
+  const checkMotor=async(a,b,expected=true)=>{
+   await setMotor(a,b);
+   await page.locator('#check').click();
+   const approved=await page.locator('#feedback').evaluate(el=>el.classList.contains('ok'));
+   assert.equal(approved,expected,
+    'Validação incorreta '+JSON.stringify({a,b,expected,title:await page.locator('#challengeTitle').textContent()}));
+  };
+  // Para a frente: ambos avançando juntos, sem fazer uma curva.
+  await checkMotor(40,50,false);await checkMotor(40,40);
+  await page.locator('#next').click();
+  // Curva à esquerda: mesmo com motor esquerdo em marcha à ré, vira à esquerda.
+  await checkMotor(50,40,false);
+  await checkMotor(-10,100,true);
+  const tiltLeft=await page.locator('#rover').evaluate(el=>getComputedStyle(el).transform);
+  assert.notEqual(tiltLeft,'none','A prévia deve mostrar curva');
+  await page.locator('#next').click();
+  await checkMotor(40,50,false);await checkMotor(100,-10);
+  await page.locator('#next').click();
+  // Para trás: ambos em ré e sem diferença de velocidade.
+  await checkMotor(-50,-60,false);await checkMotor(-50,-50);
+  assert.equal(await page.locator('#wheelA').getAttribute('data-direction'),'reverse');
+  assert.equal(await page.locator('#wheelB').getAttribute('data-direction'),'reverse');
+  await page.locator('#next').click();
   assert.equal(await page.locator('#motorA').inputValue(),'60');
-  await solveMotor(0,0);await page.locator('#next').click();
+  await checkMotor(20,0,false);await checkMotor(0,0);
+  await page.locator('#next').click();
   assert.equal(await page.locator('#motorA').inputValue(),'80');
-  await solveMotor(50,50);await page.locator('#next').click();
+  await checkMotor(50,-50,false);await checkMotor(-50,-50);
+  await page.locator('#next').click();
   assert.equal(await page.locator('#challengeTitle').textContent(),'Regule o LM2596!');
-  assert(!/5\s*V/.test(await page.locator('#challengeTitle').textContent()));
-  await page.evaluate(()=>{const el=document.getElementById('voltage');el.value='5';el.dispatchEvent(new Event('input',{bubbles:true}));});
-  await page.locator('#check').click();
+  assert(!/5\\s*V/.test(await page.locator('#challengeTitle').textContent()));
+  const setVoltage=async value=>page.evaluate(value=>{
+   const el=document.getElementById('voltage');el.value=String(value);el.dispatchEvent(new Event('input',{bubbles:true}));
+  },value);
+  await setVoltage(7);await page.locator('#check').click();
+  assert.equal(await page.locator('#feedback').evaluate(el=>el.classList.contains('ok')),false,'7 V não pode ser aceito');
+  await setVoltage(5);await page.locator('#check').click();
+  assert(await page.locator('#feedback').evaluate(el=>el.classList.contains('ok')));
+  await setVoltage(6);
+  assert.equal(await page.locator('#feedback').evaluate(el=>el.classList.contains('ok')),false,'Ao mudar a resposta, perde a aprovação anterior');
+  await setVoltage(5);await page.locator('#check').click();
   assert(await page.locator('#feedback').evaluate(el=>el.classList.contains('ok')));
   await page.locator('#next').click();
   assert.equal(await page.locator('#challengeTitle').textContent(),'Faça o Motor A funcionar!');
@@ -65,8 +91,9 @@ try{
     await frame.locator('[data-port="'+a+'"]').first().click({timeout:9000});
     await frame.locator('[data-port="'+b+'"]').first().click({timeout:9000});
    };
-   await connect('drv.OUT1','ml.A');
-   await connect('drv.OUT2','ml.B');
+   // Os fios do Motor A podem ser invertidos (isso apenas muda o giro).
+   await connect('drv.OUT1','ml.B');
+   await connect('drv.OUT2','ml.A');
    await page.waitForFunction(()=>document.getElementById('wiringCount').textContent.includes('2/2'),{timeout:12000});
    assert.equal((await frame.locator('body').evaluate(()=>window.PetQuizWiringTest())).success,true);
    assert(await page.locator('#feedback').evaluate(el=>el.classList.contains('ok')));
@@ -111,6 +138,25 @@ try{
   await frame.locator('#viewport').waitFor({timeout:25000});
   await page.waitForFunction(()=>document.getElementById('wiringCount').textContent.includes('0/17'),{timeout:15000});
   assert.equal((await frame.locator('body').evaluate(()=>window.PetQuizWiringTest())).total,17);
+  if(device.name==='desktop'){
+   // Reproduz montagem completa do zero usando o editor verdadeiro.
+   const all=[
+    ['b1.POS','s1.IN'],['s1.OUT','lm.INP'],['b1.NEG','lm.INN'],
+    ['lm.OUTP','esp.VIN'],['lm.OUTN','esp.GND'],
+    ['b2.POS','s2.IN'],['s2.OUT','drv.VCC'],['b2.NEG','drv.GND'],
+    ['esp.GND','drv.GND'],
+    ['esp.D27','drv.IN1'],['esp.D26','drv.IN2'],['esp.D32','drv.IN3'],['esp.D18','drv.IN4'],
+    ['drv.OUT1','ml.B'],['drv.OUT2','ml.A'],['drv.OUT3','mr.A'],['drv.OUT4','mr.B']
+   ];
+   for(const [a,b] of all){
+    const src=frame.locator('[data-port="'+a+'"]').first();
+    const dest=frame.locator('[data-port="'+b+'"]').first();
+    await src.evaluate(el=>el.click());await dest.evaluate(el=>el.click());
+   }
+   await page.waitForFunction(()=>document.getElementById('wiringCount').textContent.includes('17/17'),{timeout:15000});
+   assert.equal((await frame.locator('body').evaluate(()=>window.PetQuizWiringTest())).success,true,
+    'Montagem completa deve validar com Motor A invertido');
+  }
   const finalState=await frame.locator('body').evaluate(()=>({s:localStorage.getItem('tinkerpet-v2'),lib:localStorage.getItem('tinkerpet-library-v1')}));
   assert.deepEqual(finalState,stateCheck,'Bancadas de teste não alteram circuitos salvos');
   await page.screenshot({path:resolve(root,'test-results/petquiz-bonus-'+device.name+'.png'),fullPage:true});
