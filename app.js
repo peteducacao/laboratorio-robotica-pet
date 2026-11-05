@@ -2293,6 +2293,11 @@ function pointerUp(e){
    const destination=fixed?nearestPort(e.clientX,e.clientY,fixed,32):null;
    if(destination){suppressPortClickUntil=Date.now()+380;finishReconnect(destination);}
    else leaveReconnectLoose(e.clientX,e.clientY);
+  }else if(IS_PETGAME_WORKBENCH){
+   // Na oficina infantil, um toque seleciona a ponta: o próximo toque no pino conclui.
+   // No editor principal a interação original é preservada.
+   gesture=null;
+   message('Agora toque no terminal onde o fio deve ser conectado.',true);
   }else cancelReconnect();
   requestDraw();
  }else if(g.type==='catalog'){
