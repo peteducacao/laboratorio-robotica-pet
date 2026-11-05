@@ -17,7 +17,7 @@
 <link rel="stylesheet" href="step-hints.css?v=3">
 <link rel="stylesheet" href="petgame-workbench.css?v=4">
 <script src="step-hints.js?v=3"></script>
-<script defer src="app.js?v=98"></script>
+<script defer src="app.js?v=99"></script>
 
 
 
@@ -206,4 +206,11 @@
   </div>
 </dialog>
 <div id="wireColorMenu" class="wire-color-menu" role="group" aria-label="Escolha uma cor de fio" hidden></div>
+<div class="petgame-wire-tools" role="group" aria-label="Ferramentas de ligação da missão">
+ <div class="petgame-wire-tool-buttons">
+  <button id="petgamePickWire" type="button"> <span aria-hidden="true">🔌</span> Selecionar ponta do fio</button>
+  <button id="petgameFocusWire" type="button"><span aria-hidden="true">⌖</span> Localizar fio</button>
+ </div>
+ <p id="petgameHelperStatus" role="status">Selecione a ponta destacada e depois toque no pino onde ela deve entrar.</p>
+</div>
 </body></html>
