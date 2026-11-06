@@ -97,3 +97,13 @@
  .question-drag-ghost{max-width:160px;font-size:11px}
 }
 @media(prefers-reduced-motion:reduce){.question-zone{transition:none}}
+
+/* Ações em lote: acima de Ativas/Inativas, sem precisar marcar questões. */
+.bulk-question-actions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px;margin:0 0 14px}
+.bulk-question-button{display:flex;align-items:center;justify-content:center;gap:6px;min-width:0;min-height:43px;padding:9px 7px;border-radius:11px;border:1px solid;font-size:12px;font-weight:800;cursor:pointer;line-height:1.2}
+.bulk-question-button.activate{background:#d8fff0;color:#075c47;border-color:#63d5ac}
+.bulk-question-button.deactivate{background:#e0e8f2;color:#284460;border-color:#93aec4}
+.bulk-question-button:enabled:hover{filter:brightness(.96)}
+.bulk-question-button:disabled{opacity:.46;cursor:default}
+.bulk-question-button:focus-visible{outline:3px solid #ffc95d;outline-offset:3px}
+@media(max-width:700px){.bulk-question-actions{gap:7px}.bulk-question-button{padding:10px 5px;font-size:11px;min-height:46px}}
