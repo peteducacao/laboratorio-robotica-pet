@@ -41,7 +41,8 @@ try{
       scrollWidth:document.documentElement.scrollWidth,
       fontSize:getComputedStyle(footer).fontSize,display:getComputedStyle(footer).display};
   });
-  assert.equal(opening.text,credit,'Autoria na abertura '+width);
+  assert.equal(opening.text,credit+' · Admin','Autoria e Admin na abertura '+width);
+  assert.equal(await page.locator('.site-credit-home .site-admin-link').getAttribute('href'),'admin.html');
   assert.ok(opening.y>=0&&opening.y+opening.h<=height+1,'Rodapé visível sem rolagem na abertura '+width);
   assert.ok(opening.y>opening.buttonBottom+8,'Rodapé não cobre botão na abertura '+width);
   assert.ok(opening.scrollWidth<=width+2,'Abertura sem rolagem horizontal '+width);
