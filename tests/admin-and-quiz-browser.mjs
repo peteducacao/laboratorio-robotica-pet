@@ -142,6 +142,8 @@ try{
  assert.equal(published.categories.length,original.categories.length,'Publica categorias');
  assert.equal(published.prerequisites.length,original.prerequisites.length,'Publica requisitos');
  assert.equal(await admin.evaluate(()=>sessionStorage.getItem('tinkerpet-admin-github-token')),validToken,'Token mantido na sessão');
+ assert(!JSON.stringify(published).includes(validToken),'Token nunca é incluído no banco de perguntas');
+ assert((await admin.locator('#page-ajuda').textContent()).includes('token GitHub')|| (await admin.locator('#page-ajuda').textContent()).includes('token'),'Ajuda explica token');
  assert.equal(await admin.evaluate(()=>localStorage.getItem('tinkerpet-admin-github-token')),null,'Token nunca salvo em armazenamento permanente');
  const before=writes;
  await admin.locator('#publish').click();
