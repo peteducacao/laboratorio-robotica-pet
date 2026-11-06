@@ -42,7 +42,7 @@ try{
  await admin.locator('#opt2').fill('Controlar luz solar');
  await admin.locator('#opt3').fill('Ser uma roda');
  await admin.locator('#correctSelect').selectOption('0');
- await admin.locator('#topicInput').fill('esp32');
+ await admin.locator('#topicInput').selectOption('esp32');
  await admin.locator('#questionForm button[type="submit"]').click();
  let data=await admin.evaluate(()=>window.TinkerPETAdmin.getSettings());
  assert.equal(data.questions.length,20,'Cadastra questão');
