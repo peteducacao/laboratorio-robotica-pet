@@ -4,13 +4,13 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#0a3242">
-<meta name="description" content="PETQuiz de robótica: situações-problema com 5 segundos de leitura, respostas cronometradas e eventos bônus práticos surpresa sem pontos.">
+<meta name="description" content="PETQuiz de robótica com perguntas, respostas cronometradas e desafios bônus interativos.">
 <title>PETQuiz · Desafios de Robótica | TinkerPET</title>
 <link rel="icon" href="assets/logo-pet.svg" type="image/svg+xml">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&family=Manrope:wght@500;600;700;800&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="petquiz.css?v=13">
+<link rel="stylesheet" href="petquiz.css?v=14">
 <script defer src="petquiz.js?v=18"></script>
 </head>
 <body>
@@ -25,9 +25,8 @@
    <h1 id="introTitle">PET<span>Quiz</span></h1>
    <p class="intro-subtitle">Teste seus conhecimentos sobre o carrinho ESP32 em desafios rápidos e interativos.</p>
    <div class="intro-rules">
-    <div><span class="rule-icon">◷</span><b>5 segundos</b><small>para ler a pergunta</small></div>
-    <div><span class="rule-icon">⏱</span><b>20 segundos</b><small>para responder</small></div>
     <div><span class="rule-icon">☷</span><b id="introQuestionCount">10 perguntas</b><small>por partida</small></div>
+    <div><span class="rule-icon">⏱</span><b>20 segundos</b><small>para responder</small></div>
    </div>
    <button id="startQuiz" class="primary-btn large" type="button">Começar PETQuiz <span aria-hidden="true">➜</span></button>
    <p class="intro-foot" id="introFoot">Alternativas sorteadas a cada partida</p>
