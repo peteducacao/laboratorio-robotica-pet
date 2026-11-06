@@ -58,7 +58,7 @@
   else dirtyAccess.delete(key);
   localStorage.setItem(DRAFT_ACCESS,JSON.stringify([...dirtyAccess]));
  }
- let publishTimer=null,publishBusy=false,publishAgain=false;
+ let publishTimer=null,publishBusy=false,publishAgain=false,publishRevision=0;
  let toastTimer=null;
  function showSaveToast(message='Alterações salvas!'){
   const toast=$('saveToast');$('saveToastText').textContent=message;
@@ -324,6 +324,25 @@
    settings.questionCount=Math.max(1,qs().filter(q=>q.active).length);
   saveDraft();renderOverview();renderList();notice('Pergunta salva no rascunho.');
  }
+ async function verifySiteUpdated(snapshot,revision){
+  // O GitHub aceitar a gravação não significa que o Pages já a publicou.
+  for(let attempt=0;attempt<30;attempt++){
+   await new Promise(resolve=>setTimeout(resolve,3000));
+   if(revision!==publishRevision||JSON.stringify(settings,null,2)+'\n'!==snapshot)return;
+   try{
+    const response=await fetch(CONFIG+'?confirm='+Date.now()+'-'+attempt,{cache:'no-store'});
+    if(!response.ok)continue;
+    const live=await response.json();
+    if(JSON.stringify(live)===JSON.stringify(JSON.parse(snapshot))){
+     $('saveState').textContent='Disponível para todos! · atualização confirmada no site';
+     showSaveToast('Disponível para todos!');
+     return;
+    }
+   }catch(err){console.warn('Aguardando atualização do GitHub Pages',err)}
+  }
+  if(revision===publishRevision&&JSON.stringify(settings,null,2)+'\n'===snapshot)
+   $('saveState').textContent='Salvo no GitHub · o site ainda pode estar atualizando';
+ }
  async function publish(manual=true){
   clearTimeout(publishTimer);
   if(publishBusy){publishAgain=true;return}
@@ -335,6 +354,7 @@
    return;
   }
   publishBusy=true;
+  const revision=++publishRevision;
   const btn=$('publish'),footer=$('publishFooter');
   btn.disabled=true;footer.disabled=true;
   $('saveState').textContent='Publicando alterações no GitHub...';
@@ -363,13 +383,14 @@
    else localStorage.removeItem(DRAFT_ACCESS);
    if(JSON.stringify(settings,null,2)+'\n'===snapshot){
     localStorage.removeItem(DRAFT);
-    $('saveState').textContent='Publicado no GitHub · disponível após atualização do site';
+    $('saveState').textContent='Salvo no GitHub · aguardando atualização do site';
    }else{
     localStorage.setItem(DRAFT,JSON.stringify(settings));publishAgain=true;
-    $('saveState').textContent='Última alteração publicada · há edições mais recentes';
+    $('saveState').textContent='Salvo no GitHub · há edições mais recentes';
    }
-   showSaveToast('Publicado para todos!');
+   showSaveToast('Salvo no GitHub!');
    $('notice').hidden=true;
+   void verifySiteUpdated(snapshot,revision);
   }catch(err){
    console.error('Falha de publicação',err);
    localStorage.setItem(DRAFT,JSON.stringify(settings));
