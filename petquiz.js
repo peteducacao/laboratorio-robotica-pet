@@ -592,29 +592,64 @@
    // Justificativa guardada no banco de questões, não exibida ao aluno.
   }
  }
+ function renderBonusImages(){
+  const grid=$('bonusImageOptions');grid.replaceChildren();
+  for(const [index,id] of (state.visualOptions||[]).entries()){
+   const part=COMPONENTS.find(c=>c.id===id);if(!part)continue;
+   const button=document.createElement('button');
+   button.type='button';button.className='bonus-image-choice';
+   button.dataset.component=id;
+   button.setAttribute('aria-pressed',String(state.visualChoice===id));
+   button.setAttribute('aria-label','Opção '+String.fromCharCode(65+index)+': '+part.name);
+   button.disabled=state.phase==='bonusResult';
+   const letter=document.createElement('span');letter.className='bonus-image-letter';
+   letter.textContent=String.fromCharCode(65+index);
+   const img=document.createElement('img');img.src=part.image;img.alt=part.name;
+   img.loading='eager';img.decoding='async';
+   button.append(letter,img);
+   button.addEventListener('click',()=>{
+    if(state.phase!=='bonus')return;
+    state.visualChoice=id;state.bonusFeedback=null;
+    grid.querySelectorAll('.bonus-image-choice').forEach(card=>{
+     const selected=card.dataset.component===id;
+     card.classList.toggle('selected',selected);
+     card.setAttribute('aria-pressed',String(selected));
+    });
+    $('bonusMessage').classList.remove('ok');
+    $('bonusMessage').textContent='Imagem selecionada! Confira sua resposta.';
+   });
+   button.classList.toggle('selected',state.visualChoice===id);
+   grid.append(button);
+  }
+ }
  function paintBonus(){
   const type=BONUS[state.currentBonus];if(!type)return;
+  const image=type.kind==='identify',voltage=type.kind==='voltage';
+  $('bonusView').dataset.kind=type.kind;
   $('bonusTitle').textContent=type.title;
-  $('bonusPrompt').textContent='';
-  $('bonusMotorView').hidden=type.voltage;
-  $('bonusVoltageView').hidden=!type.voltage;
-  $('bonusMotorControls').hidden=type.voltage;
-  $('bonusVoltageControls').hidden=!type.voltage;
-  $('bonusTry').textContent=type.voltage?'Conferir medição →':'Testar movimento →';
+  $('bonusPrompt').textContent=image?'Toque na imagem do componente correto.':'';
+  $('bonusMotorView').hidden=image||voltage;
+  $('bonusVoltageView').hidden=!voltage;
+  $('bonusImageView').hidden=!image;
+  $('bonusMotorControls').hidden=image||voltage;
+  $('bonusVoltageControls').hidden=!voltage;
+  $('bonusTry').textContent=image?'Conferir escolha →':voltage?'Conferir medição →':'Testar movimento →';
   const finished=state.phase==='bonusResult';
   $('bonusTry').disabled=finished;
   $('bonusSkip').hidden=finished;
   if(finished){
    $('bonusMessage').classList.add('ok');
    $('bonusMessage').textContent=state.bonusSuccess?
-    'Experimento concluído! Movimento reconhecido.':
+    image?'Componente identificado! Muito bem!':'Experimento concluído! Movimento reconhecido.':
     'O evento bônus terminou. Seus pontos permanecem iguais.';
   }else{
    $('bonusMessage').classList.remove('ok');
-   $('bonusMessage').textContent='Desafio extra: sem pontos e sem penalidade.';
+   $('bonusMessage').textContent=image?'Escolha uma das imagens para responder.':
+    'Desafio extra: sem pontos e sem penalidade.';
   }
-  drawBonusControls();
-  if(finished)setBonusCarMood(state.bonusSuccess?'success':'fail');
+  if(image)renderBonusImages();
+  else drawBonusControls();
+  if(finished&&!image)setBonusCarMood(state.bonusSuccess?'success':'fail');
  }
  function setBonusCarMood(mood){
   const car=$('bonusCar');
