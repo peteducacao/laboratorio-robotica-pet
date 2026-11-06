@@ -3,6 +3,11 @@
  const scene=document.querySelector('.welcome'),art=document.getElementById('welcomeArt');
  const backdrop=document.getElementById('welcomeBackdrop');
  const button=document.getElementById('enterProjects');
+ const installedQuery=window.matchMedia('(display-mode: standalone)');
+ const updateInstalled=()=>scene.classList.toggle('installed-pwa',installedQuery.matches||window.navigator.standalone===true);
+ updateInstalled();
+ installedQuery.addEventListener?.('change',updateInstalled);
+
  const blink=document.getElementById('robotBlink');
  const beacon=document.getElementById('antennaGlow');
  const particles=[...document.querySelectorAll('.light-dust')];
