@@ -3,7 +3,7 @@
 const $=id=>document.getElementById(id);
 if(window.tinkerpetAccessReady)await window.tinkerpetAccessReady;
 if(window.tinkerpetAccessFlags?.answerKeyEnabled===false)return;
-if(sessionStorage.getItem('tinkerpet-gabarito-access')!=='ok'){location.replace('projects.html');return;}
+// Quando liberado no painel, o gabarito abre sem senha.
 const parts={
  b1:{label:'Bateria 9 V',asset:'assets/bateria-9v-desenhada.svg',x:20,y:85,w:88,h:125},
  s1:{label:'Gangorra 1',asset:'assets/gangorra-desenhada.svg?v=3',x:138,y:98,w:95,h:77},
