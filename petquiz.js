@@ -338,7 +338,7 @@
     if(valid.length)QUESTIONS=valid;
     GAME_SETTINGS.questionCount=Math.max(1,Math.min(99,Math.trunc(Number(local.questionCount)||10)));
     GAME_SETTINGS.bonusCount=Math.max(0,Math.min(7,Math.trunc(local.bonusCount==null?2:Number(local.bonusCount)||0)));
-    GAME_SETTINGS.quizEnabled=local.quizEnabled!==false;
+    // Bloqueio sempre segue a configuração publicada; rascunho só altera perguntas.
    }
   }catch(err){console.warn('PETQuiz: prévia local indisponível',err)}
  }
