@@ -329,6 +329,8 @@
   document.body.innerHTML='<main style="max-width:540px;margin:14vh auto;padding:32px;text-align:center;font:16px system-ui;color:#143d50"><img width="80" src="assets/logo-pet.svg" alt=""><h1>PETQuiz indisponível</h1><p>O acesso está temporariamente bloqueado pelo administrador.</p><a href="projects.html" style="color:#087e81">Voltar aos meus circuitos</a></main>';
   return;
  }
+ const introFoot=document.getElementById('introFoot');
+ if(introFoot)introFoot.textContent=GAME_SETTINGS.questionCount+' perguntas por partida · Alternativas sorteadas';
  const keys=['read','answer','result','bonus','bonusResult'];
  function shuffle(arr){
   const a=[...arr];for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a;
