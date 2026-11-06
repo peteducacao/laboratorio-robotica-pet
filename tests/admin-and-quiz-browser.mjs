@@ -96,33 +96,22 @@ try{
  assert((await admin.evaluate(()=>window.TinkerPETAdmin.getSettings())).quizEnabled,'Desbloqueia quiz');
  assert((await admin.evaluate(()=>window.TinkerPETAdmin.getSettings())).answerKeyEnabled,'Desbloqueia gabarito');
 
- // Publicação simulada: valida payload integral sem enviar credencial real.
- let writes=0,published=null;
- await admin.route('https://api.github.com/repos/peteducacao/laboratorio-robotica-pet/contents/petquiz-settings.json',async route=>{
-  const request=route.request();
-  const headers={'access-control-allow-origin':'*','access-control-allow-headers':'*',
-    'access-control-allow-methods':'GET,PUT,OPTIONS'};
-  if(request.method()==='OPTIONS')return route.fulfill({status:204,headers});
-  if(request.method()==='GET')return route.fulfill({status:200,headers,contentType:'application/json',body:JSON.stringify({sha:'fake-sha'})});
-  if(request.method()==='PUT'){
-   const body=JSON.parse(request.postData());
-   published=JSON.parse(Buffer.from(body.content,'base64').toString('utf8'));
-   writes++;
-   return route.fulfill({status:200,headers,contentType:'application/json',body:'{"content":{"sha":"new"}}'});
-  }
-  return route.fulfill({status:405,headers});
- });
+ // Exportação da atualização sem pedir token GitHub.
  await admin.locator('[data-page="configuracoes"].nav-btn').click();
- await admin.locator('#githubToken').fill('github_pat_teste_local');
+ assert.equal(await admin.locator('#githubToken').count(),0,'Sem campo de token GitHub');
+ const downloaded=admin.waitForEvent('download');
  await admin.locator('#publish').click();
- await admin.waitForFunction(()=>document.querySelector('#notice')?.textContent.includes('Publicado!'),{timeout:15000});
- assert.equal(writes,1,'Publicação enviou uma atualização');
- assert.equal(published.questions.length,19,'Publicação mantém banco completo');
- assert(published.quizEnabled&&published.answerKeyEnabled,'Publicação reabre acessos');
- assert(!await admin.evaluate(()=>!!localStorage.getItem('tinkerpet-admin-draft-v1')),'Apaga rascunho após publicar');
+ const file=await downloaded;
+ assert.equal(file.suggestedFilename(),'petquiz-settings.json');
+ const exported=JSON.parse(readFileSync(await file.path(),'utf8'));
+ assert.equal(exported.questions.length,19,'Arquivo inclui todas as perguntas');
+ assert(exported.quizEnabled&&exported.answerKeyEnabled,'Exportação inclui os controles de acesso');
+ assert.equal(exported.categories.length,original.categories.length,'Categorias exportadas');
+ assert.equal(exported.prerequisites.length,original.prerequisites.length,'Requisitos exportados');
+ assert(!!await admin.evaluate(()=>localStorage.getItem('tinkerpet-admin-draft-v1')),'Rascunho permanece salvo após exportar');
  await admin.screenshot({path:'test-results/petquiz-admin-desktop.png',fullPage:true});
  await context.close();
- console.log('PASS admin: senha, cadastro, edição, exclusão, configurações, bloqueios, desbloqueios e publicação simulada');
+ console.log('PASS admin: senha, cadastro, edição, exclusão, configurações, bloqueios, desbloqueios e exportação sem token');
 
  const mobileAdminContext=await browser.newContext({viewport:{width:390,height:844},isMobile:true,hasTouch:true});
  const mobileAdmin=await mobileAdminContext.newPage();
