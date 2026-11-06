@@ -33,6 +33,7 @@ try{
  await admin.locator('#loginForm button[type="submit"]').click();
  await admin.waitForFunction(()=>!!window.TinkerPETAdmin,{timeout:15000});
  assert.equal((await admin.evaluate(()=>window.TinkerPETAdmin.getSettings())).questions.length,19,'Banco carrega 19 perguntas');
+ await admin.locator('.nav-btn[data-page="questoes"]').click();
  await admin.locator('#addQuestion').click();
  await admin.locator('#questionText').fill('Qual é a função do ESP32 neste teste?');
  await admin.locator('#opt0').fill('Executar comandos');
@@ -56,6 +57,7 @@ try{
  await admin.locator('#deleteQuestion').click();
  data=await admin.evaluate(()=>window.TinkerPETAdmin.getSettings());
  assert.equal(data.questions.length,19,'Exclui pergunta');
+ await admin.locator('.nav-btn[data-page="inicio"]').click();
  await admin.locator('#homeQuizEnabled').uncheck({force:true});
  await admin.locator('#homeAnswerEnabled').uncheck({force:true});
  data=await admin.evaluate(()=>window.TinkerPETAdmin.getSettings());
