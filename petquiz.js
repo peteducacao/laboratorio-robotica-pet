@@ -309,10 +309,12 @@
  ];
 
  let GAME_SETTINGS={questionCount:10,bonusCount:2,quizEnabled:true};
+ let remoteSettings=null;
  try{
   const response=await fetch('petquiz-settings.json?nocache='+Date.now(),{cache:'no-store'});
   if(response.ok){
    const remote=await response.json();
+   remoteSettings=remote;
    if(Array.isArray(remote.questions)&&remote.questions.length){
     const valid=remote.questions.filter(q=>q&&typeof q.prompt==='string'&&
      Array.isArray(q.choices)&&q.choices.length===4&&Number.isInteger(q.correct)&&
@@ -325,6 +327,21 @@
     quizEnabled:remote.quizEnabled!==false};
   }
  }catch(err){console.warn('PETQuiz: usando banco padrão',err);}
+ if(sessionStorage.getItem('tinkerpet-admin-auth')==='ok'){
+  try{
+   const local=JSON.parse(localStorage.getItem('tinkerpet-admin-draft-v1')||'null');
+   if(local&&Array.isArray(local.questions)){
+    const valid=local.questions.filter(q=>q&&q.active!==false&&
+     typeof q.prompt==='string'&&q.prompt.trim()&&Array.isArray(q.choices)&&
+     q.choices.length===4&&q.choices.every(c=>typeof c==='string'&&c.trim())&&
+     Number.isInteger(q.correct)&&q.correct>=0&&q.correct<=3);
+    if(valid.length)QUESTIONS=valid;
+    GAME_SETTINGS.questionCount=Math.max(1,Math.min(99,Math.trunc(Number(local.questionCount)||10)));
+    GAME_SETTINGS.bonusCount=Math.max(0,Math.min(7,Math.trunc(local.bonusCount==null?2:Number(local.bonusCount)||0)));
+    GAME_SETTINGS.quizEnabled=local.quizEnabled!==false;
+   }
+  }catch(err){console.warn('PETQuiz: prévia local indisponível',err)}
+ }
  if(!GAME_SETTINGS.quizEnabled){
   document.body.innerHTML='<main style="max-width:540px;margin:14vh auto;padding:32px;text-align:center;font:16px system-ui;color:#143d50"><img width="80" src="assets/logo-pet.svg" alt=""><h1>PETQuiz indisponível</h1><p>O acesso está temporariamente bloqueado pelo administrador.</p><a href="projects.html" style="color:#087e81">Voltar aos meus circuitos</a></main>';
   return;
