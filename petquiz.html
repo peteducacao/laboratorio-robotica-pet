@@ -10,8 +10,8 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&family=Manrope:wght@500;600;700;800&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="petquiz.css?v=12">
-<script defer src="petquiz.js?v=16"></script>
+<link rel="stylesheet" href="petquiz.css?v=13">
+<script defer src="petquiz.js?v=17"></script>
 </head>
 <body>
 <header class="topbar">
@@ -81,8 +81,8 @@
       <span class="bonus-intro-tire left"></span><span class="bonus-intro-tire right"></span>
      </div>
      <h2>RODADA <span>BÔNUS!</span></h2>
-     <p>Prepare-se para um desafio prático!</p>
-     <div class="bonus-intro-bottom"><span id="bonusIntroCount">1 de 2</span><span>Começando...</span></div>
+     <p>Prepare-se para um desafio surpresa!</p>
+     <div class="bonus-intro-bottom"><span id="bonusIntroCount">Bônus</span><span>Começando...</span></div>
      <div class="bonus-intro-progress" aria-hidden="true"><i></i></div>
     </div>
    </section>
@@ -99,6 +99,10 @@
      <div id="bonusVoltageView" class="bonus-stage" hidden>
       <div class="bonus-voltage-circuit"><div class="bonus-battery">9 V<small>ENTRADA</small></div><span class="circuit-link"></span><div class="bonus-regulator"><strong>LM2596</strong><div>470</div></div><span class="circuit-link"></span><div class="bonus-display" id="bonusVoltageDisplay">9,0 <small>V</small></div></div>
       <p>O valor mostrado é a saída simulada do regulador.</p>
+     </div>
+     <div id="bonusImageView" class="bonus-stage bonus-image-stage" hidden>
+      <div class="bonus-images-top"><span aria-hidden="true">▦</span><strong>Encontre a peça!</strong><small>Escolha uma imagem</small></div>
+      <div id="bonusImageOptions" class="bonus-image-options" role="group" aria-label="Imagens dos componentes do TinkerPET"></div>
      </div>
      <div class="bonus-controls">
       <div id="bonusMotorControls">
