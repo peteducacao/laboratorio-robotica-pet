@@ -250,7 +250,10 @@ try{
   const p=await ctx.newPage(),errors=[];
   p.on('pageerror',e=>errors.push(e.message));
   await p.goto(base+'/petquiz.html',{waitUntil:'domcontentloaded'});await p.waitForFunction(()=>!!window.PetQuiz);
-  assert.equal(await p.locator('.intro-rules>div').count(),2);
+  assert.equal(await p.locator('.intro-rules>div').count(),3,'A abertura tem três cartões, incluindo perguntas por partida');
+  const expected=JSON.parse(readFileSync(resolve(root,'petquiz-settings.json'),'utf8')).questionCount;
+  assert.equal((await p.locator('#introQuestionCount').textContent()).trim(),
+   expected+' '+(expected===1?'pergunta':'perguntas'),'Quantidade aparece no terceiro cartão');
   await layout(p,'abertura '+screen.name);
   await validateIntro(p,'abertura '+screen.name);
   await p.screenshot({path:'test-results/petquiz-'+screen.name+'-abertura.png',fullPage:true});
