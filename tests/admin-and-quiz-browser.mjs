@@ -129,6 +129,12 @@ try{
  await mobileAdmin.addInitScript(()=>sessionStorage.setItem('tinkerpet-admin-auth','ok'));
  await mobileAdmin.goto(origin+'/admin.html');
  await mobileAdmin.waitForFunction(()=>!!window.TinkerPETAdmin,{timeout:15000});
+ await mobileAdmin.locator('.nav-btn[data-page="configuracoes"]').click();
+ await mobileAdmin.waitForTimeout(450);
+ const visibleTab=await mobileAdmin.locator('.nav-btn[data-page="configuracoes"]').evaluate(el=>{
+  const rect=el.getBoundingClientRect();return rect.left>=-1&&rect.right<=innerWidth+1;
+ });
+ assert(visibleTab,'Aba ativa deve ficar inteira visível no celular');
  await mobileAdmin.locator('.nav-btn[data-page="questoes"]').click();
  assert(await mobileAdmin.locator('#questionList .question-row').count()>0,'Banco visível no celular');
  assert(await mobileAdmin.locator('#questionForm').isVisible(),'Editor disponível no celular');
