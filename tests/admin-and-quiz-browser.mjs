@@ -24,6 +24,30 @@ const errors=[];
 try{
  browser=await chromium.launch({headless:true,args:['--disable-dev-shm-usage']});
  const context=await browser.newContext({viewport:{width:1280,height:900}});
+ const validToken='github_pat_teste_publicacao';
+ let writes=0,published=null,currentSha='test-sha';
+ await context.route('https://api.github.com/**',async route=>{
+  const request=route.request(),url=new URL(request.url());
+  const headers={'access-control-allow-origin':'*','access-control-allow-headers':'*',
+   'access-control-allow-methods':'GET,PUT,OPTIONS'};
+  const answer=(status,body)=>route.fulfill({status,headers,contentType:'application/json',body:JSON.stringify(body)});
+  if(request.method()==='OPTIONS')return route.fulfill({status:204,headers});
+  const authenticated=request.headers().authorization==='Bearer '+validToken;
+  if(url.pathname==='/user')return answer(authenticated?200:401,authenticated?{login:'teste'}:{message:'Bad credentials'});
+  if(url.pathname==='/repos/peteducacao/laboratorio-robotica-pet')
+   return answer(authenticated?200:401,authenticated?{permissions:{push:true}}:{message:'Bad credentials'});
+  if(url.pathname.endsWith('/contents/petquiz-settings.json')){
+   if(!authenticated)return answer(401,{message:'Bad credentials'});
+   if(request.method()==='GET')return answer(200,{sha:currentSha});
+   if(request.method()==='PUT'){
+    const body=JSON.parse(request.postData());
+    published=JSON.parse(Buffer.from(body.content,'base64').toString('utf8'));
+    currentSha='test-sha-'+ ++writes;
+    return answer(200,{content:{sha:currentSha}});
+   }
+  }
+  return answer(404,{message:'Not found'});
+ });
  const admin=await context.newPage();admin.on('pageerror',e=>errors.push('Admin '+e.message));
  await admin.goto(origin+'/admin.html');
  assert(await admin.locator('#authOverlay').isVisible(),'Painel pede autenticação');
@@ -33,8 +57,8 @@ try{
  await admin.locator('#toggleAdminPassword').click();
  assert.equal(await admin.locator('#password').getAttribute('type'),'password','Oculta senha');
  await admin.locator('#loginForm button[type="submit"]').click();
- assert((await admin.locator('#loginError').textContent()).includes('incorreta'),'Senha errada rejeitada');
- await admin.locator('#password').fill('peteducacao');
+ assert((await admin.locator('#loginError').textContent()).includes('inválido'),'Token incorreto rejeitado');
+ await admin.locator('#password').fill(validToken);
  await admin.locator('#loginForm button[type="submit"]').click();
  await admin.waitForFunction(()=>!!window.TinkerPETAdmin,{timeout:15000});
  await admin.locator('.nav-btn[data-page="ajuda"]').click();
@@ -53,7 +77,7 @@ try{
  await admin.locator('#topicInput').selectOption('esp32');
  await admin.locator('#questionForm button[type="submit"]').click();
  await admin.waitForFunction(()=>!document.getElementById('saveToast').hidden);
- assert((await admin.locator('#saveToast').textContent()).includes('Alterações salvas'),'Popup confirma salvamento');
+ assert((await admin.locator('#saveToast').textContent()).includes('Salvo!'),'Popup confirma salvamento');
  let data=await admin.evaluate(()=>window.TinkerPETAdmin.getSettings());
  assert.equal(data.questions.length,20,'Cadastra questão');
  assert(data.questions.some(q=>q.prompt.includes('neste teste')),'Salva enunciado da nova questão');
