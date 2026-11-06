@@ -194,8 +194,32 @@ try{
     assert.equal(await p.locator('#bonusCar').getAttribute('data-mood'),'success',
      'O rosto precisa comemorar o acerto');
   }
+  const bonusCatalog=JSON.parse(readFileSync(resolve(root,'petquiz-bonuses.json'),'utf8'));
+  const visuals=bonusCatalog.bonuses.filter(b=>b.kind==='identify');
+  assert.equal((await p.evaluate(()=>window.PetQuiz.getStatus())).bonusCatalogTotal,bonusCatalog.bonuses.length);
+  assert(visuals.length>0,'Há bônus de identificação por imagens');
+  for(const item of visuals){
+   await p.evaluate(id=>window.PetQuiz.testBonus(id),item.id);
+   await phase(p,'bonus',2200);
+   assert(await p.locator('#bonusImageView').isVisible(),'Imagens do desafio visíveis');
+   assert.equal(await p.locator('#bonusMotorView').isVisible(),false,'Motores ocultos');
+   assert.equal(await p.locator('.bonus-image-choice').count(),4,'Quatro alternativas visuais');
+   await p.waitForFunction(()=>[...document.querySelectorAll('.bonus-image-choice img')]
+    .every(img=>img.complete&&img.naturalWidth>0),{timeout:5000});
+   const src=await p.locator('.bonus-image-choice img').evaluateAll(xs=>xs.map(img=>img.getAttribute('src')));
+   assert.equal(new Set(src).size,4,'Imagens distintas');
+   assert(src.every(path=>path.startsWith('assets/')&&path.endsWith('.svg')),'Imagens da biblioteca TinkerPET');
+   await p.locator('.bonus-image-choice:not([data-component="'+item.target+'"])').first().click();
+   await p.locator('#bonusTry').click();
+   assert.equal(await p.evaluate(()=>window.PetQuiz.getStatus().phase),'bonus','Erro permite nova tentativa');
+   await p.locator('.bonus-image-choice[data-component="'+item.target+'"]').click();
+   await p.locator('#bonusTry').click();
+   await phase(p,'bonusResult',1200);
+   assert((await p.locator('#bonusMessage').textContent()).includes('Componente identificado'),
+    'Acerto visual reconhecido');
+  }
   await ctx.close();
-  console.log('✓ Sete bônus aprovados: entrada surpresa, curva com ré, parada, LM2596, rosto e rodas animadas.');
+  console.log('✓ Desafios práticos e identificação pelas imagens originais aprovados.');
  }
  // Testar tempos REAIS uma vez, sem acelerar.
  const context=await browser.newContext({viewport:{width:1280,height:760}});
@@ -364,7 +388,11 @@ try{
     if(bonusCount===2){await p.locator('#bonusSkip').click();}
     else{
      const id=(await p.evaluate(()=>window.PetQuiz.getStatus())).activeBonusId;
-     if(id==='regulator'){
+     if(id.startsWith('identify-')){
+      const target=id.slice('identify-'.length);
+      assert.equal(await p.locator('.bonus-image-choice').count(),4);
+      await p.locator('.bonus-image-choice[data-component="'+target+'"]').click();
+     }else if(id==='regulator'){
       assert.equal(await p.locator('.bonus-target').count(),0);
       assert.equal(await p.locator('#bonusTitle').textContent(),'Regule o LM2596!');
       await fill(p,'bonusVoltage',5);
