@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import {createServer} from 'node:http';
-import {readFileSync} from 'node:fs';
+import {readFileSync,mkdirSync} from 'node:fs';
 import {resolve,extname} from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {chromium} from 'playwright';
@@ -18,6 +18,7 @@ const server=createServer((req,res)=>{
 await new Promise(done=>server.listen(0,'127.0.0.1',done));
 const origin='http://127.0.0.1:'+server.address().port;
 const original=JSON.parse(readFileSync(resolve(root,'petquiz-settings.json'),'utf8'));
+mkdirSync('test-results',{recursive:true});
 let browser;
 const errors=[];
 try{
@@ -96,8 +97,23 @@ try{
  assert.equal(published.questions.length,19,'Publicação mantém banco completo');
  assert(published.quizEnabled&&published.answerKeyEnabled,'Publicação reabre acessos');
  assert(!await admin.evaluate(()=>!!localStorage.getItem('tinkerpet-admin-draft-v1')),'Apaga rascunho após publicar');
+ await admin.screenshot({path:'test-results/petquiz-admin-desktop.png',fullPage:true});
  await context.close();
  console.log('PASS admin: senha, cadastro, edição, exclusão, configurações, bloqueios, desbloqueios e publicação simulada');
+
+ const mobileAdminContext=await browser.newContext({viewport:{width:390,height:844},isMobile:true,hasTouch:true});
+ const mobileAdmin=await mobileAdminContext.newPage();
+ await mobileAdmin.addInitScript(()=>sessionStorage.setItem('tinkerpet-admin-auth','ok'));
+ await mobileAdmin.goto(origin+'/admin.html');
+ await mobileAdmin.waitForFunction(()=>!!window.TinkerPETAdmin,{timeout:15000});
+ await mobileAdmin.locator('.nav-btn[data-page="questoes"]').click();
+ assert(await mobileAdmin.locator('#questionList .question-row').count()>0,'Banco visível no celular');
+ assert(await mobileAdmin.locator('#questionForm').isVisible(),'Editor disponível no celular');
+ const mobileWidth=await mobileAdmin.evaluate(()=>({scroll:document.documentElement.scrollWidth,viewport:innerWidth}));
+ assert(mobileWidth.scroll<=mobileWidth.viewport+4,'Sem rolagem horizontal no admin: '+JSON.stringify(mobileWidth));
+ await mobileAdmin.screenshot({path:'test-results/petquiz-admin-mobile.png',fullPage:true});
+ await mobileAdminContext.close();
+ console.log('PASS admin mobile: lista, formulário e responsividade');
 
  const mobile=await browser.newContext({viewport:{width:390,height:844},isMobile:true,hasTouch:true});
  const quiz=await mobile.newPage();quiz.on('pageerror',e=>errors.push('PETQuiz '+e.message));
