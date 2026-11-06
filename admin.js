@@ -84,6 +84,93 @@
    nav.scrollTo({left:Math.max(0,goal),behavior:'smooth'});
   }
  }
+ function renderEditorOptions(){
+  const stageSelect=$('stageSelect'),topicSelect=$('topicInput');
+  const selectedStage=stageSelect.value,selectedTopic=topicSelect.value;
+  stageSelect.replaceChildren();topicSelect.replaceChildren();
+  for(const category of settings.categories){
+   const option=document.createElement('option');option.value=category.id;option.textContent=category.name;
+   stageSelect.append(option);
+  }
+  const none=document.createElement('option');none.value='';none.textContent='Nenhum';
+  topicSelect.append(none);
+  for(const topic of settings.prerequisites){
+   const option=document.createElement('option');option.value=topic.id;option.textContent=topic.name;
+   topicSelect.append(option);
+  }
+  if(settings.categories.some(c=>c.id===selectedStage))stageSelect.value=selectedStage;
+  if(settings.prerequisites.some(t=>t.id===selectedTopic))topicSelect.value=selectedTopic;
+ }
+ function updateTopicLabel(){
+  const category=settings.categories.find(c=>c.id===$('stageSelect').value);
+  $('topicLabel').firstChild.textContent=category?.stage==='practice'?
+   'Pré-requisito (opcional)':'Assunto apresentado';
+ }
+ function renderTaxonomies(){
+  const categoryList=$('categoryList'),topicList=$('topicList');
+  categoryList.replaceChildren();topicList.replaceChildren();
+  const makeRow=(list,item,meta,onEdit,onDelete)=>{
+   const row=document.createElement('div');row.className='taxonomy-row';
+   const main=document.createElement('div'),title=document.createElement('strong'),small=document.createElement('small');
+   title.textContent=item.name;small.textContent=meta;main.append(title,small);
+   const tools=document.createElement('div');tools.className='taxonomy-tools';
+   const edit=document.createElement('button');edit.type='button';edit.textContent='Editar';edit.addEventListener('click',onEdit);
+   const del=document.createElement('button');del.type='button';del.className='delete';del.textContent='Excluir';del.addEventListener('click',onDelete);
+   tools.append(edit,del);row.append(main,tools);list.append(row);
+  };
+  for(const category of settings.categories)makeRow(categoryList,category,
+   category.stage==='practice'?'Situação prática':'Conhecimento',
+   ()=>{editingCategory=category.id;$('categoryName').value=category.name;
+    $('categoryStage').value=category.stage;$('categorySave').textContent='Salvar categoria';
+    $('categoryName').focus();},
+   ()=>{if(qs().some(q=>q.categoryId===category.id)){
+     notice('Esta categoria está em uso. Troque a categoria das perguntas antes de excluir.',true);return}
+    if(!confirm('Excluir categoria '+category.name+'?'))return;
+    settings.categories=settings.categories.filter(c=>c.id!==category.id);
+    clearTaxonomy('category');saveDraft();renderTaxonomies();renderEditorOptions();
+    notice('Categoria excluída do rascunho.');});
+  for(const topic of settings.prerequisites)makeRow(topicList,topic,
+   qs().filter(q=>q.topic===topic.id||(q.requires||[]).includes(topic.id)).length+' pergunta(s)',
+   ()=>{editingTopic=topic.id;$('topicName').value=topic.name;$('topicSave').textContent='Salvar requisito';$('topicName').focus();},
+   ()=>{if(qs().some(q=>q.topic===topic.id||(q.requires||[]).includes(topic.id))){
+     notice('Este assunto está em uso. Troque o requisito das perguntas antes de excluir.',true);return}
+    if(!confirm('Excluir assunto '+topic.name+'?'))return;
+    settings.prerequisites=settings.prerequisites.filter(t=>t.id!==topic.id);
+    clearTaxonomy('topic');saveDraft();renderTaxonomies();renderEditorOptions();
+    notice('Pré-requisito excluído do rascunho.');});
+ }
+ function clearTaxonomy(kind){
+  if(kind==='category'){editingCategory=null;$('categoryForm').reset();$('categorySave').textContent='Adicionar'}
+  else{editingTopic=null;$('topicForm').reset();$('topicSave').textContent='Adicionar'}
+ }
+ function saveCategory(event){
+  event.preventDefault();
+  const name=$('categoryName').value.trim(),stage=$('categoryStage').value;
+  if(!name)return;
+  if(settings.categories.some(c=>c.name.toLowerCase()===name.toLowerCase()&&c.id!==editingCategory)){
+   notice('Já existe uma categoria com este nome.',true);return}
+  if(editingCategory){
+   const category=settings.categories.find(c=>c.id===editingCategory);
+   if(!category)return;
+   if(category.stage!==stage&&qs().some(q=>q.categoryId===category.id)){
+    notice('Altere a categoria das perguntas antes de mudar seu tipo.',true);return}
+   category.name=name;category.stage=stage;
+  }else{
+   settings.categories.push({id:'categoria-'+slug(name)+'-'+Date.now().toString(36),name,stage});
+  }
+  clearTaxonomy('category');saveDraft();renderTaxonomies();renderEditorOptions();renderList();
+  notice('Categoria salva no rascunho.');
+ }
+ function saveTopic(event){
+  event.preventDefault();
+  const name=$('topicName').value.trim();if(!name)return;
+  if(settings.prerequisites.some(t=>t.name.toLowerCase()===name.toLowerCase()&&t.id!==editingTopic)){
+   notice('Já existe um assunto com este nome.',true);return}
+  if(editingTopic){const topic=settings.prerequisites.find(t=>t.id===editingTopic);if(!topic)return;topic.name=name;}
+  else settings.prerequisites.push({id:'assunto-'+slug(name)+'-'+Date.now().toString(36),name});
+  clearTaxonomy('topic');saveDraft();renderTaxonomies();renderEditorOptions();
+  notice('Pré-requisito salvo no rascunho.');
+ }
  function renderList(){
   const filter=$('searchQuestions').value.trim().toLowerCase();
   const list=$('questionList');list.replaceChildren();
@@ -211,6 +298,11 @@
  for(const id of ['homeAnswerEnabled','settingsAnswerEnabled'])$(id).addEventListener('change',e=>{
   settings.answerKeyEnabled=e.target.checked;saveDraft();renderOverview();
  });
+ $('categoryForm').addEventListener('submit',saveCategory);
+ $('topicForm').addEventListener('submit',saveTopic);
+ $('categoryCancel').addEventListener('click',()=>clearTaxonomy('category'));
+ $('topicCancel').addEventListener('click',()=>clearTaxonomy('topic'));
+ $('stageSelect').addEventListener('change',updateTopicLabel);
  $('searchQuestions').addEventListener('input',renderList);
  $('addQuestion').addEventListener('click',newQuestion);
  $('questionForm').addEventListener('submit',saveQuestion);
