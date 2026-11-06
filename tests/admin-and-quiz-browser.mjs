@@ -58,6 +58,18 @@ try{
  await admin.locator('#deleteQuestion').click();
  data=await admin.evaluate(()=>window.TinkerPETAdmin.getSettings());
  assert.equal(data.questions.length,19,'Exclui pergunta');
+ await admin.locator('.nav-btn[data-page="taxonomia"]').click();
+ const catCount=(await admin.evaluate(()=>window.TinkerPETAdmin.getSettings())).categories.length;
+ await admin.locator('#categoryName').fill('Eletrônica básica');
+ await admin.locator('#categorySave').click();
+ assert.equal((await admin.evaluate(()=>window.TinkerPETAdmin.getSettings())).categories.length,catCount+1);
+ await admin.locator('#categoryList .taxonomy-row').last().getByText('Editar').click();
+ await admin.locator('#categoryName').fill('Eletrônica e circuitos');
+ await admin.locator('#categorySave').click();
+ assert((await admin.evaluate(()=>window.TinkerPETAdmin.getSettings())).categories.some(x=>x.name==='Eletrônica e circuitos'));
+ admin.once('dialog',d=>d.accept());
+ await admin.locator('#categoryList .taxonomy-row').last().getByText('Excluir').click();
+ assert.equal((await admin.evaluate(()=>window.TinkerPETAdmin.getSettings())).categories.length,catCount);
  await admin.locator('.nav-btn[data-page="inicio"]').click();
  await admin.locator('#homeQuizEnabled').uncheck({force:true});
  await admin.locator('#homeAnswerEnabled').uncheck({force:true});
