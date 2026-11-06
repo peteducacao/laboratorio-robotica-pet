@@ -115,8 +115,8 @@
   saveDraft();renderOverview();
  }
  function renderOverview(){
-  for(const id of ['homeQuizEnabled','settingsQuizEnabled'])$(id).checked=settings.quizEnabled;
-  for(const id of ['homeAnswerEnabled','settingsAnswerEnabled'])$(id).checked=settings.answerKeyEnabled;
+  for(const id of ['homeQuizEnabled','settingsQuizEnabled'])$(id).checked=!settings.quizEnabled;
+  for(const id of ['homeAnswerEnabled','settingsAnswerEnabled'])$(id).checked=!settings.answerKeyEnabled;
   for(const id of ['homeQuestionCount','settingsQuestionCount'])$(id).textContent=settings.questionCount;
   for(const id of ['homeBonusCount','settingsBonusCount'])$(id).textContent=settings.bonusCount;
   $('questionAvailable').textContent=qs().filter(q=>q.active).length;
@@ -393,10 +393,10 @@
  for(const el of document.querySelectorAll('[data-page]'))el.addEventListener('click',()=>setPage(el.dataset.page));
  for(const el of document.querySelectorAll('[data-counter]'))el.addEventListener('click',()=>countControl(el.dataset.counter,Number(el.dataset.step)));
  for(const id of ['homeQuizEnabled','settingsQuizEnabled'])$(id).addEventListener('change',e=>{
-  settings.quizEnabled=e.target.checked;markAccessChanged('quizEnabled');saveDraft();renderOverview();
+  settings.quizEnabled=!e.target.checked;markAccessChanged('quizEnabled');saveDraft();renderOverview();
  });
  for(const id of ['homeAnswerEnabled','settingsAnswerEnabled'])$(id).addEventListener('change',e=>{
-  settings.answerKeyEnabled=e.target.checked;markAccessChanged('answerKeyEnabled');saveDraft();renderOverview();
+  settings.answerKeyEnabled=!e.target.checked;markAccessChanged('answerKeyEnabled');saveDraft();renderOverview();
  });
  $('categoryForm').addEventListener('submit',saveCategory);
  $('topicForm').addEventListener('submit',saveTopic);
