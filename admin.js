@@ -95,30 +95,36 @@
    const num=document.createElement('span');num.className='question-number';num.textContent=String(qs().indexOf(q)+1).padStart(2,'0');
    const info=document.createElement('span'),heading=document.createElement('strong'),meta=document.createElement('small');
    heading.textContent=q.prompt;
-   meta.textContent=(q.stage==='practice'?'Situação prática':'Componentes')+' · '+(q.active?'Ativa':'Inativa');
+   meta.textContent=(settings.categories.find(c=>c.id===q.categoryId)?.name||(q.stage==='practice'?'Situação prática':'Componentes'))+' · '+(q.active?'Ativa':'Inativa');
    if(!q.active)meta.className='off';
    info.append(heading,meta);row.append(num,info);
-   row.addEventListener('click',()=>selectQuestion(q.id));
+   row.addEventListener('click',()=>selectQuestion(q.id,true));
    list.append(row);
   });
   if(!all.length){const p=document.createElement('p');p.className='muted';p.textContent='Nenhuma pergunta encontrada.';list.append(p)}
  }
- function selectQuestion(id){
+ function selectQuestion(id,scrollToEditor=false){
   const q=qs().find(x=>x.id===id);if(!q)return;
   selectedId=id;$('editorTitle').textContent='Editar pergunta';
   $('questionText').value=q.prompt;
   q.choices.forEach((text,i)=>{$('opt'+i).value=text});
   $('correctSelect').value=String(q.correct);
-  $('stageSelect').value=q.stage==='practice'?'practice':'concept';
-  $('topicInput').value=q.stage==='practice'?(q.requires||[]).join(', '):q.topic||'';
+  renderEditorOptions();
+  $('stageSelect').value=q.categoryId||defaultCategory(q.stage);
+  $('topicInput').value=q.stage==='practice'?(q.requires||[])[0]||'':q.topic||'';
+  updateTopicLabel();
   $('activeQuestion').checked=q.active!==false;
   $('deleteQuestion').disabled=false;
   renderList();
+  if(scrollToEditor&&window.innerWidth<=1080){
+   requestAnimationFrame(()=>$('editorPanel').scrollIntoView({behavior:'smooth',block:'start'}));
+  }
  }
  function newQuestion(){
   const id='custom-'+Date.now().toString(36)+'-'+Math.random().toString(36).slice(2,6);
-  const q={id,stage:'concept',topic:'assunto-'+id,prompt:'',choices:['','','',''],correct:0,why:'',active:true};
-  settings.questions.push(q);saveDraft();selectQuestion(id);setPage('questoes');$('questionText').focus();
+  const q={id,stage:'concept',categoryId:settings.categories.find(c=>c.stage==='concept')?.id||settings.categories[0]?.id,
+   topic:settings.prerequisites[0]?.id||'',prompt:'',choices:['','','',''],correct:0,why:'',active:true};
+  settings.questions.push(q);saveDraft();setPage('questoes');selectQuestion(id,true);
   notice('Nova pergunta criada. Preencha e salve as alternativas.');
  }
  function validate(){
@@ -154,11 +160,14 @@
   const q=qs().find(x=>x.id===selectedId);if(!q)return;
   const text=$('questionText').value.trim(),choices=[0,1,2,3].map(i=>$('opt'+i).value.trim());
   if(!text||choices.some(x=>!x)){notice('Preencha o enunciado e as quatro alternativas.',true);return}
-  const stage=$('stageSelect').value,topic=$('topicInput').value.trim();
+  const categoryId=$('stageSelect').value;
+  const category=settings.categories.find(c=>c.id===categoryId);
+  if(!category){notice('Selecione uma categoria cadastrada.',true);return}
+  const stage=category.stage,topic=$('topicInput').value;
   q.prompt=text;q.choices=choices;q.correct=Number($('correctSelect').value);
-  q.stage=stage;q.active=$('activeQuestion').checked;
-  if(stage==='practice'){q.requires=topic?topic.split(',').map(x=>x.trim()).filter(Boolean):[];delete q.topic;}
-  else {q.topic=topic||('tema-'+q.id);delete q.requires;}
+  q.stage=stage;q.categoryId=categoryId;q.active=$('activeQuestion').checked;
+  if(stage==='practice'){q.requires=topic?[topic]:[];delete q.topic;}
+  else {q.topic=topic;delete q.requires;}
   if(!q.active&&settings.questionCount>qs().filter(q=>q.active).length)
    settings.questionCount=Math.max(1,qs().filter(q=>q.active).length);
   saveDraft();renderOverview();renderList();notice('Pergunta salva no rascunho.');
