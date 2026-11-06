@@ -48,6 +48,8 @@ try{
   }
   return answer(404,{message:'Not found'});
  });
+ await context.route('**/petquiz-settings.json?confirm=*',route=>
+  route.fulfill({status:200,contentType:'application/json',body:JSON.stringify(published||original)}));
  const admin=await context.newPage();admin.on('pageerror',e=>errors.push('Admin '+e.message));
  await admin.goto(origin+'/admin.html');
  assert(await admin.locator('#authOverlay').isVisible(),'Painel pede autenticação');
@@ -148,7 +150,10 @@ try{
  // O mesmo token da entrada é reutilizado em toda publicação.
  await admin.locator('[data-page="configuracoes"].nav-btn').click();
  assert.equal(await admin.locator('#githubToken').count(),0,'Token não é solicitado novamente');
- await admin.waitForFunction(()=>document.querySelector('#saveState')?.textContent.includes('Publicado'),{timeout:12000});
+ await admin.waitForFunction(()=>{
+  const status=document.querySelector('#saveState')?.textContent||'';
+  return status.includes('Salvo no GitHub')||status.includes('Disponível para todos');
+ },{timeout:12000});
  assert(writes>0,'Salvamento enviou PUT automaticamente ao GitHub');
  assert.equal(published.questions.length,19,'Publicação mantém todas as perguntas');
  assert(published.quizEnabled&&published.answerKeyEnabled,'Publica controles de acesso');
@@ -162,8 +167,14 @@ try{
  assert.equal(await admin.evaluate(()=>localStorage.getItem('tinkerpet-admin-github-token')),null,'Token nunca salvo em armazenamento permanente');
  const before=writes;
  await admin.locator('#publish').click();
- await admin.waitForFunction(()=>document.querySelector('#saveState')?.textContent.includes('Publicado'),{timeout:12000});
+ await admin.waitForFunction(()=>{
+  const status=document.querySelector('#saveState')?.textContent||'';
+  return status.includes('Salvo no GitHub')||status.includes('Disponível para todos');
+ },{timeout:12000});
  assert(writes>before,'Botão Publicar reutiliza o token sem novo login');
+ await admin.waitForFunction(()=>document.querySelector('#saveState')?.textContent.includes('Disponível para todos'),{timeout:15000});
+ assert((await admin.locator('#saveState').textContent()).includes('atualização confirmada no site'),
+  'Só informar disponível quando a configuração atual aparecer no site');
  const downloaded=admin.waitForEvent('download');
  await admin.locator('#exportSettings').click();
  const file=await downloaded;
