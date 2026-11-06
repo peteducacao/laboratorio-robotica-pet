@@ -57,6 +57,7 @@ try{
  await admin.locator('#toggleAdminPassword').click();
  assert.equal(await admin.locator('#password').getAttribute('type'),'password','Oculta senha');
  await admin.locator('#loginForm button[type="submit"]').click();
+ await admin.waitForFunction(()=>document.querySelector('#loginError')?.textContent.includes('inválido'),{timeout:8000});
  assert((await admin.locator('#loginError').textContent()).includes('inválido'),'Token incorreto rejeitado');
  await admin.locator('#password').fill(validToken);
  await admin.locator('#loginForm button[type="submit"]').click();
