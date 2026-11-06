@@ -298,15 +298,37 @@
  const isReverse=(a,b)=>a<0&&a===b;
  const isStopped=(a,b)=>a===0&&b===0;
  const isStraightMotion=(a,b)=>a!==0&&a===b;
- const BONUS=[
-  {id:'forward',title:'Faça o carrinho andar para a frente!',voltage:false,initial:[0,0],check:isForward},
-  {id:'left',title:'Faça o carrinho virar à esquerda!',voltage:false,initial:[0,0],check:isLeftCurveMotion},
-  {id:'right',title:'Faça o carrinho virar à direita!',voltage:false,initial:[0,0],check:isRightCurveMotion},
-  {id:'reverse',title:'Faça o carrinho dar ré!',voltage:false,initial:[0,0],check:isReverse},
-  {id:'stop',title:'Pare o carrinho em movimento!',voltage:false,initial:[60,60],check:isStopped},
-  {id:'straight',title:'Faça o carrinho seguir em linha reta!',voltage:false,initial:[80,40],check:isStraightMotion},
-  {id:'regulator',title:'Regule o LM2596!',voltage:true,initial:[9],check:v=>v===5}
+ // Um único catálogo alimenta os desafios e a contagem exibida no Admin.
+ const checks={forward:isForward,left:isLeftCurveMotion,right:isRightCurveMotion,
+  reverse:isReverse,stop:isStopped,straight:isStraightMotion};
+ let COMPONENTS=[];
+ let BONUS=[
+  {id:'forward',kind:'motion',title:'Faça o carrinho andar para a frente!',initial:[0,0]},
+  {id:'left',kind:'motion',title:'Faça o carrinho virar à esquerda!',initial:[0,0]},
+  {id:'right',kind:'motion',title:'Faça o carrinho virar à direita!',initial:[0,0]},
+  {id:'reverse',kind:'motion',title:'Faça o carrinho dar ré!',initial:[0,0]},
+  {id:'stop',kind:'motion',title:'Pare o carrinho em movimento!',initial:[60,60]},
+  {id:'straight',kind:'motion',title:'Faça o carrinho seguir em linha reta!',initial:[80,40]},
+  {id:'regulator',kind:'voltage',title:'Regule o LM2596!',initial:[9],targetVoltage:5}
  ];
+ try{
+  const response=await fetch('petquiz-bonuses.json?nocache='+Date.now(),{cache:'no-store'});
+  if(!response.ok)throw Error('Catálogo HTTP '+response.status);
+  const catalog=await response.json();
+  if(!Array.isArray(catalog.components)||!Array.isArray(catalog.bonuses))throw Error('Catálogo incompleto');
+  const assets=catalog.components.filter(c=>c&&typeof c.id==='string'&&
+   typeof c.name==='string'&&typeof c.image==='string'&&
+   /^assets\/[a-z0-9/._-]+\.svg$/.test(c.image));
+  const ids=new Set(),valid=catalog.bonuses.filter(b=>{
+   if(!b||typeof b.id!=='string'||typeof b.title!=='string'||ids.has(b.id))return false;
+   const ok=b.kind==='motion'&&!!checks[b.id]&&Array.isArray(b.initial)||
+    b.kind==='voltage'&&Number.isFinite(Number(b.targetVoltage))||
+    b.kind==='identify'&&assets.some(c=>c.id===b.target)&&assets.length>=4;
+   if(ok)ids.add(b.id);return ok;
+  });
+  if(valid.length){COMPONENTS=assets;BONUS=valid}
+ }catch(error){console.warn('PETQuiz: catálogo de bônus indisponível; modo básico ativo',error)}
+
 
  let GAME_SETTINGS={questionCount:10,bonusCount:2,quizEnabled:true};
  let remoteSettings=null;
@@ -323,7 +345,7 @@
    }
    GAME_SETTINGS={...GAME_SETTINGS,
     questionCount:Math.max(1,Math.min(99,Math.trunc(Number(remote.questionCount)||10))),
-    bonusCount:Math.max(0,Math.min(7,Math.trunc(remote.bonusCount==null?2:Number(remote.bonusCount)||0))),
+    bonusCount:Math.max(0,Math.min(BONUS.length,Math.trunc(remote.bonusCount==null?2:Number(remote.bonusCount)||0))),
     quizEnabled:remote.quizEnabled!==false};
   }
  }catch(err){console.warn('PETQuiz: usando banco padrão',err);}
@@ -337,7 +359,7 @@
      Number.isInteger(q.correct)&&q.correct>=0&&q.correct<=3);
     if(valid.length)QUESTIONS=valid;
     GAME_SETTINGS.questionCount=Math.max(1,Math.min(99,Math.trunc(Number(local.questionCount)||10)));
-    GAME_SETTINGS.bonusCount=Math.max(0,Math.min(7,Math.trunc(local.bonusCount==null?2:Number(local.bonusCount)||0)));
+    GAME_SETTINGS.bonusCount=Math.max(0,Math.min(BONUS.length,Math.trunc(local.bonusCount==null?2:Number(local.bonusCount)||0)));
     // Bloqueio sempre segue a configuração publicada; rascunho só altera perguntas.
    }
   }catch(err){console.warn('PETQuiz: prévia local indisponível',err)}
