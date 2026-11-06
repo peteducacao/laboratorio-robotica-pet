@@ -24,6 +24,7 @@ on:
       - 'projects.css'
       - 'tests/petquiz-browser.mjs'
       - 'tests/admin-and-quiz-browser.mjs'
+      - 'tests/admin-bulk-browser.mjs'
       - 'tests/mobile-loose-end-browser.mjs'
       - '.github/workflows/petquiz.yml'
   workflow_dispatch:
@@ -44,6 +45,7 @@ jobs:
           node --check admin.js
           node --check site-access.js
           node --check tests/admin-and-quiz-browser.mjs
+          node --check tests/admin-bulk-browser.mjs
           node --check app.js
           node --check app-mobile.js
           node --check tests/petquiz-browser.mjs
@@ -54,6 +56,8 @@ jobs:
           npx playwright install --with-deps chromium
       - name: Reproduzir no Android fio solto e várias curvas após retomada
         run: node tests/mobile-loose-end-browser.mjs
+      - name: Testar Ativar todas e Desativar todas no banco de questões
+        run: node tests/admin-bulk-browser.mjs
       - name: Testar painel admin, salvar questões, jogar e bloquear acessos
         run: node tests/admin-and-quiz-browser.mjs
       - name: Jogar PETQuiz em quatro telas
