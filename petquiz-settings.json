@@ -1,0 +1,312 @@
+{
+  "version": 1,
+  "quizEnabled": true,
+  "answerKeyEnabled": true,
+  "questionCount": 10,
+  "bonusCount": 2,
+  "questions": [
+    {
+      "id": "componente-fora",
+      "stage": "concept",
+      "topic": "outros",
+      "prompt": "Qual desses componentes não faz parte da montagem do nosso carrinho?",
+      "choices": [
+        "ESP32",
+        "Sensor ultrassônico",
+        "Ponte H",
+        "Motor DC"
+      ],
+      "correct": 1,
+      "why": "O carrinho utiliza ESP32, ponte H e motores DC. O sensor ultrassônico não faz parte dessa montagem.",
+      "active": true
+    },
+    {
+      "id": "componente-ponte",
+      "stage": "concept",
+      "topic": "ponte",
+      "prompt": "Qual desses componentes é responsável por controlar os motores?",
+      "choices": [
+        "Regulador de tensão",
+        "Suporte de pilhas",
+        "Ponte H",
+        "Chave gangorra"
+      ],
+      "correct": 2,
+      "why": "A ponte H recebe os comandos do ESP32 e controla o acionamento dos motores.",
+      "active": true
+    },
+    {
+      "id": "componente-lm2596",
+      "stage": "concept",
+      "topic": "lm2596",
+      "prompt": "Qual componente utilizamos para regular a tensão que alimenta o ESP32?",
+      "choices": [
+        "Ponte H",
+        "Motor DC",
+        "Chave gangorra",
+        "LM2596"
+      ],
+      "correct": 3,
+      "why": "O LM2596 permite ajustar a tensão de saída para alimentar o ESP32 no projeto.",
+      "active": true
+    },
+    {
+      "id": "componente-gangorra",
+      "stage": "concept",
+      "topic": "gangorra",
+      "prompt": "Qual deles é utilizado para ligar e desligar o carrinho?",
+      "choices": [
+        "Chave gangorra",
+        "Jumper",
+        "Ponte H",
+        "ESP32"
+      ],
+      "correct": 0,
+      "why": "As chaves gangorra interrompem ou liberam a alimentação elétrica.",
+      "active": true
+    },
+    {
+      "id": "componente-jumper",
+      "stage": "concept",
+      "topic": "jumper",
+      "prompt": "Qual é o nome dos fios usados no carrinho?",
+      "choices": [
+        "Motor DC",
+        "Roda",
+        "Jumper",
+        "Suporte de pilhas"
+      ],
+      "correct": 2,
+      "why": "Os jumpers são fios usados para interligar os componentes do circuito.",
+      "active": true
+    },
+    {
+      "id": "componente-esp32",
+      "stage": "concept",
+      "topic": "esp32",
+      "prompt": "Qual componente funciona como o cérebro do carrinho?",
+      "choices": [
+        "Ponte H",
+        "ESP32",
+        "LM2596",
+        "Chave gangorra"
+      ],
+      "correct": 1,
+      "why": "O ESP32 executa os comandos que orientam o comportamento do carrinho.",
+      "active": true
+    },
+    {
+      "id": "componente-motor",
+      "stage": "concept",
+      "topic": "motor",
+      "prompt": "Qual deles movimenta as rodas do carrinho?",
+      "choices": [
+        "Motor DC",
+        "Regulador de tensão",
+        "ESP32",
+        "Suporte de pilhas"
+      ],
+      "correct": 0,
+      "why": "Os motores DC giram seus eixos e movimentam as rodas.",
+      "active": true
+    },
+    {
+      "id": "componente-rodas",
+      "stage": "concept",
+      "topic": "rodas",
+      "prompt": "Qual é a função das rodas no carrinho robótico?",
+      "choices": [
+        "Controlar a tensão elétrica",
+        "Receber os comandos do ESP32",
+        "Permitir que o carrinho ande",
+        "Armazenar energia"
+      ],
+      "correct": 2,
+      "why": "As rodas transformam o giro dos motores em deslocamento do carrinho.",
+      "active": true
+    },
+    {
+      "id": "componente-bateria",
+      "stage": "concept",
+      "topic": "bateria",
+      "prompt": "Qual dessas fontes de energia utilizamos para o ESP32?",
+      "choices": [
+        "Uma pilha AA",
+        "Um painel solar",
+        "O suporte de seis pilhas AA",
+        "Uma bateria de 9 V"
+      ],
+      "correct": 3,
+      "why": "No projeto, a bateria de 9 V passa pela chave gangorra e pelo regulador antes de alimentar o ESP32.",
+      "active": true
+    },
+    {
+      "id": "componente-pilhas",
+      "stage": "concept",
+      "topic": "pilhas",
+      "prompt": "Para que utilizamos os suportes de pilhas AA no carrinho?",
+      "choices": [
+        "Para controlar a direção",
+        "Para alimentar os motores por meio da ponte H",
+        "Para transmitir comandos por Wi-Fi",
+        "Para regular a saída do LM2596"
+      ],
+      "correct": 1,
+      "why": "O conjunto de pilhas AA alimenta a ponte H, que fornece energia aos motores.",
+      "active": true
+    },
+    {
+      "id": "funcionamento-alimentacao-ponte",
+      "stage": "practice",
+      "requires": [
+        "pilhas"
+      ],
+      "prompt": "O ESP32 ligou, mas a ponte H não recebeu energia. O que verificar primeiro?",
+      "choices": [
+        "As conexões de controle entre ESP32 e ponte H",
+        "A alimentação das pilhas AA e a gangorra dos motores",
+        "As conexões do Motor A com a ponte H",
+        "A saída do regulador de tensão"
+      ],
+      "correct": 1,
+      "why": "O ESP32 e os motores possuem alimentações diferentes. Confira as pilhas AA e a gangorra dos motores.",
+      "active": true
+    },
+    {
+      "id": "funcionamento-motor-a",
+      "stage": "practice",
+      "requires": [
+        "motor"
+      ],
+      "prompt": "O Motor B funciona, mas o Motor A permanece parado. Qual conexão deve ser investigada primeiro?",
+      "choices": [
+        "A conexão entre o regulador e o ESP32",
+        "A conexão da bateria de 9 V",
+        "As conexões do Motor A na ponte H",
+        "A conexão da gangorra do ESP32"
+      ],
+      "correct": 2,
+      "why": "Se um motor responde e o outro não, vale começar pelas conexões do motor parado.",
+      "active": true
+    },
+    {
+      "id": "funcionamento-seguir-reto",
+      "stage": "practice",
+      "requires": [
+        "rodas"
+      ],
+      "prompt": "As duas rodas funcionam, mas o carrinho faz uma curva quando deveria seguir reto. O que ajustar?",
+      "choices": [
+        "Igualar as velocidades dos motores",
+        "Diminuir apenas a velocidade da roda esquerda",
+        "Inverter o sentido de uma das rodas",
+        "Aumentar apenas a velocidade da roda direita"
+      ],
+      "correct": 0,
+      "why": "Rodas que giram em velocidades diferentes podem fazer o carrinho virar.",
+      "active": true
+    },
+    {
+      "id": "funcionamento-lm",
+      "stage": "practice",
+      "requires": [
+        "lm2596"
+      ],
+      "prompt": "Durante a regulagem do LM2596, o medidor parou em 7 V. Qual ajuste devemos fazer?",
+      "choices": [
+        "Aumentar a saída até 9 V",
+        "Manter a saída em 7 V",
+        "Diminuir a saída até 3 V",
+        "Reduzir a saída até 5 V e conferir a medição"
+      ],
+      "correct": 3,
+      "why": "No projeto, regulamos e conferimos a saída do LM2596 em aproximadamente 5 V antes de alimentar o ESP32.",
+      "active": true
+    },
+    {
+      "id": "funcionamento-esquerda",
+      "stage": "practice",
+      "requires": [
+        "rodas"
+      ],
+      "prompt": "O carrinho precisa virar à esquerda. Como as rodas devem girar?",
+      "choices": [
+        "As duas para a frente, com a mesma velocidade",
+        "A esquerda mais rápida que a direita",
+        "A direita mais rápida que a esquerda",
+        "As duas para trás, com a mesma velocidade"
+      ],
+      "correct": 2,
+      "why": "Com ambas avançando, a roda direita mais rápida faz o carrinho tender a virar à esquerda.",
+      "active": true
+    },
+    {
+      "id": "funcionamento-duas-chaves",
+      "stage": "practice",
+      "requires": [
+        "gangorra"
+      ],
+      "prompt": "A gangorra do ESP32 está ligada, mas a dos motores está desligada. O que acontece?",
+      "choices": [
+        "O carrinho funciona normalmente",
+        "O ESP32 pode ligar, mas a ponte H fica sem alimentação das pilhas AA",
+        "A ponte H recebe energia diretamente do regulador",
+        "Os motores recebem energia pelos pinos do ESP32"
+      ],
+      "correct": 1,
+      "why": "Há chaves e fontes distintas: o ESP32 pode ligar sem que os motores estejam alimentados.",
+      "active": true
+    },
+    {
+      "id": "funcionamento-bateria-9v",
+      "stage": "practice",
+      "requires": [
+        "bateria"
+      ],
+      "prompt": "A bateria de 9 V será utilizada para alimentar o ESP32. Qual sequência corresponde ao projeto?",
+      "choices": [
+        "Bateria → ponte H → ESP32",
+        "Bateria → motor → regulador → ESP32",
+        "Bateria → ESP32 → regulador",
+        "Bateria → gangorra → LM2596 → ESP32"
+      ],
+      "correct": 3,
+      "why": "A bateria passa pela chave gangorra e pelo LM2596 ajustado antes de alimentar o ESP32.",
+      "active": true
+    },
+    {
+      "id": "funcionamento-chave-off",
+      "stage": "practice",
+      "requires": [
+        "gangorra"
+      ],
+      "prompt": "A gangorra dos motores está desligada. Como ligar a alimentação dos motores?",
+      "choices": [
+        "Aumentar a velocidade dos motores",
+        "Trocar a conexão entre o ESP32 e o regulador",
+        "Acionar a chave gangorra dos motores",
+        "Ajustar o LM2596 para 9 V"
+      ],
+      "correct": 2,
+      "why": "A chave gangorra dos motores deve ser ligada para permitir a passagem de energia das pilhas AA para a ponte H.",
+      "active": true
+    },
+    {
+      "id": "funcionamento-curva-direita",
+      "stage": "practice",
+      "requires": [
+        "rodas"
+      ],
+      "prompt": "A roda esquerda gira mais rápido que a direita, com ambas avançando. Para qual lado o carrinho vai virar?",
+      "choices": [
+        "Para a direita",
+        "Para a esquerda",
+        "Segue reto",
+        "Gira no próprio lugar"
+      ],
+      "correct": 0,
+      "why": "Quando a roda esquerda avança mais rápido, o carrinho tende a virar para a direita.",
+      "active": true
+    }
+  ]
+}
