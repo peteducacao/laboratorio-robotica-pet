@@ -18,7 +18,8 @@
       ],
       "correct": 1,
       "why": "O carrinho utiliza ESP32, ponte H e motores DC. O sensor ultrassônico não faz parte dessa montagem.",
-      "active": true
+      "active": true,
+      "categoryId": "componentes"
     },
     {
       "id": "componente-ponte",
@@ -33,7 +34,8 @@
       ],
       "correct": 2,
       "why": "A ponte H recebe os comandos do ESP32 e controla o acionamento dos motores.",
-      "active": true
+      "active": true,
+      "categoryId": "componentes"
     },
     {
       "id": "componente-lm2596",
@@ -48,7 +50,8 @@
       ],
       "correct": 3,
       "why": "O LM2596 permite ajustar a tensão de saída para alimentar o ESP32 no projeto.",
-      "active": true
+      "active": true,
+      "categoryId": "componentes"
     },
     {
       "id": "componente-gangorra",
@@ -63,7 +66,8 @@
       ],
       "correct": 0,
       "why": "As chaves gangorra interrompem ou liberam a alimentação elétrica.",
-      "active": true
+      "active": true,
+      "categoryId": "componentes"
     },
     {
       "id": "componente-jumper",
@@ -78,7 +82,8 @@
       ],
       "correct": 2,
       "why": "Os jumpers são fios usados para interligar os componentes do circuito.",
-      "active": true
+      "active": true,
+      "categoryId": "componentes"
     },
     {
       "id": "componente-esp32",
@@ -93,7 +98,8 @@
       ],
       "correct": 1,
       "why": "O ESP32 executa os comandos que orientam o comportamento do carrinho.",
-      "active": true
+      "active": true,
+      "categoryId": "componentes"
     },
     {
       "id": "componente-motor",
@@ -108,7 +114,8 @@
       ],
       "correct": 0,
       "why": "Os motores DC giram seus eixos e movimentam as rodas.",
-      "active": true
+      "active": true,
+      "categoryId": "componentes"
     },
     {
       "id": "componente-rodas",
@@ -123,7 +130,8 @@
       ],
       "correct": 2,
       "why": "As rodas transformam o giro dos motores em deslocamento do carrinho.",
-      "active": true
+      "active": true,
+      "categoryId": "componentes"
     },
     {
       "id": "componente-bateria",
@@ -138,7 +146,8 @@
       ],
       "correct": 3,
       "why": "No projeto, a bateria de 9 V passa pela chave gangorra e pelo regulador antes de alimentar o ESP32.",
-      "active": true
+      "active": true,
+      "categoryId": "componentes"
     },
     {
       "id": "componente-pilhas",
@@ -153,7 +162,8 @@
       ],
       "correct": 1,
       "why": "O conjunto de pilhas AA alimenta a ponte H, que fornece energia aos motores.",
-      "active": true
+      "active": true,
+      "categoryId": "componentes"
     },
     {
       "id": "funcionamento-alimentacao-ponte",
@@ -170,7 +180,8 @@
       ],
       "correct": 1,
       "why": "O ESP32 e os motores possuem alimentações diferentes. Confira as pilhas AA e a gangorra dos motores.",
-      "active": true
+      "active": true,
+      "categoryId": "situacoes"
     },
     {
       "id": "funcionamento-motor-a",
@@ -187,7 +198,8 @@
       ],
       "correct": 2,
       "why": "Se um motor responde e o outro não, vale começar pelas conexões do motor parado.",
-      "active": true
+      "active": true,
+      "categoryId": "situacoes"
     },
     {
       "id": "funcionamento-seguir-reto",
@@ -204,7 +216,8 @@
       ],
       "correct": 0,
       "why": "Rodas que giram em velocidades diferentes podem fazer o carrinho virar.",
-      "active": true
+      "active": true,
+      "categoryId": "situacoes"
     },
     {
       "id": "funcionamento-lm",
@@ -221,7 +234,8 @@
       ],
       "correct": 3,
       "why": "No projeto, regulamos e conferimos a saída do LM2596 em aproximadamente 5 V antes de alimentar o ESP32.",
-      "active": true
+      "active": true,
+      "categoryId": "situacoes"
     },
     {
       "id": "funcionamento-esquerda",
@@ -238,7 +252,8 @@
       ],
       "correct": 2,
       "why": "Com ambas avançando, a roda direita mais rápida faz o carrinho tender a virar à esquerda.",
-      "active": true
+      "active": true,
+      "categoryId": "situacoes"
     },
     {
       "id": "funcionamento-duas-chaves",
@@ -255,7 +270,8 @@
       ],
       "correct": 1,
       "why": "Há chaves e fontes distintas: o ESP32 pode ligar sem que os motores estejam alimentados.",
-      "active": true
+      "active": true,
+      "categoryId": "situacoes"
     },
     {
       "id": "funcionamento-bateria-9v",
@@ -272,7 +288,8 @@
       ],
       "correct": 3,
       "why": "A bateria passa pela chave gangorra e pelo LM2596 ajustado antes de alimentar o ESP32.",
-      "active": true
+      "active": true,
+      "categoryId": "situacoes"
     },
     {
       "id": "funcionamento-chave-off",
@@ -289,7 +306,8 @@
       ],
       "correct": 2,
       "why": "A chave gangorra dos motores deve ser ligada para permitir a passagem de energia das pilhas AA para a ponte H.",
-      "active": true
+      "active": true,
+      "categoryId": "situacoes"
     },
     {
       "id": "funcionamento-curva-direita",
@@ -306,7 +324,62 @@
       ],
       "correct": 0,
       "why": "Quando a roda esquerda avança mais rápido, o carrinho tende a virar para a direita.",
-      "active": true
+      "active": true,
+      "categoryId": "situacoes"
+    }
+  ],
+  "categories": [
+    {
+      "id": "componentes",
+      "name": "Componentes",
+      "stage": "concept"
+    },
+    {
+      "id": "situacoes",
+      "name": "Situações práticas",
+      "stage": "practice"
+    }
+  ],
+  "prerequisites": [
+    {
+      "id": "outros",
+      "name": "Outros componentes"
+    },
+    {
+      "id": "ponte",
+      "name": "Ponte H"
+    },
+    {
+      "id": "lm2596",
+      "name": "LM2596"
+    },
+    {
+      "id": "gangorra",
+      "name": "Chave gangorra"
+    },
+    {
+      "id": "jumper",
+      "name": "Jumpers"
+    },
+    {
+      "id": "esp32",
+      "name": "ESP32"
+    },
+    {
+      "id": "motor",
+      "name": "Motor DC"
+    },
+    {
+      "id": "rodas",
+      "name": "Rodas"
+    },
+    {
+      "id": "bateria",
+      "name": "Bateria 9 V"
+    },
+    {
+      "id": "pilhas",
+      "name": "Pilhas AA"
     }
   ]
 }
