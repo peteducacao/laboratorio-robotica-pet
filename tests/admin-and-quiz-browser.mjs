@@ -70,6 +70,17 @@ try{
  admin.once('dialog',d=>d.accept());
  await admin.locator('#categoryList .taxonomy-row').last().getByText('Excluir').click();
  assert.equal((await admin.evaluate(()=>window.TinkerPETAdmin.getSettings())).categories.length,catCount);
+ const topicCount=(await admin.evaluate(()=>window.TinkerPETAdmin.getSettings())).prerequisites.length;
+ await admin.locator('#topicName').fill('Fios especiais');
+ await admin.locator('#topicSave').click();
+ assert.equal((await admin.evaluate(()=>window.TinkerPETAdmin.getSettings())).prerequisites.length,topicCount+1);
+ await admin.locator('#topicList .taxonomy-row').last().getByText('Editar').click();
+ await admin.locator('#topicName').fill('Fios de teste');
+ await admin.locator('#topicSave').click();
+ assert((await admin.evaluate(()=>window.TinkerPETAdmin.getSettings())).prerequisites.some(x=>x.name==='Fios de teste'));
+ admin.once('dialog',d=>d.accept());
+ await admin.locator('#topicList .taxonomy-row').last().getByText('Excluir').click();
+ assert.equal((await admin.evaluate(()=>window.TinkerPETAdmin.getSettings())).prerequisites.length,topicCount);
  await admin.locator('.nav-btn[data-page="inicio"]').click();
  await admin.locator('#homeQuizEnabled').uncheck({force:true});
  await admin.locator('#homeAnswerEnabled').uncheck({force:true});
