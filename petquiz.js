@@ -1,300 +1,300 @@
 'use strict';
-(()=>{
+(async()=>{
  const $=id=>document.getElementById(id);
  const KEY='petquiz-session-v1';
  const FAST=window.__PETQUIZ_TEST_SPEED__===true;
  const DUR={read:FAST?300:5000,answer:FAST?2500:20000,result:FAST?850:4000,bonusIntro:FAST?420:2500,bonus:FAST?5000:35000,bonusResult:FAST?450:1900};
- const QUESTIONS=[
- {
-  "id": "componente-fora",
-  "stage": "concept",
-  "topic": "outros",
-  "prompt": "Qual destes componentes não faz parte da montagem do nosso carrinho robótico?",
-  "choices": [
-   "ESP32",
-   "Sensor ultrassônico",
-   "Ponte H",
-   "Motor DC"
-  ],
-  "correct": 1,
-  "why": "O carrinho utiliza ESP32, ponte H e motores DC. O sensor ultrassônico não faz parte dessa montagem."
- },
- {
-  "id": "componente-ponte",
-  "stage": "concept",
-  "topic": "ponte",
-  "prompt": "Qual componente é responsável por controlar os motores do carrinho?",
-  "choices": [
-   "Regulador de tensão",
-   "Suporte de pilhas",
-   "Ponte H",
-   "Chave gangorra"
-  ],
-  "correct": 2,
-  "why": "A ponte H recebe os comandos do ESP32 e controla o acionamento dos motores."
- },
- {
-  "id": "componente-lm2596",
-  "stage": "concept",
-  "topic": "lm2596",
-  "prompt": "Qual componente utilizamos para regular a tensão que alimenta o ESP32?",
-  "choices": [
-   "Ponte H",
-   "Motor DC",
-   "Chave gangorra",
-   "LM2596"
-  ],
-  "correct": 3,
-  "why": "O LM2596 permite ajustar a tensão de saída para alimentar o ESP32 no projeto."
- },
- {
-  "id": "componente-gangorra",
-  "stage": "concept",
-  "topic": "gangorra",
-  "prompt": "Qual destes componentes é utilizado para ligar e desligar a alimentação do carrinho?",
-  "choices": [
-   "Chave gangorra",
-   "Jumper",
-   "Ponte H",
-   "ESP32"
-  ],
-  "correct": 0,
-  "why": "As chaves gangorra interrompem ou liberam a alimentação elétrica."
- },
- {
-  "id": "componente-jumper",
-  "stage": "concept",
-  "topic": "jumper",
-  "prompt": "Qual componente permite realizar as conexões elétricas entre as peças do carrinho?",
-  "choices": [
-   "Motor DC",
-   "Roda",
-   "Jumper",
-   "Suporte de pilhas"
-  ],
-  "correct": 2,
-  "why": "Os jumpers são fios usados para interligar os componentes do circuito."
- },
- {
-  "id": "componente-esp32",
-  "stage": "concept",
-  "topic": "esp32",
-  "prompt": "Qual componente funciona como o cérebro do nosso carrinho robótico?",
-  "choices": [
-   "Ponte H",
-   "ESP32",
-   "LM2596",
-   "Chave gangorra"
-  ],
-  "correct": 1,
-  "why": "O ESP32 executa os comandos que orientam o comportamento do carrinho."
- },
- {
-  "id": "componente-motor",
-  "stage": "concept",
-  "topic": "motor",
-  "prompt": "Qual componente é responsável por movimentar as rodas do carrinho?",
-  "choices": [
-   "Motor DC",
-   "Regulador de tensão",
-   "ESP32",
-   "Suporte de pilhas"
-  ],
-  "correct": 0,
-  "why": "Os motores DC giram seus eixos e movimentam as rodas."
- },
- {
-  "id": "componente-rodas",
-  "stage": "concept",
-  "topic": "rodas",
-  "prompt": "Qual é a função das rodas no carrinho robótico?",
-  "choices": [
-   "Controlar a tensão elétrica",
-   "Receber os comandos do ESP32",
-   "Permitir o deslocamento do carrinho",
-   "Armazenar energia"
-  ],
-  "correct": 2,
-  "why": "As rodas transformam o giro dos motores em deslocamento do carrinho."
- },
- {
-  "id": "componente-bateria",
-  "stage": "concept",
-  "topic": "bateria",
-  "prompt": "Qual fonte de alimentação utilizamos para o ESP32 no nosso projeto?",
-  "choices": [
-   "Uma pilha AA",
-   "Um painel solar",
-   "O suporte de seis pilhas AA",
-   "Uma bateria de 9 V"
-  ],
-  "correct": 3,
-  "why": "No projeto, a bateria de 9 V passa pela chave gangorra e pelo regulador antes de alimentar o ESP32."
- },
- {
-  "id": "componente-pilhas",
-  "stage": "concept",
-  "topic": "pilhas",
-  "prompt": "Para que utilizamos os suportes de pilhas AA no carrinho?",
-  "choices": [
-   "Para controlar a direção",
-   "Para alimentar os motores por meio da ponte H",
-   "Para transmitir comandos por Wi-Fi",
-   "Para regular a saída do LM2596"
-  ],
-  "correct": 1,
-  "why": "O conjunto de pilhas AA alimenta a ponte H, que fornece energia aos motores."
- },
- {
-  "id": "funcionamento-alimentacao-ponte",
-  "stage": "practice",
-  "requires": [
-   "pilhas"
-  ],
-  "prompt": "O ESP32 liga normalmente, mas a ponte H não recebe energia. O que verificar primeiro?",
-  "choices": [
-   "As conexões de controle entre ESP32 e ponte H",
-   "A alimentação das pilhas AA e a gangorra dos motores",
-   "As conexões do Motor A com a ponte H",
-   "A saída do regulador de tensão"
-  ],
-  "correct": 1,
-  "why": "O ESP32 e os motores possuem alimentações diferentes. Confira as pilhas AA e a gangorra dos motores."
- },
- {
-  "id": "funcionamento-motor-a",
-  "stage": "practice",
-  "requires": [
-   "motor"
-  ],
-  "prompt": "O Motor B funciona, mas o Motor A permanece parado. Qual conexão deve ser investigada primeiro?",
-  "choices": [
-   "A conexão entre o regulador e o ESP32",
-   "A conexão da bateria de 9 V",
-   "As conexões do Motor A na ponte H",
-   "A conexão da gangorra do ESP32"
-  ],
-  "correct": 2,
-  "why": "Se um motor responde e o outro não, vale começar pelas conexões do motor parado."
- },
- {
-  "id": "funcionamento-seguir-reto",
-  "stage": "practice",
-  "requires": [
-   "rodas"
-  ],
-  "prompt": "As duas rodas giram, mas o carrinho faz uma curva quando deveria seguir reto. O que ajustar?",
-  "choices": [
-   "Igualar as velocidades dos motores",
-   "Diminuir apenas a velocidade da roda esquerda",
-   "Inverter o sentido de uma das rodas",
-   "Aumentar apenas a velocidade da roda direita"
-  ],
-  "correct": 0,
-  "why": "Rodas que giram em velocidades diferentes podem fazer o carrinho virar."
- },
- {
-  "id": "funcionamento-lm",
-  "stage": "practice",
-  "requires": [
-   "lm2596"
-  ],
-  "prompt": "Durante a regulagem do LM2596, o medidor parou em 7 V. Qual ajuste devemos fazer?",
-  "choices": [
-   "Aumentar a saída até 9 V",
-   "Manter a saída em 7 V",
-   "Diminuir a saída até 3 V",
-   "Reduzir a saída até 5 V e conferir a medição"
-  ],
-  "correct": 3,
-  "why": "No projeto, regulamos e conferimos a saída do LM2596 em aproximadamente 5 V antes de alimentar o ESP32."
- },
- {
-  "id": "funcionamento-esquerda",
-  "stage": "practice",
-  "requires": [
-   "rodas"
-  ],
-  "prompt": "O carrinho precisa virar à esquerda. Como as rodas devem girar?",
-  "choices": [
-   "As duas para a frente, com a mesma velocidade",
-   "A esquerda mais rápida que a direita",
-   "A direita mais rápida que a esquerda",
-   "As duas para trás, com a mesma velocidade"
-  ],
-  "correct": 2,
-  "why": "Com ambas avançando, a roda direita mais rápida faz o carrinho tender a virar à esquerda."
- },
- {
-  "id": "funcionamento-duas-chaves",
-  "stage": "practice",
-  "requires": [
-   "gangorra"
-  ],
-  "prompt": "A gangorra do ESP32 está ligada, mas a dos motores está desligada. O que acontece?",
-  "choices": [
-   "O carrinho funciona normalmente",
-   "O ESP32 pode ligar, mas a ponte H fica sem alimentação das pilhas AA",
-   "A ponte H recebe energia diretamente do regulador",
-   "Os motores recebem energia pelos pinos do ESP32"
-  ],
-  "correct": 1,
-  "why": "Há chaves e fontes distintas: o ESP32 pode ligar sem que os motores estejam alimentados."
- },
- {
-  "id": "funcionamento-bateria-9v",
-  "stage": "practice",
-  "requires": [
-   "bateria"
-  ],
-  "prompt": "A bateria de 9 V será utilizada para alimentar o ESP32. Qual sequência corresponde ao projeto?",
-  "choices": [
-   "Bateria → ponte H → ESP32",
-   "Bateria → motor → regulador → ESP32",
-   "Bateria → ESP32 → regulador",
-   "Bateria → gangorra → LM2596 → ESP32"
-  ],
-  "correct": 3,
-  "why": "A bateria passa pela chave gangorra e pelo LM2596 ajustado antes de alimentar o ESP32."
- },
- {
-  "id": "funcionamento-chave-off",
-  "stage": "practice",
-  "requires": [
-   "gangorra"
-  ],
-  "prompt": "As pilhas AA estão conectadas, mas a ponte H continua desligada. A gangorra dos motores está em OFF. O que fazer?",
-  "choices": [
-   "Aumentar a velocidade dos motores",
-   "Trocar a conexão entre o ESP32 e o regulador",
-   "Ligar a gangorra responsável pela alimentação da ponte H",
-   "Ajustar o LM2596 para 9 V"
-  ],
-  "correct": 2,
-  "why": "Com a gangorra dos motores em OFF, a alimentação da ponte H fica interrompida."
- },
- {
-  "id": "funcionamento-curva-direita",
-  "stage": "practice",
-  "requires": [
-   "rodas"
-  ],
-  "prompt": "A roda esquerda gira mais rápido que a direita, com ambas avançando. Para que lado o carrinho tende a virar?",
-  "choices": [
-   "Para a direita",
-   "Para a esquerda",
-   "Segue reto",
-   "Gira no próprio lugar"
-  ],
-  "correct": 0,
-  "why": "Quando a roda esquerda avança mais rápido, o carrinho tende a virar para a direita."
- }
+ let QUESTIONS=[
+  {
+    "id": "componente-fora",
+    "stage": "concept",
+    "topic": "outros",
+    "prompt": "Qual desses componentes não faz parte da montagem do nosso carrinho?",
+    "choices": [
+      "ESP32",
+      "Sensor ultrassônico",
+      "Ponte H",
+      "Motor DC"
+    ],
+    "correct": 1,
+    "why": "O carrinho utiliza ESP32, ponte H e motores DC. O sensor ultrassônico não faz parte dessa montagem."
+  },
+  {
+    "id": "componente-ponte",
+    "stage": "concept",
+    "topic": "ponte",
+    "prompt": "Qual desses componentes é responsável por controlar os motores?",
+    "choices": [
+      "Regulador de tensão",
+      "Suporte de pilhas",
+      "Ponte H",
+      "Chave gangorra"
+    ],
+    "correct": 2,
+    "why": "A ponte H recebe os comandos do ESP32 e controla o acionamento dos motores."
+  },
+  {
+    "id": "componente-lm2596",
+    "stage": "concept",
+    "topic": "lm2596",
+    "prompt": "Qual componente utilizamos para regular a tensão que alimenta o ESP32?",
+    "choices": [
+      "Ponte H",
+      "Motor DC",
+      "Chave gangorra",
+      "LM2596"
+    ],
+    "correct": 3,
+    "why": "O LM2596 permite ajustar a tensão de saída para alimentar o ESP32 no projeto."
+  },
+  {
+    "id": "componente-gangorra",
+    "stage": "concept",
+    "topic": "gangorra",
+    "prompt": "Qual deles é utilizado para ligar e desligar o carrinho?",
+    "choices": [
+      "Chave gangorra",
+      "Jumper",
+      "Ponte H",
+      "ESP32"
+    ],
+    "correct": 0,
+    "why": "As chaves gangorra interrompem ou liberam a alimentação elétrica."
+  },
+  {
+    "id": "componente-jumper",
+    "stage": "concept",
+    "topic": "jumper",
+    "prompt": "Qual é o nome dos fios usados no carrinho?",
+    "choices": [
+      "Motor DC",
+      "Roda",
+      "Jumper",
+      "Suporte de pilhas"
+    ],
+    "correct": 2,
+    "why": "Os jumpers são fios usados para interligar os componentes do circuito."
+  },
+  {
+    "id": "componente-esp32",
+    "stage": "concept",
+    "topic": "esp32",
+    "prompt": "Qual componente funciona como o cérebro do carrinho?",
+    "choices": [
+      "Ponte H",
+      "ESP32",
+      "LM2596",
+      "Chave gangorra"
+    ],
+    "correct": 1,
+    "why": "O ESP32 executa os comandos que orientam o comportamento do carrinho."
+  },
+  {
+    "id": "componente-motor",
+    "stage": "concept",
+    "topic": "motor",
+    "prompt": "Qual deles movimenta as rodas do carrinho?",
+    "choices": [
+      "Motor DC",
+      "Regulador de tensão",
+      "ESP32",
+      "Suporte de pilhas"
+    ],
+    "correct": 0,
+    "why": "Os motores DC giram seus eixos e movimentam as rodas."
+  },
+  {
+    "id": "componente-rodas",
+    "stage": "concept",
+    "topic": "rodas",
+    "prompt": "Qual é a função das rodas no carrinho robótico?",
+    "choices": [
+      "Controlar a tensão elétrica",
+      "Receber os comandos do ESP32",
+      "Permitir que o carrinho ande",
+      "Armazenar energia"
+    ],
+    "correct": 2,
+    "why": "As rodas transformam o giro dos motores em deslocamento do carrinho."
+  },
+  {
+    "id": "componente-bateria",
+    "stage": "concept",
+    "topic": "bateria",
+    "prompt": "Qual dessas fontes de energia utilizamos para o ESP32?",
+    "choices": [
+      "Uma pilha AA",
+      "Um painel solar",
+      "O suporte de seis pilhas AA",
+      "Uma bateria de 9 V"
+    ],
+    "correct": 3,
+    "why": "No projeto, a bateria de 9 V passa pela chave gangorra e pelo regulador antes de alimentar o ESP32."
+  },
+  {
+    "id": "componente-pilhas",
+    "stage": "concept",
+    "topic": "pilhas",
+    "prompt": "Para que utilizamos os suportes de pilhas AA no carrinho?",
+    "choices": [
+      "Para controlar a direção",
+      "Para alimentar os motores por meio da ponte H",
+      "Para transmitir comandos por Wi-Fi",
+      "Para regular a saída do LM2596"
+    ],
+    "correct": 1,
+    "why": "O conjunto de pilhas AA alimenta a ponte H, que fornece energia aos motores."
+  },
+  {
+    "id": "funcionamento-alimentacao-ponte",
+    "stage": "practice",
+    "requires": [
+      "pilhas"
+    ],
+    "prompt": "O ESP32 ligou, mas a ponte H não recebeu energia. O que verificar primeiro?",
+    "choices": [
+      "As conexões de controle entre ESP32 e ponte H",
+      "A alimentação das pilhas AA e a gangorra dos motores",
+      "As conexões do Motor A com a ponte H",
+      "A saída do regulador de tensão"
+    ],
+    "correct": 1,
+    "why": "O ESP32 e os motores possuem alimentações diferentes. Confira as pilhas AA e a gangorra dos motores."
+  },
+  {
+    "id": "funcionamento-motor-a",
+    "stage": "practice",
+    "requires": [
+      "motor"
+    ],
+    "prompt": "O Motor B funciona, mas o Motor A permanece parado. Qual conexão deve ser investigada primeiro?",
+    "choices": [
+      "A conexão entre o regulador e o ESP32",
+      "A conexão da bateria de 9 V",
+      "As conexões do Motor A na ponte H",
+      "A conexão da gangorra do ESP32"
+    ],
+    "correct": 2,
+    "why": "Se um motor responde e o outro não, vale começar pelas conexões do motor parado."
+  },
+  {
+    "id": "funcionamento-seguir-reto",
+    "stage": "practice",
+    "requires": [
+      "rodas"
+    ],
+    "prompt": "As duas rodas funcionam, mas o carrinho faz uma curva quando deveria seguir reto. O que ajustar?",
+    "choices": [
+      "Igualar as velocidades dos motores",
+      "Diminuir apenas a velocidade da roda esquerda",
+      "Inverter o sentido de uma das rodas",
+      "Aumentar apenas a velocidade da roda direita"
+    ],
+    "correct": 0,
+    "why": "Rodas que giram em velocidades diferentes podem fazer o carrinho virar."
+  },
+  {
+    "id": "funcionamento-lm",
+    "stage": "practice",
+    "requires": [
+      "lm2596"
+    ],
+    "prompt": "Durante a regulagem do LM2596, o medidor parou em 7 V. Qual ajuste devemos fazer?",
+    "choices": [
+      "Aumentar a saída até 9 V",
+      "Manter a saída em 7 V",
+      "Diminuir a saída até 3 V",
+      "Reduzir a saída até 5 V e conferir a medição"
+    ],
+    "correct": 3,
+    "why": "No projeto, regulamos e conferimos a saída do LM2596 em aproximadamente 5 V antes de alimentar o ESP32."
+  },
+  {
+    "id": "funcionamento-esquerda",
+    "stage": "practice",
+    "requires": [
+      "rodas"
+    ],
+    "prompt": "O carrinho precisa virar à esquerda. Como as rodas devem girar?",
+    "choices": [
+      "As duas para a frente, com a mesma velocidade",
+      "A esquerda mais rápida que a direita",
+      "A direita mais rápida que a esquerda",
+      "As duas para trás, com a mesma velocidade"
+    ],
+    "correct": 2,
+    "why": "Com ambas avançando, a roda direita mais rápida faz o carrinho tender a virar à esquerda."
+  },
+  {
+    "id": "funcionamento-duas-chaves",
+    "stage": "practice",
+    "requires": [
+      "gangorra"
+    ],
+    "prompt": "A gangorra do ESP32 está ligada, mas a dos motores está desligada. O que acontece?",
+    "choices": [
+      "O carrinho funciona normalmente",
+      "O ESP32 pode ligar, mas a ponte H fica sem alimentação das pilhas AA",
+      "A ponte H recebe energia diretamente do regulador",
+      "Os motores recebem energia pelos pinos do ESP32"
+    ],
+    "correct": 1,
+    "why": "Há chaves e fontes distintas: o ESP32 pode ligar sem que os motores estejam alimentados."
+  },
+  {
+    "id": "funcionamento-bateria-9v",
+    "stage": "practice",
+    "requires": [
+      "bateria"
+    ],
+    "prompt": "A bateria de 9 V será utilizada para alimentar o ESP32. Qual sequência corresponde ao projeto?",
+    "choices": [
+      "Bateria → ponte H → ESP32",
+      "Bateria → motor → regulador → ESP32",
+      "Bateria → ESP32 → regulador",
+      "Bateria → gangorra → LM2596 → ESP32"
+    ],
+    "correct": 3,
+    "why": "A bateria passa pela chave gangorra e pelo LM2596 ajustado antes de alimentar o ESP32."
+  },
+  {
+    "id": "funcionamento-chave-off",
+    "stage": "practice",
+    "requires": [
+      "gangorra"
+    ],
+    "prompt": "A gangorra dos motores está desligada. Como ligar a alimentação dos motores?",
+    "choices": [
+      "Aumentar a velocidade dos motores",
+      "Trocar a conexão entre o ESP32 e o regulador",
+      "Acionar a chave gangorra dos motores",
+      "Ajustar o LM2596 para 9 V"
+    ],
+    "correct": 2,
+    "why": "A chave gangorra dos motores deve ser ligada para permitir a passagem de energia das pilhas AA para a ponte H."
+  },
+  {
+    "id": "funcionamento-curva-direita",
+    "stage": "practice",
+    "requires": [
+      "rodas"
+    ],
+    "prompt": "A roda esquerda gira mais rápido que a direita, com ambas avançando. Para qual lado o carrinho vai virar?",
+    "choices": [
+      "Para a direita",
+      "Para a esquerda",
+      "Segue reto",
+      "Gira no próprio lugar"
+    ],
+    "correct": 0,
+    "why": "Quando a roda esquerda avança mais rápido, o carrinho tende a virar para a direita."
+  }
 ];
  // Valores negativos representam ré, positivos representam avanço.
  // O movimento reto exige a mesma velocidade nas duas rodas.
  const isForward=(a,b)=>a>0&&a===b;
- const isLeftCurveMotion=(a,b)=>b>a;
- const isRightCurveMotion=(a,b)=>a>b;
+ const isLeftCurveMotion=(a,b)=>a>=0&&b>0&&b>a;
+ const isRightCurveMotion=(a,b)=>b>=0&&a>0&&a>b;
  const isReverse=(a,b)=>a<0&&a===b;
  const isStopped=(a,b)=>a===0&&b===0;
  const isStraightMotion=(a,b)=>a!==0&&a===b;
@@ -302,44 +302,83 @@
   {id:'forward',title:'Faça o carrinho andar para a frente!',voltage:false,initial:[0,0],check:isForward},
   {id:'left',title:'Faça o carrinho virar à esquerda!',voltage:false,initial:[0,0],check:isLeftCurveMotion},
   {id:'right',title:'Faça o carrinho virar à direita!',voltage:false,initial:[0,0],check:isRightCurveMotion},
-  {id:'reverse',title:'Faça o carrinho andar para trás!',voltage:false,initial:[0,0],check:isReverse},
+  {id:'reverse',title:'Faça o carrinho dar ré!',voltage:false,initial:[0,0],check:isReverse},
   {id:'stop',title:'Pare o carrinho em movimento!',voltage:false,initial:[60,60],check:isStopped},
   {id:'straight',title:'Faça o carrinho seguir em linha reta!',voltage:false,initial:[80,40],check:isStraightMotion},
   {id:'regulator',title:'Regule o LM2596!',voltage:true,initial:[9],check:v=>v===5}
  ];
+
+ let GAME_SETTINGS={questionCount:10,bonusCount:2,quizEnabled:true};
+ try{
+  const response=await fetch('petquiz-settings.json?nocache='+Date.now(),{cache:'no-store'});
+  if(response.ok){
+   const remote=await response.json();
+   if(Array.isArray(remote.questions)&&remote.questions.length){
+    const valid=remote.questions.filter(q=>q&&typeof q.prompt==='string'&&
+     Array.isArray(q.choices)&&q.choices.length===4&&Number.isInteger(q.correct)&&
+     q.correct>=0&&q.correct<=3&&q.choices.every(c=>typeof c==='string')&&q.active!==false);
+    if(valid.length)QUESTIONS=valid;
+   }
+   GAME_SETTINGS={...GAME_SETTINGS,
+    questionCount:Math.max(1,Math.min(99,Math.trunc(Number(remote.questionCount)||10))),
+    bonusCount:Math.max(0,Math.min(7,Math.trunc(remote.bonusCount==null?2:Number(remote.bonusCount)||0))),
+    quizEnabled:remote.quizEnabled!==false};
+  }
+ }catch(err){console.warn('PETQuiz: usando banco padrão',err);}
+ if(!GAME_SETTINGS.quizEnabled){
+  document.body.innerHTML='<main style="max-width:540px;margin:14vh auto;padding:32px;text-align:center;font:16px system-ui;color:#143d50"><img width="80" src="assets/logo-pet.svg" alt=""><h1>PETQuiz indisponível</h1><p>O acesso está temporariamente bloqueado pelo administrador.</p><a href="projects.html" style="color:#087e81">Voltar aos meus circuitos</a></main>';
+  return;
+ }
  const keys=['read','answer','result','bonus','bonusResult'];
  function shuffle(arr){
   const a=[...arr];for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a;
  }
- function scheduleBonus(){
-  // Exatamente dois bônus, fora das dez perguntas. A posição varia a cada partida,
-  // sempre entre questões e com ao menos uma pergunta de intervalo entre bônus.
-  const candidates=shuffle([2,3,4,5,6,7,8]);
-  const first=candidates[0];
-  const second=candidates.find(x=>Math.abs(x-first)>=2);
-  if(second===undefined)throw Error('Não foi possível distribuir dois bônus');
-  return [first,second].sort((a,b)=>a-b);
+ function scheduleBonus(total){
+  const count=Math.max(0,Math.min(GAME_SETTINGS.bonusCount,BONUS.length,Math.max(0,total-1)));
+  const slots=shuffle(Array.from({length:Math.max(0,total-1)},(_,i)=>i+1));
+  const chosen=[];
+  for(const slot of slots){if(chosen.length>=count)break;if(chosen.every(p=>Math.abs(p-slot)>=2))chosen.push(slot);}
+  for(const slot of slots){if(chosen.length>=count)break;if(!chosen.includes(slot))chosen.push(slot);}
+  return chosen.sort((a,b)=>a-b);
  }
  // Cinco situações de aplicação e cinco perguntas sobre componentes.
  // Cada situação precisa aparecer depois da apresentação de seu componente.
  function buildRound(){
-  const practices=shuffle(QUESTIONS.map((q,i)=>({q,i})).filter(x=>x.q.stage==='practice')).slice(0,5);
-  const topics=new Set(practices.flatMap(x=>x.q.requires));
-  if(topics.size>5)throw Error('Mais pré-requisitos que perguntas introdutórias');
-  const concepts=shuffle(QUESTIONS.map((q,i)=>({q,i})).filter(x=>x.q.stage==='concept'&&!topics.has(x.q.topic)));
-  const needed=QUESTIONS.map((q,i)=>({q,i})).filter(x=>x.q.stage==='concept'&&topics.has(x.q.topic));
-  const selected=[...needed,...concepts.slice(0,5-needed.length),...practices];
-  const pool=[...selected],order=[],introduced=new Set();
-  while(pool.length){
-   const ready=pool.filter(x=>x.q.stage==='concept'||x.q.requires.every(t=>introduced.has(t)));
-   if(!ready.length)throw Error('Rodada sem ordem válida');
-   const introReady=ready.filter(x=>x.q.stage==='concept');
-   const practiceReady=ready.filter(x=>x.q.stage==='practice');
-   const choice=practiceReady.length&&(!introReady.length||Math.random()<.62)?
-    shuffle(practiceReady)[0]:shuffle(introReady)[0];
+  const pool=QUESTIONS.map((q,i)=>({q,i})).filter(x=>x.q.active!==false);
+  const concepts=pool.filter(x=>x.q.stage==='concept');
+  const topics=new Set(concepts.map(x=>x.q.topic));
+  const practices=pool.filter(x=>x.q.stage==='practice'&&(x.q.requires||[]).every(t=>topics.has(t)));
+  const total=Math.min(Math.max(1,GAME_SETTINGS.questionCount),concepts.length+practices.length);
+  if(total<1)return [];
+  let candidates=shuffle(practices).slice(0,Math.floor(total/2)),needed=[];
+  while(candidates.length){
+   const required=new Set(candidates.flatMap(x=>x.q.requires||[]));
+   needed=concepts.filter(x=>required.has(x.q.topic));
+   if(needed.length+candidates.length<=total)break;
+   candidates.pop();
+  }
+  const selected=[...needed,...candidates],used=new Set(selected.map(x=>x.i));
+  for(const item of shuffle(concepts)){
+   if(selected.length>=total)break;
+   if(!used.has(item.i)){selected.push(item);used.add(item.i)}
+  }
+  for(const item of shuffle(practices)){
+   if(selected.length>=total)break;
+   if(!used.has(item.i)&&(item.q.requires||[]).every(t=>selected.some(x=>x.q.topic===t))){
+    selected.push(item);used.add(item.i);
+   }
+  }
+  const remaining=[...selected],order=[],introduced=new Set();
+  while(remaining.length){
+   const ready=remaining.filter(x=>x.q.stage==='concept'||(x.q.requires||[]).every(t=>introduced.has(t)));
+   if(!ready.length)throw Error('Banco de perguntas sem ordem válida');
+   const conceptsReady=ready.filter(x=>x.q.stage==='concept');
+   const practicesReady=ready.filter(x=>x.q.stage==='practice');
+   const choice=practicesReady.length&&(!conceptsReady.length||Math.random()<.62)?
+    shuffle(practicesReady)[0]:shuffle(conceptsReady)[0];
    order.push(choice.i);
    if(choice.q.stage==='concept')introduced.add(choice.q.topic);
-   pool.splice(pool.indexOf(choice),1);
+   remaining.splice(remaining.indexOf(choice),1);
   }
   return order;
  }
@@ -348,12 +387,13 @@
   const forced=FAST?BONUS.findIndex(b=>b.id===window.__PETQUIZ_TEST_BONUS_ID__):-1;
   return forced<0?order:[forced,...order.filter(i=>i!==forced)];
  }
- const fresh=()=>({
-  phase:'intro',idx:0,order:buildRound(),options:QUESTIONS.map(()=>shuffle([0,1,2,3])),
-  bonusAt:scheduleBonus(),bonusOrder:bonusOrderForGame(),shownBonus:[],currentBonus:null,solvedBonus:0,
-  bonusFeedback:null,
-  score:0,correct:0,wrong:0,timeout:0,last:null,deadline:0,finishedReason:null
- });
+ const fresh=()=>{
+  const order=buildRound();
+  return {phase:'intro',idx:0,order,options:QUESTIONS.map(()=>shuffle([0,1,2,3])),
+   bonusAt:scheduleBonus(order.length),bonusOrder:bonusOrderForGame(),
+   shownBonus:[],currentBonus:null,solvedBonus:0,bonusFeedback:null,
+   score:0,correct:0,wrong:0,timeout:0,last:null,deadline:0,finishedReason:null};
+ };
  // A partida existe somente enquanto a página estiver aberta. Não salvar pontuação,
  // rodada, perguntas ou bônus: ao voltar, sempre abrir a tela inicial.
  try{localStorage.removeItem(KEY)}catch{}
