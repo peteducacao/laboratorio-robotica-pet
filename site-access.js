@@ -1,21 +1,39 @@
 'use strict';
-(async()=>{
+window.tinkerpetAccessReady=(async()=>{
  let flags={quizEnabled:true,answerKeyEnabled:true};
  try{
   const response=await fetch('petquiz-settings.json?nocache='+Date.now(),{cache:'no-store'});
-  if(response.ok){const settings=await response.json();flags.quizEnabled=settings.quizEnabled!==false;flags.answerKeyEnabled=settings.answerKeyEnabled!==false}
- }catch(error){console.warn('Acesso: configurações públicas indisponíveis',error)}
- const blocked=(el,label)=>{
+  if(response.ok){
+   const remote=await response.json();
+   flags.quizEnabled=remote.quizEnabled!==false;
+   flags.answerKeyEnabled=remote.answerKeyEnabled!==false;
+  }
+ }catch(error){console.warn('Acesso: configurações publicadas indisponíveis',error)}
+ // Prévia imediata somente quando há sessão administrativa neste navegador.
+ // Outros dispositivos dependem de Publicar no GitHub.
+ if(sessionStorage.getItem('tinkerpet-admin-auth')==='ok'){
+  try{
+   const draft=JSON.parse(localStorage.getItem('tinkerpet-admin-draft-v1')||'null');
+   if(draft){
+    flags.quizEnabled=draft.quizEnabled!==false;
+    flags.answerKeyEnabled=draft.answerKeyEnabled!==false;
+   }
+  }catch(error){console.warn('Rascunho administrativo inválido',error)}
+ }
+ window.tinkerpetAccessFlags=flags;
+ const blockLink=(el,label)=>{
   if(!el)return;
-  el.setAttribute('aria-disabled','true');el.title=label+' temporariamente bloqueado pelo administrador';
+  el.setAttribute('aria-disabled','true');
+  el.title=label+' bloqueado pelo administrador';
   el.style.opacity='.46';el.style.cursor='not-allowed';
-  el.addEventListener('click',e=>{e.preventDefault();e.stopImmediatePropagation();alert(label+' temporariamente indisponível.');},true);
+  el.addEventListener('click',e=>{
+   e.preventDefault();e.stopImmediatePropagation();
+   alert(label+' temporariamente indisponível.');
+  },true);
  };
- const quiz=document.getElementById('openPetQuiz');
- const gate=document.getElementById('openGate');
- if(!flags.quizEnabled)blocked(quiz,'PETQuiz');
+ if(!flags.quizEnabled)blockLink(document.getElementById('openPetQuiz'),'PETQuiz');
  if(!flags.answerKeyEnabled){
-  blocked(gate,'Gabarito');
+  blockLink(document.getElementById('openGate'),'Gabarito');
   const label=document.getElementById('gateLabel');
   if(label)label.textContent='Gabarito bloqueado';
  }
@@ -29,4 +47,5 @@
   const a=document.createElement('a');a.textContent='Voltar aos meus circuitos';a.href='projects.html';a.style.color='#087b75';
   main.append(h,p,a);document.body.append(main);
  }
+ return flags;
 })();
