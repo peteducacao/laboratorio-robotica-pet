@@ -393,3 +393,9 @@ body{background:#ecf8f2}
 .final-robot .pet-rover-svg{bottom:130px}
 @media(max-width:750px){.final-robot .pet-rover-svg{bottom:65px}}
 @media(prefers-reduced-motion:reduce){.final-view::before,.final-view::after{animation:none}}
+
+/* Confetes na camada posterior, preservando textos e botões na frente */
+.final-view::before,.final-view::after{z-index:0}
+.final-hero{position:relative;z-index:1}
+.intro-rules{max-width:385px}
+@media(max-width:750px){.intro-rules{max-width:100%}.intro-rules>div{flex:1;min-width:130px}}
