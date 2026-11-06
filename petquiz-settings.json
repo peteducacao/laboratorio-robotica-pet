@@ -72,7 +72,7 @@
       ],
       "correct": 1,
       "why": "O carrinho utiliza ESP32, ponte H e motores DC. O sensor ultrassônico não faz parte dessa montagem.",
-      "active": false,
+      "active": true,
       "categoryId": "componentes"
     },
     {
