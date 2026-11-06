@@ -126,7 +126,15 @@
   for(const id of ['homeAnswerEnabled','settingsAnswerEnabled'])$(id).checked=!settings.answerKeyEnabled;
   for(const id of ['homeQuestionCount','settingsQuestionCount'])$(id).textContent=settings.questionCount;
   for(const id of ['homeBonusCount','settingsBonusCount'])$(id).textContent=settings.bonusCount;
-  $('questionAvailable').textContent=qs().filter(q=>q.active).length;
+  const activeCount=qs().filter(q=>q.active).length;
+  $('questionAvailable').textContent=activeCount;
+  $('activateAllQuestions').disabled=activeCount===qs().length;
+  $('deactivateAllQuestions').disabled=activeCount===0;
+  for(const id of ['homeQuestionCount','settingsQuestionCount'])
+   $(id).textContent=activeCount===0?0:settings.questionCount;
+  for(const button of document.querySelectorAll('[data-counter="questionCount"]'))
+   button.disabled=activeCount===0||Number(button.dataset.step)>0&&settings.questionCount>=activeCount||
+    Number(button.dataset.step)<0&&settings.questionCount<=1;
   const info=bonusCatalogCount===null?'Catálogo de desafios indisponível':
    bonusCatalogCount+' desafios cadastrados · até '+maxBonuses()+' por partida';
   $('bonusCatalogSummary').textContent=info;
@@ -244,9 +252,6 @@
  }
  function changeQuestionState(id,active){
   const question=qs().find(q=>q.id===id);if(!question||question.active===active)return false;
-  if(!active&&qs().filter(q=>q.active).length===1){
-   notice('Mantenha pelo menos uma pergunta ativa.',true);return false;
-  }
   if(!active&&question.stage==='concept'&&question.topic){
    const otherConcept=qs().some(q=>q.id!==id&&q.active&&q.stage==='concept'&&q.topic===question.topic);
    const required=qs().some(q=>q.active&&q.stage==='practice'&&(q.requires||[]).includes(question.topic));
@@ -271,6 +276,30 @@
    'Esta pergunta está '+(active?'ativa':'inativa')+'. Arraste entre as duas colunas para alterar.';
   notice(active?'Pergunta ativada.':'Pergunta desativada.');
   return true;
+ }
+ function setAllQuestionsActive(active){
+  if(!qs().length){notice('Não há perguntas cadastradas.',true);return}
+  const changed=qs().filter(q=>q.active!==active);
+  if(!changed.length)return;
+  if(active){
+   const incomplete=qs().find(q=>!q.prompt?.trim()||!Array.isArray(q.choices)||
+    q.choices.length!==4||q.choices.some(option=>!String(option).trim()));
+   if(incomplete){
+    notice('Complete a pergunta e suas quatro alternativas antes de ativar todas: '+(incomplete.prompt||'nova pergunta'),true);
+    return;
+   }
+  }
+  // Mesmo com busca ativa, os botões aplicam-se ao banco inteiro.
+  for(const question of qs())question.active=active;
+  if(active)settings.questionCount=Math.max(1,Math.min(settings.questionCount,qs().length));
+  // Quando todas estão inativas, preservar a quantidade para restaurá-la depois.
+  saveDraft();
+  renderOverview();
+  renderList();
+  if(selectedId)$('questionActivityLabel').textContent=
+   'Esta pergunta está '+(active?'ativa':'inativa')+'. Arraste entre as colunas para alterar.';
+  notice(active?'Todas as '+qs().length+' perguntas foram ativadas.':
+   'Todas as '+qs().length+' perguntas foram desativadas. O PETQuiz não inicia sem perguntas ativas.');
  }
  let ignoreCardClicksUntil=0;
  function renderList(){
@@ -377,7 +406,7 @@
  function validate(){
   if(!Array.isArray(settings.questions)||!settings.questions.length)throw Error('Cadastre ao menos uma pergunta.');
   const active=qs().filter(q=>q.active!==false);
-  if(!active.length)throw Error('Ative ao menos uma pergunta.');
+  // Banco com zero perguntas ativas é válido; o PETQuiz exibirá um aviso sem iniciar a partida.
   const ids=new Set();
   for(const q of qs()){
    if(!q.id||ids.has(q.id))throw Error('IDs de pergunta repetidos.');
@@ -396,7 +425,7 @@
   const activeTopics=new Set(active.filter(q=>q.stage==='concept').map(q=>q.topic).filter(Boolean));
   const invalidPractice=active.find(q=>q.stage==='practice'&&(q.requires||[]).some(t=>!activeTopics.has(t)));
   if(invalidPractice)throw Error('Esta situação prática precisa de uma pergunta ativa que apresente seu assunto: '+invalidPractice.prompt);
-  settings.questionCount=Math.max(1,Math.min(settings.questionCount,active.length));
+  if(active.length)settings.questionCount=Math.max(1,Math.min(settings.questionCount,active.length));
   settings.bonusCount=Math.max(0,Math.min(settings.bonusCount,maxBonuses()));
   return true;
  }
@@ -530,6 +559,8 @@
  $('topicCancel').addEventListener('click',()=>clearTaxonomy('topic'));
  $('stageSelect').addEventListener('change',updateTopicLabel);
  $('searchQuestions').addEventListener('input',renderList);
+ $('activateAllQuestions').addEventListener('click',()=>setAllQuestionsActive(true));
+ $('deactivateAllQuestions').addEventListener('click',()=>setAllQuestionsActive(false));
  $('addQuestion').addEventListener('click',newQuestion);
  $('questionForm').addEventListener('submit',saveQuestion);
  $('deleteQuestion').addEventListener('click',deleteQuestion);
