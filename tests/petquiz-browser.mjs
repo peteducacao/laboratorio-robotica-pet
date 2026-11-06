@@ -29,6 +29,9 @@ assert(!/5\s*V/.test(bonusTitles[6][2]),'O enunciado não pode entregar a regula
 assert(!bonusMarkup.includes('bonus-test-link'),'Não deve existir botão de teste temporário');
 assert(bonusMarkup.includes('id="bonusIntroView"'),'O anúncio da rodada bônus precisa existir');
 const browser=await chromium.launch({headless:true,args:['--disable-dev-shm-usage']});
+const enabledSettings={...JSON.parse(readFileSync(resolve(root,'petquiz-settings.json'),'utf8')),quizEnabled:true,answerKeyEnabled:true};
+const mockEnabled=ctx=>ctx.route('**/petquiz-settings.json*',route=>
+ route.fulfill({status:200,contentType:'application/json',body:JSON.stringify(enabledSettings)}));
 mkdirSync('test-results',{recursive:true});
 const screens=[
  {name:'desktop',width:1366,height:800,touch:false},
@@ -135,6 +138,7 @@ try{
  // Rodar TODOS os sete bônus no mesmo jogo isolado, forçando apenas no teste.
  {
   const ctx=await browser.newContext({viewport:{width:390,height:844},hasTouch:true,isMobile:true});
+  await mockEnabled(ctx);
   const p=await ctx.newPage();
   await p.addInitScript(()=>{window.__PETQUIZ_TEST_SPEED__=true;});
   await p.goto(base+'/petquiz.html',{waitUntil:'domcontentloaded'});await p.waitForFunction(()=>!!window.PetQuiz);
@@ -195,6 +199,7 @@ try{
  }
  // Testar tempos REAIS uma vez, sem acelerar.
  const context=await browser.newContext({viewport:{width:1280,height:760}});
+ await mockEnabled(context);
  const page=await context.newPage();
  await page.goto(base+'/petquiz.html',{waitUntil:'domcontentloaded'});await page.waitForFunction(()=>!!window.PetQuiz);
  assert.match(await page.locator('#introTitle').textContent(),/PETQuiz/);
@@ -216,6 +221,7 @@ try{
  for(const screen of screens){
   const ctx=await browser.newContext({viewport:{width:screen.width,height:screen.height},
    isMobile:screen.touch,hasTouch:screen.touch,deviceScaleFactor:1});
+  await mockEnabled(ctx);
   await ctx.addInitScript(()=>{window.__PETQUIZ_TEST_SPEED__=true});
   const p=await ctx.newPage(),errors=[];
   p.on('pageerror',e=>errors.push(e.message));
