@@ -18,6 +18,8 @@ const server=createServer((req,res)=>{
 await new Promise(done=>server.listen(0,'127.0.0.1',done));
 const origin='http://127.0.0.1:'+server.address().port;
 const original=JSON.parse(readFileSync(resolve(root,'petquiz-settings.json'),'utf8'));
+const initialQuestionCount=original.questions.length;
+const bonusCatalog=JSON.parse(readFileSync(resolve(root,'petquiz-bonuses.json'),'utf8'));
 mkdirSync('test-results',{recursive:true});
 let browser;
 const errors=[];
@@ -68,8 +70,33 @@ try{
  assert(await admin.locator('#page-ajuda').isVisible(),'A aba Ajuda abre');
  assert((await admin.locator('#page-ajuda').textContent()).includes('Salvar e atualizar'),'Ajuda explica publicação');
 
- assert.equal((await admin.evaluate(()=>window.TinkerPETAdmin.getSettings())).questions.length,19,'Banco carrega 19 perguntas');
+ assert.equal((await admin.evaluate(()=>window.TinkerPETAdmin.getSettings())).questions.length,initialQuestionCount,'Carrega banco inteiro');
  await admin.locator('.nav-btn[data-page="questoes"]').click();
+ // Mover de Ativas para Inativas e voltar com o mouse.
+ const row=admin.locator('#activeQuestionList .question-row').first();
+ const itemId=await row.getAttribute('data-question-id');
+ const drag=async(from,to)=>{
+  const fromBox=await from.boundingBox(),toBox=await to.boundingBox();
+  assert(fromBox&&toBox,'Origem e destino visíveis');
+  await admin.mouse.move(fromBox.x+fromBox.width*.5,fromBox.y+Math.min(fromBox.height*.5,28));
+  await admin.mouse.down();
+  await admin.mouse.move(toBox.x+toBox.width*.5,toBox.y+Math.min(toBox.height*.5,80),{steps:12});
+  await admin.mouse.up();
+ };
+ await drag(row,admin.locator('[data-status-zone="inactive"]'));
+ assert.equal(await admin.locator('#inactiveQuestionList [data-question-id="'+itemId+'"]').count(),1,
+  'Arrastar para Inativas desativa');
+ assert.equal((await admin.evaluate(()=>window.TinkerPETAdmin.getSettings())).questions.find(q=>q.id===itemId).active,false);
+ await drag(admin.locator('#inactiveQuestionList [data-question-id="'+itemId+'"]'),
+  admin.locator('[data-status-zone="active"]'));
+ assert.equal(await admin.locator('#activeQuestionList [data-question-id="'+itemId+'"]').count(),1,
+  'Arrastar para Ativas reativa');
+ assert.equal((await admin.evaluate(()=>window.TinkerPETAdmin.getSettings())).questions.find(q=>q.id===itemId).active,true);
+ assert.equal(await admin.locator('#activeQuestionCount').textContent(),String(initialQuestionCount));
+ assert.equal(await admin.locator('#inactiveQuestionCount').textContent(),'0');
+ assert.equal(await admin.locator('#activeQuestion').count(),0,'Sem checkbox de ativação');
+ assert((await admin.locator('#bonusCatalogSummary').textContent()).includes(bonusCatalog.bonuses.length+' desafios'),
+  'Total de bônus é carregado do catálogo');
  await admin.locator('#addQuestion').click();
  await admin.locator('#questionText').fill('Qual é a função do ESP32 neste teste?');
  await admin.locator('#opt0').fill('Executar comandos');
@@ -82,7 +109,7 @@ try{
  await admin.waitForFunction(()=>!document.getElementById('saveToast').hidden);
  assert((await admin.locator('#saveToast').textContent()).includes('Salvo!'),'Popup confirma salvamento');
  let data=await admin.evaluate(()=>window.TinkerPETAdmin.getSettings());
- assert.equal(data.questions.length,20,'Cadastra questão');
+ assert.equal(data.questions.length,initialQuestionCount+1,'Cadastra questão');
  assert(data.questions.some(q=>q.prompt.includes('neste teste')),'Salva enunciado da nova questão');
  await admin.locator('#questionText').fill('Qual componente executa os comandos no teste?');
  await admin.locator('#opt0').fill('Motor DC');
@@ -94,7 +121,7 @@ try{
  admin.once('dialog',dialog=>dialog.accept());
  await admin.locator('#deleteQuestion').click();
  data=await admin.evaluate(()=>window.TinkerPETAdmin.getSettings());
- assert.equal(data.questions.length,19,'Exclui pergunta');
+ assert.equal(data.questions.length,initialQuestionCount,'Exclui pergunta');
  await admin.locator('.nav-btn[data-page="taxonomia"]').click();
  const catCount=(await admin.evaluate(()=>window.TinkerPETAdmin.getSettings())).categories.length;
  await admin.locator('#categoryName').fill('Eletrônica básica');
@@ -155,7 +182,7 @@ try{
   return status.includes('Salvo no GitHub')||status.includes('Disponível para todos');
  },{timeout:12000});
  assert(writes>0,'Salvamento enviou PUT automaticamente ao GitHub');
- assert.equal(published.questions.length,19,'Publicação mantém todas as perguntas');
+ assert.equal(published.questions.length,initialQuestionCount,'Publicação mantém todas as perguntas');
  assert(published.quizEnabled&&published.answerKeyEnabled,'Publica controles de acesso');
  assert.equal(published.questionCount,9,'Publica quantidade de perguntas');
  assert.equal(published.bonusCount,3,'Publica quantidade de bônus');
@@ -180,7 +207,7 @@ try{
  const file=await downloaded;
  assert.equal(file.suggestedFilename(),'petquiz-settings.json','Backup opcional');
  const exported=JSON.parse(readFileSync(await file.path(),'utf8'));
- assert.equal(exported.questions.length,19,'Backup mantém perguntas');
+ assert.equal(exported.questions.length,initialQuestionCount,'Backup mantém perguntas');
  await admin.screenshot({path:'test-results/petquiz-admin-desktop.png',fullPage:true});
  await context.close();
  console.log('PASS admin: token único, CRUD, salvamento automático, publicação repetida e backup');
