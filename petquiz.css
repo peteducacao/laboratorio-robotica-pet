@@ -399,3 +399,36 @@ body{background:#ecf8f2}
 .final-hero{position:relative;z-index:1}
 .intro-rules{max-width:385px}
 @media(max-width:750px){.intro-rules{max-width:100%}.intro-rules>div{flex:1;min-width:130px}}
+
+/* Bônus de identificação — imagens SVG originais da bancada TinkerPET. */
+#bonusView[data-kind="identify"] .bonus-grid{grid-template-columns:minmax(0,1fr);gap:12px}
+#bonusView[data-kind="identify"] .bonus-stage{min-height:0;display:block;padding:18px}
+#bonusView[data-kind="identify"] .bonus-controls{min-height:0;padding:15px;gap:8px}
+#bonusView[data-kind="identify"] .bonus-controls .primary-btn{max-width:460px;margin:0 auto}
+#bonusView[data-kind="identify"] .bonus-message{text-align:center;min-height:25px}
+.bonus-images-top{display:flex;align-items:center;gap:10px;color:#17566b;margin:0 0 13px}
+.bonus-images-top>span{font-size:24px;color:#0e998b}
+.bonus-images-top strong{font-size:16px}
+.bonus-images-top small{margin-left:auto;font-size:11px;color:#678596}
+.bonus-image-options{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;max-width:650px;margin:auto}
+.bonus-image-choice{position:relative;min-width:0;min-height:145px;padding:16px 12px;
+ border:3px solid #d5e5df;border-radius:16px;background:linear-gradient(155deg,#fff,#edf8f3);
+ box-shadow:0 4px 0 #0d544619;display:flex;justify-content:center;align-items:center;cursor:pointer;
+ transition:transform .14s,border-color .14s,background .14s;overflow:hidden}
+.bonus-image-choice img{max-width:100%;max-height:135px;object-fit:contain;filter:drop-shadow(0 4px 3px #102b2720);pointer-events:none}
+.bonus-image-letter{position:absolute;left:10px;top:9px;z-index:1;width:29px;height:29px;border-radius:9px;background:#137e83;color:#fff;
+ font-size:14px;font-weight:900;display:grid;place-items:center}
+.bonus-image-choice:enabled:hover{transform:translateY(-2px);border-color:#6ebfad}
+.bonus-image-choice.selected,.bonus-image-choice[aria-pressed="true"]{border-color:#0fbaa1;background:#dcfff1;box-shadow:0 0 0 3px #56dec356}
+.bonus-image-choice.selected .bonus-image-letter{background:#0c9d7c}
+.bonus-image-choice:focus-visible{outline:3px solid #f5a634;outline-offset:2px}
+@media(max-width:640px){
+ #bonusView[data-kind="identify"] .bonus-stage{padding:12px}
+ .bonus-image-options{gap:8px}
+ .bonus-image-choice{min-height:119px;padding:12px 7px;border-radius:12px}
+ .bonus-image-choice img{max-height:104px}
+ .bonus-image-letter{width:23px;height:23px;left:7px;top:6px;font-size:12px}
+ .bonus-images-top{margin-bottom:9px}
+ .bonus-images-top strong{font-size:13px}
+}
+@media(prefers-reduced-motion:reduce){.bonus-image-choice{transition:none}}
