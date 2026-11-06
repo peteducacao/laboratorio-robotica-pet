@@ -1,9 +1,63 @@
 {
   "version": 1,
-  "quizEnabled": true,
-  "answerKeyEnabled": true,
+  "quizEnabled": false,
+  "answerKeyEnabled": false,
   "questionCount": 10,
   "bonusCount": 2,
+  "categories": [
+    {
+      "id": "componentes",
+      "name": "Componentes",
+      "stage": "concept"
+    },
+    {
+      "id": "situacoes",
+      "name": "Situações práticas",
+      "stage": "practice"
+    }
+  ],
+  "prerequisites": [
+    {
+      "id": "outros",
+      "name": "Outros componentes"
+    },
+    {
+      "id": "ponte",
+      "name": "Ponte H"
+    },
+    {
+      "id": "lm2596",
+      "name": "LM2596"
+    },
+    {
+      "id": "gangorra",
+      "name": "Chave gangorra"
+    },
+    {
+      "id": "jumper",
+      "name": "Jumpers"
+    },
+    {
+      "id": "esp32",
+      "name": "ESP32"
+    },
+    {
+      "id": "motor",
+      "name": "Motor DC"
+    },
+    {
+      "id": "rodas",
+      "name": "Rodas"
+    },
+    {
+      "id": "bateria",
+      "name": "Bateria de 9 V"
+    },
+    {
+      "id": "pilhas",
+      "name": "Pilhas AA"
+    }
+  ],
   "questions": [
     {
       "id": "componente-fora",
@@ -326,60 +380,6 @@
       "why": "Quando a roda esquerda avança mais rápido, o carrinho tende a virar para a direita.",
       "active": true,
       "categoryId": "situacoes"
-    }
-  ],
-  "categories": [
-    {
-      "id": "componentes",
-      "name": "Componentes",
-      "stage": "concept"
-    },
-    {
-      "id": "situacoes",
-      "name": "Situações práticas",
-      "stage": "practice"
-    }
-  ],
-  "prerequisites": [
-    {
-      "id": "outros",
-      "name": "Outros componentes"
-    },
-    {
-      "id": "ponte",
-      "name": "Ponte H"
-    },
-    {
-      "id": "lm2596",
-      "name": "LM2596"
-    },
-    {
-      "id": "gangorra",
-      "name": "Chave gangorra"
-    },
-    {
-      "id": "jumper",
-      "name": "Jumpers"
-    },
-    {
-      "id": "esp32",
-      "name": "ESP32"
-    },
-    {
-      "id": "motor",
-      "name": "Motor DC"
-    },
-    {
-      "id": "rodas",
-      "name": "Rodas"
-    },
-    {
-      "id": "bateria",
-      "name": "Bateria 9 V"
-    },
-    {
-      "id": "pilhas",
-      "name": "Pilhas AA"
     }
   ]
 }
