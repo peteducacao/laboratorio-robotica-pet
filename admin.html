@@ -5,8 +5,8 @@
 <title>Painel Admin • TinkerPET</title>
 <meta name="theme-color" content="#092747">
 <link rel="icon" href="assets/logo-pet.svg" type="image/svg+xml">
-<link rel="stylesheet" href="admin.css?v=3">
-<script defer src="admin.js?v=8"></script>
+<link rel="stylesheet" href="admin.css?v=4">
+<script defer src="admin.js?v=9"></script>
 </head>
 <body>
 <div class="auth-overlay" id="authOverlay">
@@ -60,24 +60,33 @@
      <div class="count-line"><div><strong>Perguntas por partida</strong><small>Selecionadas aleatoriamente</small></div>
       <div class="stepper"><button type="button" data-counter="questionCount" data-step="-1">−</button><output id="homeQuestionCount">10</output><button type="button" data-counter="questionCount" data-step="1">+</button></div>
      </div>
-     <div class="count-line"><div><strong>Bônus por partida</strong><small>Entre os sete desafios existentes</small></div>
+     <div class="count-line"><div><strong>Bônus por partida</strong><small id="bonusCatalogSummary">Consultando os desafios...</small></div>
       <div class="stepper"><button type="button" data-counter="bonusCount" data-step="-1">−</button><output id="homeBonusCount">2</output><button type="button" data-counter="bonusCount" data-step="1">+</button></div>
      </div>
-     <p class="muted">Perguntas ativas: <b id="questionAvailable">19</b></p>
+     <p class="muted">Perguntas ativas: <b id="questionAvailable">—</b></p>
     </section>
    </div>
   </section>
   <section class="page" id="page-questoes">
    <div class="page-actions">
-    <div><h2>Banco de questões</h2><p class="muted">Cadastre, altere, exclua ou desative perguntas.</p></div>
+    <div><h2>Banco de questões</h2><p class="muted">Arraste perguntas entre Ativas e Inativas. Toque para editar.</p></div>
     <button id="addQuestion" class="primary" type="button">+ Nova pergunta</button>
    </div>
    <div class="bank-layout">
     <section class="panel bank-list">
      <label for="searchQuestions" class="sr-only">Buscar perguntas</label>
      <input id="searchQuestions" placeholder="Buscar pergunta...">
-     <div class="bank-toolbar"><span id="bankCount">19 perguntas</span><span>Clique para editar</span></div>
-     <div id="questionList" class="question-list"></div>
+     <div class="bank-toolbar"><span id="bankCount">Carregando perguntas...</span><span><span aria-hidden="true">↔</span> Arraste para mover</span></div>
+     <div id="questionList" class="question-board" aria-label="Organizar perguntas ativas e inativas">
+      <section class="question-zone" data-status-zone="active" aria-label="Perguntas ativas">
+       <h3>Ativas <span id="activeQuestionCount">—</span></h3>
+       <div id="activeQuestionList" class="question-list"></div>
+      </section>
+      <section class="question-zone inactive-zone" data-status-zone="inactive" aria-label="Perguntas inativas">
+       <h3>Inativas <span id="inactiveQuestionCount">—</span></h3>
+       <div id="inactiveQuestionList" class="question-list"></div>
+      </section>
+     </div>
     </section>
     <section class="panel question-editor" id="editorPanel">
      <h2 id="editorTitle">Editar pergunta</h2>
@@ -95,7 +104,7 @@
       </div>
       <label id="topicLabel">Assunto / pré-requisito<select id="topicInput"></select></label>
       <p class="muted">As opções podem ser gerenciadas em <button type="button" class="inline-action" data-page="taxonomia">Categorias e requisitos</button>.</p>
-      <label class="plain-check"><input id="activeQuestion" type="checkbox"> Pergunta ativa</label>
+      <p id="questionActivityLabel" class="muted">Mova a pergunta entre as colunas Ativas e Inativas para alterar sua disponibilidade.</p>
       <div class="editor-buttons"><button type="submit" class="primary">Salvar pergunta</button><button type="button" class="danger" id="deleteQuestion">Excluir</button></div>
      </form>
     </section>
@@ -136,7 +145,7 @@
      <h2>🎮 Partida</h2>
      <div class="count-line"><span>Perguntas por partida</span><div class="stepper"><button type="button" data-counter="questionCount" data-step="-1">−</button><output id="settingsQuestionCount">10</output><button type="button" data-counter="questionCount" data-step="1">+</button></div></div>
      <div class="count-line"><span>Bônus por partida</span><div class="stepper"><button type="button" data-counter="bonusCount" data-step="-1">−</button><output id="settingsBonusCount">2</output><button type="button" data-counter="bonusCount" data-step="1">+</button></div></div>
-     <p class="muted">Os desafios bônus continuam fixos, sem editor próprio.</p>
+     <p class="muted" id="bonusSettingsSummary">A quantidade disponível é consultada no catálogo de desafios. Os bônus não têm editor próprio.</p>
     </section>
    </div>
    <section class="panel publish-panel">
@@ -149,9 +158,9 @@
    <div class="page-actions"><div><h2>Como usar o painel</h2><p class="muted">Um guia simples para administrar o PETQuiz.</p></div></div>
    <section class="panel help-panel">
     <h2>1. Início</h2><p>Use os atalhos para acessar as perguntas, abrir o jogo e alterar as configurações. Nos controles de bloqueio, verde significa bloqueado e cinza significa liberado. PETQuiz e Gabarito são independentes.</p>
-    <h2>2. Banco de questões</h2><p>Toque numa pergunta para abrir o editor. Mude enunciado, alternativas, gabarito, categoria, assunto e situação ativa. Use <strong>Salvar pergunta</strong> após editar. Também é possível criar novas perguntas ou excluir as que não serão utilizadas.</p>
+    <h2>2. Banco de questões</h2><p>Toque numa pergunta para abrir o editor. Para ativar ou desativar, arraste a pergunta entre as colunas Ativas e Inativas, também no celular. Mude enunciado, alternativas, gabarito, categoria e assunto. Use <strong>Salvar pergunta</strong> após editar. Também é possível criar novas perguntas ou excluir as que não serão utilizadas.</p>
     <h2>3. Categorias e requisitos</h2><p>Crie, renomeie ou exclua categorias e assuntos. Os que já são utilizados por perguntas precisam ser desvinculados antes da exclusão. Categorias e requisitos ficam disponíveis para escolha no editor.</p>
-    <h2>4. Configurações do jogo</h2><p>Escolha quantas perguntas e quantos bônus aparecerão por partida. Os sete desafios bônus existentes continuam fixos e não têm editor individual.</p>
+    <h2>4. Configurações do jogo</h2><p>Escolha quantas perguntas e quantos bônus aparecerão por partida. A quantidade de bônus disponíveis é atualizada automaticamente conforme o catálogo. O limite por partida também depende do número de perguntas: cada bônus aparece entre duas perguntas. Não há editor individual de bônus.</p>
     <h2>5. Salvar e atualizar para todos</h2><p>O token usado para entrar também permite publicar. Após salvar uma pergunta ou mudar uma configuração, aguarde o aviso <strong>Publicado para todos!</strong>. Em caso de falha, use <strong>Publicar agora</strong>. O backup é opcional.</p>
     <h2>6. Senha do painel</h2><p>O token GitHub substitui a antiga senha do Admin. Ele é guardado somente nesta sessão do navegador e não é incluído nas perguntas ou no site. O mesmo token pode atender ao catálogo se tiver acesso aos dois repositórios. Use <strong>Sair</strong> para encerrar a sessão.</p>
    </section>
