@@ -5,8 +5,8 @@
 <title>Painel Admin • TinkerPET</title>
 <meta name="theme-color" content="#092747">
 <link rel="icon" href="assets/logo-pet.svg" type="image/svg+xml">
-<link rel="stylesheet" href="admin.css?v=1">
-<script defer src="admin.js?v=1"></script>
+<link rel="stylesheet" href="admin.css?v=2">
+<script defer src="admin.js?v=2"></script>
 </head>
 <body>
 <div class="auth-overlay" id="authOverlay">
@@ -28,6 +28,7 @@
   <nav class="side-nav" aria-label="Navegação do painel">
    <button class="nav-btn active" data-page="inicio" type="button"><span>⌂</span> Início</button>
    <button class="nav-btn" data-page="questoes" type="button"><span>▤</span> Banco de questões</button>
+   <button class="nav-btn" data-page="taxonomia" type="button"><span>☷</span> Categorias e requisitos</button>
    <button class="nav-btn" data-page="configuracoes" type="button"><span>⚙</span> Configurações do jogo</button>
   </nav>
   <button class="logout" id="logout" type="button">↪ Sair</button>
@@ -89,21 +90,44 @@
       </div>
       <div class="editor-mini">
        <label>Gabarito<select id="correctSelect"><option value="0">A</option><option value="1">B</option><option value="2">C</option><option value="3">D</option></select></label>
-       <label>Categoria<select id="stageSelect"><option value="concept">Componentes</option><option value="practice">Situação prática</option></select></label>
+       <label>Categoria<select id="stageSelect" required></select></label>
       </div>
-      <label>Assunto / pré-requisito<input id="topicInput" maxlength="60" placeholder="Ex.: esp32, motores, rodas"></label>
-      <p class="muted">Nas situações práticas, indique o assunto que a criança precisa conhecer antes.</p>
+      <label id="topicLabel">Assunto / pré-requisito<select id="topicInput"></select></label>
+      <p class="muted">As opções podem ser gerenciadas em <button type="button" class="inline-action" data-page="taxonomia">Categorias e requisitos</button>.</p>
       <label class="plain-check"><input id="activeQuestion" type="checkbox"> Pergunta ativa</label>
       <div class="editor-buttons"><button type="submit" class="primary">Salvar pergunta</button><button type="button" class="danger" id="deleteQuestion">Excluir</button></div>
      </form>
     </section>
    </div>
   </section>
+  <section class="page" id="page-taxonomia">
+   <div class="page-actions"><div><h2>Categorias e pré-requisitos</h2><p class="muted">Crie e organize as opções usadas nas perguntas.</p></div></div>
+   <div class="two-column taxonomy-grid">
+    <section class="panel">
+     <h2>Categorias</h2>
+     <div id="categoryList" class="taxonomy-list"></div>
+     <form id="categoryForm" class="taxonomy-form">
+      <label>Nome da categoria<input id="categoryName" placeholder="Ex.: Componentes" maxlength="60" required></label>
+      <label>Tipo<select id="categoryStage"><option value="concept">Conhecimento</option><option value="practice">Situação prática</option></select></label>
+      <div class="taxonomy-actions"><button type="submit" class="primary" id="categorySave">Adicionar</button><button type="button" class="secondary" id="categoryCancel">Cancelar</button></div>
+     </form>
+    </section>
+    <section class="panel">
+     <h2>Pré-requisitos e assuntos</h2>
+     <div id="topicList" class="taxonomy-list"></div>
+     <form id="topicForm" class="taxonomy-form">
+      <label>Nome do assunto<input id="topicName" placeholder="Ex.: Motores" maxlength="60" required></label>
+      <div class="taxonomy-actions"><button type="submit" class="primary" id="topicSave">Adicionar</button><button type="button" class="secondary" id="topicCancel">Cancelar</button></div>
+     </form>
+    </section>
+   </div>
+   <p class="muted taxonomy-tip">Opções em uso por perguntas não podem ser excluídas. Ao renomear, as perguntas continuam vinculadas.</p>
+  </section>
   <section class="page" id="page-configuracoes">
    <div class="page-actions"><div><h2>Configurações do jogo</h2><p class="muted">Defina o que ficará disponível para os alunos.</p></div></div>
    <div class="two-column">
     <section class="panel">
-     <h2>🔓 Acesso</h2>
+     <h2>🔓 Acesso</h2><p class="muted">Alterações não publicadas funcionam apenas como prévia neste navegador de administrador.</p>
      <label class="switch-line"><span>PETQuiz</span><input type="checkbox" id="settingsQuizEnabled"><i></i></label>
      <label class="switch-line"><span>Gabarito</span><input type="checkbox" id="settingsAnswerEnabled"><i></i></label>
     </section>
@@ -115,7 +139,7 @@
     </section>
    </div>
    <section class="panel publish-panel">
-    <h2>Publicar para todos os dispositivos</h2>
+    <h2>Publicar para todos os dispositivos</h2><p class="muted"><strong>Importante:</strong> desligar o acesso aqui não bloqueia outros celulares até publicar.</p>
     <p>Suas edições são salvas como rascunho neste navegador. Para atualizar o site dos alunos, informe um token GitHub com acesso de escrita ao repositório e clique em <b>Publicar</b>. O token dura apenas enquanto esta aba estiver aberta.</p>
     <label for="githubToken">Token de publicação do GitHub</label>
     <input type="password" id="githubToken" autocomplete="off" placeholder="github_pat_...">
