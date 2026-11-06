@@ -157,3 +157,6 @@ body{overflow:hidden;background:#091e39;font-family:'DM Sans',Arial,sans-serif}
  .main-action .cta-energy,.main-action .side-energy{display:none!important}
  /* Brilho do botão preservado; apenas a moldura deslocada fica oculta. */
 }
+
+/* No aplicativo instalado, o contorno duplicado permanece oculto. */
+.welcome.installed-pwa .main-action .cta-energy{display:none!important}
