@@ -284,7 +284,7 @@
         "Aumentar a saída até 9 V",
         "Manter a saída em 7 V",
         "Diminuir a saída até 3 V",
-        "Reduzir a saída até 5 V e conferir a medição"
+        "Reduzir a saída até 5 V"
       ],
       "correct": 3,
       "why": "No projeto, regulamos e conferimos a saída do LM2596 em aproximadamente 5 V antes de alimentar o ESP32.",
