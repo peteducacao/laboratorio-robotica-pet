@@ -152,6 +152,8 @@ try{
  console.log('PASS admin mobile: lista, formulário e responsividade');
 
  const mobile=await browser.newContext({viewport:{width:390,height:844},isMobile:true,hasTouch:true});
+ const gameSettings={...original,quizEnabled:true,answerKeyEnabled:true};
+ await mobile.route('**/petquiz-settings.json*',route=>route.fulfill({status:200,contentType:'application/json',body:JSON.stringify(gameSettings)}));
  const quiz=await mobile.newPage();quiz.on('pageerror',e=>errors.push('PETQuiz '+e.message));
  await quiz.addInitScript(()=>{window.__PETQUIZ_TEST_SPEED__=true});
  await quiz.goto(origin+'/petquiz.html');
@@ -208,6 +210,7 @@ try{
  console.log('PASS bônus: expressão muda por direção, intensidade, erro e acerto');
 
  const allowed=await browser.newContext({viewport:{width:390,height:844},isMobile:true,hasTouch:true});
+ await allowed.route('**/petquiz-settings.json*',route=>route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({...original,quizEnabled:true,answerKeyEnabled:true})}));
  const allowedPage=await allowed.newPage();
  await allowedPage.goto(origin+'/projects.html');
  await allowedPage.locator('#openGate').click();
