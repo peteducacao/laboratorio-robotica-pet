@@ -380,6 +380,22 @@
       "why": "Quando a roda esquerda avança mais rápido, o carrinho tende a virar para a direita.",
       "active": true,
       "categoryId": "situacoes"
+    },
+    {
+      "id": "custom-mw4fwhl0-4gi5",
+      "stage": "concept",
+      "categoryId": "componentes",
+      "topic": "outros",
+      "prompt": "Teste",
+      "choices": [
+        "A",
+        "A",
+        "A",
+        "A"
+      ],
+      "correct": 1,
+      "why": "",
+      "active": true
     }
   ]
 }
