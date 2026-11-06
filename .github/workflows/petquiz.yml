@@ -6,6 +6,14 @@ on:
       - 'petquiz.html'
       - 'petquiz.css'
       - 'petquiz.js'
+      - 'petquiz-settings.json'
+      - 'admin.html'
+      - 'admin.css'
+      - 'admin.js'
+      - 'site-access.js'
+      - 'gabarito.html'
+      - 'home.css'
+      - 'home.js'
       - 'app.js'
       - 'app-mobile.js'
       - 'mobile-editor.css'
@@ -13,6 +21,7 @@ on:
       - 'projects.html'
       - 'projects.css'
       - 'tests/petquiz-browser.mjs'
+      - 'tests/admin-and-quiz-browser.mjs'
       - 'tests/mobile-loose-end-browser.mjs'
       - '.github/workflows/petquiz.yml'
   workflow_dispatch:
@@ -30,6 +39,9 @@ jobs:
       - name: Conferir sintaxe
         run: |
           node --check petquiz.js
+          node --check admin.js
+          node --check site-access.js
+          node --check tests/admin-and-quiz-browser.mjs
           node --check app.js
           node --check app-mobile.js
           node --check tests/petquiz-browser.mjs
@@ -40,6 +52,8 @@ jobs:
           npx playwright install --with-deps chromium
       - name: Reproduzir no Android fio solto e várias curvas após retomada
         run: node tests/mobile-loose-end-browser.mjs
+      - name: Testar painel admin, salvar questões, jogar e bloquear acessos
+        run: node tests/admin-and-quiz-browser.mjs
       - name: Jogar PETQuiz em quatro telas
         run: node tests/petquiz-browser.mjs
       - name: Capturas de teste
