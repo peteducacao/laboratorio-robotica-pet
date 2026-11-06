@@ -1,6 +1,8 @@
 'use strict';
-(()=>{
+(async()=>{
 const $=id=>document.getElementById(id);
+if(window.tinkerpetAccessReady)await window.tinkerpetAccessReady;
+if(window.tinkerpetAccessFlags?.answerKeyEnabled===false)return;
 if(sessionStorage.getItem('tinkerpet-gabarito-access')!=='ok'){location.replace('projects.html');return;}
 const parts={
  b1:{label:'Bateria 9 V',asset:'assets/bateria-9v-desenhada.svg',x:20,y:85,w:88,h:125},
