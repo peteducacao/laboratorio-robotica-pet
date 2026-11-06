@@ -88,7 +88,7 @@
       ],
       "correct": 2,
       "why": "A ponte H recebe os comandos do ESP32 e controla o acionamento dos motores.",
-      "active": false,
+      "active": true,
       "categoryId": "componentes"
     },
     {
