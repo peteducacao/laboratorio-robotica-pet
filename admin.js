@@ -45,6 +45,7 @@
   categories:[{id:'componentes',name:'Componentes',stage:'concept'},{id:'situacoes',name:'Situações práticas',stage:'practice'}],
   prerequisites:[],questions:[]};
  let settings={...placeholder},selectedId=null,remoteSettings=null,editingCategory=null,editingTopic=null;
+ let publishTimer=null,publishBusy=false,publishAgain=false;
  let toastTimer=null;
  function showSaveToast(message='Alterações salvas!'){
   const toast=$('saveToast');$('saveToastText').textContent=message;
@@ -58,10 +59,15 @@
  function notice(message,error=false){
   const el=$('notice');el.textContent=message;el.classList.toggle('error',error);el.hidden=false;
  }
- function saveDraft(){
+ function saveDraft(autoPublish=true){
   localStorage.setItem(DRAFT,JSON.stringify(settings));
-  $('saveState').textContent='Salvo neste aparelho · envie o arquivo para atualizar todos';
-  showSaveToast();
+  $('saveState').textContent=autoPublish?'Salvo neste aparelho · publicando...':'Rascunho salvo · termine de editar para publicar';
+  showSaveToast(autoPublish?'Salvo! Publicando...':'Rascunho salvo!');
+  if(autoPublish)schedulePublish();
+ }
+ function schedulePublish(){
+  clearTimeout(publishTimer);
+  publishTimer=setTimeout(()=>{publish(false)},850);
  }
  const defaultCategory=stage=>stage==='practice'?'situacoes':'componentes';
  const slug=text=>text.normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'').slice(0,35)||'novo';
@@ -247,7 +253,7 @@
   const id='custom-'+Date.now().toString(36)+'-'+Math.random().toString(36).slice(2,6);
   const q={id,stage:'concept',categoryId:settings.categories.find(c=>c.stage==='concept')?.id||settings.categories[0]?.id,
    topic:settings.prerequisites[0]?.id||'',prompt:'',choices:['','','',''],correct:0,why:'',active:true};
-  settings.questions.push(q);saveDraft();setPage('questoes');selectQuestion(id,true);
+  settings.questions.push(q);saveDraft(false);setPage('questoes');selectQuestion(id,true);
   notice('Nova pergunta criada. Preencha e salve as alternativas.');
  }
  function validate(){
