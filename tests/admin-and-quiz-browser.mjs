@@ -207,6 +207,16 @@ try{
  await mobile.close();
  console.log('PASS bônus: expressão muda por direção, intensidade, erro e acerto');
 
+ const allowed=await browser.newContext({viewport:{width:390,height:844},isMobile:true,hasTouch:true});
+ const allowedPage=await allowed.newPage();
+ await allowedPage.goto(origin+'/projects.html');
+ await allowedPage.locator('#openGate').click();
+ await allowedPage.waitForURL(/gabarito\.html/,{timeout:8000});
+ assert(await allowedPage.locator('#chooser').isVisible(),'Gabarito liberado abre sem senha');
+ await allowedPage.goto(origin+'/gabarito.html');
+ assert(await allowedPage.locator('#chooser').isVisible(),'Link direto abre gabarito liberado');
+ await allowed.close();
+ console.log('PASS acesso: gabarito aberto sem pedir senha, pelo menu e por link direto');
  const locked=await browser.newContext({viewport:{width:390,height:844},isMobile:true,hasTouch:true});
  await locked.addInitScript(()=>window.__PETQUIZ_TEST_SPEED__=true);
  const lockPage=await locked.newPage();
