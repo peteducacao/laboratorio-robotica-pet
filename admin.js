@@ -15,8 +15,10 @@
   return;
  }
  $('authOverlay').hidden=true;$('adminShell').hidden=false;
- const placeholder={version:1,quizEnabled:true,answerKeyEnabled:true,questionCount:10,bonusCount:2,questions:[]};
- let settings={...placeholder},selectedId=null,remoteSettings=null;
+ const placeholder={version:1,quizEnabled:true,answerKeyEnabled:true,questionCount:10,bonusCount:2,
+  categories:[{id:'componentes',name:'Componentes',stage:'concept'},{id:'situacoes',name:'Situações práticas',stage:'practice'}],
+  prerequisites:[],questions:[]};
+ let settings={...placeholder},selectedId=null,remoteSettings=null,editingCategory=null,editingTopic=null;
  const clone=obj=>JSON.parse(JSON.stringify(obj));
  const qs=()=>settings.questions;
  function notice(message,error=false){
@@ -24,14 +26,30 @@
  }
  function saveDraft(){
   localStorage.setItem(DRAFT,JSON.stringify(settings));
-  $('saveState').textContent='Rascunho salvo neste navegador · publique para atualizar os alunos';
+  $('saveState').textContent='Prévia local · publique para atualizar os alunos';
  }
+ const defaultCategory=stage=>stage==='practice'?'situacoes':'componentes';
+ const slug=text=>text.normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'').slice(0,35)||'novo';
  function normalize(data){
   if(!data||!Array.isArray(data.questions))throw Error('Banco de questões inválido.');
+  const categories=Array.isArray(data.categories)&&data.categories.length?
+   data.categories.filter(c=>c?.id&&c.name&&['concept','practice'].includes(c.stage)):
+   clone(placeholder.categories);
+  const names={outros:'Outros componentes',ponte:'Ponte H',lm2596:'LM2596',
+   gangorra:'Chave gangorra',jumper:'Jumpers',esp32:'ESP32',motor:'Motor DC',
+   rodas:'Rodas',bateria:'Bateria de 9 V',pilhas:'Pilhas AA'};
+  const topicIds=new Set(data.questions.flatMap(q=>[q.topic,...(q.requires||[])].filter(Boolean)));
+  const prerequisites=Array.isArray(data.prerequisites)?data.prerequisites.filter(t=>t?.id&&t.name):[];
+  for(const id of topicIds)if(!prerequisites.some(t=>t.id===id))prerequisites.push({id,name:names[id]||id});
   const out={version:1,quizEnabled:data.quizEnabled!==false,answerKeyEnabled:data.answerKeyEnabled!==false,
    questionCount:Math.max(1,Math.min(99,Math.trunc(Number(data.questionCount)||10))),
    bonusCount:Math.max(0,Math.min(7,Math.trunc(data.bonusCount==null?2:Number(data.bonusCount)||0))),
-   questions:data.questions.filter(q=>q&&typeof q.prompt==='string').map(q=>({...q,active:q.active!==false}))};
+   categories,prerequisites,
+   questions:data.questions.filter(q=>q&&typeof q.prompt==='string').map(q=>({
+    ...q,active:q.active!==false,
+    categoryId:categories.some(c=>c.id===q.categoryId)?q.categoryId:
+     (categories.find(c=>c.stage===q.stage)?.id||defaultCategory(q.stage))
+   }))};
   const active=out.questions.filter(q=>q.active).length;
   if(active&&out.questionCount>active)out.questionCount=active;
   return out;
@@ -54,10 +72,17 @@
   for(const b of document.querySelectorAll('.nav-btn'))b.classList.toggle('active',b.dataset.page===page);
   const labels={inicio:['Painel de Controle','Gerencie o PETQuiz de forma rápida.'],
    questoes:['Banco de Questões','Cadastre e revise as perguntas do jogo.'],
+   taxonomia:['Categorias e Requisitos','Organize as opções para cadastrar perguntas.'],
    configuracoes:['Configurações do Jogo','Defina a disponibilidade e o número de desafios.']};
   $('pageTitle').textContent=labels[page][0];$('pageDescription').textContent=labels[page][1];
   if(page==='questoes')renderList();
+  if(page==='taxonomia')renderTaxonomies();
   window.scrollTo({top:0,behavior:'instant'});
+  const active=document.querySelector('.nav-btn.active'),nav=document.querySelector('.side-nav');
+  if(active&&nav&&window.innerWidth<=700){
+   const goal=active.offsetLeft-nav.offsetLeft-(nav.clientWidth-active.clientWidth)/2;
+   nav.scrollTo({left:Math.max(0,goal),behavior:'smooth'});
+  }
  }
  function renderList(){
   const filter=$('searchQuestions').value.trim().toLowerCase();
