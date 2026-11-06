@@ -4,6 +4,15 @@
  const CONFIG='petquiz-settings.json',DRAFT='tinkerpet-admin-draft-v1';
  const auth=sessionStorage.getItem('tinkerpet-admin-auth')==='ok';
  const login=$('loginForm');
+ const visibility=$('toggleAdminPassword');
+ visibility.addEventListener('click',()=>{
+  const input=$('password'),show=input.type==='password';
+  input.type=show?'text':'password';
+  visibility.setAttribute('aria-pressed',String(show));
+  visibility.setAttribute('aria-label',show?'Ocultar senha':'Mostrar senha');
+  visibility.title=show?'Ocultar senha':'Mostrar senha';
+  input.focus();
+ });
  if(!auth){
   login.addEventListener('submit',e=>{
    e.preventDefault();
