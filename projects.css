@@ -561,3 +561,8 @@
 .nav #openAdmin{color:#678092;font-size:13px;opacity:.82}
 .nav #openAdmin:hover{background:#eff8f7;color:#087d73;opacity:1}
 @media(max-width:810px){.sidebar .nav #openAdmin{grid-column:1/-1;justify-content:center;min-height:42px;font-size:12px;opacity:.8}}
+
+/* Admin discreto no menu, logo abaixo de PETQuiz. */
+.nav #openAdmin{color:#678092;font-size:13px;opacity:.82}
+.nav #openAdmin:hover{background:#eff8f7;color:#087d73;opacity:1}
+@media(max-width:810px){.sidebar .nav #openAdmin{grid-column:1/-1;justify-content:center;min-height:42px;font-size:12px;opacity:.8}}
