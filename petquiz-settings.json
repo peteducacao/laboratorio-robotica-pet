@@ -1,7 +1,7 @@
 {
   "version": 1,
   "quizEnabled": true,
-  "answerKeyEnabled": false,
+  "answerKeyEnabled": true,
   "questionCount": 10,
   "bonusCount": 2,
   "categories": [
