@@ -225,7 +225,17 @@
    if(!q.prompt.trim()||!Array.isArray(q.choices)||q.choices.length!==4||
     q.choices.some(c=>!String(c).trim()))throw Error('Preencha as quatro alternativas de todas as perguntas. Verifique: '+(q.prompt||q.id));
    if(!Number.isInteger(q.correct)||q.correct<0||q.correct>3)throw Error('Gabarito inválido: '+q.prompt);
+   const category=settings.categories.find(c=>c.id===q.categoryId);
+   if(!category||category.stage!==q.stage)throw Error('Categoria inválida: '+q.prompt);
+   if(q.stage==='concept'){
+    if(q.topic&&!settings.prerequisites.some(t=>t.id===q.topic))throw Error('Assunto inválido: '+q.prompt);
+   }else if((q.requires||[]).some(id=>!settings.prerequisites.some(t=>t.id===id))){
+    throw Error('Pré-requisito inválido: '+q.prompt);
+   }
   }
+  const activeTopics=new Set(active.filter(q=>q.stage==='concept').map(q=>q.topic).filter(Boolean));
+  const invalidPractice=active.find(q=>q.stage==='practice'&&(q.requires||[]).some(t=>!activeTopics.has(t)));
+  if(invalidPractice)throw Error('Esta situação prática precisa de uma pergunta ativa que apresente seu assunto: '+invalidPractice.prompt);
   settings.questionCount=Math.max(1,Math.min(settings.questionCount,active.length));
   settings.bonusCount=Math.max(0,Math.min(7,settings.bonusCount));
   return true;
