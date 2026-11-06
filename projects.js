@@ -406,11 +406,10 @@
  function closeCredits(){
   if($('creditsDialog').open)$('creditsDialog').close();
  }
- function openGate(){
-  if(sessionStorage.getItem('tinkerpet-gabarito-access')==='ok'){
-   location.href='gabarito.html?release=20261031-gpio18-mobile-fix-v2';return;
-  }
-  $('gatePassword').value='';$('gatePassword').type='password';$('toggleGatePassword').setAttribute('aria-pressed','false');$('toggleGatePassword').setAttribute('aria-label','Mostrar senha');$('toggleGatePassword').style.background='#fff';$('gateError').textContent='';$('gateDialog').showModal();$('gatePassword').focus();
+ async function openGate(){
+  const options=await (window.tinkerpetAccessReady||Promise.resolve({answerKeyEnabled:true}));
+  if(options.answerKeyEnabled===false){toast('Gabarito indisponível.');return}
+  location.href='gabarito.html';
  }
  function attach(){
   $('projectsGrid').addEventListener('click',e=>{
