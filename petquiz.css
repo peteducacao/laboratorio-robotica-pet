@@ -368,3 +368,28 @@ body{background:#ecf8f2}
  .bonus-car[data-mood=success],.bonus-car[data-mood=fail]{animation:none}
  .bonus-wheel.spinning{animation-duration:2s}
 }
+
+/* PETQuiz: expressões que reagem diretamente ao ajuste das velocidades */
+.bonus-car[data-speed=slow] .bonus-mouth{transform:scale(.8)}
+.bonus-car[data-speed=medium] .bonus-mouth{transform:scale(1.08)}
+.bonus-car[data-speed=fast] .bonus-mouth{transform:scale(1.2)}
+.bonus-car[data-speed=fast]:not([data-mood=fail]):not([data-mood=success]) .bonus-cheek{opacity:.85}
+.bonus-car[data-mood=surprised] .bonus-mouth{height:20px;width:18px;border:4px solid #a9f4cb;border-radius:50%}
+.bonus-car[data-mood=left][data-speed=fast] .bonus-eyes i:first-child,
+.bonus-car[data-mood=right][data-speed=fast] .bonus-eyes i:last-child{height:15px}
+.bonus-car[data-speed=fast]:not([data-mood=fail]):not([data-mood=success]){filter:drop-shadow(0 6px 8px #0a92a950)}
+/* Fim da partida: robô suspenso acima do pódio e confetes pelo cenário inteiro */
+.final-view{position:relative;isolation:isolate;overflow:hidden}
+.final-view::before,.final-view::after{content:"";position:absolute;inset:-70% -15% 0;pointer-events:none;z-index:-1;
+ background-image:radial-gradient(#efb83c 3px,transparent 4px),
+ radial-gradient(#20b69e 3px,transparent 4px),
+ radial-gradient(#438fda 2px,transparent 3px),
+ radial-gradient(#eb7779 3px,transparent 4px);
+ background-size:137px 173px,169px 195px,113px 149px,199px 211px;
+ background-position:9px 19px,64px 94px,11px 61px,82px 30px;
+ animation:petQuizConfetti 12s linear infinite;opacity:.72}
+.final-view::after{animation-duration:17s;animation-direction:reverse;opacity:.38;background-position:80px 0,12px 62px,75px 22px,33px 115px}
+@keyframes petQuizConfetti{to{transform:translateY(240px)}}
+.final-robot .pet-rover-svg{bottom:130px}
+@media(max-width:750px){.final-robot .pet-rover-svg{bottom:65px}}
+@media(prefers-reduced-motion:reduce){.final-view::before,.final-view::after{animation:none}}
