@@ -407,8 +407,8 @@
   if($('creditsDialog').open)$('creditsDialog').close();
  }
  async function openGate(){
-  const options=await (window.tinkerpetAccessReady||Promise.resolve({answerKeyEnabled:true}));
-  if(options.answerKeyEnabled===false){toast('Gabarito indisponível.');return}
+  if(window.tinkerpetAccessReady)await window.tinkerpetAccessReady;
+  if(window.tinkerpetAccessFlags?.answerKeyEnabled===false){toast('Gabarito indisponível.');return}
   location.href='gabarito.html';
  }
  function attach(){
