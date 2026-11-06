@@ -246,6 +246,72 @@ try{
  await mobile.close();
  console.log('PASS bônus: expressão muda por direção, intensidade, erro e acerto');
 
+ // Quatro combinações independentes + rascunho antigo que não pode bloquear o segundo recurso.
+ for(const [quizEnabled,answerKeyEnabled] of [[true,true],[false,true],[true,false],[false,false]]){
+  const flags={...original,quizEnabled,answerKeyEnabled};
+  const scenario=await browser.newContext({viewport:{width:390,height:844},isMobile:true,hasTouch:true});
+  await scenario.addInitScript(snapshot=>{
+   sessionStorage.setItem('tinkerpet-admin-auth','ok');
+   // Simula um rascunho de sessão anterior que tinha ambos bloqueados.
+   localStorage.setItem('tinkerpet-admin-draft-v1',JSON.stringify({...snapshot,quizEnabled:false,answerKeyEnabled:false}));
+  },original);
+  await scenario.route('**/petquiz-settings.json*',route=>
+   route.fulfill({status:200,contentType:'application/json',body:JSON.stringify(flags)}));
+  const page=await scenario.newPage();
+  page.on('pageerror',e=>errors.push('Acessos '+e.message));
+  await page.goto(origin+'/projects.html');
+  await page.waitForFunction(()=>!!window.tinkerpetAccessFlags&&
+   document.getElementById('openPetQuiz')?.hasAttribute('aria-disabled')&&
+   document.getElementById('openGate')?.hasAttribute('aria-disabled'));
+  const state=await page.evaluate(()=>({
+   quiz:document.getElementById('openPetQuiz').getAttribute('aria-disabled'),
+   answer:document.getElementById('openGate').getAttribute('aria-disabled'),
+   flags:window.tinkerpetAccessFlags
+  }));
+  assert.equal(state.quiz,String(!quizEnabled),'PETQuiz independente: '+JSON.stringify(flags));
+  assert.equal(state.answer,String(!answerKeyEnabled),'Gabarito independente: '+JSON.stringify(flags));
+  assert.equal(state.flags.quizEnabled,quizEnabled,'Valor do PETQuiz não herda rascunho');
+  assert.equal(state.flags.answerKeyEnabled,answerKeyEnabled,'Valor do Gabarito não herda rascunho');
+  await page.goto(origin+'/petquiz.html');
+  if(quizEnabled){
+   await page.waitForFunction(()=>!!window.PetQuiz,{timeout:8000});
+   assert(await page.locator('#startQuiz').isVisible(),'PETQuiz liberado entra');
+  }else{
+   await page.waitForFunction(()=>document.body.textContent.includes('PETQuiz indisponível'),{timeout:8000});
+  }
+  await page.goto(origin+'/gabarito.html');
+  if(answerKeyEnabled){
+   await page.waitForFunction(()=>document.getElementById('chooser')&&
+    getComputedStyle(document.getElementById('chooser')).display!=='none',{timeout:8000});
+   assert(await page.locator('#chooser').isVisible(),'Gabarito liberado sem senha');
+  }else{
+   await page.waitForFunction(()=>document.body.textContent.includes('Gabarito indisponível'),{timeout:8000});
+  }
+  await scenario.close();
+ }
+ console.log('PASS permissões: quatro combinações independentes e rascunho antigo ignorado');
+ // O painel também precisa ignorar o valor antigo do controle NÃO alterado.
+ {
+  const stale=await browser.newContext({viewport:{width:390,height:844},isMobile:true,hasTouch:true});
+  await stale.addInitScript(snapshot=>{
+   sessionStorage.setItem('tinkerpet-admin-github-token','github_pat_teste_publicacao');
+   localStorage.setItem('tinkerpet-admin-draft-v1',JSON.stringify({...snapshot,quizEnabled:false,answerKeyEnabled:false}));
+   localStorage.removeItem('tinkerpet-admin-draft-access-keys-v1');
+  },original);
+  await stale.route('**/petquiz-settings.json*',route=>
+   route.fulfill({status:200,contentType:'application/json',
+    body:JSON.stringify({...original,quizEnabled:false,answerKeyEnabled:true})}));
+  const ap=await stale.newPage();
+  ap.on('pageerror',e=>errors.push('Admin stale '+e.message));
+  await ap.goto(origin+'/admin.html');
+  await ap.waitForFunction(()=>!!window.TinkerPETAdmin,{timeout:8000});
+  const opts=await ap.evaluate(()=>window.TinkerPETAdmin.getSettings());
+  assert.equal(opts.quizEnabled,false,'Respeitar PETQuiz bloqueado no publicado');
+  assert.equal(opts.answerKeyEnabled,true,'Gabarito liberado não pode herdar bloqueio antigo');
+  await stale.close();
+ }
+ console.log('PASS admin: rascunho antigo não muda outro bloqueio');
+
  const allowed=await browser.newContext({viewport:{width:390,height:844},isMobile:true,hasTouch:true});
  await allowed.route('**/petquiz-settings.json*',route=>route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({...original,quizEnabled:true,answerKeyEnabled:true})}));
  const allowedPage=await allowed.newPage();
