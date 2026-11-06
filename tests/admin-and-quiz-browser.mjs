@@ -234,6 +234,34 @@ try{
  });
  assert(editorVisible,'A pergunta selecionada leva ao editor no celular');
  assert.equal(await mobileAdmin.locator('#topicInput').evaluate(el=>el.tagName),'SELECT');
+ // Arrastar de verdade usando o gesto de toque do navegador no celular.
+ const mobileFirst=mobileAdmin.locator('#activeQuestionList .question-row').first();
+ await mobileFirst.scrollIntoViewIfNeeded();
+ const mobileQuestionId=await mobileFirst.getAttribute('data-question-id');
+ const touch=await mobileAdmin.context().newCDPSession(mobileAdmin);
+ const moveTouch=async(from,to)=>{
+  await from.scrollIntoViewIfNeeded();
+  const a=await from.boundingBox(),b=await to.boundingBox();
+  assert(a&&b,'As colunas devem estar visíveis');
+  const x=a.x+a.width*.50,y=a.y+Math.min(a.height*.5,30);
+  const endX=b.x+b.width*.5,endY=b.y+Math.min(b.height*.5,65);
+  const point=(cx,cy)=>[{x:cx,y:cy}];
+  await touch.send('Input.dispatchTouchEvent',{type:'touchStart',touchPoints:point(x,y)});
+  for(let i=1;i<=12;i++){
+   await touch.send('Input.dispatchTouchEvent',{type:'touchMove',
+    touchPoints:point(x+(endX-x)*i/12,y+(endY-y)*i/12)});
+  }
+  await touch.send('Input.dispatchTouchEvent',{type:'touchEnd',touchPoints:[]});
+ };
+ await moveTouch(mobileFirst,mobileAdmin.locator('[data-status-zone="inactive"]'));
+ await mobileAdmin.waitForFunction(id=>!!document.querySelector('#inactiveQuestionList [data-question-id="'+id+'"]'),
+  mobileQuestionId,{timeout:5000});
+ assert.equal((await mobileAdmin.evaluate(()=>window.TinkerPETAdmin.getSettings())).questions.find(q=>q.id===mobileQuestionId).active,false);
+ await moveTouch(mobileAdmin.locator('#inactiveQuestionList [data-question-id="'+mobileQuestionId+'"]'),
+  mobileAdmin.locator('[data-status-zone="active"]'));
+ await mobileAdmin.waitForFunction(id=>!!document.querySelector('#activeQuestionList [data-question-id="'+id+'"]'),
+  mobileQuestionId,{timeout:5000});
+ console.log('PASS arrastar por toque: desativa e reativa a pergunta');
  const mobileWidth=await mobileAdmin.evaluate(()=>({scroll:document.documentElement.scrollWidth,viewport:innerWidth}));
  assert(mobileWidth.scroll<=mobileWidth.viewport+4,'Sem rolagem horizontal no admin: '+JSON.stringify(mobileWidth));
  await mobileAdmin.screenshot({path:'test-results/petquiz-admin-mobile.png',fullPage:true});
