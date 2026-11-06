@@ -2,26 +2,44 @@
 (async()=>{
  const $=id=>document.getElementById(id);
  const CONFIG='petquiz-settings.json',DRAFT='tinkerpet-admin-draft-v1';
- const auth=sessionStorage.getItem('tinkerpet-admin-auth')==='ok';
+ const REPO='peteducacao/laboratorio-robotica-pet';
+ const TOKEN_KEY='tinkerpet-admin-github-token';
+ const token=()=>sessionStorage.getItem(TOKEN_KEY)||'';
  const login=$('loginForm');
  const visibility=$('toggleAdminPassword');
  visibility.addEventListener('click',()=>{
   const input=$('password'),show=input.type==='password';
   input.type=show?'text':'password';
   visibility.setAttribute('aria-pressed',String(show));
-  visibility.setAttribute('aria-label',show?'Ocultar senha':'Mostrar senha');
-  visibility.title=show?'Ocultar senha':'Mostrar senha';
+  visibility.setAttribute('aria-label',show?'Ocultar token':'Mostrar token');
+  visibility.title=show?'Ocultar token':'Mostrar token';
   input.focus();
  });
- if(!auth){
-  login.addEventListener('submit',e=>{
+ if(!token()){
+  sessionStorage.removeItem('tinkerpet-admin-auth');
+  login.addEventListener('submit',async e=>{
    e.preventDefault();
-   if($('password').value==='peteducacao'){
-    sessionStorage.setItem('tinkerpet-admin-auth','ok');location.reload();
-   }else{$('loginError').textContent='Senha incorreta.';$('password').value='';$('password').focus()}
+   const candidate=$('password').value.trim(),button=login.querySelector('[type=submit]');
+   if(!candidate)return;
+   button.disabled=true;$('loginError').textContent='Verificando token no GitHub...';
+   try{
+    const headers={'Authorization':'Bearer '+candidate,'Accept':'application/vnd.github+json','X-GitHub-Api-Version':'2022-11-28'};
+    const who=await fetch('https://api.github.com/user',{headers,cache:'no-store'});
+    if(!who.ok)throw Error('Token inválido ou expirado. Confira no GitHub.');
+    const access=await fetch('https://api.github.com/repos/'+REPO,{headers,cache:'no-store'});
+    if(!access.ok)throw Error('Token sem acesso ao repositório do TinkerPET.');
+    const info=await access.json();
+    if(info.permissions?.push===false)throw Error('Sua conta precisa ter permissão de escrita no repositório.');
+    sessionStorage.setItem(TOKEN_KEY,candidate);
+    sessionStorage.setItem('tinkerpet-admin-auth','ok');
+    $('password').value='';
+    location.reload();
+   }catch(err){$('loginError').textContent=err.message||'Não foi possível validar o token.'}
+   finally{button.disabled=false}
   });
   return;
  }
+ sessionStorage.setItem('tinkerpet-admin-auth','ok');
  $('authOverlay').hidden=true;$('adminShell').hidden=false;
  const placeholder={version:1,quizEnabled:true,answerKeyEnabled:true,questionCount:10,bonusCount:2,
   categories:[{id:'componentes',name:'Componentes',stage:'concept'},{id:'situacoes',name:'Situações práticas',stage:'practice'}],
