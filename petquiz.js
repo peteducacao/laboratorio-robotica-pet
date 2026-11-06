@@ -432,6 +432,25 @@
   if(event==='bonus'){tone(660,.1);tone(830,.11,'sine',.11);tone(1110,.3,'sine',.24)}
   if(event==='finish'){tone(523,.12);tone(659,.12,'sine',.14);tone(784,.12,'sine',.28);tone(1047,.35,'sine',.43)}
  }
+ // Trilha instrumental original, sem música de terceiros.
+ let nextMusicTime=0,musicStep=0;
+ const notes=[261.63,329.63,392,493.88,440,392,329.63,293.66,
+  261.63,329.63,392,523.25,493.88,392,329.63,293.66];
+ function musicTick(){
+  if(!soundOn||state.phase==='intro'||state.phase==='finished')return;
+  const ac=audioReady();if(!ac||ac.state!=='running')return;
+  if(nextMusicTime<ac.currentTime)nextMusicTime=ac.currentTime+.08;
+  while(nextMusicTime<ac.currentTime+.35){
+   const n=notes[musicStep%notes.length],o=ac.createOscillator(),g=ac.createGain();
+   o.type='sine';o.frequency.value=n;
+   g.gain.setValueAtTime(.0001,nextMusicTime);
+   g.gain.linearRampToValueAtTime(.007,nextMusicTime+.025);
+   g.gain.exponentialRampToValueAtTime(.0001,nextMusicTime+.19);
+   o.connect(g);g.connect(ac.destination);
+   o.start(nextMusicTime);o.stop(nextMusicTime+.21);
+   nextMusicTime+=.32;musicStep++;
+  }
+ }
  function syncSoundButton(){
   const b=$('soundToggle');b.setAttribute('aria-pressed',String(soundOn));
   b.title=soundOn?'Silenciar sons':'Ativar sons';
@@ -485,7 +504,9 @@
   $('phaseLabel').textContent=state.phase==='read'?'LEITURA':state.phase==='answer'?'RESPOSTAS':bonus?'EVENTO BÔNUS':state.phase==='finished'?'CONCLUÍDO':'RESULTADO';
   $('hudInfo').textContent=state.phase==='read'?'Só a pergunta por 5 segundos':state.phase==='answer'?'20 segundos para escolher':bonus?'Não vale pontos':state.phase==='result'?'Veja a explicação':'';
   const total=state.order.length;
-  $('runProgress').style.width=((state.idx+(state.phase==='result'?1:0))/total*100)+'%';
+  const completed=state.correct+state.wrong+state.timeout;
+   const progress=state.phase==='finished'?completed:state.idx+(state.phase==='result'?1:0);
+   $('runProgress').style.width=(total?Math.min(100,progress/total*100):100)+'%';
  }
  function renderQuestion(){
   const q=activeQuestion(),isRead=state.phase==='read',result=state.phase==='result';
@@ -493,7 +514,7 @@
   $('answersWrap').hidden=isRead;
   $('readingPlaceholder').hidden=!isRead;
   $('readHint').textContent=isRead?'Leia com atenção. As alternativas aparecerão em 5 segundos.':
-   result?'Veja a explicação antes de continuar.':'Escolha a alternativa que melhor resolve a situação.';
+   result?'Próxima pergunta em instantes.':'Escolha a alternativa que melhor resolve a situação.';
   $('timerCaption').textContent=isRead?'LEITURA':result?'RESULTADO':'RESPOSTA';
   $('answerFeedback').hidden=!result;
   const grid=$('answersGrid');grid.replaceChildren();
@@ -522,7 +543,7 @@
    $('feedbackHeading').textContent=correct?'Resposta correta!':last.status==='timeout'?'Tempo encerrado!':'Boa tentativa!';
    $('feedbackPoints').textContent=correct?'+'+fmt(last.delta)+' pontos':'0 ponto nesta pergunta';
    $('feedbackAdvance').textContent='A próxima atividade começa automaticamente.';
-   $('feedbackExplanation').textContent=q.why;
+   // Justificativa guardada no banco de questões, não exibida ao aluno.
   }
  }
  function paintBonus(){
@@ -562,6 +583,8 @@
   $('bonusCarLed').classList.toggle('active',a!==0||b!==0);
   const angle=Math.max(-20,Math.min(20,(a-b)*.20));
   $('bonusCar').style.transform='rotate('+angle+'deg)';
+   const intensity=Math.max(Math.abs(a),Math.abs(b));
+   $('bonusCar').dataset.speed=intensity===0?'off':intensity<35?'slow':intensity<70?'medium':'fast';
   for(const [id,val] of [['bonusWheelA',a],['bonusWheelB',b]]){
    const wheel=$(id);
    wheel.classList.toggle('spinning',val!==0);
@@ -578,7 +601,7 @@
    'Os motores estão ajustados.';
   $('bonusMotorStatus').textContent=motion;
   const mood=state.bonusFeedback==='wrong'?'fail':
-   a===0&&b===0?'idle':a<0&&b<0?'reverse':
+   a===0&&b===0?'idle':a<0&&b<0?'reverse':a*b<0?'surprised':
    b>a?'left':a>b?'right':'forward';
   if(state.phase==='bonus')setBonusCarMood(mood);
  }
@@ -608,7 +631,7 @@
   updateHud();
   if(phase==='read'||phase==='answer'||phase==='result')renderQuestion();
   if(phase==='bonusIntro'){
-   $('bonusIntroCount').textContent=String(state.shownBonus.length)+' de 2';
+   $('bonusIntroCount').textContent=String(state.shownBonus.length)+' de '+state.bonusAt.length;
    $('bonusIntroView').style.setProperty('--intro-duration',DUR.bonusIntro+'ms');
   }
   if(phase==='bonus'||phase==='bonusResult')paintBonus();
@@ -635,7 +658,7 @@
   }
  }
  function start(){
-  if(state.phase==='intro'){audioReady();setPhase('read',DUR.read);}
+  if(state.phase==='intro'){audioReady();nextMusicTime=0;setPhase('read',DUR.read);}
   else draw();
  }
  function answer(choice){
@@ -729,7 +752,7 @@
  function bind(){
   $('startQuiz').addEventListener('click',start);
   $('quitQuiz').addEventListener('click',abandonQuiz);
-  $('soundToggle').addEventListener('click',()=>{soundOn=!soundOn;syncSoundButton();if(soundOn)sound('start')});
+  $('soundToggle').addEventListener('click',()=>{soundOn=!soundOn;syncSoundButton();if(soundOn){audioReady();nextMusicTime=0;sound('start')}});
   $('fullscreenToggle').addEventListener('click',toggleFullscreen);
   document.addEventListener('fullscreenchange',syncFullscreenButton);
   syncSoundButton();syncFullscreenButton();
@@ -774,7 +797,7 @@
   });
  }
  // Nenhum dado de partida é recuperado ou armazenado entre visitas.
- bind();draw();setInterval(clockTick,100);
+ bind();draw();setInterval(clockTick,100);setInterval(musicTick,180);
  window.PetQuiz={getStatus:()=>({
    phase:state.phase,index:state.idx,score:state.score,correct:state.correct,wrong:state.wrong,
    timeout:state.timeout,bonusCount:state.shownBonus.length,bonusSolved:state.solvedBonus,deadline:state.deadline,
