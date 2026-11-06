@@ -6,7 +6,7 @@
 <meta name="theme-color" content="#092747">
 <link rel="icon" href="assets/logo-pet.svg" type="image/svg+xml">
 <link rel="stylesheet" href="admin.css?v=2">
-<script defer src="admin.js?v=2"></script>
+<script defer src="admin.js?v=3"></script>
 </head>
 <body>
 <div class="auth-overlay" id="authOverlay">
@@ -139,14 +139,12 @@
     </section>
    </div>
    <section class="panel publish-panel">
-    <h2>Publicar para todos os dispositivos</h2><p class="muted"><strong>Importante:</strong> desligar o acesso aqui não bloqueia outros celulares até publicar.</p>
-    <p>Suas edições são salvas como rascunho neste navegador. Para atualizar o site dos alunos, informe um token GitHub com acesso de escrita ao repositório e clique em <b>Publicar</b>. O token dura apenas enquanto esta aba estiver aberta.</p>
-    <label for="githubToken">Token de publicação do GitHub</label>
-    <input type="password" id="githubToken" autocomplete="off" placeholder="github_pat_...">
-    <div class="publish-actions"><button type="button" id="publish" class="primary">Publicar alterações</button><button type="button" id="exportSettings" class="secondary">Baixar JSON</button><button type="button" id="discardDraft" class="secondary">Descartar rascunho</button></div>
+    <h2>Salvar e enviar alterações</h2>
+    <p>Suas edições já ficam salvas automaticamente neste aparelho. Para atualizar o PETQuiz e o gabarito nos celulares das crianças, baixe a atualização e envie o arquivo aqui na conversa do ChatGPT. Eu publico no GitHub para você, sem precisar de token.</p>
+    <div class="publish-actions"><button type="button" id="publish" class="primary">Baixar atualização</button><button type="button" id="exportSettings" class="secondary">Copiar atualização</button><button type="button" id="discardDraft" class="secondary">Descartar rascunho</button></div>
    </section>
   </section>
-  <footer class="admin-footer"><span id="saveState">Configurações carregadas</span><button type="button" class="primary" id="publishFooter">Publicar alterações</button></footer>
+  <footer class="admin-footer"><span id="saveState">Configurações carregadas</span><button type="button" class="primary" id="publishFooter">Baixar atualização</button></footer>
  </main>
 </div>
 </body></html>
