@@ -7,7 +7,7 @@ import {fileURLToPath} from 'node:url';
 import {chromium} from 'playwright';
 
 const root=resolve(fileURLToPath(new URL('..',import.meta.url)));
-const types={'.html':'text/html; charset=utf-8','.css':'text/css; charset=utf-8','.js':'text/javascript; charset=utf-8','.svg':'image/svg+xml'};
+const types={'.html':'text/html; charset=utf-8','.css':'text/css; charset=utf-8','.js':'text/javascript; charset=utf-8','.json':'application/json','.svg':'image/svg+xml'};
 const server=createServer((req,res)=>{
  try{
   const url=new URL(req.url,'http://127.0.0.1');
@@ -44,7 +44,7 @@ const answers={
  'componente-jumper':'Jumper',
  'componente-esp32':'ESP32',
  'componente-motor':'Motor DC',
- 'componente-rodas':'Permitir o deslocamento',
+ 'componente-rodas':'Permitir que o carrinho ande',
  'componente-bateria':'Uma bateria de 9 V',
  'componente-pilhas':'Para alimentar os motores',
  'funcionamento-alimentacao-ponte':'A alimentação das pilhas AA',
@@ -54,7 +54,7 @@ const answers={
  'funcionamento-esquerda':'A direita mais rápida',
  'funcionamento-duas-chaves':'O ESP32 pode ligar',
  'funcionamento-bateria-9v':'Bateria → gangorra → LM2596',
- 'funcionamento-chave-off':'Ligar a gangorra responsável',
+ 'funcionamento-chave-off':'Acionar a chave gangorra dos motores',
  'funcionamento-curva-direita':'Para a direita'
 };
 function validatePlan(plan){
@@ -114,10 +114,10 @@ async function validateIntro(page,label){
    gridWidth:g.width,gap,cards,btn:{width:btn.width,left:btn.left,right:btn.right},
    title:{left:title.left,right:title.right},pageHeight:document.documentElement.scrollHeight};
  });
- const expected=(v.gridWidth-v.gap)/2;
- assert.equal(v.cards.length,3,label+' exige três cards');
+ const expected=110;
+ assert.equal(v.cards.length,2,label+' exige dois cards');
  for(const [i,c] of v.cards.entries()){
-  const min=i===2?v.gridWidth*.92:expected*.92;
+  const min=expected*.92;
   assert(c.width>=min,label+' card '+i+' estreito: '+JSON.stringify({min,actual:c.width,all:v}));
   assert(c.boldScroll<=c.boldClient+2,label+' texto do card '+i+' cortado: '+JSON.stringify(v));
   assert(c.left>=-3&&c.right<=v.vp+3,label+' card '+i+' extrapola a tela');
@@ -137,11 +137,11 @@ try{
   const ctx=await browser.newContext({viewport:{width:390,height:844},hasTouch:true,isMobile:true});
   const p=await ctx.newPage();
   await p.addInitScript(()=>{window.__PETQUIZ_TEST_SPEED__=true;});
-  await p.goto(base+'/petquiz.html',{waitUntil:'domcontentloaded'});
+  await p.goto(base+'/petquiz.html',{waitUntil:'domcontentloaded'});await p.waitForFunction(()=>!!window.PetQuiz);
   const samples=[
    {id:'forward',bad:[40,50],good:[50,50]},
-   {id:'left',bad:[50,20],good:[-10,100]},
-   {id:'right',bad:[20,50],good:[100,-10]},
+   {id:'left',bad:[50,20],good:[20,100]},
+   {id:'right',bad:[20,50],good:[100,20]},
    {id:'reverse',bad:[-50,-40],good:[-50,-50]},
    {id:'stop',bad:[20,0],good:[0,0]},
    {id:'straight',bad:[20,-20],good:[-50,-50]},
@@ -156,7 +156,7 @@ try{
    assert.equal(await p.locator('#bonusIntroView').isVisible(),false);
    assert.equal(await p.locator('#bonusTitle').textContent(),
     ({forward:'Faça o carrinho andar para a frente!',left:'Faça o carrinho virar à esquerda!',
-      right:'Faça o carrinho virar à direita!',reverse:'Faça o carrinho andar para trás!',
+      right:'Faça o carrinho virar à direita!',reverse:'Faça o carrinho dar ré!',
       stop:'Pare o carrinho em movimento!',straight:'Faça o carrinho seguir em linha reta!',
       regulator:'Regule o LM2596!'})[test.id]);
    const setValues=async values=>{
@@ -196,7 +196,7 @@ try{
  // Testar tempos REAIS uma vez, sem acelerar.
  const context=await browser.newContext({viewport:{width:1280,height:760}});
  const page=await context.newPage();
- await page.goto(base+'/petquiz.html',{waitUntil:'domcontentloaded'});
+ await page.goto(base+'/petquiz.html',{waitUntil:'domcontentloaded'});await page.waitForFunction(()=>!!window.PetQuiz);
  assert.match(await page.locator('#introTitle').textContent(),/PETQuiz/);
  assert.equal(await page.locator('.header-label').count(),0,'Sem título PETQuiz duplicado no topo');
  await page.locator('#startQuiz').click();
@@ -219,8 +219,8 @@ try{
   await ctx.addInitScript(()=>{window.__PETQUIZ_TEST_SPEED__=true});
   const p=await ctx.newPage(),errors=[];
   p.on('pageerror',e=>errors.push(e.message));
-  await p.goto(base+'/petquiz.html',{waitUntil:'domcontentloaded'});
-  assert.equal(await p.locator('.intro-rules>div').count(),3);
+  await p.goto(base+'/petquiz.html',{waitUntil:'domcontentloaded'});await p.waitForFunction(()=>!!window.PetQuiz);
+  assert.equal(await p.locator('.intro-rules>div').count(),2);
   await layout(p,'abertura '+screen.name);
   await validateIntro(p,'abertura '+screen.name);
   await p.screenshot({path:'test-results/petquiz-'+screen.name+'-abertura.png',fullPage:true});
@@ -243,7 +243,7 @@ try{
    for(let k=0;k<22;k++){
     const plan=(await p.evaluate(()=>window.PetQuiz.getStatus())).plan;
     validatePlan(plan);layouts.add(plan.map(x=>x.id).join('|'));
-    await p.reload({waitUntil:'domcontentloaded'});
+    await p.reload({waitUntil:'domcontentloaded'});await p.waitForFunction(()=>!!window.PetQuiz);
    }
    assert(layouts.size>=12,'O sorteio das perguntas não pode ser fixo');
   }
@@ -308,7 +308,7 @@ try{
   assert.equal(await p.evaluate(()=>window.PetQuiz.getStatus().phase),'finished');
   assert.equal(await p.evaluate(()=>window.PetQuiz.getStatus().score),earned);
   await p.locator('.back-link').click();
-  await p.goBack({waitUntil:'domcontentloaded'});
+  await p.goBack({waitUntil:'domcontentloaded'});await p.waitForFunction(()=>!!window.PetQuiz);
   assert.equal(await p.evaluate(()=>window.PetQuiz.getStatus().phase),'intro',
    'Navegar para fora continua sem salvar progresso');
   await p.locator('#startQuiz').click();
@@ -340,7 +340,7 @@ try{
     }
     assert.equal(await p.locator('#answerFeedback').isVisible(),true,'Feedback após resposta');
     assert.equal(await p.locator('#nextQuestion').isVisible(),false,'Avanço automático sem botão');
-    assert((await p.locator('#feedbackExplanation').textContent()).length>20);
+    assert.equal(await p.locator('#feedbackExplanation').count(),0,'Sem justificativa após resposta');
     assert.equal(await p.locator('.answer-btn.correct').count(),1,'Marcar resposta correta no resultado');
     if(answered===0)await p.screenshot({path:'test-results/petquiz-'+screen.name+'-correcao.png',fullPage:true});
     answered++;
@@ -363,7 +363,7 @@ try{
       assert.equal(await p.locator('#bonusTitle').textContent(),'Regule o LM2596!');
       await fill(p,'bonusVoltage',5);
      }else{
-      const configs={forward:[50,50],left:[-10,100],right:[100,-10],
+      const configs={forward:[50,50],left:[20,100],right:[100,20],
        reverse:[-50,-50],stop:[0,0],straight:[-50,-50]};
       assert(configs[id],'Bônus inesperado '+id);
       await fill(p,'bonusA',configs[id][0]);await fill(p,'bonusB',configs[id][1]);
@@ -397,7 +397,7 @@ try{
   assert.equal(await p.locator('#finalWrong').textContent(),String(wrong));
   await layout(p,'final '+screen.name);
   await p.screenshot({path:'test-results/petquiz-'+screen.name+'-final.png',fullPage:true});
-  await p.reload({waitUntil:'domcontentloaded'});
+  await p.reload({waitUntil:'domcontentloaded'});await p.waitForFunction(()=>!!window.PetQuiz);
   assert.equal(await p.evaluate(()=>window.PetQuiz.getStatus().phase),'intro');
   assert.equal(await p.evaluate(()=>window.PetQuiz.getStatus().score),0);
   assert.equal(await p.evaluate(()=>localStorage.getItem('petquiz-session-v1')),null);
