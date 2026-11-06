@@ -275,6 +275,7 @@
   notice(active?'Pergunta ativada.':'Pergunta desativada.');
   return true;
  }
+ let ignoreCardClicksUntil=0;
  function renderList(){
   const filter=$('searchQuestions').value.trim().toLowerCase();
   const targets={active:$('activeQuestionList'),inactive:$('inactiveQuestionList')};
@@ -332,12 +333,16 @@
     origin=null;cleanup();
     try{row.releasePointerCapture(event.pointerId)}catch{}
     if(wasDragging){
+     ignoreCardClicksUntil=Date.now()+450;
      if(zone)changeQuestionState(q.id,zone.dataset.statusZone==='active');
-    }else selectQuestion(q.id,true);
+    }
    });
    row.addEventListener('pointercancel',()=>{origin=null;cleanup()});
-   // Teclado continua abrindo o editor sem exigir mouse.
-   row.addEventListener('click',event=>{if(event.detail===0)selectQuestion(q.id,true)});
+   // Um toque/click simples abre o editor; arrastar não provoca clique acidental.
+   row.addEventListener('click',()=>{
+    if(Date.now()<ignoreCardClicksUntil)return;
+    selectQuestion(q.id,true);
+   });
   }
   for(const [kind,list] of Object.entries(targets)){
    if(list.children.length)continue;
