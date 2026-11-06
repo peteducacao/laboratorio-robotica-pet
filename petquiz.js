@@ -438,6 +438,7 @@
   return {phase:'intro',idx:0,order,options:QUESTIONS.map(()=>shuffle([0,1,2,3])),
    bonusAt:scheduleBonus(order.length),bonusOrder:bonusOrderForGame(),
    shownBonus:[],currentBonus:null,solvedBonus:0,bonusFeedback:null,
+   visualChoice:null,visualOptions:[],
    score:0,correct:0,wrong:0,timeout:0,last:null,deadline:0,finishedReason:null};
  };
  // A partida existe somente enquanto a página estiver aberta. Não salvar pontuação,
@@ -758,6 +759,19 @@
   setPhase('result',DUR.result);
   sound('timeout');
  }
+ function prepareBonus(type){
+  const initial=type.initial||[0,0];
+  $('bonusA').value=initial[0]??0;
+  $('bonusB').value=initial[1]??initial[0]??0;
+  $('bonusVoltage').value=type.kind==='voltage'?initial[0]??9:9;
+  state.visualChoice=null;
+  state.visualOptions=type.kind==='identify'?shuffle([
+   type.target,...shuffle(COMPONENTS.filter(c=>c.id!==type.target)).slice(0,3).map(c=>c.id)
+  ]):[];
+  state.bonusFeedback=null;
+  state.bonusSuccess=false;
+  setBonusCarMood('idle');
+ }
  function next(){
   if(state.phase!=='result'||advancing)return;
   advancing=true;
@@ -767,12 +781,7 @@
    state.shownBonus.push(completedCount);
    state.currentBonus=state.bonusOrder[(state.shownBonus.length-1)%state.bonusOrder.length];
    const selected=BONUS[state.currentBonus];
-   $('bonusA').value=selected.initial[0];
-   $('bonusB').value=selected.initial[1]??selected.initial[0];
-   $('bonusVoltage').value=selected.voltage?selected.initial[0]:9;
-   state.bonusFeedback=null;
-   state.bonusSuccess=false;
-   setBonusCarMood('idle');
+   prepareBonus(selected);
    setPhase('bonusIntro',DUR.bonusIntro);
   }else{
    state.idx++;
@@ -791,12 +800,20 @@
   if(state.phase!=='bonus')return;
   const type=BONUS[state.currentBonus];
   const a=Number($('bonusA').value),b=Number($('bonusB').value),v=Number($('bonusVoltage').value);
-  const ok=type.voltage?type.check(v):type.check(a,b);
+  if(type.kind==='identify'&&!state.visualChoice){
+   $('bonusMessage').textContent='Toque em uma imagem antes de conferir.';
+   return;
+  }
+  const ok=type.kind==='identify'?state.visualChoice===type.target:
+   type.kind==='voltage'?v===Number(type.targetVoltage):
+   !!checks[type.id]?.(a,b);
   if(ok)completeBonus(true);
   else{
    state.bonusFeedback='wrong';
-   setBonusCarMood('fail');
-   $('bonusMessage').textContent='Ainda não deu certo. Tente novamente.';
+   if(type.kind!=='identify')setBonusCarMood('fail');
+   $('bonusMessage').textContent=type.kind==='identify'?
+    'Essa não é a peça. Experimente outra imagem.':
+    'Ainda não deu certo. Tente novamente.';
   }
  }
  function leaveBonus(){
@@ -883,6 +900,7 @@
    phase:state.phase,index:state.idx,score:state.score,correct:state.correct,wrong:state.wrong,
    timeout:state.timeout,bonusCount:state.shownBonus.length,bonusSolved:state.solvedBonus,deadline:state.deadline,
    bonusAt:[...state.bonusAt],questionTotal:state.order.length,
+   bonusCatalogTotal:BONUS.length,visualOptions:[...state.visualOptions],visualChoice:state.visualChoice,
    finishedReason:state.finishedReason,answered:state.correct+state.wrong+state.timeout,
    plan:state.order.map(i=>({id:QUESTIONS[i].id,stage:QUESTIONS[i].stage,topic:QUESTIONS[i].topic||null,requires:QUESTIONS[i].requires||[]})),
    activeBonusId:state.currentBonus===null?null:BONUS[state.currentBonus].id,
@@ -898,11 +916,7 @@
   state.shownBonus=[2];
   state.bonusSuccess=false;
   state.bonusFeedback=null;
-  const config=BONUS[i];
-  $('bonusA').value=config.initial[0];
-  $('bonusB').value=config.initial[1]??config.initial[0];
-  $('bonusVoltage').value=config.voltage?config.initial[0]:9;
-  setBonusCarMood('idle');
+  prepareBonus(BONUS[i]);
   setPhase('bonusIntro',DUR.bonusIntro);
  };
 })();
