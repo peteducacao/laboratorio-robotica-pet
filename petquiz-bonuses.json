@@ -1,0 +1,158 @@
+{
+  "version": 1,
+  "components": [
+    {
+      "id": "esp32",
+      "name": "ESP32",
+      "image": "assets/esp32-devkit-v1-30p.svg"
+    },
+    {
+      "id": "ponte-h",
+      "name": "Ponte H",
+      "image": "assets/mx1508-desenhado.svg"
+    },
+    {
+      "id": "lm2596",
+      "name": "Regulador LM2596",
+      "image": "assets/lm2596-desenhado.svg"
+    },
+    {
+      "id": "motor",
+      "name": "Motor DC",
+      "image": "assets/motor-frontal.svg"
+    },
+    {
+      "id": "gangorra",
+      "name": "Chave gangorra",
+      "image": "assets/gangorra-desenhada.svg"
+    },
+    {
+      "id": "bateria-9v",
+      "name": "Bateria de 9 V",
+      "image": "assets/bateria-9v-desenhada.svg"
+    },
+    {
+      "id": "pilhas-aa",
+      "name": "Suporte de pilhas AA",
+      "image": "assets/suporte-6-pilhas.svg"
+    },
+    {
+      "id": "jumper",
+      "name": "Fios jumper",
+      "image": "assets/fios-jumper-ilustracao.svg"
+    }
+  ],
+  "bonuses": [
+    {
+      "id": "forward",
+      "kind": "motion",
+      "title": "Faça o carrinho andar para a frente!",
+      "initial": [
+        0,
+        0
+      ]
+    },
+    {
+      "id": "left",
+      "kind": "motion",
+      "title": "Faça o carrinho virar à esquerda!",
+      "initial": [
+        0,
+        0
+      ]
+    },
+    {
+      "id": "right",
+      "kind": "motion",
+      "title": "Faça o carrinho virar à direita!",
+      "initial": [
+        0,
+        0
+      ]
+    },
+    {
+      "id": "reverse",
+      "kind": "motion",
+      "title": "Faça o carrinho dar ré!",
+      "initial": [
+        0,
+        0
+      ]
+    },
+    {
+      "id": "stop",
+      "kind": "motion",
+      "title": "Pare o carrinho em movimento!",
+      "initial": [
+        60,
+        60
+      ]
+    },
+    {
+      "id": "straight",
+      "kind": "motion",
+      "title": "Faça o carrinho seguir em linha reta!",
+      "initial": [
+        80,
+        40
+      ]
+    },
+    {
+      "id": "regulator",
+      "kind": "voltage",
+      "title": "Regule o LM2596!",
+      "initial": [
+        9
+      ],
+      "targetVoltage": 5
+    },
+    {
+      "id": "identify-esp32",
+      "kind": "identify",
+      "title": "Qual desses componentes é o ESP32?",
+      "target": "esp32"
+    },
+    {
+      "id": "identify-ponte-h",
+      "kind": "identify",
+      "title": "Qual desses componentes é a Ponte H?",
+      "target": "ponte-h"
+    },
+    {
+      "id": "identify-lm2596",
+      "kind": "identify",
+      "title": "Qual desses componentes é o regulador LM2596?",
+      "target": "lm2596"
+    },
+    {
+      "id": "identify-motor",
+      "kind": "identify",
+      "title": "Qual desses componentes é o motor DC?",
+      "target": "motor"
+    },
+    {
+      "id": "identify-gangorra",
+      "kind": "identify",
+      "title": "Qual desses componentes é a chave gangorra?",
+      "target": "gangorra"
+    },
+    {
+      "id": "identify-bateria-9v",
+      "kind": "identify",
+      "title": "Qual desses componentes é a bateria de 9 V?",
+      "target": "bateria-9v"
+    },
+    {
+      "id": "identify-pilhas-aa",
+      "kind": "identify",
+      "title": "Qual desses componentes é o suporte de pilhas AA?",
+      "target": "pilhas-aa"
+    },
+    {
+      "id": "identify-jumper",
+      "kind": "identify",
+      "title": "Quais desses componentes são os fios jumper?",
+      "target": "jumper"
+    }
+  ]
+}
