@@ -250,10 +250,14 @@ try{
   const p=await ctx.newPage(),errors=[];
   p.on('pageerror',e=>errors.push(e.message));
   await p.goto(base+'/petquiz.html',{waitUntil:'domcontentloaded'});await p.waitForFunction(()=>!!window.PetQuiz);
-  assert.equal(await p.locator('.intro-rules>div').count(),3,'A abertura tem três cartões, incluindo perguntas por partida');
+  assert.equal(await p.locator('.intro-rules>div').count(),2,'A abertura apresenta somente dois cartões: perguntas e tempo');
   const expected=JSON.parse(readFileSync(resolve(root,'petquiz-settings.json'),'utf8')).questionCount;
   assert.equal((await p.locator('#introQuestionCount').textContent()).trim(),
-   expected+' '+(expected===1?'pergunta':'perguntas'),'Quantidade aparece no terceiro cartão');
+   expected+' '+(expected===1?'pergunta':'perguntas'),'Quantidade aparece no primeiro cartão');
+  const rules=await p.locator('.intro-rules>div').allTextContents();
+  assert(rules[0].includes('por partida'),'Primeiro cartão é de perguntas');
+  assert(rules[1].includes('20 segundos'),'Segundo cartão mostra o tempo');
+  assert(!rules.join(' ').includes('5 segundos'),'Abertura não informa os 5 segundos de leitura');
   await layout(p,'abertura '+screen.name);
   await validateIntro(p,'abertura '+screen.name);
   await p.screenshot({path:'test-results/petquiz-'+screen.name+'-abertura.png',fullPage:true});
