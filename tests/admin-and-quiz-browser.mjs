@@ -138,6 +138,14 @@ try{
  await mobileAdmin.locator('.nav-btn[data-page="questoes"]').click();
  assert(await mobileAdmin.locator('#questionList .question-row').count()>0,'Banco visível no celular');
  assert(await mobileAdmin.locator('#questionForm').isVisible(),'Editor disponível no celular');
+ await mobileAdmin.locator('#questionList .question-row').nth(2).click();
+ await mobileAdmin.waitForTimeout(650);
+ const editorVisible=await mobileAdmin.evaluate(()=>{
+  const rect=document.getElementById('editorPanel').getBoundingClientRect();
+  return scrollY>0&&rect.top>=-30&&rect.top<innerHeight*.65;
+ });
+ assert(editorVisible,'A pergunta selecionada leva ao editor no celular');
+ assert.equal(await mobileAdmin.locator('#topicInput').evaluate(el=>el.tagName),'SELECT');
  const mobileWidth=await mobileAdmin.evaluate(()=>({scroll:document.documentElement.scrollWidth,viewport:innerWidth}));
  assert(mobileWidth.scroll<=mobileWidth.viewport+4,'Sem rolagem horizontal no admin: '+JSON.stringify(mobileWidth));
  await mobileAdmin.screenshot({path:'test-results/petquiz-admin-mobile.png',fullPage:true});
