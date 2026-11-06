@@ -337,11 +337,11 @@
   if(response.ok){
    const remote=await response.json();
    remoteSettings=remote;
-   if(Array.isArray(remote.questions)&&remote.questions.length){
+   if(Array.isArray(remote.questions)){
     const valid=remote.questions.filter(q=>q&&typeof q.prompt==='string'&&
      Array.isArray(q.choices)&&q.choices.length===4&&Number.isInteger(q.correct)&&
      q.correct>=0&&q.correct<=3&&q.choices.every(c=>typeof c==='string')&&q.active!==false);
-    if(valid.length)QUESTIONS=valid;
+    QUESTIONS=valid;
    }
    GAME_SETTINGS={...GAME_SETTINGS,
     questionCount:Math.max(1,Math.min(99,Math.trunc(Number(remote.questionCount)||10))),
@@ -357,7 +357,7 @@
      typeof q.prompt==='string'&&q.prompt.trim()&&Array.isArray(q.choices)&&
      q.choices.length===4&&q.choices.every(c=>typeof c==='string'&&c.trim())&&
      Number.isInteger(q.correct)&&q.correct>=0&&q.correct<=3);
-    if(valid.length)QUESTIONS=valid;
+    QUESTIONS=valid;
     GAME_SETTINGS.questionCount=Math.max(1,Math.min(99,Math.trunc(Number(local.questionCount)||10)));
     GAME_SETTINGS.bonusCount=Math.max(0,Math.min(BONUS.length,Math.trunc(local.bonusCount==null?2:Number(local.bonusCount)||0)));
     // Bloqueio sempre segue a configuração publicada; rascunho só altera perguntas.
@@ -370,7 +370,14 @@
  }
  const introFoot=document.getElementById('introFoot');
  const introCount=document.getElementById('introQuestionCount');
- if(introCount)introCount.textContent=GAME_SETTINGS.questionCount+' '+(GAME_SETTINGS.questionCount===1?'pergunta':'perguntas');
+ const availableQuestions=Math.min(GAME_SETTINGS.questionCount,QUESTIONS.length);
+ if(introCount)introCount.textContent=availableQuestions+' '+(availableQuestions===1?'pergunta':'perguntas');
+ if(QUESTIONS.length===0){
+  $('startQuiz').disabled=true;
+  $('startQuiz').textContent='Sem perguntas disponíveis';
+  const subtitle=document.querySelector('.intro-subtitle');
+  if(subtitle)subtitle.textContent='Não há perguntas ativas no momento. O administrador pode liberá-las pelo painel.';
+ }
  if(introFoot)introFoot.textContent='Alternativas sorteadas a cada partida';
  const keys=['read','answer','result','bonus','bonusResult'];
  function shuffle(arr){
@@ -742,6 +749,7 @@
   }
  }
  function start(){
+  if(!state.order.length)return;
   if(state.phase==='intro'){audioReady();nextMusicTime=0;setPhase('read',DUR.read);}
   else draw();
  }
