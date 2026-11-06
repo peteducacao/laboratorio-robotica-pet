@@ -352,13 +352,18 @@
   const practices=pool.filter(x=>x.q.stage==='practice'&&(x.q.requires||[]).every(t=>topics.has(t)));
   const total=Math.min(Math.max(1,GAME_SETTINGS.questionCount),concepts.length+practices.length);
   if(total<1)return [];
-  let candidates=shuffle(practices).slice(0,Math.floor(total/2)),needed=[];
-  while(candidates.length){
-   const required=new Set(candidates.flatMap(x=>x.q.requires||[]));
-   needed=concepts.filter(x=>required.has(x.q.topic));
-   if(needed.length+candidates.length<=total)break;
-   candidates.pop();
+  // Primeiro escolher situações práticas que caibam nos pré-requisitos;
+  // para 10 questões manter a proporção de 5 componentes + 5 situações.
+  const desired=Math.min(Math.floor(total/2),practices.length);
+  let candidates=[],needed=[];
+  for(const item of shuffle(practices)){
+   if(candidates.length>=desired)break;
+   const possible=[...candidates,item];
+   const required=new Set(possible.flatMap(x=>x.q.requires||[]));
+   if(required.size+possible.length<=total)candidates=possible;
   }
+  const required=new Set(candidates.flatMap(x=>x.q.requires||[]));
+  needed=concepts.filter(x=>required.has(x.q.topic));
   const selected=[...needed,...candidates],used=new Set(selected.map(x=>x.i));
   for(const item of shuffle(concepts)){
    if(selected.length>=total)break;
