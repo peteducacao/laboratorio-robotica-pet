@@ -56,7 +56,8 @@ try{
       boardBottom:b.bottom,mainBottom:m.bottom,scrollWidth:document.documentElement.scrollWidth,
       fontSize:getComputedStyle(footer).fontSize};
   });
-  assert.equal(library.text,credit,'Autoria na biblioteca '+width);
+  assert.equal(library.text,credit+' · Admin','Autoria e acesso discreto na biblioteca '+width);
+  assert.equal(await page.locator('.site-admin-link').getAttribute('href'),'admin.html');
   assert.ok(library.contentTop>=library.boardBottom+20,'Texto do rodapé fica após os cartões '+width+': '+JSON.stringify(library));
   assert.ok(library.bottom<=library.mainBottom+1,'Rodapé permanece na área de conteúdo '+width);
   assert.ok(library.scrollWidth<=width+2,'Biblioteca sem rolagem horizontal '+width);
