@@ -90,7 +90,8 @@
   const labels={inicio:['Painel de Controle','Gerencie o PETQuiz de forma rápida.'],
    questoes:['Banco de Questões','Cadastre e revise as perguntas do jogo.'],
    taxonomia:['Categorias e Requisitos','Organize as opções para cadastrar perguntas.'],
-   configuracoes:['Configurações do Jogo','Defina a disponibilidade e o número de desafios.']};
+   configuracoes:['Configurações do Jogo','Defina a disponibilidade e o número de desafios.'],
+   ajuda:['Ajuda','Aprenda a administrar as perguntas e os acessos.']};
   $('pageTitle').textContent=labels[page][0];$('pageDescription').textContent=labels[page][1];
   if(page==='questoes')renderList();
   if(page==='taxonomia')renderTaxonomies();
