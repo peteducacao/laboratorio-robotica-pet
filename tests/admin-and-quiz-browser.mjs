@@ -117,10 +117,20 @@ try{
  await admin.locator('#topicList .taxonomy-row').last().getByText('Excluir').click();
  assert.equal((await admin.evaluate(()=>window.TinkerPETAdmin.getSettings())).prerequisites.length,topicCount);
  await admin.locator('.nav-btn[data-page="inicio"]').click();
+ // Verde = BLOQUEADO; cinza = LIBERADO. Testar os dois separadamente.
  await admin.locator('#homeQuizEnabled').uncheck({force:true});
  await admin.locator('#homeAnswerEnabled').uncheck({force:true});
  data=await admin.evaluate(()=>window.TinkerPETAdmin.getSettings());
- assert(!data.quizEnabled&&!data.answerKeyEnabled,'Bloqueia quiz e gabarito separadamente');
+ assert(data.quizEnabled&&data.answerKeyEnabled,'Ambos liberados com as chaves desligadas');
+ await admin.locator('#homeQuizEnabled').check({force:true});
+ data=await admin.evaluate(()=>window.TinkerPETAdmin.getSettings());
+ assert(!data.quizEnabled&&data.answerKeyEnabled,'Bloquear PETQuiz preserva Gabarito');
+ assert(await admin.locator('#settingsQuizEnabled').isChecked(),'Sincroniza chave do PETQuiz');
+ await admin.locator('#homeQuizEnabled').uncheck({force:true});
+ await admin.locator('#homeAnswerEnabled').check({force:true});
+ data=await admin.evaluate(()=>window.TinkerPETAdmin.getSettings());
+ assert(data.quizEnabled&&!data.answerKeyEnabled,'Bloquear Gabarito preserva PETQuiz');
+ assert(await admin.locator('#settingsAnswerEnabled').isChecked(),'Sincroniza chave do Gabarito');
  await admin.locator('[data-counter="questionCount"][data-step="-1"]').first().click();
  await admin.locator('[data-counter="bonusCount"][data-step="1"]').first().click();
  data=await admin.evaluate(()=>window.TinkerPETAdmin.getSettings());
@@ -128,8 +138,12 @@ try{
  assert.equal(data.bonusCount,3,'Altera quantidade de bônus');
  await admin.locator('#homeQuizEnabled').check({force:true});
  await admin.locator('#homeAnswerEnabled').check({force:true});
- assert((await admin.evaluate(()=>window.TinkerPETAdmin.getSettings())).quizEnabled,'Desbloqueia quiz');
- assert((await admin.evaluate(()=>window.TinkerPETAdmin.getSettings())).answerKeyEnabled,'Desbloqueia gabarito');
+ assert(!(await admin.evaluate(()=>window.TinkerPETAdmin.getSettings())).quizEnabled,'Ativado bloqueia o PETQuiz');
+ assert(!(await admin.evaluate(()=>window.TinkerPETAdmin.getSettings())).answerKeyEnabled,'Ativado bloqueia o Gabarito');
+ await admin.locator('#homeQuizEnabled').uncheck({force:true});
+ await admin.locator('#homeAnswerEnabled').uncheck({force:true});
+ assert((await admin.evaluate(()=>window.TinkerPETAdmin.getSettings())).quizEnabled,'Desativado libera PETQuiz');
+ assert((await admin.evaluate(()=>window.TinkerPETAdmin.getSettings())).answerKeyEnabled,'Desativado libera Gabarito');
 
  // O mesmo token da entrada é reutilizado em toda publicação.
  await admin.locator('[data-page="configuracoes"].nav-btn').click();
