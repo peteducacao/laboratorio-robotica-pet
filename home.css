@@ -160,3 +160,7 @@ body{overflow:hidden;background:#091e39;font-family:'DM Sans',Arial,sans-serif}
 
 /* No aplicativo instalado, o contorno duplicado permanece oculto. */
 .welcome.installed-pwa .main-action .cta-energy{display:none!important}
+
+/* Acesso administrativo quase invisível junto ao crédito da abertura. */
+.site-credit-home .site-admin-link{pointer-events:auto;color:inherit;opacity:.65;text-decoration:none;margin-left:4px;font-weight:500}
+.site-credit-home .site-admin-link:focus-visible,.site-credit-home .site-admin-link:hover{opacity:1;text-decoration:underline}
