@@ -27,6 +27,14 @@
   categories:[{id:'componentes',name:'Componentes',stage:'concept'},{id:'situacoes',name:'Situações práticas',stage:'practice'}],
   prerequisites:[],questions:[]};
  let settings={...placeholder},selectedId=null,remoteSettings=null,editingCategory=null,editingTopic=null;
+ let toastTimer=null;
+ function showSaveToast(message='Alterações salvas!'){
+  const toast=$('saveToast');$('saveToastText').textContent=message;
+  toast.hidden=false;toast.classList.remove('toast-show');
+  void toast.offsetWidth;toast.classList.add('toast-show');
+  clearTimeout(toastTimer);
+  toastTimer=setTimeout(()=>{toast.hidden=true;toast.classList.remove('toast-show')},2400);
+ }
  const clone=obj=>JSON.parse(JSON.stringify(obj));
  const qs=()=>settings.questions;
  function notice(message,error=false){
@@ -35,6 +43,7 @@
  function saveDraft(){
   localStorage.setItem(DRAFT,JSON.stringify(settings));
   $('saveState').textContent='Salvo neste aparelho · envie o arquivo para atualizar todos';
+  showSaveToast();
  }
  const defaultCategory=stage=>stage==='practice'?'situacoes':'componentes';
  const slug=text=>text.normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'').slice(0,35)||'novo';
