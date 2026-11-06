@@ -28,11 +28,19 @@ try{
  await admin.goto(origin+'/admin.html');
  assert(await admin.locator('#authOverlay').isVisible(),'Painel pede autenticação');
  await admin.locator('#password').fill('senha errada');
+ await admin.locator('#toggleAdminPassword').click();
+ assert.equal(await admin.locator('#password').getAttribute('type'),'text','Revela senha');
+ await admin.locator('#toggleAdminPassword').click();
+ assert.equal(await admin.locator('#password').getAttribute('type'),'password','Oculta senha');
  await admin.locator('#loginForm button[type="submit"]').click();
  assert((await admin.locator('#loginError').textContent()).includes('incorreta'),'Senha errada rejeitada');
  await admin.locator('#password').fill('peteducacao');
  await admin.locator('#loginForm button[type="submit"]').click();
  await admin.waitForFunction(()=>!!window.TinkerPETAdmin,{timeout:15000});
+ await admin.locator('.nav-btn[data-page="ajuda"]').click();
+ assert(await admin.locator('#page-ajuda').isVisible(),'A aba Ajuda abre');
+ assert((await admin.locator('#page-ajuda').textContent()).includes('Salvar e atualizar'),'Ajuda explica publicação');
+
  assert.equal((await admin.evaluate(()=>window.TinkerPETAdmin.getSettings())).questions.length,19,'Banco carrega 19 perguntas');
  await admin.locator('.nav-btn[data-page="questoes"]').click();
  await admin.locator('#addQuestion').click();
@@ -44,6 +52,8 @@ try{
  await admin.locator('#correctSelect').selectOption('0');
  await admin.locator('#topicInput').selectOption('esp32');
  await admin.locator('#questionForm button[type="submit"]').click();
+ await admin.waitForFunction(()=>!document.getElementById('saveToast').hidden);
+ assert((await admin.locator('#saveToast').textContent()).includes('Alterações salvas'),'Popup confirma salvamento');
  let data=await admin.evaluate(()=>window.TinkerPETAdmin.getSettings());
  assert.equal(data.questions.length,20,'Cadastra questão');
  assert(data.questions.some(q=>q.prompt.includes('neste teste')),'Salva enunciado da nova questão');
