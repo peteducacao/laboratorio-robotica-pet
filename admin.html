@@ -6,7 +6,7 @@
 <meta name="theme-color" content="#092747">
 <link rel="icon" href="assets/logo-pet.svg" type="image/svg+xml">
 <link rel="stylesheet" href="admin.css?v=3">
-<script defer src="admin.js?v=7"></script>
+<script defer src="admin.js?v=8"></script>
 </head>
 <body>
 <div class="auth-overlay" id="authOverlay">
@@ -51,9 +51,9 @@
    </section>
    <div class="two-column">
     <section class="panel">
-     <h2>● Status do jogo</h2>
-     <label class="switch-line"><span>🎮 PETQuiz</span><input type="checkbox" id="homeQuizEnabled"><i></i></label>
-     <label class="switch-line"><span>✓ Gabarito</span><input type="checkbox" id="homeAnswerEnabled"><i></i></label>
+     <h2>● Bloqueios de acesso</h2><p class="muted">Verde = bloqueado · Cinza = liberado</p>
+     <label class="switch-line"><span>🔒 Bloquear PETQuiz</span><input type="checkbox" id="homeQuizEnabled" aria-label="Bloquear PETQuiz"><i></i></label>
+     <label class="switch-line"><span>🔒 Bloquear Gabarito</span><input type="checkbox" id="homeAnswerEnabled" aria-label="Bloquear Gabarito"><i></i></label>
     </section>
     <section class="panel">
      <h2>☷ Configuração da partida</h2>
@@ -128,9 +128,9 @@
    <div class="page-actions"><div><h2>Configurações do jogo</h2><p class="muted">Defina o que ficará disponível para os alunos.</p></div></div>
    <div class="two-column">
     <section class="panel">
-     <h2>🔓 Acesso</h2><p class="muted">Alterações não publicadas funcionam apenas como prévia neste navegador de administrador.</p>
-     <label class="switch-line"><span>PETQuiz</span><input type="checkbox" id="settingsQuizEnabled"><i></i></label>
-     <label class="switch-line"><span>Gabarito</span><input type="checkbox" id="settingsAnswerEnabled"><i></i></label>
+     <h2>🔒 Bloqueios de acesso</h2><p class="muted">Verde = bloqueado · Cinza = liberado. Os dois controles funcionam separadamente.</p>
+     <label class="switch-line"><span>Bloquear PETQuiz</span><input type="checkbox" id="settingsQuizEnabled" aria-label="Bloquear PETQuiz"><i></i></label>
+     <label class="switch-line"><span>Bloquear Gabarito</span><input type="checkbox" id="settingsAnswerEnabled" aria-label="Bloquear Gabarito"><i></i></label>
     </section>
     <section class="panel">
      <h2>🎮 Partida</h2>
@@ -148,7 +148,7 @@
   <section class="page" id="page-ajuda">
    <div class="page-actions"><div><h2>Como usar o painel</h2><p class="muted">Um guia simples para administrar o PETQuiz.</p></div></div>
    <section class="panel help-panel">
-    <h2>1. Início</h2><p>Use os atalhos para acessar as perguntas, abrir o jogo e alterar as configurações. Os botões de PETQuiz e Gabarito permitem liberar ou bloquear os acessos de forma independente.</p>
+    <h2>1. Início</h2><p>Use os atalhos para acessar as perguntas, abrir o jogo e alterar as configurações. Nos controles de bloqueio, verde significa bloqueado e cinza significa liberado. PETQuiz e Gabarito são independentes.</p>
     <h2>2. Banco de questões</h2><p>Toque numa pergunta para abrir o editor. Mude enunciado, alternativas, gabarito, categoria, assunto e situação ativa. Use <strong>Salvar pergunta</strong> após editar. Também é possível criar novas perguntas ou excluir as que não serão utilizadas.</p>
     <h2>3. Categorias e requisitos</h2><p>Crie, renomeie ou exclua categorias e assuntos. Os que já são utilizados por perguntas precisam ser desvinculados antes da exclusão. Categorias e requisitos ficam disponíveis para escolha no editor.</p>
     <h2>4. Configurações do jogo</h2><p>Escolha quantas perguntas e quantos bônus aparecerão por partida. Os sete desafios bônus existentes continuam fixos e não têm editor individual.</p>
