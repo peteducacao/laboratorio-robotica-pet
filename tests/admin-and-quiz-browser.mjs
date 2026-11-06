@@ -130,26 +130,36 @@ try{
  assert((await admin.evaluate(()=>window.TinkerPETAdmin.getSettings())).quizEnabled,'Desbloqueia quiz');
  assert((await admin.evaluate(()=>window.TinkerPETAdmin.getSettings())).answerKeyEnabled,'Desbloqueia gabarito');
 
- // Exportação da atualização sem pedir token GitHub.
+ // O mesmo token da entrada é reutilizado em toda publicação.
  await admin.locator('[data-page="configuracoes"].nav-btn').click();
- assert.equal(await admin.locator('#githubToken').count(),0,'Sem campo de token GitHub');
- const downloaded=admin.waitForEvent('download');
+ assert.equal(await admin.locator('#githubToken').count(),0,'Token não é solicitado novamente');
+ await admin.waitForFunction(()=>document.querySelector('#saveState')?.textContent.includes('Publicado'),{timeout:12000});
+ assert(writes>0,'Salvamento enviou PUT automaticamente ao GitHub');
+ assert.equal(published.questions.length,19,'Publicação mantém todas as perguntas');
+ assert(published.quizEnabled&&published.answerKeyEnabled,'Publica controles de acesso');
+ assert.equal(published.questionCount,9,'Publica quantidade de perguntas');
+ assert.equal(published.bonusCount,3,'Publica quantidade de bônus');
+ assert.equal(published.categories.length,original.categories.length,'Publica categorias');
+ assert.equal(published.prerequisites.length,original.prerequisites.length,'Publica requisitos');
+ assert.equal(await admin.evaluate(()=>sessionStorage.getItem('tinkerpet-admin-github-token')),validToken,'Token mantido na sessão');
+ assert.equal(await admin.evaluate(()=>localStorage.getItem('tinkerpet-admin-github-token')),null,'Token nunca salvo em armazenamento permanente');
+ const before=writes;
  await admin.locator('#publish').click();
+ await admin.waitForFunction(()=>document.querySelector('#saveState')?.textContent.includes('Publicado'),{timeout:12000});
+ assert(writes>before,'Botão Publicar reutiliza o token sem novo login');
+ const downloaded=admin.waitForEvent('download');
+ await admin.locator('#exportSettings').click();
  const file=await downloaded;
- assert.equal(file.suggestedFilename(),'petquiz-settings.json');
+ assert.equal(file.suggestedFilename(),'petquiz-settings.json','Backup opcional');
  const exported=JSON.parse(readFileSync(await file.path(),'utf8'));
- assert.equal(exported.questions.length,19,'Arquivo inclui todas as perguntas');
- assert(exported.quizEnabled&&exported.answerKeyEnabled,'Exportação inclui os controles de acesso');
- assert.equal(exported.categories.length,original.categories.length,'Categorias exportadas');
- assert.equal(exported.prerequisites.length,original.prerequisites.length,'Requisitos exportados');
- assert(!!await admin.evaluate(()=>localStorage.getItem('tinkerpet-admin-draft-v1')),'Rascunho permanece salvo após exportar');
+ assert.equal(exported.questions.length,19,'Backup mantém perguntas');
  await admin.screenshot({path:'test-results/petquiz-admin-desktop.png',fullPage:true});
  await context.close();
- console.log('PASS admin: senha, cadastro, edição, exclusão, configurações, bloqueios, desbloqueios e exportação sem token');
+ console.log('PASS admin: token único, CRUD, salvamento automático, publicação repetida e backup');
 
  const mobileAdminContext=await browser.newContext({viewport:{width:390,height:844},isMobile:true,hasTouch:true});
  const mobileAdmin=await mobileAdminContext.newPage();
- await mobileAdmin.addInitScript(()=>sessionStorage.setItem('tinkerpet-admin-auth','ok'));
+ await mobileAdmin.addInitScript(()=>{sessionStorage.setItem('tinkerpet-admin-auth','ok');sessionStorage.setItem('tinkerpet-admin-github-token','github_pat_teste_publicacao')});
  await mobileAdmin.goto(origin+'/admin.html');
  await mobileAdmin.waitForFunction(()=>!!window.TinkerPETAdmin,{timeout:15000});
  await mobileAdmin.locator('.nav-btn[data-page="configuracoes"]').click();
