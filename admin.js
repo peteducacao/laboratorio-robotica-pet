@@ -311,33 +311,66 @@
    settings.questionCount=Math.max(1,qs().filter(q=>q.active).length);
   saveDraft();renderOverview();renderList();notice('Pergunta salva no rascunho.');
  }
- function downloadUpdate(){
+ async function publish(manual=true){
+  clearTimeout(publishTimer);
+  if(publishBusy){publishAgain=true;return}
+  let snapshot;
+  try{validate();snapshot=JSON.stringify(settings,null,2)+'\n'}
+  catch(err){
+   $('saveState').textContent='Rascunho incompleto · corrija antes de publicar';
+   if(manual)notice(err.message,true);
+   return;
+  }
+  publishBusy=true;
+  const btn=$('publish'),footer=$('publishFooter');
+  btn.disabled=true;footer.disabled=true;
+  $('saveState').textContent='Publicando alterações no GitHub...';
+  try{
+   const uri='https://api.github.com/repos/'+REPO+'/contents/'+CONFIG;
+   const headers={'Authorization':'Bearer '+token(),'Accept':'application/vnd.github+json',
+    'X-GitHub-Api-Version':'2022-11-28'};
+   const get=await fetch(uri,{headers,cache:'no-store'});
+   if(!get.ok)throw Error('Não foi possível obter a configuração atual (HTTP '+get.status+').');
+   const doc=await get.json();
+   const bytes=new TextEncoder().encode(snapshot);let binary='';
+   for(let i=0;i<bytes.length;i+=16384)
+    binary+=String.fromCharCode(...bytes.slice(i,i+16384));
+   const content=btoa(binary);
+   const put=await fetch(uri,{method:'PUT',headers:{...headers,'Content-Type':'application/json'},
+    body:JSON.stringify({message:'Admin: publicar alterações do PETQuiz',content,sha:doc.sha,branch:'main'})});
+   if(!put.ok){
+    if(put.status===401||put.status===403)throw Error('O token não tem permissão para publicar. Confira Contents: leitura e escrita no GitHub.');
+    throw Error('Não foi possível publicar (HTTP '+put.status+'). Tente novamente.');
+   }
+   remoteSettings=clone(JSON.parse(snapshot));
+   if(JSON.stringify(settings,null,2)+'\n'===snapshot){
+    localStorage.removeItem(DRAFT);
+    $('saveState').textContent='Publicado no GitHub · disponível após atualização do site';
+   }else{
+    localStorage.setItem(DRAFT,JSON.stringify(settings));publishAgain=true;
+    $('saveState').textContent='Última alteração publicada · há edições mais recentes';
+   }
+   showSaveToast('Publicado para todos!');
+   $('notice').hidden=true;
+  }catch(err){
+   console.error('Falha de publicação',err);
+   localStorage.setItem(DRAFT,JSON.stringify(settings));
+   $('saveState').textContent='Não publicado · tente novamente';
+   notice(err.message||'Erro de publicação',true);
+   showSaveToast('Não foi possível publicar');
+  }finally{
+   publishBusy=false;btn.disabled=false;footer.disabled=false;
+   if(publishAgain){publishAgain=false;schedulePublish()}
+  }
+ }
+ function exportJson(){
   try{validate()}catch(err){notice(err.message,true);return}
-  saveDraft();
-  const json=JSON.stringify(settings,null,2)+'\n';
-  const blob=new Blob([json],{type:'application/json'});
+  const blob=new Blob([JSON.stringify(settings,null,2)+'\n'],{type:'application/json'});
   const url=URL.createObjectURL(blob),link=document.createElement('a');
   link.href=url;link.download='petquiz-settings.json';
   document.body.append(link);link.click();link.remove();
   setTimeout(()=>URL.revokeObjectURL(url),1500);
-  notice('Atualização preparada! Envie o arquivo petquiz-settings.json nesta conversa para eu publicar para todos os alunos.');
- }
- async function copyUpdate(){
-  try{validate()}catch(err){notice(err.message,true);return}
-  saveDraft();
-  const json=JSON.stringify(settings,null,2)+'\n';
-  try{
-   await navigator.clipboard.writeText(json);
-   notice('Atualização copiada! Cole o texto nesta conversa para eu publicar no GitHub.');
-  }catch(err){
-   const box=document.createElement('textarea');
-   box.value=json;box.style.cssText='position:fixed;left:12px;top:12px;width:calc(100vw - 24px);height:180px;z-index:9999';
-   document.body.append(box);box.focus();box.select();
-   try{
-    if(document.execCommand('copy')){box.remove();notice('Atualização copiada. Cole nesta conversa para publicar.');return;}
-   }catch{}
-   notice('A cópia automática não foi permitida. Selecione e copie o texto aberto na tela.',true);
-  }
+  notice('Backup salvo neste aparelho.');
  }
  for(const el of document.querySelectorAll('[data-page]'))el.addEventListener('click',()=>setPage(el.dataset.page));
  for(const el of document.querySelectorAll('[data-counter]'))el.addEventListener('click',()=>countControl(el.dataset.counter,Number(el.dataset.step)));
@@ -356,24 +389,24 @@
  $('addQuestion').addEventListener('click',newQuestion);
  $('questionForm').addEventListener('submit',saveQuestion);
  $('deleteQuestion').addEventListener('click',deleteQuestion);
- $('publish').addEventListener('click',downloadUpdate);$('publishFooter').addEventListener('click',downloadUpdate);
- $('exportSettings').addEventListener('click',copyUpdate);
+ $('publish').addEventListener('click',()=>publish(true));$('publishFooter').addEventListener('click',()=>publish(true));
+ $('exportSettings').addEventListener('click',exportJson);
  $('discardDraft').addEventListener('click',()=>{
   if(!confirm('Descartar alterações locais e voltar à última versão publicada?'))return;
   if(remoteSettings){settings=clone(remoteSettings);localStorage.removeItem(DRAFT);selectedId=settings.questions[0]?.id||null;
    if(selectedId)selectQuestion(selectedId);renderOverview();notice('Rascunho descartado.')}
  });
- $('logout').addEventListener('click',()=>{sessionStorage.removeItem('tinkerpet-admin-auth');location.href='admin.html'});
+ $('logout').addEventListener('click',()=>{sessionStorage.removeItem(TOKEN_KEY);sessionStorage.removeItem('tinkerpet-admin-auth');location.href='admin.html'});
  try{
   const response=await fetch(CONFIG+'?nocache='+Date.now(),{cache:'no-store'});
   if(!response.ok)throw Error('Não foi possível carregar as configurações publicadas ('+response.status+').');
   remoteSettings=normalize(await response.json());
   let draft=null;try{draft=JSON.parse(localStorage.getItem(DRAFT)||'null')}catch{}
   settings=normalize(draft||remoteSettings);
-  if(draft){notice('Rascunho recuperado. Baixe a atualização e me envie o arquivo para atualizar o site dos alunos.');$('saveState').textContent='Salvo neste aparelho · ainda não publicado online'}
+  if(draft){notice('Há alterações salvas neste aparelho que ainda precisam ser publicadas.');$('saveState').textContent='Rascunho local · publicando...';schedulePublish()}
   selectedId=qs()[0]?.id||null;
   renderOverview();if(selectedId)selectQuestion(selectedId);
   renderList();
  }catch(err){notice(err.message,true);$('saveState').textContent='Falha ao carregar configurações';$('publish').disabled=true}
- window.TinkerPETAdmin={getSettings:()=>clone(settings),downloadUpdate,selectQuestion,newQuestion,deleteQuestion};
+ window.TinkerPETAdmin={getSettings:()=>clone(settings),publish,selectQuestion,newQuestion,deleteQuestion};
 })();
