@@ -46,6 +46,10 @@
   categories:[{id:'componentes',name:'Componentes',stage:'concept'},{id:'situacoes',name:'Situações práticas',stage:'practice'}],
   prerequisites:[],questions:[]};
  let settings={...placeholder},selectedId=null,remoteSettings=null,editingCategory=null,editingTopic=null;
+ let bonusCatalogCount=null;
+ const maxBonuses=()=>bonusCatalogCount===null?Math.max(0,settings.bonusCount):
+  Math.max(0,Math.min(bonusCatalogCount,settings.questionCount-1));
+ const clampBonuses=()=>{if(bonusCatalogCount!==null)settings.bonusCount=Math.min(settings.bonusCount,maxBonuses());};
  // Registra somente a permissão intencionalmente modificada.
  const dirtyAccess=new Set();
  try{
@@ -97,7 +101,7 @@
   for(const id of topicIds)if(!prerequisites.some(t=>t.id===id))prerequisites.push({id,name:names[id]||id});
   const out={version:1,quizEnabled:data.quizEnabled!==false,answerKeyEnabled:data.answerKeyEnabled!==false,
    questionCount:Math.max(1,Math.min(99,Math.trunc(Number(data.questionCount)||10))),
-   bonusCount:Math.max(0,Math.min(7,Math.trunc(data.bonusCount==null?2:Number(data.bonusCount)||0))),
+   bonusCount:Math.max(0,Math.trunc(data.bonusCount==null?2:Number(data.bonusCount)||0)),
    categories,prerequisites,
    questions:data.questions.filter(q=>q&&typeof q.prompt==='string').map(q=>({
     ...q,active:q.active!==false,
@@ -109,9 +113,15 @@
   return out;
  }
  function countControl(kind,step){
-  const max=kind==='bonusCount'?7:Math.max(1,qs().filter(q=>q.active).length);
+  if(kind==='bonusCount'&&bonusCatalogCount===null){
+   notice('Não foi possível consultar os desafios. Atualize o painel para tentar novamente.',true);return;
+  }
+  const max=kind==='bonusCount'?maxBonuses():Math.max(1,qs().filter(q=>q.active).length);
   const min=kind==='bonusCount'?0:1;
-  settings[kind]=Math.min(max,Math.max(min,settings[kind]+step));
+  const next=Math.min(max,Math.max(min,settings[kind]+step));
+  if(next===settings[kind])return;
+  settings[kind]=next;
+  clampBonuses();
   saveDraft();renderOverview();
  }
  function renderOverview(){
@@ -120,6 +130,15 @@
   for(const id of ['homeQuestionCount','settingsQuestionCount'])$(id).textContent=settings.questionCount;
   for(const id of ['homeBonusCount','settingsBonusCount'])$(id).textContent=settings.bonusCount;
   $('questionAvailable').textContent=qs().filter(q=>q.active).length;
+  const info=bonusCatalogCount===null?'Catálogo de desafios indisponível':
+   bonusCatalogCount+' desafios cadastrados · até '+maxBonuses()+' por partida';
+  $('bonusCatalogSummary').textContent=info;
+  $('bonusSettingsSummary').textContent=bonusCatalogCount===null?
+   'Não foi possível consultar os bônus. Atualize o painel.':
+   info+' · Sem editor de bônus no painel.';
+  for(const button of document.querySelectorAll('[data-counter="bonusCount"]'))
+   button.disabled=bonusCatalogCount===null||Number(button.dataset.step)>0&&settings.bonusCount>=maxBonuses()||
+    Number(button.dataset.step)<0&&settings.bonusCount<=0;
  }
  function setPage(page){
   for(const p of document.querySelectorAll('.page'))p.classList.toggle('active',p.id==='page-'+page);
@@ -292,7 +311,7 @@
   const invalidPractice=active.find(q=>q.stage==='practice'&&(q.requires||[]).some(t=>!activeTopics.has(t)));
   if(invalidPractice)throw Error('Esta situação prática precisa de uma pergunta ativa que apresente seu assunto: '+invalidPractice.prompt);
   settings.questionCount=Math.max(1,Math.min(settings.questionCount,active.length));
-  settings.bonusCount=Math.max(0,Math.min(7,settings.bonusCount));
+  settings.bonusCount=Math.max(0,Math.min(settings.bonusCount,maxBonuses()));
   return true;
  }
  function deleteQuestion(){
@@ -440,8 +459,16 @@
   const response=await fetch(CONFIG+'?nocache='+Date.now(),{cache:'no-store'});
   if(!response.ok)throw Error('Não foi possível carregar as configurações publicadas ('+response.status+').');
   remoteSettings=normalize(await response.json());
+  try{
+   const result=await fetch('petquiz-bonuses.json?nocache='+Date.now(),{cache:'no-store'});
+   if(!result.ok)throw Error('HTTP '+result.status);
+   const catalog=await result.json();
+   if(!Array.isArray(catalog.bonuses))throw Error('Catálogo sem lista');
+   bonusCatalogCount=catalog.bonuses.length;
+  }catch(err){console.warn('Admin: catálogo de bônus indisponível',err);bonusCatalogCount=null}
   let draft=null;try{draft=JSON.parse(localStorage.getItem(DRAFT)||'null')}catch{}
   settings=normalize(draft||remoteSettings);
+  clampBonuses();
   if(draft){
    // Um rascunho antigo não pode alterar o outro bloqueio já publicado.
    for(const key of ['quizEnabled','answerKeyEnabled']){
