@@ -6,15 +6,15 @@
 <meta name="theme-color" content="#092747">
 <link rel="icon" href="assets/logo-pet.svg" type="image/svg+xml">
 <link rel="stylesheet" href="admin.css?v=3">
-<script defer src="admin.js?v=4"></script>
+<script defer src="admin.js?v=6"></script>
 </head>
 <body>
 <div class="auth-overlay" id="authOverlay">
  <form class="login-card" id="loginForm" autocomplete="off">
   <div class="brandmark">🤖</div><h1>Painel TinkerPET</h1>
-  <p>Acesso do administrador</p>
-  <label for="password">Senha</label>
-  <div class="password-field"><input id="password" type="password" autocomplete="off" required placeholder="Digite a senha"><button type="button" id="toggleAdminPassword" aria-label="Mostrar senha" aria-pressed="false" title="Mostrar senha"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M2 12s3.5-6 10-6 10 6 10 6-3.5 6-10 6S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/></svg></button></div>
+  <p>Use um token GitHub com permissão de escrita neste repositório.</p>
+  <label for="password">Token do GitHub</label>
+  <div class="password-field"><input id="password" type="password" autocomplete="off" required placeholder="Cole seu token GitHub"><button type="button" id="toggleAdminPassword" aria-label="Mostrar senha" aria-pressed="false" title="Mostrar senha"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M2 12s3.5-6 10-6 10 6 10 6-3.5 6-10 6S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/></svg></button></div>
   <p id="loginError" class="form-error" role="alert"></p>
   <button type="submit" class="primary wide">Entrar no painel</button>
   <a href="projects.html">Voltar aos meus circuitos</a>
@@ -140,9 +140,9 @@
     </section>
    </div>
    <section class="panel publish-panel">
-    <h2>Salvar e enviar alterações</h2>
-    <p>Suas edições já ficam salvas automaticamente neste aparelho. Para atualizar o PETQuiz e o gabarito nos celulares das crianças, baixe a atualização e envie o arquivo aqui na conversa do ChatGPT. Eu publico no GitHub para você, sem precisar de token.</p>
-    <div class="publish-actions"><button type="button" id="publish" class="primary">Baixar atualização</button><button type="button" id="exportSettings" class="secondary">Copiar atualização</button><button type="button" id="discardDraft" class="secondary">Descartar rascunho</button></div>
+    <h2>Publicação automática</h2>
+    <p>Depois de entrar com o token, as alterações salvas são publicadas diretamente no GitHub. Não é necessário digitar o token novamente a cada edição.</p>
+    <div class="publish-actions"><button type="button" id="publish" class="primary">Publicar agora</button><button type="button" id="exportSettings" class="secondary">Baixar backup</button><button type="button" id="discardDraft" class="secondary">Descartar rascunho</button></div>
    </section>
   </section>
   <section class="page" id="page-ajuda">
@@ -152,12 +152,12 @@
     <h2>2. Banco de questões</h2><p>Toque numa pergunta para abrir o editor. Mude enunciado, alternativas, gabarito, categoria, assunto e situação ativa. Use <strong>Salvar pergunta</strong> após editar. Também é possível criar novas perguntas ou excluir as que não serão utilizadas.</p>
     <h2>3. Categorias e requisitos</h2><p>Crie, renomeie ou exclua categorias e assuntos. Os que já são utilizados por perguntas precisam ser desvinculados antes da exclusão. Categorias e requisitos ficam disponíveis para escolha no editor.</p>
     <h2>4. Configurações do jogo</h2><p>Escolha quantas perguntas e quantos bônus aparecerão por partida. Os sete desafios bônus existentes continuam fixos e não têm editor individual.</p>
-    <h2>5. Salvar e atualizar para todos</h2><p>As mudanças são salvas automaticamente no navegador deste aparelho. O botão <strong>Baixar atualização</strong> gera um arquivo que você pode enviar nesta conversa para eu publicar no GitHub. Sem essa publicação, os demais aparelhos continuam usando a última configuração disponível online.</p>
-    <h2>6. Senha do painel</h2><p>A senha de entrada é independente do Gabarito. O Gabarito, quando liberado, abre diretamente, sem pedir outra senha. Para encerrar a sessão administrativa, use <strong>Sair</strong>.</p>
+    <h2>5. Salvar e atualizar para todos</h2><p>O token usado para entrar também permite publicar. Após salvar uma pergunta ou mudar uma configuração, aguarde o aviso <strong>Publicado para todos!</strong>. Em caso de falha, use <strong>Publicar agora</strong>. O backup é opcional.</p>
+    <h2>6. Senha do painel</h2><p>O token GitHub substitui a antiga senha do Admin. Ele é guardado somente nesta sessão do navegador e não é incluído nas perguntas ou no site. O mesmo token pode atender ao catálogo se tiver acesso aos dois repositórios. Use <strong>Sair</strong> para encerrar a sessão.</p>
    </section>
   </section>
   <div id="saveToast" class="save-toast" role="status" aria-live="polite" hidden><span class="toast-check" aria-hidden="true">✓</span><span id="saveToastText">Alterações salvas!</span></div>
-  <footer class="admin-footer"><span id="saveState">Configurações carregadas</span><button type="button" class="primary" id="publishFooter">Baixar atualização</button></footer>
+  <footer class="admin-footer"><span id="saveState">Configurações carregadas</span><button type="button" class="primary" id="publishFooter">Publicar agora</button></footer>
  </main>
 </div>
 </body></html>
