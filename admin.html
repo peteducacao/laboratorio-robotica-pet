@@ -5,8 +5,8 @@
 <title>Painel Admin • TinkerPET</title>
 <meta name="theme-color" content="#092747">
 <link rel="icon" href="assets/logo-pet.svg" type="image/svg+xml">
-<link rel="stylesheet" href="admin.css?v=2">
-<script defer src="admin.js?v=3"></script>
+<link rel="stylesheet" href="admin.css?v=3">
+<script defer src="admin.js?v=4"></script>
 </head>
 <body>
 <div class="auth-overlay" id="authOverlay">
@@ -14,7 +14,7 @@
   <div class="brandmark">🤖</div><h1>Painel TinkerPET</h1>
   <p>Acesso do administrador</p>
   <label for="password">Senha</label>
-  <input id="password" type="password" autocomplete="off" required placeholder="Digite a senha">
+  <div class="password-field"><input id="password" type="password" autocomplete="off" required placeholder="Digite a senha"><button type="button" id="toggleAdminPassword" aria-label="Mostrar senha" aria-pressed="false" title="Mostrar senha"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M2 12s3.5-6 10-6 10 6 10 6-3.5 6-10 6S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/></svg></button></div>
   <p id="loginError" class="form-error" role="alert"></p>
   <button type="submit" class="primary wide">Entrar no painel</button>
   <a href="projects.html">Voltar aos meus circuitos</a>
@@ -30,6 +30,7 @@
    <button class="nav-btn" data-page="questoes" type="button"><span>▤</span> Banco de questões</button>
    <button class="nav-btn" data-page="taxonomia" type="button"><span>☷</span> Categorias e requisitos</button>
    <button class="nav-btn" data-page="configuracoes" type="button"><span>⚙</span> Configurações do jogo</button>
+   <button class="nav-btn" data-page="ajuda" type="button"><span>?</span> Ajuda</button>
   </nav>
   <button class="logout" id="logout" type="button">↪ Sair</button>
  </aside>
@@ -144,6 +145,18 @@
     <div class="publish-actions"><button type="button" id="publish" class="primary">Baixar atualização</button><button type="button" id="exportSettings" class="secondary">Copiar atualização</button><button type="button" id="discardDraft" class="secondary">Descartar rascunho</button></div>
    </section>
   </section>
+  <section class="page" id="page-ajuda">
+   <div class="page-actions"><div><h2>Como usar o painel</h2><p class="muted">Um guia simples para administrar o PETQuiz.</p></div></div>
+   <section class="panel help-panel">
+    <h2>1. Início</h2><p>Use os atalhos para acessar as perguntas, abrir o jogo e alterar as configurações. Os botões de PETQuiz e Gabarito permitem liberar ou bloquear os acessos de forma independente.</p>
+    <h2>2. Banco de questões</h2><p>Toque numa pergunta para abrir o editor. Mude enunciado, alternativas, gabarito, categoria, assunto e situação ativa. Use <strong>Salvar pergunta</strong> após editar. Também é possível criar novas perguntas ou excluir as que não serão utilizadas.</p>
+    <h2>3. Categorias e requisitos</h2><p>Crie, renomeie ou exclua categorias e assuntos. Os que já são utilizados por perguntas precisam ser desvinculados antes da exclusão. Categorias e requisitos ficam disponíveis para escolha no editor.</p>
+    <h2>4. Configurações do jogo</h2><p>Escolha quantas perguntas e quantos bônus aparecerão por partida. Os sete desafios bônus existentes continuam fixos e não têm editor individual.</p>
+    <h2>5. Salvar e atualizar para todos</h2><p>As mudanças são salvas automaticamente no navegador deste aparelho. O botão <strong>Baixar atualização</strong> gera um arquivo que você pode enviar nesta conversa para eu publicar no GitHub. Sem essa publicação, os demais aparelhos continuam usando a última configuração disponível online.</p>
+    <h2>6. Senha do painel</h2><p>A senha de entrada é independente do Gabarito. O Gabarito, quando liberado, abre diretamente, sem pedir outra senha. Para encerrar a sessão administrativa, use <strong>Sair</strong>.</p>
+   </section>
+  </section>
+  <div id="saveToast" class="save-toast" role="status" aria-live="polite" hidden><span class="toast-check" aria-hidden="true">✓</span><span id="saveToastText">Alterações salvas!</span></div>
   <footer class="admin-footer"><span id="saveState">Configurações carregadas</span><button type="button" class="primary" id="publishFooter">Baixar atualização</button></footer>
  </main>
 </div>
