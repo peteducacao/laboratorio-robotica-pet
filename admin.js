@@ -2,6 +2,7 @@
 (async()=>{
  const $=id=>document.getElementById(id);
  const CONFIG='petquiz-settings.json',DRAFT='tinkerpet-admin-draft-v1';
+ const DRAFT_ACCESS='tinkerpet-admin-draft-access-keys-v1';
  const REPO='peteducacao/laboratorio-robotica-pet';
  const TOKEN_KEY='tinkerpet-admin-github-token';
  const token=()=>sessionStorage.getItem(TOKEN_KEY)||'';
@@ -45,6 +46,18 @@
   categories:[{id:'componentes',name:'Componentes',stage:'concept'},{id:'situacoes',name:'Situações práticas',stage:'practice'}],
   prerequisites:[],questions:[]};
  let settings={...placeholder},selectedId=null,remoteSettings=null,editingCategory=null,editingTopic=null;
+ // Registra somente a permissão intencionalmente modificada.
+ const dirtyAccess=new Set();
+ try{
+  for(const key of JSON.parse(localStorage.getItem(DRAFT_ACCESS)||'[]')){
+   if(key==='quizEnabled'||key==='answerKeyEnabled')dirtyAccess.add(key);
+  }
+ }catch{localStorage.removeItem(DRAFT_ACCESS)}
+ function markAccessChanged(key){
+  if(!remoteSettings||settings[key]!==remoteSettings[key])dirtyAccess.add(key);
+  else dirtyAccess.delete(key);
+  localStorage.setItem(DRAFT_ACCESS,JSON.stringify([...dirtyAccess]));
+ }
  let publishTimer=null,publishBusy=false,publishAgain=false;
  let toastTimer=null;
  function showSaveToast(message='Alterações salvas!'){
@@ -343,6 +356,11 @@
     throw Error('Não foi possível publicar (HTTP '+put.status+'). Tente novamente.');
    }
    remoteSettings=clone(JSON.parse(snapshot));
+   for(const key of [...dirtyAccess]){
+    if(settings[key]===remoteSettings[key])dirtyAccess.delete(key);
+   }
+   if(dirtyAccess.size)localStorage.setItem(DRAFT_ACCESS,JSON.stringify([...dirtyAccess]));
+   else localStorage.removeItem(DRAFT_ACCESS);
    if(JSON.stringify(settings,null,2)+'\n'===snapshot){
     localStorage.removeItem(DRAFT);
     $('saveState').textContent='Publicado no GitHub · disponível após atualização do site';
@@ -375,10 +393,10 @@
  for(const el of document.querySelectorAll('[data-page]'))el.addEventListener('click',()=>setPage(el.dataset.page));
  for(const el of document.querySelectorAll('[data-counter]'))el.addEventListener('click',()=>countControl(el.dataset.counter,Number(el.dataset.step)));
  for(const id of ['homeQuizEnabled','settingsQuizEnabled'])$(id).addEventListener('change',e=>{
-  settings.quizEnabled=e.target.checked;saveDraft();renderOverview();
+  settings.quizEnabled=e.target.checked;markAccessChanged('quizEnabled');saveDraft();renderOverview();
  });
  for(const id of ['homeAnswerEnabled','settingsAnswerEnabled'])$(id).addEventListener('change',e=>{
-  settings.answerKeyEnabled=e.target.checked;saveDraft();renderOverview();
+  settings.answerKeyEnabled=e.target.checked;markAccessChanged('answerKeyEnabled');saveDraft();renderOverview();
  });
  $('categoryForm').addEventListener('submit',saveCategory);
  $('topicForm').addEventListener('submit',saveTopic);
@@ -393,7 +411,7 @@
  $('exportSettings').addEventListener('click',exportJson);
  $('discardDraft').addEventListener('click',()=>{
   if(!confirm('Descartar alterações locais e voltar à última versão publicada?'))return;
-  if(remoteSettings){settings=clone(remoteSettings);localStorage.removeItem(DRAFT);selectedId=settings.questions[0]?.id||null;
+  if(remoteSettings){settings=clone(remoteSettings);localStorage.removeItem(DRAFT);localStorage.removeItem(DRAFT_ACCESS);dirtyAccess.clear();selectedId=settings.questions[0]?.id||null;
    if(selectedId)selectQuestion(selectedId);renderOverview();notice('Rascunho descartado.')}
  });
  $('logout').addEventListener('click',()=>{sessionStorage.removeItem(TOKEN_KEY);sessionStorage.removeItem('tinkerpet-admin-auth');location.href='admin.html'});
@@ -403,6 +421,13 @@
   remoteSettings=normalize(await response.json());
   let draft=null;try{draft=JSON.parse(localStorage.getItem(DRAFT)||'null')}catch{}
   settings=normalize(draft||remoteSettings);
+  if(draft){
+   // Um rascunho antigo não pode alterar o outro bloqueio já publicado.
+   for(const key of ['quizEnabled','answerKeyEnabled']){
+    if(!dirtyAccess.has(key))settings[key]=remoteSettings[key];
+   }
+   localStorage.setItem(DRAFT,JSON.stringify(settings));
+  }
   if(draft){notice('Há alterações salvas neste aparelho que ainda precisam ser publicadas.');$('saveState').textContent='Rascunho local · publicando...';schedulePublish()}
   selectedId=qs()[0]?.id||null;
   renderOverview();if(selectedId)selectQuestion(selectedId);
