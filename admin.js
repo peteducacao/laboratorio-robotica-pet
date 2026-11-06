@@ -245,24 +245,107 @@
   clearTaxonomy('topic');saveDraft();renderTaxonomies();renderEditorOptions();
   notice('Pré-requisito salvo no rascunho.');
  }
+ function changeQuestionState(id,active){
+  const question=qs().find(q=>q.id===id);if(!question||question.active===active)return false;
+  if(!active&&qs().filter(q=>q.active).length===1){
+   notice('Mantenha pelo menos uma pergunta ativa.',true);return false;
+  }
+  if(!active&&question.stage==='concept'&&question.topic){
+   const otherConcept=qs().some(q=>q.id!==id&&q.active&&q.stage==='concept'&&q.topic===question.topic);
+   const required=qs().some(q=>q.active&&q.stage==='practice'&&(q.requires||[]).includes(question.topic));
+   if(required&&!otherConcept){
+    notice('Essa pergunta apresenta um assunto exigido por situações práticas ativas. Mova essas situações para Inativas primeiro.',true);return false;
+   }
+  }
+  if(active&&question.stage==='practice'){
+   const known=new Set(qs().filter(q=>q.active&&q.stage==='concept').map(q=>q.topic));
+   if((question.requires||[]).some(id=>!known.has(id))){
+    notice('Ative primeiro uma pergunta que apresente o pré-requisito desta situação.',true);return false;
+   }
+  }
+  if(active&&(!question.prompt.trim()||question.choices.some(x=>!String(x).trim()))){
+   notice('Preencha a pergunta e as quatro alternativas antes de ativá-la.',true);return false;
+  }
+  question.active=active;
+  settings.questionCount=Math.max(1,Math.min(settings.questionCount,qs().filter(q=>q.active).length));
+  clampBonuses();
+  saveDraft();renderOverview();renderList();
+  if(selectedId===id)$('questionActivityLabel').textContent=
+   'Esta pergunta está '+(active?'ativa':'inativa')+'. Arraste entre as duas colunas para alterar.';
+  notice(active?'Pergunta ativada.':'Pergunta desativada.');
+  return true;
+ }
  function renderList(){
   const filter=$('searchQuestions').value.trim().toLowerCase();
-  const list=$('questionList');list.replaceChildren();
-  const all=qs().filter(q=>(q.prompt+' '+(q.topic||'')+' '+(q.requires||[]).join(' ')).toLowerCase().includes(filter));
-  $('bankCount').textContent=all.length+' pergunta'+(all.length===1?'':'s');
-  all.forEach((q,i)=>{
-   const row=document.createElement('button');row.type='button';row.className='question-row';
+  const targets={active:$('activeQuestionList'),inactive:$('inactiveQuestionList')};
+  for(const list of Object.values(targets))list.replaceChildren();
+  const matched=qs().filter(q=>(q.prompt+' '+(q.topic||'')+' '+(q.requires||[]).join(' ')).toLowerCase().includes(filter));
+  $('bankCount').textContent=matched.length+' pergunta'+(matched.length===1?'':'s');
+  $('activeQuestionCount').textContent=qs().filter(q=>q.active).length;
+  $('inactiveQuestionCount').textContent=qs().filter(q=>!q.active).length;
+  const findZone=(x,y)=>document.elementFromPoint(x,y)?.closest('.question-zone');
+  function markZone(zone){
+   document.querySelectorAll('.question-zone').forEach(el=>el.classList.toggle('drop-target',el===zone));
+  }
+  for(const q of matched){
+   const row=document.createElement('button');
+   row.type='button';row.className='question-row';
+   row.dataset.questionId=q.id;
    row.classList.toggle('active',q.id===selectedId);
-   const num=document.createElement('span');num.className='question-number';num.textContent=String(qs().indexOf(q)+1).padStart(2,'0');
+   const num=document.createElement('span');num.className='question-number';
+   num.textContent=String(qs().indexOf(q)+1).padStart(2,'0');
    const info=document.createElement('span'),heading=document.createElement('strong'),meta=document.createElement('small');
    heading.textContent=q.prompt;
-   meta.textContent=(settings.categories.find(c=>c.id===q.categoryId)?.name||(q.stage==='practice'?'Situação prática':'Componentes'))+' · '+(q.active?'Ativa':'Inativa');
-   if(!q.active)meta.className='off';
+   meta.textContent=settings.categories.find(c=>c.id===q.categoryId)?.name||
+    (q.stage==='practice'?'Situação prática':'Componentes');
    info.append(heading,meta);row.append(num,info);
-   row.addEventListener('click',()=>selectQuestion(q.id,true));
-   list.append(row);
-  });
-  if(!all.length){const p=document.createElement('p');p.className='muted';p.textContent='Nenhuma pergunta encontrada.';list.append(p)}
+   const target=q.active?targets.active:targets.inactive;target.append(row);
+   let origin=null,ghost=null;
+   const cleanup=()=>{
+    row.classList.remove('is-dragging');
+    ghost?.remove();ghost=null;
+    markZone(null);
+   };
+   row.addEventListener('pointerdown',event=>{
+    if(event.pointerType==='mouse'&&event.button!==0)return;
+    origin={id:event.pointerId,x:event.clientX,y:event.clientY,dragging:false};
+    try{row.setPointerCapture(event.pointerId)}catch{}
+   });
+   row.addEventListener('pointermove',event=>{
+    if(!origin||origin.id!==event.pointerId)return;
+    const dx=event.clientX-origin.x,dy=event.clientY-origin.y;
+    if(!origin.dragging){
+     if(event.pointerType==='touch'&&!(Math.abs(dx)>17&&Math.abs(dx)>Math.abs(dy)*1.12))return;
+     if(event.pointerType!=='touch'&&Math.hypot(dx,dy)<9)return;
+     origin.dragging=true;row.classList.add('is-dragging');
+     ghost=document.createElement('div');ghost.className='question-drag-ghost';
+     ghost.textContent=q.prompt;document.body.append(ghost);
+    }
+    if(event.cancelable)event.preventDefault();
+    ghost.style.left=event.clientX+'px';ghost.style.top=event.clientY+'px';
+    markZone(findZone(event.clientX,event.clientY));
+   });
+   row.addEventListener('pointerup',event=>{
+    if(!origin||origin.id!==event.pointerId)return;
+    const wasDragging=origin.dragging;
+    const zone=wasDragging?findZone(event.clientX,event.clientY):null;
+    origin=null;cleanup();
+    try{row.releasePointerCapture(event.pointerId)}catch{}
+    if(wasDragging){
+     if(zone)changeQuestionState(q.id,zone.dataset.statusZone==='active');
+    }else selectQuestion(q.id,true);
+   });
+   row.addEventListener('pointercancel',()=>{origin=null;cleanup()});
+   // Teclado continua abrindo o editor sem exigir mouse.
+   row.addEventListener('click',event=>{if(event.detail===0)selectQuestion(q.id,true)});
+  }
+  for(const [kind,list] of Object.entries(targets)){
+   if(list.children.length)continue;
+   const p=document.createElement('p');p.className='question-drop-hint';
+   p.textContent=filter?'Nenhuma pergunta encontrada':
+    kind==='inactive'?'Arraste uma pergunta para cá':'Arraste perguntas para esta coluna';
+   list.append(p);
+  }
  }
  function selectQuestion(id,scrollToEditor=false){
   const q=qs().find(x=>x.id===id);if(!q)return;
@@ -274,7 +357,8 @@
   $('stageSelect').value=q.categoryId||defaultCategory(q.stage);
   $('topicInput').value=q.stage==='practice'?(q.requires||[])[0]||'':q.topic||'';
   updateTopicLabel();
-  $('activeQuestion').checked=q.active!==false;
+  $('questionActivityLabel').textContent='Esta pergunta está '+(q.active?'ativa':'inativa')+
+   '. Arraste entre as colunas Ativas e Inativas para alterar.';
   $('deleteQuestion').disabled=false;
   renderList();
   if(scrollToEditor&&window.innerWidth<=1080){
@@ -336,7 +420,7 @@
   if(!category){notice('Selecione uma categoria cadastrada.',true);return}
   const stage=category.stage,topic=$('topicInput').value;
   q.prompt=text;q.choices=choices;q.correct=Number($('correctSelect').value);
-  q.stage=stage;q.categoryId=categoryId;q.active=$('activeQuestion').checked;
+  q.stage=stage;q.categoryId=categoryId;
   if(stage==='practice'){q.requires=topic?[topic]:[];delete q.topic;}
   else {q.topic=topic;delete q.requires;}
   if(!q.active&&settings.questionCount>qs().filter(q=>q.active).length)
