@@ -5,8 +5,8 @@
 <title>Painel Admin • TinkerPET</title>
 <meta name="theme-color" content="#092747">
 <link rel="icon" href="assets/logo-pet.svg" type="image/svg+xml">
-<link rel="stylesheet" href="admin.css?v=4">
-<script defer src="admin.js?v=9"></script>
+<link rel="stylesheet" href="admin.css?v=5">
+<script defer src="admin.js?v=10"></script>
 </head>
 <body>
 <div class="auth-overlay" id="authOverlay">
@@ -77,6 +77,10 @@
      <label for="searchQuestions" class="sr-only">Buscar perguntas</label>
      <input id="searchQuestions" placeholder="Buscar pergunta...">
      <div class="bank-toolbar"><span id="bankCount">Carregando perguntas...</span><span><span aria-hidden="true">↔</span> Arraste para mover</span></div>
+     <div class="bulk-question-actions" role="group" aria-label="Ações para todas as perguntas">
+      <button type="button" id="activateAllQuestions" class="bulk-question-button activate"><span aria-hidden="true">✓</span> Ativar todas</button>
+      <button type="button" id="deactivateAllQuestions" class="bulk-question-button deactivate"><span aria-hidden="true">−</span> Desativar todas</button>
+     </div>
      <div id="questionList" class="question-board" aria-label="Organizar perguntas ativas e inativas">
       <section class="question-zone" data-status-zone="active" aria-label="Perguntas ativas">
        <h3>Ativas <span id="activeQuestionCount">—</span></h3>
@@ -158,7 +162,7 @@
    <div class="page-actions"><div><h2>Como usar o painel</h2><p class="muted">Um guia simples para administrar o PETQuiz.</p></div></div>
    <section class="panel help-panel">
     <h2>1. Início</h2><p>Use os atalhos para acessar as perguntas, abrir o jogo e alterar as configurações. Nos controles de bloqueio, verde significa bloqueado e cinza significa liberado. PETQuiz e Gabarito são independentes.</p>
-    <h2>2. Banco de questões</h2><p>Toque numa pergunta para abrir o editor. Para ativar ou desativar, arraste a pergunta entre as colunas Ativas e Inativas, também no celular. Mude enunciado, alternativas, gabarito, categoria e assunto. Use <strong>Salvar pergunta</strong> após editar. Também é possível criar novas perguntas ou excluir as que não serão utilizadas.</p>
+    <h2>2. Banco de questões</h2><p>Toque numa pergunta para abrir o editor. Para ativar ou desativar, arraste a pergunta entre as colunas Ativas e Inativas, também no celular, ou use os botões Ativar todas e Desativar todas acima das colunas. Mude enunciado, alternativas, gabarito, categoria e assunto. Use <strong>Salvar pergunta</strong> após editar. Também é possível criar novas perguntas ou excluir as que não serão utilizadas.</p>
     <h2>3. Categorias e requisitos</h2><p>Crie, renomeie ou exclua categorias e assuntos. Os que já são utilizados por perguntas precisam ser desvinculados antes da exclusão. Categorias e requisitos ficam disponíveis para escolha no editor.</p>
     <h2>4. Configurações do jogo</h2><p>Escolha quantas perguntas e quantos bônus aparecerão por partida. A quantidade de bônus disponíveis é atualizada automaticamente conforme o catálogo. O limite por partida também depende do número de perguntas: cada bônus aparece entre duas perguntas. Não há editor individual de bônus.</p>
     <h2>5. Salvar e atualizar para todos</h2><p>O token usado para entrar também permite publicar. Após salvar uma pergunta ou mudar uma configuração, aguarde o aviso <strong>Publicado para todos!</strong>. Em caso de falha, use <strong>Publicar agora</strong>. O backup é opcional.</p>
