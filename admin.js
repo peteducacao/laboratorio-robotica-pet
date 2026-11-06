@@ -47,8 +47,8 @@
   prerequisites:[],questions:[]};
  let settings={...placeholder},selectedId=null,remoteSettings=null,editingCategory=null,editingTopic=null;
  let bonusCatalogCount=null;
- const maxBonuses=()=>bonusCatalogCount===null?Math.max(0,settings.bonusCount):
-  Math.max(0,Math.min(bonusCatalogCount,settings.questionCount-1));
+ const maxBonuses=()=>Math.max(0,Math.min(
+  bonusCatalogCount===null?settings.questionCount-1:bonusCatalogCount,settings.questionCount-1));
  const clampBonuses=()=>{if(bonusCatalogCount!==null)settings.bonusCount=Math.min(settings.bonusCount,maxBonuses());};
  // Registra somente a permissão intencionalmente modificada.
  const dirtyAccess=new Set();
@@ -113,9 +113,6 @@
   return out;
  }
  function countControl(kind,step){
-  if(kind==='bonusCount'&&bonusCatalogCount===null){
-   notice('Não foi possível consultar os desafios. Atualize o painel para tentar novamente.',true);return;
-  }
   const max=kind==='bonusCount'?maxBonuses():Math.max(1,qs().filter(q=>q.active).length);
   const min=kind==='bonusCount'?0:1;
   const next=Math.min(max,Math.max(min,settings[kind]+step));
@@ -137,7 +134,7 @@
    'Não foi possível consultar os bônus. Atualize o painel.':
    info+' · Sem editor de bônus no painel.';
   for(const button of document.querySelectorAll('[data-counter="bonusCount"]'))
-   button.disabled=bonusCatalogCount===null||Number(button.dataset.step)>0&&settings.bonusCount>=maxBonuses()||
+   button.disabled=Number(button.dataset.step)>0&&settings.bonusCount>=maxBonuses()||
     Number(button.dataset.step)<0&&settings.bonusCount<=0;
  }
  function setPage(page){
