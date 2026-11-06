@@ -1,0 +1,153 @@
+{
+  "version": 1,
+  "components": [
+    {
+      "id": "ponte-h",
+      "name": "Ponte H",
+      "image": "assets/mx1508-desenhado.svg"
+    },
+    {
+      "id": "esp32",
+      "name": "ESP32",
+      "image": "assets/esp32-devkit-v1-30p.svg"
+    },
+    {
+      "id": "lm2596",
+      "name": "LM2596",
+      "image": "assets/lm2596-desenhado.svg"
+    },
+    {
+      "id": "motor-dc",
+      "name": "Motor DC",
+      "image": "assets/motor-frontal.svg"
+    },
+    {
+      "id": "gangorra",
+      "name": "Chave gangorra",
+      "image": "assets/gangorra-desenhada.svg"
+    },
+    {
+      "id": "bateria-9v",
+      "name": "Bateria de 9 V",
+      "image": "assets/bateria-9v-desenhada.svg"
+    },
+    {
+      "id": "suporte-pilhas",
+      "name": "Suporte de pilhas",
+      "image": "assets/suporte-6-pilhas.svg"
+    }
+  ],
+  "bonus": [
+    {
+      "id": "forward",
+      "kind": "motor",
+      "title": "Faça o carrinho andar para a frente!",
+      "rule": "forward",
+      "initial": [
+        0,
+        0
+      ]
+    },
+    {
+      "id": "left",
+      "kind": "motor",
+      "title": "Faça o carrinho virar à esquerda!",
+      "rule": "left",
+      "initial": [
+        0,
+        0
+      ]
+    },
+    {
+      "id": "right",
+      "kind": "motor",
+      "title": "Faça o carrinho virar à direita!",
+      "rule": "right",
+      "initial": [
+        0,
+        0
+      ]
+    },
+    {
+      "id": "reverse",
+      "kind": "motor",
+      "title": "Faça o carrinho dar ré!",
+      "rule": "reverse",
+      "initial": [
+        0,
+        0
+      ]
+    },
+    {
+      "id": "stop",
+      "kind": "motor",
+      "title": "Pare o carrinho em movimento!",
+      "rule": "stop",
+      "initial": [
+        60,
+        60
+      ]
+    },
+    {
+      "id": "straight",
+      "kind": "motor",
+      "title": "Faça o carrinho seguir em linha reta!",
+      "rule": "straight",
+      "initial": [
+        80,
+        40
+      ]
+    },
+    {
+      "id": "regulator",
+      "kind": "voltage",
+      "title": "Regule o LM2596!",
+      "rule": "regulator",
+      "initial": [
+        9
+      ]
+    },
+    {
+      "id": "identify-ponte-h",
+      "kind": "identify",
+      "title": "Qual desses componentes é a Ponte H?",
+      "target": "ponte-h"
+    },
+    {
+      "id": "identify-esp32",
+      "kind": "identify",
+      "title": "Qual desses componentes é o ESP32?",
+      "target": "esp32"
+    },
+    {
+      "id": "identify-lm2596",
+      "kind": "identify",
+      "title": "Qual desses componentes é o LM2596?",
+      "target": "lm2596"
+    },
+    {
+      "id": "identify-motor-dc",
+      "kind": "identify",
+      "title": "Qual desses componentes é o Motor DC?",
+      "target": "motor-dc"
+    },
+    {
+      "id": "identify-gangorra",
+      "kind": "identify",
+      "title": "Qual desses componentes é a Chave gangorra?",
+      "target": "gangorra"
+    },
+    {
+      "id": "identify-bateria-9v",
+      "kind": "identify",
+      "title": "Qual desses componentes é a Bateria de 9 V?",
+      "target": "bateria-9v"
+    },
+    {
+      "id": "identify-suporte-pilhas",
+      "kind": "identify",
+      "title": "Qual desses componentes é o Suporte de pilhas?",
+      "target": "suporte-pilhas"
+    }
+  ]
+}
