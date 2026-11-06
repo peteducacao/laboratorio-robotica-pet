@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "quizEnabled": false,
+  "quizEnabled": true,
   "answerKeyEnabled": false,
   "questionCount": 10,
   "bonusCount": 2,
