@@ -1,0 +1,128 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Painel Admin • TinkerPET</title>
+<meta name="theme-color" content="#092747">
+<link rel="icon" href="assets/logo-pet.svg" type="image/svg+xml">
+<link rel="stylesheet" href="admin.css?v=1">
+<script defer src="admin.js?v=1"></script>
+</head>
+<body>
+<div class="auth-overlay" id="authOverlay">
+ <form class="login-card" id="loginForm" autocomplete="off">
+  <div class="brandmark">🤖</div><h1>Painel TinkerPET</h1>
+  <p>Acesso do administrador</p>
+  <label for="password">Senha</label>
+  <input id="password" type="password" autocomplete="off" required placeholder="Digite a senha">
+  <p id="loginError" class="form-error" role="alert"></p>
+  <button type="submit" class="primary wide">Entrar no painel</button>
+  <a href="projects.html">Voltar aos meus circuitos</a>
+ </form>
+</div>
+<div class="admin-shell" id="adminShell" hidden>
+ <aside class="sidebar">
+  <a class="logo" href="projects.html" aria-label="TinkerPET — Meus circuitos">
+   <img src="assets/logo-pet.svg" alt=""><span>Tinker<b>PET</b><small>PAINEL ADMIN</small></span>
+  </a>
+  <nav class="side-nav" aria-label="Navegação do painel">
+   <button class="nav-btn active" data-page="inicio" type="button"><span>⌂</span> Início</button>
+   <button class="nav-btn" data-page="questoes" type="button"><span>▤</span> Banco de questões</button>
+   <button class="nav-btn" data-page="configuracoes" type="button"><span>⚙</span> Configurações do jogo</button>
+  </nav>
+  <button class="logout" id="logout" type="button">↪ Sair</button>
+ </aside>
+ <main class="main-panel">
+  <header class="panel-heading">
+   <div><span class="eyebrow">TINKERPET STUDIO</span><h1 id="pageTitle">Painel de Controle</h1><p id="pageDescription">Gerencie o PETQuiz de forma rápida.</p></div>
+   <div class="mascot" aria-hidden="true"><div class="mascot-antenna"></div><div class="mascot-head"><span>● ᴗ ●</span></div></div>
+  </header>
+  <div class="alert" id="notice" role="status" aria-live="polite" hidden></div>
+  <section class="page active" id="page-inicio">
+   <section class="panel">
+    <h2>⚡ Acessos rápidos</h2>
+    <div class="quick-grid">
+     <button type="button" class="quick blue" data-page="questoes"><span>▤</span><strong>Editar perguntas</strong><b>›</b></button>
+     <button type="button" class="quick violet" data-page="configuracoes"><span>⚙</span><strong>Configurar jogo</strong><b>›</b></button>
+     <a class="quick aqua" href="petquiz.html" target="_blank" rel="noopener"><span>▶</span><strong>Ver PETQuiz</strong><b>›</b></a>
+    </div>
+   </section>
+   <div class="two-column">
+    <section class="panel">
+     <h2>● Status do jogo</h2>
+     <label class="switch-line"><span>🎮 PETQuiz</span><input type="checkbox" id="homeQuizEnabled"><i></i></label>
+     <label class="switch-line"><span>✓ Gabarito</span><input type="checkbox" id="homeAnswerEnabled"><i></i></label>
+    </section>
+    <section class="panel">
+     <h2>☷ Configuração da partida</h2>
+     <div class="count-line"><div><strong>Perguntas por partida</strong><small>Selecionadas aleatoriamente</small></div>
+      <div class="stepper"><button type="button" data-counter="questionCount" data-step="-1">−</button><output id="homeQuestionCount">10</output><button type="button" data-counter="questionCount" data-step="1">+</button></div>
+     </div>
+     <div class="count-line"><div><strong>Bônus por partida</strong><small>Entre os sete desafios existentes</small></div>
+      <div class="stepper"><button type="button" data-counter="bonusCount" data-step="-1">−</button><output id="homeBonusCount">2</output><button type="button" data-counter="bonusCount" data-step="1">+</button></div>
+     </div>
+     <p class="muted">Perguntas ativas: <b id="questionAvailable">19</b></p>
+    </section>
+   </div>
+  </section>
+  <section class="page" id="page-questoes">
+   <div class="page-actions">
+    <div><h2>Banco de questões</h2><p class="muted">Cadastre, altere, exclua ou desative perguntas.</p></div>
+    <button id="addQuestion" class="primary" type="button">+ Nova pergunta</button>
+   </div>
+   <div class="bank-layout">
+    <section class="panel bank-list">
+     <label for="searchQuestions" class="sr-only">Buscar perguntas</label>
+     <input id="searchQuestions" placeholder="Buscar pergunta...">
+     <div class="bank-toolbar"><span id="bankCount">19 perguntas</span><span>Clique para editar</span></div>
+     <div id="questionList" class="question-list"></div>
+    </section>
+    <section class="panel question-editor" id="editorPanel">
+     <h2 id="editorTitle">Editar pergunta</h2>
+     <form id="questionForm">
+      <label>Enunciado<textarea id="questionText" rows="3" required maxlength="400"></textarea></label>
+      <div class="choices-editor">
+       <label>Alternativa A<input id="opt0" required maxlength="200"></label>
+       <label>Alternativa B<input id="opt1" required maxlength="200"></label>
+       <label>Alternativa C<input id="opt2" required maxlength="200"></label>
+       <label>Alternativa D<input id="opt3" required maxlength="200"></label>
+      </div>
+      <div class="editor-mini">
+       <label>Gabarito<select id="correctSelect"><option value="0">A</option><option value="1">B</option><option value="2">C</option><option value="3">D</option></select></label>
+       <label>Categoria<select id="stageSelect"><option value="concept">Componentes</option><option value="practice">Situação prática</option></select></label>
+      </div>
+      <label>Assunto / pré-requisito<input id="topicInput" maxlength="60" placeholder="Ex.: esp32, motores, rodas"></label>
+      <p class="muted">Nas situações práticas, indique o assunto que a criança precisa conhecer antes.</p>
+      <label class="plain-check"><input id="activeQuestion" type="checkbox"> Pergunta ativa</label>
+      <div class="editor-buttons"><button type="submit" class="primary">Salvar pergunta</button><button type="button" class="danger" id="deleteQuestion">Excluir</button></div>
+     </form>
+    </section>
+   </div>
+  </section>
+  <section class="page" id="page-configuracoes">
+   <div class="page-actions"><div><h2>Configurações do jogo</h2><p class="muted">Defina o que ficará disponível para os alunos.</p></div></div>
+   <div class="two-column">
+    <section class="panel">
+     <h2>🔓 Acesso</h2>
+     <label class="switch-line"><span>PETQuiz</span><input type="checkbox" id="settingsQuizEnabled"><i></i></label>
+     <label class="switch-line"><span>Gabarito</span><input type="checkbox" id="settingsAnswerEnabled"><i></i></label>
+    </section>
+    <section class="panel">
+     <h2>🎮 Partida</h2>
+     <div class="count-line"><span>Perguntas por partida</span><div class="stepper"><button type="button" data-counter="questionCount" data-step="-1">−</button><output id="settingsQuestionCount">10</output><button type="button" data-counter="questionCount" data-step="1">+</button></div></div>
+     <div class="count-line"><span>Bônus por partida</span><div class="stepper"><button type="button" data-counter="bonusCount" data-step="-1">−</button><output id="settingsBonusCount">2</output><button type="button" data-counter="bonusCount" data-step="1">+</button></div></div>
+     <p class="muted">Os desafios bônus continuam fixos, sem editor próprio.</p>
+    </section>
+   </div>
+   <section class="panel publish-panel">
+    <h2>Publicar para todos os dispositivos</h2>
+    <p>Suas edições são salvas como rascunho neste navegador. Para atualizar o site dos alunos, informe um token GitHub com acesso de escrita ao repositório e clique em <b>Publicar</b>. O token dura apenas enquanto esta aba estiver aberta.</p>
+    <label for="githubToken">Token de publicação do GitHub</label>
+    <input type="password" id="githubToken" autocomplete="off" placeholder="github_pat_...">
+    <div class="publish-actions"><button type="button" id="publish" class="primary">Publicar alterações</button><button type="button" id="exportSettings" class="secondary">Baixar JSON</button><button type="button" id="discardDraft" class="secondary">Descartar rascunho</button></div>
+   </section>
+  </section>
+  <footer class="admin-footer"><span id="saveState">Configurações carregadas</span><button type="button" class="primary" id="publishFooter">Publicar alterações</button></footer>
+ </main>
+</div>
+</body></html>
