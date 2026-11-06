@@ -369,7 +369,9 @@
   return;
  }
  const introFoot=document.getElementById('introFoot');
- if(introFoot)introFoot.textContent=GAME_SETTINGS.questionCount+' perguntas por partida · Alternativas sorteadas';
+ const introCount=document.getElementById('introQuestionCount');
+ if(introCount)introCount.textContent=GAME_SETTINGS.questionCount+' '+(GAME_SETTINGS.questionCount===1?'pergunta':'perguntas');
+ if(introFoot)introFoot.textContent='Alternativas sorteadas a cada partida';
  const keys=['read','answer','result','bonus','bonusResult'];
  function shuffle(arr){
   const a=[...arr];for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a;
