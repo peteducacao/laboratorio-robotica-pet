@@ -32,7 +32,7 @@ const types=vm.runInNewContext('['+js.match(/const TYPES=\[([\s\S]*?)\];/)[1]+']
 // A nova ponte H é uma ALTERNATIVA: gabaritos originais de 7/9 peças continuam inalterados.
 const l298n=vm.runInNewContext(js.match(/const L298N_TYPES=\[([\s\S]*?)\];/)[0]+'\nL298N_TYPES')[0];
 assert.equal(l298n.kind,'l298n','L298N disponível como componente independente');
-assert.deepEqual(l298n.pins.map(([p])=>p),['V12','GND','IN1','IN2','IN3','IN4','OUT1','OUT2','OUT3','OUT4'],'somente os dez bornes usados participam das ligações');
+assert.deepEqual([...l298n.pins].map(([p])=>p),['V12','GND','IN1','IN2','IN3','IN4','OUT1','OUT2','OUT3','OUT4'],'somente os dez bornes usados participam das ligações');
 assert(!l298n.pins.some(([p])=>['5V','ENA','ENB'].includes(p)),'5V e habilitação não viram pinos conectáveis');
 assert(js.includes("p.slice('drvL298n.'.length)==='V12'?'VCC'"),'L298N 12V corresponde à alimentação do suporte de pilhas');
 assert(js.includes("exists('drv')||exists('drvL298n')"),'simulador considera MX1508 ou L298N');
