@@ -1,9 +1,10 @@
 /* TinkerPET mobile enhancements — desktop runtime is not modified. */
 (()=>{
  'use strict';
- const onlyMobile=window.matchMedia('(max-width:700px)');
+ const isTouchEditor=()=>window.matchMedia('(pointer:coarse)').matches||
+  (navigator.maxTouchPoints>0&&window.matchMedia('(hover:none)').matches);
  const initialize=()=>{
-  if(!onlyMobile.matches)return;
+  if(!isTouchEditor())return;
   const viewport=document.getElementById('viewport');
   if(!viewport)return;
   // O SVG original tinha um canto reto parecido com ponteiro de relógio.
@@ -29,7 +30,7 @@
   // or build a separate wire-routing algorithm.
   const movableSelector='[data-port], .wire-end-handle, #wireSvg [data-wire-index]';
   viewport.addEventListener('pointerdown',e=>{
-   if(!onlyMobile.matches||e.pointerType!=='touch')return;
+   if(!isTouchEditor()||e.pointerType!=='touch')return;
    const target=e.target.closest?.(movableSelector);
    if(!target)return;
    // A própria rota SVG é redesenhada em cada movimento.
@@ -40,7 +41,7 @@
   // When app.js dispatches the actual PNG anchor click, the export has been
   // initiated. Close the preview then; keep it open on generation failures.
   document.addEventListener('click',e=>{
-   if(!onlyMobile.matches)return;
+   if(!isTouchEditor())return;
    const link=e.target.closest?.('a[download]');
    if(!link||!String(link.download||'').toLowerCase().endsWith('.png'))return;
    const dialog=document.getElementById('exportPreviewDialog');
