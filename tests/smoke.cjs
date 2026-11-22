@@ -48,6 +48,41 @@ assert(!l298n.pins.some(([p])=>['5V','ENA','ENB'].includes(p)),'5V e habilitaç�
 assert(js.includes("p.slice('drvL298n.'.length)==='V12'?'VCC'"),'L298N 12V corresponde à alimentação do suporte de pilhas');
 assert(js.includes("exists('drv')||exists('drvL298n')"),'simulador considera MX1508 ou L298N');
 assert(fs.readFileSync(path.join(base,'sw.js'),'utf8').includes('assets/l298n-desenhado.svg'),'PWA salva SVG da L298N para uso offline');
+// O editor mantém o mesmo motor por toque ao girar o celular para a horizontal.
+const mobileAppJs=fs.readFileSync(path.join(base,'app-mobile.js'),'utf8');
+const mobileEditorJs=fs.readFileSync(path.join(base,'mobile-editor.js'),'utf8');
+const editorHtml=fs.readFileSync(path.join(base,'editor.html'),'utf8');
+assert(editorHtml.includes("const TOUCH_EDITOR=window.matchMedia('(pointer:coarse)')"),'paisagem continua com motor de toque');
+assert(mobileEditorJs.includes("const isTouchEditor=()=>"),'captura do dedo permanece ativa na paisagem');
+assert(editorLayoutCss.includes('width:36px!important;min-width:36px!important;max-width:36px!important'),'seta compacta não invade a bancada');
+assert(editorLayoutJs.includes('editorOrientationMode')&&editorLayoutJs.includes("api.lock('portrait')"),'opção para travar vertical no Android');
+const routeStart=mobileAppJs.indexOf('function mobileRoundPoint(');
+const routeEnd=mobileAppJs.indexOf('function pointerMove(e){',routeStart);
+assert(routeStart>0&&routeEnd>routeStart,'roteador de toque identificado');
+const traceSource=mobileAppJs.slice(routeStart,routeEnd);
+const routeChecks=JSON.parse(vm.runInNewContext(`
+const zoom=.17;
+${traceSource}
+function simulate(points){
+ const t=mobileBeginTrace([{x:0,y:0}],{x:0,y:0});
+ let route=[];
+ for(const [x,y] of points)route=mobileTraceStep(t,{x:x/zoom,y:y/zoom});
+ return {length:route.length,turns:t.turnCount,axis:t.axis};
+}
+JSON.stringify({
+ straight:simulate(Array.from({length:22},(_,i)=>[i*10,Math.sin(i)*3])),
+ diagonal:simulate(Array.from({length:22},(_,i)=>[i*10,i*1.1])),
+ corner:simulate([
+  ...Array.from({length:18},(_,i)=>[i*11,Math.sin(i)*2]),
+  ...Array.from({length:18},(_,i)=>[187+Math.cos(i),i*11])
+ ])
+})
+`));
+assert.equal(routeChecks.straight.length,2,'arraste horizontal não cria curvas por tremor');
+assert.equal(routeChecks.straight.turns,0,'arraste reto sem viradas involuntárias');
+assert.equal(routeChecks.diagonal.turns,0,'desvio leve não força curva');
+assert.equal(routeChecks.corner.length,3,'giro intencional desenha só um cotovelo');
+assert.equal(routeChecks.corner.turns,1,'giro do dedo gera exatamente uma curva');
 const edges=vm.runInNewContext(js.match(/const COMMON_CONNECTIONS=\[([\s\S]*?)\];/)[0]+'\n'+js.match(/const EXPECTED=\[([\s\S]*?)\];/)[0]+'\nEXPECTED');
 const esp=types.find(t=>t.kind==='esp');
 assert.equal(esp.pins.length,30,'ESP32 precisa ter 30 contatos físicos na bancada');
