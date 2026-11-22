@@ -160,7 +160,10 @@ document.querySelector('.studio').after(settings);
  });
  // O navegador pode reiniciar a orientação ao voltar do segundo plano.
  void applyOrientation(orientationMode);
- window.addEventListener('pageshow',()=>{
+ window.addEventListener('pageshow',event=>{
+  // O carregamento normal já chamou applyOrientation; só reexecutar ao
+  // restaurar a página do cache de navegação (evita lock concorrente).
+  if(!event.persisted)return;
   orientationSelect.value=orientationMode;
   void applyOrientation(orientationMode);
  });
