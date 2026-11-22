@@ -1317,20 +1317,11 @@ function reconnectRoute(pending,position){
  // Não reconstruir a rota com o algoritmo antigo: isso apagava as curvas
  // ao soltar o fio e retomar a ponta quadrada no celular.
  if(pending.touchRoute?.length>=2){
-  const path=pending.touchRoute.map(p=>({x:Math.round(p.x),y:Math.round(p.y)}));
-  if(position){
-   const to={x:Math.round(position.x),y:Math.round(position.y)};
-   const tail=path.at(-1);
-   if(tail.x!==to.x||tail.y!==to.y){
-    if(tail.x!==to.x&&tail.y!==to.y){
-     const before=path.at(-2);
-     const wasHorizontal=before&&Math.abs(before.y-tail.y)<2;
-     path.push(wasHorizontal?{x:to.x,y:tail.y}:{x:tail.x,y:to.y});
-    }
-    path.push(to);
-   }
-  }
-  const normalized=mobileNormalizeRoute(path);
+  // A ponta toca o último ponto da trajetória; ao encaixar em um pino,
+  // acrescenta no máximo um cotovelo, sem reconstruir os anteriores.
+  const normalized=position
+   ?mobileJoinDestination(pending.touchRoute,position,pending.touchAxis)
+   :mobileNormalizeRoute(pending.touchRoute);
   return pending.end==='b'?normalized:normalized.reverse();
  }
  const w=state.wires[pending.index],all=pending.base|| (w&&wirePoints(w));
@@ -1465,7 +1456,8 @@ function leaveReconnectLoose(clientX,clientY){
  const wire=state.wires[pending.index];if(!wire){cancelReconnect();return false;}
  const box=Q('viewport').getBoundingClientRect();
  const inside=clientX>=box.left&&clientX<=box.right&&clientY>=box.top&&clientY<=box.bottom;
- const point=inside?worldXY(clientX,clientY):pending.point;
+ const point=pending.touchRoute?.length>=2?pending.touchRoute.at(-1):
+  inside?worldXY(clientX,clientY):pending.point;
  if(!point)return false;
  const route=reconnectRoute(pending,point);
  if(route.length<2)return false;
@@ -2177,8 +2169,9 @@ function startDragEdgePan(){
  if(!dragEdgePanFrame)dragEdgePanFrame=requestAnimationFrame(dragEdgePanTick);
 }
 
-// VERSÃO MÓVEL: gestos de fio seguem o dedo e registram as viradas.
-// Não existe no app.js do computador.
+// Editor de toque: cada trecho começa reto e só ganha um cotovelo quando
+// o dedo realmente muda de eixo. Pequenas oscilações não são curvas.
+// Distâncias são medidas em pixels visíveis, mesmo em zoom de 17%.
 function mobileRoundPoint(p){return {x:Math.round(p.x),y:Math.round(p.y)};}
 function mobileNormalizeRoute(points){
  const route=[];
@@ -2186,137 +2179,111 @@ function mobileNormalizeRoute(points){
   if(!raw)continue;
   const p=mobileRoundPoint(raw),a=route.at(-1),b=route.at(-2);
   if(a&&a.x===p.x&&a.y===p.y)continue;
-  if(b&&((b.x===a.x&&a.x===p.x)||(b.y===a.y&&a.y===p.y)))route[route.length-1]=p;
-  else route.push(p);
+  if(b&&((b.x===a.x&&a.x===p.x)||(b.y===a.y&&a.y===p.y))){
+   route[route.length-1]=p;
+   if(b.x===p.x&&b.y===p.y)route.pop();
+  }else route.push(p);
  }
  return route;
 }
+function mobileBeginTrace(fixed,start){
+ const route=mobileNormalizeRoute(fixed);
+ return {fixed:route,origin:mobileRoundPoint(start),axis:null,
+   parallel:mobileRoundPoint(start),head:route.at(-1),turnCount:0};
+}
+function mobileTraceStep(trace,raw){
+ const current=mobileRoundPoint(raw);
+ const base=trace.fixed.at(-1);
+ if(!base)return [];
+ if(!trace.axis){
+  const dx=current.x-trace.origin.x,dy=current.y-trace.origin.y;
+  // Não cria fio com um microarraste ou oscilação na zona do borne.
+  if(Math.hypot(dx,dy)*zoom<9)return [...trace.fixed];
+  trace.axis=Math.abs(dx)>=Math.abs(dy)?'x':'y';
+  trace.parallel=mobileRoundPoint(trace.origin);
+ }
+ const axis=trace.axis;
+ const cross=axis==='x'?'y':'x';
+ const distanceCross=Math.abs(current[cross]-base[cross])*zoom;
+ const crossSinceParallel=Math.abs(current[cross]-trace.parallel[cross])*zoom;
+ const parallelDistance=Math.abs(current[axis]-trace.parallel[axis])*zoom;
+ // Um giro legítimo exige desvio perpendicular consistente de pelo menos
+ // 24px E uma pausa/queda do movimento no eixo anterior. Arraste diagonal
+ // com dedos tremendo deve continuar sendo um ÚNICO trecho reto.
+ if(distanceCross>=24&&crossSinceParallel>=19&&parallelDistance<=8){
+  const pivot=axis==='x'
+   ?{x:trace.parallel.x,y:base.y}
+   :{x:base.x,y:trace.parallel.y};
+  if(Math.hypot(pivot.x-base.x,pivot.y-base.y)*zoom>=10&&trace.fixed.length<46){
+   trace.fixed=mobileNormalizeRoute([...trace.fixed,pivot]);
+   trace.turnCount++;
+  }
+  trace.axis=cross;
+  trace.parallel=current;
+ }else if(parallelDistance>=8){
+  trace.parallel=current;
+ }
+ const last=trace.fixed.at(-1);
+ trace.head=trace.axis==='x'?{x:current.x,y:last.y}:{x:last.x,y:current.y};
+ return mobileNormalizeRoute([...trace.fixed,trace.head]);
+}
+function mobileJoinDestination(route,rawEnd,axis){
+ const points=mobileNormalizeRoute(route),end=mobileRoundPoint(rawEnd),tail=points.at(-1);
+ if(!tail)return [end];
+ if(tail.x!==end.x&&tail.y!==end.y){
+  // No último pino, uma única curva ortogonal é suficiente.
+  const corner=axis==='y'?{x:tail.x,y:end.y}:{x:end.x,y:tail.y};
+  points.push(corner);
+ }
+ points.push(end);
+ return mobileNormalizeRoute(points);
+}
 function mobileFingerRoute(g,e){
  if(!g||e.pointerType!=='touch')return;
- const current=mobileRoundPoint(worldXY(e.clientX,e.clientY));
- if(!g.fingerFixed){
+ if(!g.fingerTrace){
   const start=getPortPos(g.port);
   if(!start)return;
-  g.fingerFixed=[mobileRoundPoint(start)];
-  g.fingerAxis=null;g.fingerPrevious=mobileRoundPoint(worldXY(g.startX,g.startY));
-  g.fingerHead=g.fingerFixed[0];
-  g.fingerDirectionCandidate=null;
+  g.fingerTrace=mobileBeginTrace([start],worldXY(g.startX,g.startY));
  }
- const prev=g.fingerPrevious;
- const deltaX=current.x-prev.x,deltaY=current.y-prev.y;
- const distance=Math.hypot(deltaX,deltaY),minimum=6/zoom;
- if(distance>=minimum){
-  const candidate=Math.abs(deltaX)>Math.abs(deltaY)*1.2?'x':
-    Math.abs(deltaY)>Math.abs(deltaX)*1.2?'y':null;
-  if(candidate&&!g.fingerAxis)g.fingerAxis=candidate;
-  else if(candidate&&candidate!==g.fingerAxis){
-   const axisValue=candidate==='x'?current.x:current.y;
-   const oldAxisValue=candidate==='x'?prev.x:prev.y;
-   const distanceTurn=Math.abs(axisValue-oldAxisValue)*zoom;
-   if(distanceTurn>=7){
-    // Consolida a curva no local da última ponta antes da mudança de direção.
-    const head=mobileRoundPoint(g.fingerHead);
-    const last=g.fingerFixed.at(-1);
-    if(last&&(head.x!==last.x||head.y!==last.y)&&g.fingerFixed.length<44)
-     g.fingerFixed.push(head);
-    g.fingerAxis=candidate;
-   }
-  }
-  g.fingerPrevious=current;
- }
- const base=g.fingerFixed.at(-1);
- if(!base)return;
- const activeAxis=g.fingerAxis|| (Math.abs(current.x-base.x)>=Math.abs(current.y-base.y)?'x':'y');
- const head=mobileRoundPoint(activeAxis==='x'?{x:current.x,y:base.y}:{x:base.x,y:current.y});
- g.fingerHead=head;
- // Um segundo trecho curto fecha exatamente na posição do dedo; quando
- // ele vira, a curva anterior fica fixada e o trajeto continua do novo eixo.
- const route=mobileNormalizeRoute([...g.fingerFixed,head,current]);
- // O limite de curvas é aplicado nos pontos fixados, sem cortar a origem.
- const fixedStart=route[0];
- const tip=route.at(-1);
- if(!fixedStart||!tip)return;
- state.bends=route.slice(1,-1);
- previewPoint=tip;
- previewSnapPort=null;
- pendingAlignment=null;
+ const points=mobileTraceStep(g.fingerTrace,worldXY(e.clientX,e.clientY));
+ if(points.length<2)return;
+ state.bends=points.slice(1,-1);
+ previewPoint=points.at(-1);
+ previewSnapPort=null;pendingAlignment=null;
  requestDraw();
 }
-// Arraste de um jumper já conectado: a bolinha acompanha o dedo e
-// as mudanças reais de direção geram novos pontos em pending.corners.
-// O MESMO traçado ortogonal utilizado ao criar um fio agora funciona
-// ao RETOMAR o quadradinho de uma ponta solta, inclusive após várias pausas.
-// A prévia e a gravação recebem exatamente a rota percorrida pelo dedo.
+// Ao retomar um jumper, reutiliza as curvas já salvas; só o último trecho
+// acompanha o novo gesto, com o mesmo filtro contra zigue-zague.
 function mobileReconnectFinger(g,e){
  if(e.pointerType!=='touch'||!g?.moved||!reconnectPending)return;
  const pending=reconnectPending;
- const wire=state.wires[pending.index];
- if(!wire)return;
- const current=mobileRoundPoint(worldXY(e.clientX,e.clientY));
- if(!g.reconnectFingerFixed){
-  const base=pending.base||wirePoints(wire);
-  if(base.length<2)return;
-  g.reconnectFingerFixed=(pending.end==='b'?base:[...base].reverse()).map(mobileRoundPoint);
-  g.reconnectFingerPrevious=mobileRoundPoint(worldXY(g.startX,g.startY));
-  g.reconnectFingerHead=g.reconnectFingerFixed.at(-1);
-  g.reconnectFingerAxis=null;
+ const wire=state.wires[pending.index];if(!wire)return;
+ if(!g.reconnectTrace){
+  const old=pending.base||wirePoints(wire);
+  if(old.length<2)return;
+  const start=(pending.end==='b'?old:[...old].reverse());
+  g.reconnectTrace=mobileBeginTrace(start,worldXY(g.startX,g.startY));
  }
- const prev=g.reconnectFingerPrevious,dx=current.x-prev.x,dy=current.y-prev.y;
- const dist=Math.hypot(dx,dy);
- if(dist>=6/zoom){
-  const candidate=Math.abs(dx)>Math.abs(dy)*1.2?'x':
-   Math.abs(dy)>Math.abs(dx)*1.2?'y':null;
-  if(candidate&&!g.reconnectFingerAxis)g.reconnectFingerAxis=candidate;
-  else if(candidate&&candidate!==g.reconnectFingerAxis&&
-          Math.abs(candidate==='x'?dx:dy)*zoom>=7){
-   // Guarda a última virada ANTES de seguir o novo eixo.
-   const previousHead=mobileRoundPoint(g.reconnectFingerHead);
-   const last=g.reconnectFingerFixed.at(-1);
-   if(last&&Math.hypot(previousHead.x-last.x,previousHead.y-last.y)>=4/zoom&&
-      g.reconnectFingerFixed.length<46){
-    g.reconnectFingerFixed.push(previousHead);
-   }
-   g.reconnectFingerAxis=candidate;
-  }
-  g.reconnectFingerPrevious=current;
- }
- const anchor=g.reconnectFingerFixed.at(-1);
- if(!anchor)return;
- const axis=g.reconnectFingerAxis||
-  (Math.abs(current.x-anchor.x)>=Math.abs(current.y-anchor.y)?'x':'y');
- const head=mobileRoundPoint(axis==='x'?
-  {x:current.x,y:anchor.y}:{x:anchor.x,y:current.y});
- g.reconnectFingerHead=head;
- const route=mobileNormalizeRoute([...g.reconnectFingerFixed,head,current]);
- if(route.length<2)return;
- pending.touchRoute=route;
- pending.point=current;
- pending.snapPort=null;
- pendingAlignment=null;
- requestDraw();
+ const points=mobileTraceStep(g.reconnectTrace,worldXY(e.clientX,e.clientY));
+ if(points.length<2)return;
+ pending.touchRoute=points;
+ pending.touchAxis=g.reconnectTrace.axis;
+ pending.point=points.at(-1);
+ pending.snapPort=null;pendingAlignment=null;requestDraw();
 }
 function mobileFinishFingerRoute(g,targetPort=null,looseTip=null){
- if(!g?.fingerFixed)return;
- let points=mobileNormalizeRoute([...g.fingerFixed,g.fingerHead,looseTip||previewPoint]);
- if(points.length<2)return;
+ if(!g?.fingerTrace)return;
+ const trace=g.fingerTrace;
+ if(looseTip)mobileTraceStep(trace,looseTip);
+ let points=mobileNormalizeRoute([...trace.fixed,trace.head]);
  if(targetPort){
   const end=getPortPos(targetPort);
-  if(end){
-   const tail=points.at(-1);
-   if(tail&&tail.x!==Math.round(end.x)&&tail.y!==Math.round(end.y)){
-    const prev=points.at(-2);
-    const horizontal=prev&&Math.abs(prev.y-tail.y)<2;
-    const corner=horizontal?{x:Math.round(end.x),y:tail.y}:{x:tail.x,y:Math.round(end.y)};
-    points.push(corner);
-   }
-   points.push(mobileRoundPoint(end));
-  }
+  if(end)points=mobileJoinDestination(points,end,trace.axis);
  }
- points=mobileNormalizeRoute(points);
+ if(points.length<2)return;
  if(points.length>49)points=points.slice(0,48).concat(points.at(-1));
  state.bends=points.slice(1,-1);
- previewPoint=points.at(-1);
- requestDraw();
+ previewPoint=points.at(-1);requestDraw();
 }
 function pointerMove(e){
  if(trackingTouchMove(e)||pinch)return;
@@ -2490,7 +2457,7 @@ function pointerUp(e){
      // em um ponto vazio; só um NOVO arraste volta a mover sua bolinha.
      const box=Q('viewport').getBoundingClientRect();
      if(e.clientX>=box.left&&e.clientX<=box.right&&e.clientY>=box.top&&e.clientY<=box.bottom && state.startPort){
-       const position=worldXY(e.clientX,e.clientY);
+       const position=e.pointerType==='touch'&&previewPoint?previewPoint:worldXY(e.clientX,e.clientY);
        const origin=state.startPort;
        if(!g.startedNew)snapshot();
        // Um toque ou arrasto mínimo não cria um fio invisível.
