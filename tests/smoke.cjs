@@ -28,6 +28,17 @@ assert(projectsHtml.includes('<button type="button" id="openGate"><svg')&&projec
 assert(projectsJs.includes("$('gateLabel').textContent='Gabaritos'"),'desbloqueio atualiza somente o texto do Gabarito');
 assert(!projectsJs.includes("openGate').innerHTML='Gabaritos'"),'desbloqueio não remove SVG do Gabarito');
 new vm.Script(projectsJs);
+// O topo recolhível não deve alterar o circuito e mantém acesso por seta.
+const editorLayoutJs=fs.readFileSync(path.join(base,'editor-layout.js'),'utf8');
+const studioPreviewJs=fs.readFileSync(path.join(base,'studio-preview.js'),'utf8');
+const editorLayoutCss=fs.readFileSync(path.join(base,'editor-layout.css'),'utf8');
+const manifest=JSON.parse(fs.readFileSync(path.join(base,'manifest.webmanifest'),'utf8'));
+new vm.Script(editorLayoutJs);new vm.Script(studioPreviewJs);
+assert(editorLayoutJs.includes("editorChromeToggle")&&editorLayoutJs.includes("editor-chrome-collapsed"),'há seta para recolher ferramentas');
+assert(editorLayoutJs.includes("tinkerpet-editor-topbar-collapsed-v1"),'a preferência de recolhimento fica salva');
+assert(studioPreviewJs.includes("tinkerpet:chrome-layout")&&studioPreviewJs.includes("toggle?.getBoundingClientRect().bottom"),'bancada calcula altura considerando o menu recolhido');
+assert(editorLayoutCss.includes("editor-chrome-collapsed .app-header")&&editorLayoutCss.includes("editor-chrome-collapsed .studio-topbar"),'a seta recolhe cabeçalho e ferramentas');
+assert(!Object.hasOwn(manifest,'orientation'),'o PWA deixa a orientação sob controle do sistema');
 const types=vm.runInNewContext('['+js.match(/const TYPES=\[([\s\S]*?)\];/)[1]+']');
 // A nova ponte H é uma ALTERNATIVA: gabaritos originais de 7/9 peças continuam inalterados.
 const l298n=vm.runInNewContext(js.match(/const L298N_TYPES=\[([\s\S]*?)\];/)[0]+'\nL298N_TYPES')[0];
