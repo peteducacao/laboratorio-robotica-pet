@@ -76,7 +76,7 @@ const key=(a,b)=>[a,b].sort().join('|');
 const canonicalPort=p=>{
  if(p==='esp.GND2')return 'esp.GND';
  // Mesmo papel elétrico da MX1508; o terminal 12V da L298N é o positivo do suporte.
- if(p.startsWith('drvL298n.'))return 'drv.'+(p.slice(10)==='V12'?'VCC':p.slice(10));
+ if(p.startsWith('drvL298n.'))return 'drv.'+(p.slice('drvL298n.'.length)==='V12'?'VCC':p.slice('drvL298n.'.length));
  return p;
 };
 const electricalKey=(a,b)=>key(canonicalPort(a),canonicalPort(b));
