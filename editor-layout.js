@@ -25,6 +25,39 @@ const library=$('library');
 const drawer=$('drawerHandle');
 const closeLibrary=$('closeLibrary');
 if(!header||!brand||!right||!toolbarRight||!toolbarLeft||!library||!drawer)return;
+// A seta recolhe todo o chrome superior no celular, sem interferir nos fios
+// e sem forçar resize: a bancada mantém a câmera e o zoom atuais.
+const mobileChrome=window.matchMedia('(max-width:1100px)');
+const topbar=document.querySelector('.studio-topbar');
+if(topbar){
+ const toggle=document.createElement('button');
+ toggle.id='editorChromeToggle';
+ toggle.className='editor-chrome-toggle';
+ toggle.type='button';
+ topbar.id='editorToolbarPanel';
+ toggle.setAttribute('aria-controls','editorToolbarPanel');
+ toggle.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 15 7-7 7 7"/></svg>';
+ topbar.after(toggle);
+ const preferenceKey='tinkerpet-editor-topbar-collapsed-v1';
+ const stored=()=>{try{return localStorage.getItem(preferenceKey)==='1'}catch{return false}};
+ const applyCollapse=collapsed=>{
+  const active=!!collapsed&&mobileChrome.matches;
+  body.classList.toggle('editor-chrome-collapsed',active);
+  toggle.setAttribute('aria-expanded',String(!active));
+  toggle.setAttribute('aria-label',active?'Mostrar ferramentas e cabeçalho':'Recolher ferramentas e cabeçalho');
+  toggle.title=active?'Mostrar ferramentas':'Recolher ferramentas';
+  window.dispatchEvent(new Event('tinkerpet:chrome-layout'));
+ };
+ applyCollapse(stored());
+ toggle.addEventListener('click',()=>{
+  const next=!body.classList.contains('editor-chrome-collapsed');
+  try{localStorage.setItem(preferenceKey,next?'1':'0')}catch{/* Não impedir o botão. */}
+  applyCollapse(next);
+ });
+ const onBreakpoint=()=>applyCollapse(stored());
+ if(mobileChrome.addEventListener)mobileChrome.addEventListener('change',onBreakpoint);
+ else mobileChrome.addListener?.(onBreakpoint);
+}
 const robot='<svg viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="6" y="9" width="20" height="18" rx="6"/><path d="M16 9V5"/><circle cx="16" cy="4.5" r="1.6" fill="currentColor" stroke="none"/><path d="M3 16v6M29 16v6"/><circle cx="12" cy="17" r="1" fill="currentColor"/><path d="M20 17c1.7-.8 2.8.5 2 1.6M13 22q3 3 6 0"/></svg>';
 const user='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-8 16-8 16 0"/></svg>';
 const gear='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9.7 2.6 10.2 4h3.6l.5-1.4 2.6 1.1-.6 1.5 2.5 2.5 1.5-.6 1.1 2.6-1.4.5v3.6l1.4.5-1.1 2.6-1.5-.6-2.5 2.5.6 1.5-2.6 1.1-.5-1.4h-3.6l-.5 1.4-2.6-1.1.6-1.5-2.5-2.5-1.5.6-1.1-2.6 1.4-.5v-3.6l-1.4-.5 1.1-2.6 1.5.6 2.5-2.5-.6-1.5z"/><circle cx="12" cy="12" r="3.3"/></svg>';
