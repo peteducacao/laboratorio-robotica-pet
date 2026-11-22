@@ -29,6 +29,14 @@ assert(projectsJs.includes("$('gateLabel').textContent='Gabaritos'"),'desbloquei
 assert(!projectsJs.includes("openGate').innerHTML='Gabaritos'"),'desbloqueio não remove SVG do Gabarito');
 new vm.Script(projectsJs);
 const types=vm.runInNewContext('['+js.match(/const TYPES=\[([\s\S]*?)\];/)[1]+']');
+// A nova ponte H é uma ALTERNATIVA: gabaritos originais de 7/9 peças continuam inalterados.
+const l298n=vm.runInNewContext(js.match(/const L298N_TYPES=\[([\s\S]*?)\];/)[0]+'\nL298N_TYPES')[0];
+assert.equal(l298n.kind,'l298n','L298N disponível como componente independente');
+assert.deepEqual(l298n.pins.map(([p])=>p),['V12','GND','IN1','IN2','IN3','IN4','OUT1','OUT2','OUT3','OUT4'],'somente os dez bornes usados participam das ligações');
+assert(!l298n.pins.some(([p])=>['5V','ENA','ENB'].includes(p)),'5V e habilitação não viram pinos conectáveis');
+assert(js.includes("p.slice('drvL298n.'.length)==='V12'?'VCC'"),'L298N 12V corresponde à alimentação do suporte de pilhas');
+assert(js.includes("exists('drv')||exists('drvL298n')"),'simulador considera MX1508 ou L298N');
+assert(fs.readFileSync(path.join(base,'sw.js'),'utf8').includes('assets/l298n-desenhado.svg'),'PWA salva SVG da L298N para uso offline');
 const edges=vm.runInNewContext(js.match(/const COMMON_CONNECTIONS=\[([\s\S]*?)\];/)[0]+'\n'+js.match(/const EXPECTED=\[([\s\S]*?)\];/)[0]+'\nEXPECTED');
 const esp=types.find(t=>t.kind==='esp');
 assert.equal(esp.pins.length,30,'ESP32 precisa ter 30 contatos físicos na bancada');
