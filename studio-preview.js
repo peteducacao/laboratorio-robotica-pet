@@ -23,15 +23,28 @@
  // Dynamic sizing makes the component library align with the toolbar
  // on phones, desktop, zoomed displays and when text wraps.
  const syncHeader=()=>{
-  const bottom=Math.max(60,Math.ceil(bar.getBoundingClientRect().bottom));
+  const toggle=document.getElementById('editorChromeToggle');
+  const collapsed=document.body.classList.contains('editor-chrome-collapsed')&&
+    window.matchMedia('(max-width:1100px)').matches;
+  // No modo recolhido, a seta (e não a toolbar escondida) determina o topo
+  // útil da bancada, gavetas e painéis. Nunca reencaixar a câmera.
+  const edge=collapsed?(toggle?.getBoundingClientRect().bottom||0):
+    Math.max(bar.getBoundingClientRect().bottom,toggle?.getBoundingClientRect().bottom||0);
+  const bottom=Math.max(collapsed?0:60,Math.ceil(edge));
   document.documentElement.style.setProperty('--studio-top-offset',bottom+'px');
  };
  syncHeader();
  window.addEventListener('resize',syncHeader,{passive:true});
+ window.addEventListener('tinkerpet:chrome-layout',syncHeader);
+ window.addEventListener('pageshow',syncHeader);
  if(typeof ResizeObserver!=='undefined'){
   const obs=new ResizeObserver(syncHeader);
   obs.observe(bar);
-  obs.observe(document.querySelector('.app-header'));
+  const header=document.querySelector('.app-header');
+  if(header)obs.observe(header);
+  // A seta é inserida por editor-layout.js após este script.
+  const toggle=document.getElementById('editorChromeToggle');
+  if(toggle)obs.observe(toggle);
  }
  // Never open inspector automatically: preserve room for the infinite canvas.
  document.getElementById('backBtn')?.addEventListener('click',()=>setOpen(false));
