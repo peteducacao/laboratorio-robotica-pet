@@ -39,10 +39,20 @@ const TYPES=[
  {kind:'switch',name:'Chave gangorra',img:'assets/gangorra-desenhada.svg?v=3',ids:['s1','s2'],pins:[['IN','Contato 1'],['OUT','Contato 2'],['LEDG','LED − (indicador)']],info:'Gangorra iluminada de três terminais. Os contatos 1 e 2 abrem e fecham a alimentação: não têm polaridade para a função liga/desliga. O terceiro terminal é o retorno da luz LED, não um contato de comutação. A posição física dos terminais varia conforme o modelo.',tip:'Neste gabarito: positivo da fonte → contato 1 (IN), contato 2 (OUT) → IN+ do LM2596 ou + da ponte H. Não é necessário ligar o contato do LED na atividade. Identifique os dois contatos reais de comutação com multímetro, sem energizar o circuito.'},
  {kind:'motor',name:'Motor DC',img:'assets/motor-frontal.svg',ids:['ml','mr'],pins:[['A','+'],['B','−']],info:'Motor DC com caixa de redução amarela, eixo lateral para a roda e dois contatos no motor metálico. Na simulação, a ponte H controla o sentido de giro.',tip:'Os dois contatos ficam ao lado do motor metálico, identificados em vermelho e preto. O eixo de saída fica na caixa amarela.'}
 ];
-const byKind=Object.fromEntries(TYPES.map(p=>[p.kind,p]));
+/* L298N é alternativa à MX1508: os circuitos existentes e o gabarito canônico não mudam. */
+const L298N_TYPES=[{
+ kind:'l298n',name:'Ponte H dupla L298N',img:'assets/l298n-desenhado.svg?v=1',ids:['drvL298n'],
+ pins:[['V12','12V · pilhas'],['GND','GND'],['IN1','IN1'],['IN2','IN2'],['IN3','IN3'],['IN4','IN4'],
+ ['OUT1','Motor A · 1'],['OUT2','Motor A · 2'],['OUT3','Motor B · 1'],['OUT4','Motor B · 2']],
+ info:'Ponte H dupla L298N para dois motores DC. O suporte de pilhas vai ao borne 12V e ao GND. O GND da ponte também deve ser ligado ao ESP32. Os pinos 5V e ENA/ENB aparecem na placa, mas não precisam de fios nesta atividade.',
+ tip:'Pilhas (+) → 12V; pilhas (−) → GND; ESP32 GND → GND. GPIO27→IN1, GPIO26→IN2, GPIO32→IN3, GPIO18→IN4. Motor A em OUT1/OUT2 e B em OUT3/OUT4. Não ligue 5V, ENA ou ENB; mantenha os jumpers de habilitação do módulo instalados.'
+}];
+const CATALOG_TYPES=[...TYPES,...L298N_TYPES];
+const byKind=Object.fromEntries(CATALOG_TYPES.map(p=>[p.kind,p]));
 const PART_LAYOUTS={
  esp:{w:790,h:365,pins:{"VIN":[14.4,18.5],"GND":[19.43,18.5],"D13":[24.46,18.5],"D12":[29.49,18.5],"D14":[34.52,18.5],"D27":[39.55,18.5],"D26":[44.58,18.5],"D25":[49.61,18.5],"D33":[54.64,18.5],"D32":[59.67,18.5],"D35":[64.7,18.5],"D34":[69.73,18.5],"VN":[74.76,18.5],"VP":[79.79,18.5],"EN":[84.82,18.5],"3V3":[14.4,85.7],"GND2":[19.43,85.7],"D15":[24.46,85.7],"D2":[29.49,85.7],"D4":[34.52,85.7],"RX2":[39.55,85.7],"TX2":[44.58,85.7],"D5":[49.61,85.7],"D18":[54.64,85.7],"D19":[59.67,85.7],"D21":[64.7,85.7],"RX0":[69.73,85.7],"TX0":[74.76,85.7],"D22":[79.79,85.7],"D23":[84.82,85.7]}},
  driver:{w:250,h:317,pins:{VCC:[24.3,84.5],GND:[34.7,84.5],IN1:[45,84.5],IN2:[55.3,84.5],IN3:[65.7,84.5],IN4:[76,84.5],OUT1:[70.7,16.5],OUT2:[85.7,16.5],OUT3:[24.3,16.5],OUT4:[39.3,16.5]}},
+ l298n:{w:500,h:486,pins:{V12:[24.03,77.29],GND:[33.47,77.29],IN1:[59.17,78],IN2:[64.44,78],IN3:[69.72,78],IN4:[75,78],OUT1:[15.9,33.57],OUT2:[15.9,44.29],OUT3:[84.24,33.57],OUT4:[84.24,44.29]}},
  buck:{w:288,h:180,pins:{INP:[14.72,35.1],INN:[14.72,63.1],OUTP:[85,35.1],OUTN:[85,63.1]}},
  battery:{w:170,h:228,pins:{POS:[30.6,4.7],NEG:[68.6,6.2]}},
  batteryPack:{w:265,h:255,pins:{POS:[16.1,7.7],NEG:[84.7,7.7]}},
@@ -50,7 +60,7 @@ const PART_LAYOUTS={
  motor:{w:190,h:405,pins:{A:[18,85],B:[18,80]}},
  motorSide:{w:340,h:170,pins:{A:[96,42],B:[96,63]}}
 };
-const byId=Object.fromEntries(TYPES.flatMap(p=>p.ids.map(id=>[id,p])));
+const byId=Object.fromEntries(CATALOG_TYPES.flatMap(p=>p.ids.map(id=>[id,p])));
 // Os dois esquemas têm as mesmas ligações de controle, motores e GND comum.
 // A única diferença é se cada positivo passa ou não por uma gangorra.
 const COMMON_CONNECTIONS=[
@@ -73,11 +83,16 @@ const EXPECTED=[
 ];
 const SWITCHED_CONNECTIONS=EXPECTED;
 const key=(a,b)=>[a,b].sort().join('|');
-const canonicalPort=p=>p==='esp.GND2'?'esp.GND':p;
+const canonicalPort=p=>{
+ if(p==='esp.GND2')return 'esp.GND';
+ // Mesmo papel elétrico da MX1508; o terminal 12V da L298N é o positivo do suporte.
+ if(p.startsWith('drvL298n.'))return 'drv.'+(p.slice(10)==='V12'?'VCC':p.slice(10));
+ return p;
+};
 const electricalKey=(a,b)=>key(canonicalPort(a),canonicalPort(b));
 const REQUIRED=new Set(EXPECTED.map(([a,b])=>electricalKey(a,b)));
 const valid=new Set([...DIRECT_CONNECTIONS,...SWITCHED_CONNECTIONS].map(([a,b])=>electricalKey(a,b)));
-const allPorts=new Set(TYPES.flatMap(t=>t.ids.flatMap(id=>t.pins.map(p=>id+'.'+p[0]))));
+const allPorts=new Set(CATALOG_TYPES.flatMap(t=>t.ids.flatMap(id=>t.pins.map(p=>id+'.'+p[0]))));
 const Q=id=>document.getElementById(id);
 // Coordenadas da bancada são livres: a câmera não impõe bordas às peças ou fios.
 const WORLD={w:1900,h:1450};
@@ -455,8 +470,8 @@ function selectedControlConnections(){
  return CONTROL_INPUTS.map((input,i)=>{
   const target='drv.'+input;
   const matching=state.wires.filter(w=>!w.loose).map(w=>{
-   if(w.a===target&&CONTROL_GPIO.includes(w.b))return w.b;
-   if(w.b===target&&CONTROL_GPIO.includes(w.a))return w.a;
+   if(canonicalPort(w.a)===target&&CONTROL_GPIO.includes(w.b))return w.b;
+   if(canonicalPort(w.b)===target&&CONTROL_GPIO.includes(w.a))return w.a;
    return null;
   }).filter(Boolean);
   const picked=matching.find(p=>!used.has(p));
@@ -534,7 +549,7 @@ function powerStatus(){
  const buck=exists('b1')&&exists('lm')&&espPositive&&has('b1.NEG','lm.INN');
  const esp=buck&&exists('esp')&&Math.abs(state.voltage-5)<.01
   &&has('lm.OUTP','esp.VIN')&&has('lm.OUTN','esp.GND');
- const driver=exists('b2')&&exists('drv')&&motorPositive&&has('b2.NEG','drv.GND');
+ const driver=exists('b2')&&(exists('drv')||exists('drvL298n'))&&motorPositive&&has('b2.NEG','drv.GND');
  const common=esp&&has('esp.GND','drv.GND');
  const assigned=selectedMotorConnections();
  const motorOn=(id)=>{
@@ -564,7 +579,7 @@ function updateLiveSimulation(){
  }
  for(const card of Q('partsLayer').querySelectorAll('.part')){
   const id=card.dataset.part;
-  const on=id==='esp'?live.esp:id==='lm'?live.buck:id==='drv'?live.driver:
+  const on=id==='esp'?live.esp:id==='lm'?live.buck:(id==='drv'||id==='drvL298n')?live.driver:
    id==='ml'||id==='mr'?live.motors[id]:false;
   card.classList.toggle('powered',enabled&&!!on);
   if(id==='ml'||id==='mr')card.classList.toggle('running',enabled&&!!on);
@@ -590,7 +605,7 @@ function toggleSimulation(){
 function renderCatalog(){
  const query=Q('componentSearch').value.trim().toLowerCase();
  Q('catalog').replaceChildren();
- TYPES.filter(t=>t.name.toLowerCase().includes(query)).forEach(t=>{
+ CATALOG_TYPES.filter(t=>t.name.toLowerCase().includes(query)).forEach(t=>{
   const n=t.ids.filter(exists).length,left=t.ids.length-n;
   const btn=document.createElement('button');btn.type='button';btn.className='catalog-card'+(left===0?' unavailable':'');btn.disabled=left===0;btn.dataset.kind=t.kind;btn.setAttribute('aria-label','Adicionar '+t.name+', '+left+' disponível(is)');
   const img=document.createElement('img');img.src=imageUrl(t);img.alt='';img.loading='lazy';img.draggable=false;
@@ -645,7 +660,7 @@ function renderParts(){
    ledBlue.title='Atividade Wi-Fi simulada (indicador didático)';
    imgbox.append(ledRed,ledBlue);
   }
-  if(p.kind==='buck'||p.kind==='driver'){
+  if(p.kind==='buck'||p.kind==='driver'||p.kind==='l298n'){
    const badge=document.createElement('span');
    badge.className='powered-tag';
    badge.textContent=p.kind==='buck'?'ENTRADA · 9 V':'ALIMENTAÇÃO';
@@ -1212,6 +1227,7 @@ function portDirection(id){
  let d={x:0,y:-1};
  if(p.kind==='esp')d={x:0,y:['3V3','GND2','D15','D2','D4','RX2','TX2','D5','D18','D19','D21','RX0','TX0','D22','D23'].includes(code)?1:-1};
  else if(p.kind==='driver')d={x:0,y:code.startsWith('OUT')?-1:1};
+ else if(p.kind==='l298n')d=code==='OUT1'||code==='OUT2'?{x:-1,y:0}:code==='OUT3'||code==='OUT4'?{x:1,y:0}:{x:0,y:1};
  else if(p.kind==='buck')d={x:code.startsWith('IN')?-1:1,y:0};
  else if(p.kind==='battery')d={x:0,y:-1};
  else if(p.kind==='switch')d={x:0,y:1};
