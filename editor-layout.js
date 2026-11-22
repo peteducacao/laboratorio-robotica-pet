@@ -100,13 +100,71 @@ settings.innerHTML=
  '<input id="editorCircuitName" type="text" maxlength="80" autocomplete="off" placeholder="Nome do circuito">'+
  '<label for="editorCircuitDescription">Descrição (opcional)</label>'+
  '<textarea id="editorCircuitDescription" maxlength="500" placeholder="Descreva seu circuito..."></textarea>'+
+
+ '<div class="editor-orientation-setting">'+
+ '<label for="editorOrientationMode">Orientação da tela</label>'+
+ '<select id="editorOrientationMode" aria-describedby="editorOrientationStatus">'+
+ '<option value="portrait">Manter na vertical</option>'+
+ '<option value="auto">Permitir rotação</option></select>'+
+ '<p id="editorOrientationStatus" class="editor-orientation-status" role="status" aria-live="polite"></p>'+
+ '</div>'+
  '<p class="editor-field-status" id="editorFieldStatus" aria-live="polite"></p>'+
  '<div class="settings-actions">'+
  '<button type="button" id="settingsPartDetails">Propriedades do componente selecionado</button>'+
  '<button type="button" class="remove-project" id="settingsRemoveProject">Excluir circuito</button>'+
  '</div>';
 document.querySelector('.studio').after(settings);
-const nameField=$('editorCircuitName');
+// O Android/Chrome nem sempre respeita o bloqueio do sistema em PWAs.
+ // Não existe Web API pública que informe se a rotação automática do Android
+ // está habilitada. Um controle próprio resolve quando o navegador permitir.
+ const ORIENTATION_KEY='tinkerpet-orientation-preference-v1';
+ const orientationSelect=$('editorOrientationMode');
+ const orientationStatus=$('editorOrientationStatus');
+ const installedPwa=window.matchMedia('(display-mode: standalone)').matches||
+   window.matchMedia('(display-mode: fullscreen)').matches;
+ const android=/Android/i.test(navigator.userAgent);
+ function initialOrientationMode(){
+  let saved=null;
+  try{saved=localStorage.getItem(ORIENTATION_KEY)}catch{}
+  if(saved==='auto'||saved==='portrait')return saved;
+  // No Android instalado, evita o giro indesejado por padrão.
+  // Um usuário que deseja usar o sensor pode ativar "Permitir rotação".
+  return installedPwa&&android?'portrait':'auto';
+ }
+ let orientationMode=initialOrientationMode();
+ orientationSelect.value=orientationMode;
+ async function applyOrientation(mode,announced=false){
+  const api=window.screen?.orientation;
+  if(!api||typeof api.lock!=='function'||typeof api.unlock!=='function'){
+   orientationStatus.textContent='O bloqueio de orientação não está disponível neste navegador.';
+   return false;
+  }
+  if(mode==='auto'){
+   try{api.unlock();orientationStatus.textContent='Rotação liberada. O Android decide quando girar.';return true}
+   catch{orientationStatus.textContent='O navegador não conseguiu liberar a rotação.';return false}
+  }
+  try{
+   await api.lock('portrait');
+   orientationStatus.textContent='Vertical ativado. Para girar, selecione Permitir rotação.';
+   return true;
+  }catch(e){
+   orientationStatus.textContent='Este navegador não permitiu travar a tela. Em PWAs, pode ser necessário reabrir o aplicativo.';
+   if(announced)console.warn('TinkerPET: orientação não pôde ser travada',e?.name||e);
+   return false;
+  }
+ }
+ orientationSelect.addEventListener('change',()=>{
+  orientationMode=orientationSelect.value;
+  try{localStorage.setItem(ORIENTATION_KEY,orientationMode)}catch{}
+  void applyOrientation(orientationMode,true);
+ });
+ // O navegador pode reiniciar a orientação ao voltar do segundo plano.
+ void applyOrientation(orientationMode);
+ window.addEventListener('pageshow',()=>{
+  orientationSelect.value=orientationMode;
+  void applyOrientation(orientationMode);
+ });
+ const nameField=$('editorCircuitName');
 const descriptionField=$('editorCircuitDescription');
 const status=$('editorFieldStatus');
 const title=$('editorCurrentTitle');
