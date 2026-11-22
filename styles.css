@@ -58,7 +58,7 @@
 .part[data-kind="switch"] .part-image{left:20px;right:20px;top:24px;bottom:22px;height:auto}
 .part[data-kind="motor"] .part-image{left:14px;right:14px;top:22px;bottom:5px;height:auto}
 .part[data-kind="buck"] .part-image{left:18px;right:18px;top:22px;bottom:28px;height:auto}
-.part[data-kind="driver"] .part-image{left:25px;right:25px;top:20px;bottom:7px;height:auto}
+.part:is([data-kind="driver"],[data-kind="l298n"]) .part-image{left:25px;right:25px;top:20px;bottom:7px;height:auto}
 .part[data-kind="esp"] .part-image{left:27px;right:27px;top:25px;bottom:8px;height:auto}
 .wire-line{stroke-width:5;filter:drop-shadow(0 1px 1px #172c3c40)}
 .wire-target{stroke-width:17}
@@ -206,25 +206,25 @@
 
 
 /* TinkerPET v8 · componentes desenhados sem cartões; pinos sobre os bornes reais */
-.part[data-kind="driver"] .part-image,
+.part:is([data-kind="driver"],[data-kind="l298n"]) .part-image,
 .part[data-kind="buck"] .part-image,
 .part[data-kind="battery"] .part-image,
 .part[data-kind="switch"] .part-image {
  position:absolute;inset:0;height:100%;width:100%;padding:0;margin:0;
  display:flex;align-items:center;justify-content:center;background:transparent;
 }
-.part[data-kind="driver"] .part-image img,
+.part:is([data-kind="driver"],[data-kind="l298n"]) .part-image img,
 .part[data-kind="buck"] .part-image img,
 .part[data-kind="battery"] .part-image img,
 .part[data-kind="switch"] .part-image img {
  width:100%;height:100%;max-width:100%;max-height:100%;object-fit:contain;
  mix-blend-mode:normal;filter:drop-shadow(0 4px 4px rgba(23,47,61,.17));
 }
-.part[data-kind="driver"] .part-head,
+.part:is([data-kind="driver"],[data-kind="l298n"]) .part-head,
 .part[data-kind="buck"] .part-head,
 .part[data-kind="battery"] .part-head,
 .part[data-kind="switch"] .part-head {top:-15px;pointer-events:none}
-.part[data-kind="driver"] .pin-btn,
+.part:is([data-kind="driver"],[data-kind="l298n"]) .pin-btn,
 .part[data-kind="buck"] .pin-btn,
 .part[data-kind="battery"] .pin-btn,
 .part[data-kind="switch"] .pin-btn {
@@ -232,33 +232,33 @@
  background:transparent;box-shadow:none;border:0;font-size:0;color:transparent;
  touch-action:none;
 }
-.part[data-kind="driver"] .pin-dot,
+.part:is([data-kind="driver"],[data-kind="l298n"]) .pin-dot,
 .part[data-kind="buck"] .pin-dot,
 .part[data-kind="battery"] .pin-dot,
 .part[data-kind="switch"] .pin-dot {opacity:0}
-.part[data-kind="driver"] .pin-btn:hover,
+.part:is([data-kind="driver"],[data-kind="l298n"]) .pin-btn:hover,
 .part[data-kind="buck"] .pin-btn:hover,
 .part[data-kind="battery"] .pin-btn:hover,
 .part[data-kind="switch"] .pin-btn:hover,
-.part[data-kind="driver"] .pin-btn:focus-visible,
+.part:is([data-kind="driver"],[data-kind="l298n"]) .pin-btn:focus-visible,
 .part[data-kind="buck"] .pin-btn:focus-visible,
 .part[data-kind="battery"] .pin-btn:focus-visible,
 .part[data-kind="switch"] .pin-btn:focus-visible {
  background:rgba(35,185,203,.17);outline:2px solid #23a4c0;outline-offset:0;
 }
-.part[data-kind="driver"] .pin-btn.selected,
+.part:is([data-kind="driver"],[data-kind="l298n"]) .pin-btn.selected,
 .part[data-kind="buck"] .pin-btn.selected,
 .part[data-kind="battery"] .pin-btn.selected,
 .part[data-kind="switch"] .pin-btn.selected {
  background:rgba(102,221,230,.26);outline:3px solid #19adba;
 }
-.part[data-kind="driver"] .pin-btn.connected:not(.selected),
+.part:is([data-kind="driver"],[data-kind="l298n"]) .pin-btn.connected:not(.selected),
 .part[data-kind="buck"] .pin-btn.connected:not(.selected),
 .part[data-kind="battery"] .pin-btn.connected:not(.selected),
 .part[data-kind="switch"] .pin-btn.connected:not(.selected) {
  background:rgba(96,221,142,.23);outline:2px solid #42ae75;
 }
-.part[data-kind="driver"] .pin-btn.invalid,
+.part:is([data-kind="driver"],[data-kind="l298n"]) .pin-btn.invalid,
 .part[data-kind="buck"] .pin-btn.invalid,
 .part[data-kind="battery"] .pin-btn.invalid,
 .part[data-kind="switch"] .pin-btn.invalid {
@@ -303,31 +303,31 @@
 
 /* TinkerPET v9 — correções dos contatos e interações dos componentes */
 .part[data-kind="buck"] .part-image,
-.part[data-kind="driver"] .part-image,
+.part:is([data-kind="driver"],[data-kind="l298n"]) .part-image,
 .part[data-kind="battery"] .part-image,
 .part[data-kind="switch"] .part-image{
  position:absolute;inset:0;width:100%;height:100%;padding:0;margin:0;
 }
 .part[data-kind="buck"] .part-image img,
-.part[data-kind="driver"] .part-image img,
+.part:is([data-kind="driver"],[data-kind="l298n"]) .part-image img,
 .part[data-kind="battery"] .part-image img,
 .part[data-kind="switch"] .part-image img{
  width:100%;height:100%;max-width:100%;max-height:100%;
  object-fit:fill;mix-blend-mode:normal;
 }
 .part[data-kind="buck"] .part-head,
-.part[data-kind="driver"] .part-head,
+.part:is([data-kind="driver"],[data-kind="l298n"]) .part-head,
 .part[data-kind="battery"] .part-head,
 .part[data-kind="switch"] .part-head{top:-21px}
 .part[data-kind="buck"] .part-head strong,
-.part[data-kind="driver"] .part-head strong,
+.part:is([data-kind="driver"],[data-kind="l298n"]) .part-head strong,
 .part[data-kind="battery"] .part-head strong,
 .part[data-kind="switch"] .part-head strong{
  background:#f8fbfded;border-radius:12px;padding:2px 8px;
 }
 /* Precisão de toque: o centro do alvo coincide com o centro do borne desenhado. */
 .part[data-kind="buck"] .pin-btn,
-.part[data-kind="driver"] .pin-btn,
+.part:is([data-kind="driver"],[data-kind="l298n"]) .pin-btn,
 .part[data-kind="battery"] .pin-btn,
 .part[data-kind="switch"] .pin-btn{
  position:absolute;transform:translate(-50%,-50%);
@@ -335,10 +335,10 @@
  background:transparent;border:0;border-radius:50%;padding:0;box-shadow:none;
 }
 .part[data-kind="buck"] .pin-dot,
-.part[data-kind="driver"] .pin-dot,
+.part:is([data-kind="driver"],[data-kind="l298n"]) .pin-dot,
 .part[data-kind="switch"] .pin-dot{opacity:0}
 .part[data-kind="buck"] .pin-btn:focus-visible,
-.part[data-kind="driver"] .pin-btn:focus-visible,
+.part:is([data-kind="driver"],[data-kind="l298n"]) .pin-btn:focus-visible,
 .part[data-kind="battery"] .pin-btn:focus-visible,
 .part[data-kind="switch"] .pin-btn:focus-visible{outline:3px solid #159fbc;outline-offset:1px}
 .part[data-kind="battery"] .pin-btn{width:35px;height:35px;min-height:35px}
@@ -517,7 +517,7 @@
  width:33px!important;height:40px!important;min-height:40px!important;
  touch-action:none;z-index:12
 }
-.part[data-kind="driver"] .pin-btn,
+.part:is([data-kind="driver"],[data-kind="l298n"]) .pin-btn,
 .part[data-kind="buck"] .pin-btn,
 .part[data-kind="battery"] .pin-btn,
 .part[data-kind="switch"] .pin-btn,
@@ -525,7 +525,7 @@
  min-width:44px!important;width:44px!important;min-height:44px!important;height:44px!important;
  touch-action:none
 }
-.part[data-kind="driver"] .pin-btn:focus-visible,
+.part:is([data-kind="driver"],[data-kind="l298n"]) .pin-btn:focus-visible,
 .part[data-kind="buck"] .pin-btn:focus-visible,
 .part[data-kind="battery"] .pin-btn:focus-visible,
 .part[data-kind="switch"] .pin-btn:focus-visible,
@@ -1130,7 +1130,7 @@
  content:none!important;display:none!important;
 }
 /* O visual do contato está no desenho, não num ponto artificial por cima. */
-#partsLayer .part:is([data-kind="esp"],[data-kind="driver"],[data-kind="buck"],[data-kind="switch"],[data-kind="batteryPack"]) .pin-dot{
+#partsLayer .part:is([data-kind="esp"],[data-kind="driver"],[data-kind="l298n"],[data-kind="buck"],[data-kind="switch"],[data-kind="batteryPack"]) .pin-dot{
  display:none!important;
 }
 #partsLayer .part[data-kind="motor"] .pin-btn .pin-dot,
@@ -1415,4 +1415,12 @@ body.preview-studio .flip-component-btn[aria-pressed="true"]:not(:disabled){
 }
 body.preview-studio .flip-component-btn svg{
  width:20px;height:20px;display:block;pointer-events:none;
+}
+
+/* L298N: quatro entradas de comando próximas entre si permanecem clicáveis separadamente. */
+.part[data-kind="l298n"] .pin-btn[data-port$=".IN1"],
+.part[data-kind="l298n"] .pin-btn[data-port$=".IN2"],
+.part[data-kind="l298n"] .pin-btn[data-port$=".IN3"],
+.part[data-kind="l298n"] .pin-btn[data-port$=".IN4"]{
+ width:25px!important;min-width:25px!important;height:32px!important;min-height:32px!important;
 }
