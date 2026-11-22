@@ -21,8 +21,12 @@
 // No computador permanece o app.js original. Só o celular recebe um motor
 // independente, com traçado acompanhando as mudanças de direção do dedo.
 // Defer preserva a ordem de inicialização com os scripts subsequentes.
-document.write(window.matchMedia('(max-width:700px)').matches
- ? '<script defer src="app-mobile.js?v=23"><\/script>'
+// Na tela girada a largura ultrapassa 700px, mas o dispositivo continua
+// usando toque. Nunca troque o motor do editor só por girar o celular.
+const TOUCH_EDITOR=window.matchMedia('(pointer:coarse)').matches||
+ (navigator.maxTouchPoints>0&&window.matchMedia('(hover:none)').matches);
+document.write(TOUCH_EDITOR
+ ? '<script defer src="app-mobile.js?v=24"><\/script>'
  : '<script defer src="app.js?v=95"><\/script>');
 </script>
 <script defer src="answer-key.js?v=37"></script>
@@ -30,9 +34,10 @@ document.write(window.matchMedia('(max-width:700px)').matches
 <script defer src="editor-layout.js?v=12"></script>
 <script>
 // Mobile only: the existing desktop application and its event logic stay intact.
-if(window.matchMedia('(max-width:700px)').matches){
+if(window.matchMedia('(pointer:coarse)').matches||
+ (navigator.maxTouchPoints>0&&window.matchMedia('(hover:none)').matches)){
  const script=document.createElement('script');
- script.src='mobile-editor.js?v=8';
+ script.src='mobile-editor.js?v=9';
  document.head.appendChild(script);
 }
 </script>
