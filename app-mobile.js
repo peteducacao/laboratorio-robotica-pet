@@ -2084,6 +2084,32 @@ function captureBendNearComponents(e){
  suppressPortClickUntil=Date.now()+300;
  gesture={type:reconnectPending?'reconnect-bend':'bend',pointer:e.pointerId,startX:e.clientX,startY:e.clientY,moved:false};
 }
+// No toque, a ponta do jumper selecionado pode ser alcançada numa área
+// virtual de 62px, sem aumentar as alças ou cobrir os terminais próximos.
+// Pinos e controles reais sempre têm prioridade sobre a proximidade.
+function captureNearbyWireEnd(e){
+ if(e.pointerType!=='touch'||(e.button!==undefined&&e.button!==0)||
+   state.startPort||reconnectPending||pinch||activeTouches.size>=2||
+   Date.now()<gestureBlockedUntil||spaceHeld||!Number.isInteger(state.selectedWire))return;
+ if(e.target.closest?.('[data-port],.wire-end-handle,button,input,select,textarea,.canvas-zoom-button,.canvas-zoom-panel'))return;
+ const wire=state.wires[state.selectedWire],viewport=Q('viewport');
+ if(!wire||!viewport)return;
+ const rect=viewport.getBoundingClientRect();
+ if(e.clientX<rect.left||e.clientX>rect.right||e.clientY<rect.top||e.clientY>rect.bottom)return;
+ let closestEnd=null,closestDistance=31;
+ for(const end of ['a','b']){
+  const point=wire.loose?.end===end?wire.loose.point:getPortPos(wire[end]);
+  if(!point)continue;
+  const distance=Math.hypot(e.clientX-(rect.left+panX+point.x*zoom),
+                            e.clientY-(rect.top+panY+point.y*zoom));
+  if(distance<=closestDistance){closestEnd=end;closestDistance=distance;}
+ }
+ if(!closestEnd)return;
+ beginReconnect(e,state.selectedWire,closestEnd);
+ // A rota SVG é recriada; capturar no viewport fixo evita perder o gesto.
+ try{viewport.setPointerCapture(e.pointerId)}catch{}
+ e.stopImmediatePropagation();
+}
 function viewportDown(e){
  if(pinch||activeTouches.size>=2||Date.now()<gestureBlockedUntil)return;
  if(e.button!==undefined&&e.button!==0&&e.button!==1)return;
@@ -2877,6 +2903,7 @@ function bind(){
  });
  Q('viewport').addEventListener('pointerdown',trackingTouchDown,true);
  Q('viewport').addEventListener('pointerdown',multiSelectCapture,true);
+ Q('viewport').addEventListener('pointerdown',captureNearbyWireEnd,true);
  Q('viewport').addEventListener('pointerdown',captureBendNearComponents,true);
  Q('viewport').addEventListener('pointerdown',viewportDown);
  window.addEventListener('pointermove',pointerMove);
