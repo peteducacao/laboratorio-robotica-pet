@@ -839,3 +839,25 @@
 @media (prefers-reduced-motion:reduce){
  .preview-studio.editor-layout #editorChromeToggle svg{transition:none!important}
 }
+
+/* v17: alça apenas com uma seta pequena. Ocupa o mínimo possível da bancada. */
+@media(max-width:1100px){
+ .preview-studio.editor-layout #editorChromeToggle.editor-chrome-toggle{
+  width:36px!important;min-width:36px!important;max-width:36px!important;
+  height:19px!important;min-height:19px!important;max-height:19px!important;
+  padding:0!important;border:1px solid #cddedc!important;border-top:0!important;
+  border-radius:0 0 8px 8px!important;box-shadow:none!important;
+  background:#f8fbfa!important;
+ }
+ .preview-studio.editor-layout #editorChromeToggle svg{
+  width:16px!important;height:16px!important;min-width:16px!important;
+  stroke-width:2.5!important;
+ }
+ .preview-studio.editor-layout.editor-chrome-collapsed .workspace-region{
+  padding:4px 7px 6px!important;gap:0!important;
+ }
+ .preview-studio.editor-layout.editor-chrome-collapsed #viewport{
+  height:calc(100dvh - var(--studio-top-offset,19px) - 9px)!important;
+  min-height:140px!important;
+ }
+}
