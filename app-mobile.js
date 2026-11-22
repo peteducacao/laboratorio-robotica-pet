@@ -37,7 +37,7 @@ const L298N_TYPES=[{
  info:'Ponte H dupla L298N para dois motores DC. O suporte de pilhas vai ao borne 12V e ao GND. O GND da ponte também deve ser ligado ao ESP32. Os pinos 5V e ENA/ENB aparecem na placa, mas não precisam de fios nesta atividade.',
  tip:'Pilhas (+) → 12V; pilhas (−) → GND; ESP32 GND → GND. GPIO27→IN1, GPIO26→IN2, GPIO32→IN3, GPIO18→IN4. Motor A em OUT1/OUT2 e B em OUT3/OUT4. Não ligue 5V, ENA ou ENB; mantenha os jumpers de habilitação do módulo instalados.'
 }];
-const CATALOG_TYPES=[...TYPES,...L298N_TYPES];
+const CATALOG_TYPES=[TYPES[0],TYPES[1],...L298N_TYPES,...TYPES.slice(2)];
 const byKind=Object.fromEntries(CATALOG_TYPES.map(p=>[p.kind,p]));
 const PART_LAYOUTS={
  esp:{w:790,h:365,pins:{"VIN":[14.4,18.5],"GND":[19.43,18.5],"D13":[24.46,18.5],"D12":[29.49,18.5],"D14":[34.52,18.5],"D27":[39.55,18.5],"D26":[44.58,18.5],"D25":[49.61,18.5],"D33":[54.64,18.5],"D32":[59.67,18.5],"D35":[64.7,18.5],"D34":[69.73,18.5],"VN":[74.76,18.5],"VP":[79.79,18.5],"EN":[84.82,18.5],"3V3":[14.4,85.7],"GND2":[19.43,85.7],"D15":[24.46,85.7],"D2":[29.49,85.7],"D4":[34.52,85.7],"RX2":[39.55,85.7],"TX2":[44.58,85.7],"D5":[49.61,85.7],"D18":[54.64,85.7],"D19":[59.67,85.7],"D21":[64.7,85.7],"RX0":[69.73,85.7],"TX0":[74.76,85.7],"D22":[79.79,85.7],"D23":[84.82,85.7]}},
