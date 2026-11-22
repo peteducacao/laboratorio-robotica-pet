@@ -1,7 +1,7 @@
 /* TinkerPET PWA. Escopo estático: nunca acessa nem apaga projetos do navegador. */
 'use strict';
 const PREFIX='tinkerpet-offline-shell-';
-const BOOT='20261031-first-install-v1';
+const BOOT='20261122-l298n-v1';
 const BOOT_CACHE=PREFIX+BOOT;
 const META_CACHE='tinkerpet-offline-meta-v1';
 const ACTIVE_URL=new URL('__active-shell__',self.registration.scope).href;
@@ -48,6 +48,7 @@ const PRECACHE=[
  "assets/motor-frontal.svg",
  "assets/motor-lateral.svg",
  "assets/mx1508-desenhado.svg",
+ "assets/l298n-desenhado.svg",
  "assets/suporte-6-pilhas.svg",
  "assets/tinkerpet-app-192.png",
  "assets/tinkerpet-app-512.png",
