@@ -177,3 +177,8 @@ html.tinkerpet-booting .tinkerpet-loading{
  .tinkerpet-loading-mascot{width:min(28vh,120px)}
  .tinkerpet-loading-wordmark{width:100%}
 }
+
+/* Marca em uma imagem única, sem duplicação no carregamento. */
+.tinkerpet-loading-mascot{width:min(84vw,530px);max-width:100%;max-height:min(43dvh,370px);aspect-ratio:616/363;object-fit:contain;filter:drop-shadow(0 9px 13px #0216329b)}
+.tinkerpet-loading-brand,.tinkerpet-loading-swirl{display:none!important}
+@media(max-height:560px){.tinkerpet-loading-mascot{width:min(49vw,320px);max-height:55dvh}}
