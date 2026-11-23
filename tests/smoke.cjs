@@ -60,10 +60,39 @@ const mobileAppJs=fs.readFileSync(path.join(base,'app-mobile.js'),'utf8');
 const mobileEditorJs=fs.readFileSync(path.join(base,'mobile-editor.js'),'utf8');
 const editorHtml=fs.readFileSync(path.join(base,'editor.html'),'utf8');
 for(const editor of [js,mobileAppJs]){
- assert(editor.includes("if(correct&&!completionAlreadyShown())showCompletionCelebration()"),'parabéns surge ao abrir montagem concluída ainda não celebrada');
- assert(editor.includes('function markCompletionShown()'),'celebração salva confirmação sem alterar o projeto');
- assert(editor.includes('if(!completionWasValid&&correct)showCompletionCelebration()'),'parabéns volta quando uma montagem é corrigida novamente');
- assert(editor.includes('if(ready()){showCompletionCelebration();return;}'),'progresso verde reabre o cartão de parabéns');
+ assert(editor.includes('state.parts.length>=requiredParts()'),'validação permite itens opcionais extras sem contradizer a barra verde');
+ assert(editor.includes('const fullyValid=ready()'),'progresso e parabéns usam o mesmo validador');
+ assert(editor.includes('if(correct)showCompletionCelebration()'),'ao abrir montagem completa, os parabéns aparecem');
+ assert(editor.includes('if(!completionWasValid&&correct)showCompletionCelebration()'),'reconectar o último fio exibe parabéns novamente');
+ assert(!editor.includes('completionAlreadyShown')&&!editor.includes('markCompletionShown'),'sem histórico persistente impedindo repetir comemoração');
+ assert(editor.includes('if(ready()){showCompletionCelebration();return;}'),'progresso verde reabre os parabéns');
+}
+// Testes de transição incompleto -> completo, inclusive 4+2 AA com L298N.
+for(const editor of [js,mobileAppJs]){
+ const readySource=editor.slice(editor.indexOf('function ready(){'),editor.indexOf('// Modelo pedagógico:',editor.indexOf('function ready(){')));
+ const completionSource=editor.slice(editor.indexOf('function syncCompletionCelebration(){'),editor.indexOf('function refresh(){',editor.indexOf('function syncCompletionCelebration(){')));
+ assert(readySource.includes('function ready()')&&completionSource.includes('function syncCompletionCelebration()'),'funções de validação extraídas');
+ for(const [name,partCount,required] of [['clássico',7,7],['L298N e AA 4+2',8,8],['L298N com componente adicional',9,8],['gangorras e AA 4+2',10,10]]){
+  const code=`
+   let missingCount=0,wrongCount=0,voltageAdjusting=false,completionKnown=false,completionWasValid=false,celebrations=0;
+   const state={parts:Array.from({length:${partCount}},()=>({})),voltage:5,switches:{s1:true,s2:true}};
+   const assemblyMode=()=>${JSON.stringify(partCount===10?'switched':'direct')};
+   const requiredParts=()=>${required};
+   const missing=()=>Array.from({length:missingCount},()=>({}));
+   const mistakes=()=>Array.from({length:wrongCount},()=>({}));
+   function showCompletionCelebration(){celebrations++}
+   ${readySource}
+   ${completionSource}
+   syncCompletionCelebration();const first=celebrations;
+   syncCompletionCelebration();const unchanged=celebrations;
+   missingCount=1;syncCompletionCelebration();const broken=celebrations;
+   missingCount=0;syncCompletionCelebration();const repaired=celebrations;
+   missingCount=1;syncCompletionCelebration();missingCount=0;syncCompletionCelebration();const repairedAgain=celebrations;
+   return {first,unchanged,broken,repaired,repairedAgain};
+  `;
+  const output=vm.runInNewContext(code);
+  assert.deepEqual(JSON.parse(JSON.stringify(output)),{first:1,unchanged:1,broken:1,repaired:2,repairedAgain:3},'comemoração se repete em cada conclusão: '+name);
+ }
 }
 assert(editorHtml.includes('id="completionDialog"')&&editorHtml.includes('id="completionConfetti"'),'cartão de confetes continua presente');
 
