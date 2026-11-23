@@ -22,28 +22,11 @@ body{min-width:280px;color:#fff;font-family:'Fredoka','Trebuchet MS',system-ui,s
 .circuit-trace-top{top:10%;right:-11px}
 .circuit-trace-bottom{left:-12px;bottom:10%;transform:rotate(180deg)}
 .brand-stage{position:relative;z-index:2;display:flex;flex-direction:column;align-items:center;justify-content:center;width:min(100%,680px);min-width:0;transform:translateY(-1.5vh);text-align:center}
-.mascot{position:relative;display:block;width:clamp(155px,min(44vw,29vh),265px);aspect-ratio:324/242;height:auto;flex:0 0 auto;padding:0;border:0;background:none;cursor:pointer;touch-action:manipulation;-webkit-tap-highlight-color:transparent;transition:transform .2s ease;filter:drop-shadow(0 9px 13px #001d5b66)}
-.mascot:hover{transform:translateY(-3px)}
-.mascot:active{transform:scale(.98)}
-.mascot:focus-visible,.main-action:focus-visible{outline:3px solid #ffde4b;outline-offset:5px}
+.mascot{position:relative;display:block;width:clamp(155px,min(44vw,29vh),265px);aspect-ratio:324/242;height:auto;flex:0 0 auto;padding:0;border:0;background:none;pointer-events:none;filter:drop-shadow(0 9px 13px #001d5b66)}
 .mascot-reference{width:100%;height:100%;display:block;object-fit:contain;user-select:none;pointer-events:none}
-.mascot-blink-lid{position:absolute;left:33%;top:60%;width:12.8%;height:17%;opacity:0;pointer-events:none;background:linear-gradient(#f3f5fd,#c6daf0);border-radius:50%;transform:scaleY(.05)}
-.mascot-blink-lid::after{content:"";position:absolute;left:11%;top:44%;width:78%;height:23%;border-top:2px solid #0a2958;border-radius:50%}
-.mascot.is-blinking .mascot-blink-lid{opacity:1;transform:scaleY(1)}
-.mascot-reaction{position:absolute;right:-9%;top:14%;opacity:0;transform:translateY(5px);font-size:30px;pointer-events:none;transition:opacity .2s ease,transform .2s ease}
-.mascot[data-mood] .mascot-reaction{opacity:1;transform:translateY(0)}
-.mascot[data-mood="excited"] .mascot-reference{animation:robot-bounce .4s ease}
-@keyframes robot-bounce{50%{transform:translateY(-4px)}}
 .brand-sign{display:flex;flex-direction:column;align-items:center;width:min(92vw,560px);max-width:100%;margin:-11px 0 0}
 .brand-title{width:100%;margin:0;padding:0;font-size:0;line-height:0;overflow:visible;filter:drop-shadow(0 5px 6px #001c59b5)}
 .brand-wordmark{display:block;width:100%;height:auto;aspect-ratio:578/127;object-fit:contain;overflow:visible}
-.main-action{display:flex;align-items:center;justify-content:space-between;gap:clamp(8px,2.4vw,19px);width:min(83vw,505px);max-width:100%;min-height:clamp(60px,8.1vh,84px);margin-top:clamp(19px,3vh,34px);padding:9px clamp(11px,3vw,22px);border:3px solid #2af3ff;border-radius:999px;background:linear-gradient(145deg,#12b8f8 0%,#0873e5 36%,#0743bf 100%);box-shadow:0 0 0 3px #063f94,0 0 21px #00dbff9c,inset 0 2px 13px #89f6ff3c;color:#fff;font-size:clamp(15px,3.85vw,25px);font-weight:700;text-decoration:none;white-space:nowrap;text-shadow:0 2px 4px #062f6b;cursor:pointer;touch-action:manipulation;transition:transform .2s ease,filter .2s ease}
-.main-action:hover{filter:brightness(1.08)}
-.main-action:active{transform:scale(.98)}
-.main-action-label{flex:1;min-width:0;text-align:center}
-.folder-icon{width:clamp(25px,5vw,37px);height:auto;flex:none}
-.arrow-icon{display:grid;place-items:center;width:clamp(39px,7vw,53px);height:clamp(39px,7vw,53px);border-radius:50%;flex:none;background:linear-gradient(145deg,#0bf7f3,#02a3ee);box-shadow:0 0 14px #00e2f7a8}
-.arrow-icon svg{width:59%;height:59%}
 .site-credit-home{position:absolute;z-index:3;left:12px;right:12px;bottom:max(9px,env(safe-area-inset-bottom,0px));color:#d5edff91;text-align:center;font:400 10px/1.3 system-ui,sans-serif;pointer-events:none}
 .sr-only{position:absolute!important;width:1px!important;height:1px!important;padding:0!important;overflow:hidden!important;clip:rect(0,0,0,0)!important;white-space:nowrap!important;border:0!important}
 @media (orientation:landscape) and (max-height:620px){
@@ -51,10 +34,12 @@ body{min-width:280px;color:#fff;font-family:'Fredoka','Trebuchet MS',system-ui,s
  .brand-stage{display:grid;grid-template-columns:auto minmax(0,1fr);column-gap:clamp(8px,2vw,25px);row-gap:8px;align-items:center;justify-content:center;width:min(92vw,625px);transform:none}
  .mascot{grid-column:1;grid-row:1;width:clamp(73px,24vh,142px)}
  .brand-sign{grid-column:2;grid-row:1;margin:0;width:min(48vw,390px)}
- .main-action{grid-column:1/-1;grid-row:2;justify-self:center;width:min(65vw,420px);min-height:48px;margin-top:0;padding:5px 12px;font-size:clamp(14px,2.5vw,19px)}
- .arrow-icon{width:35px;height:35px}.folder-icon{width:27px}
  .circuit-trace-top{top:4%}.circuit-trace-bottom{bottom:3%}
  .site-credit-home{font-size:9px;bottom:4px}
 }
-@media (max-width:340px){.main-action{width:92vw;gap:6px;padding-inline:9px;font-size:15px}.brand-sign{width:94vw}}
-@media (prefers-reduced-motion:reduce){.mascot,.main-action,.mascot-reaction,.mascot-reference{animation:none!important;transition:none!important}}
+@media (max-width:340px){.brand-sign{width:94vw}}
+@media (prefers-reduced-motion:reduce){.mascot-reference{animation:none!important;transition:none!important}}
+
+/* A tela inteira é um único link nativo (toque, mouse e teclado). */
+.welcome-activation{position:absolute;inset:0;z-index:5;display:block;cursor:pointer;touch-action:manipulation;-webkit-tap-highlight-color:transparent}
+.welcome-activation:focus-visible{outline:4px solid #ffe36c;outline-offset:-7px;border-radius:8px}
