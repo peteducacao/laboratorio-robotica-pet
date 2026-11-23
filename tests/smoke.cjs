@@ -28,6 +28,13 @@ assert(projectsHtml.includes('<button type="button" id="openGate"><svg')&&projec
 assert(projectsJs.includes("$('gateLabel').textContent='Gabaritos'"),'desbloqueio atualiza somente o texto do Gabarito');
 assert(!projectsJs.includes("openGate').innerHTML='Gabaritos'"),'desbloqueio não remove SVG do Gabarito');
 new vm.Script(projectsJs);
+for(const marker of ["drvL298n:'l298n'","aa4:'batteryPack4'","aa2:'batteryPack2'",
+ "l298n:[500,486","batteryPack4:[265,194","batteryPack2:[265,134"]){
+ assert(projectsJs.includes(marker),'minatura de Meus circuitos reconhece '+marker);
+}
+assert(projectsJs.includes('const visibleParts=parts.filter('),'tipo desconhecido não interrompe a miniatura');
+assert(!projectsJs.includes('out.parts=out.parts.slice(0,9)'),'biblioteca não descarta décima peça com suporte 4+2');
+
 // O topo recolhível não deve alterar o circuito e mantém acesso por seta.
 const editorLayoutJs=fs.readFileSync(path.join(base,'editor-layout.js'),'utf8');
 const studioPreviewJs=fs.readFileSync(path.join(base,'studio-preview.js'),'utf8');
@@ -52,6 +59,14 @@ assert(fs.readFileSync(path.join(base,'sw.js'),'utf8').includes('assets/l298n-de
 const mobileAppJs=fs.readFileSync(path.join(base,'app-mobile.js'),'utf8');
 const mobileEditorJs=fs.readFileSync(path.join(base,'mobile-editor.js'),'utf8');
 const editorHtml=fs.readFileSync(path.join(base,'editor.html'),'utf8');
+for(const editor of [js,mobileAppJs]){
+ assert(editor.includes("if(correct&&!completionAlreadyShown())showCompletionCelebration()"),'parabéns surge ao abrir montagem concluída ainda não celebrada');
+ assert(editor.includes('function markCompletionShown()'),'celebração salva confirmação sem alterar o projeto');
+ assert(editor.includes('if(!completionWasValid&&correct)showCompletionCelebration()'),'parabéns volta quando uma montagem é corrigida novamente');
+ assert(editor.includes('if(ready()){showCompletionCelebration();return;}'),'progresso verde reabre o cartão de parabéns');
+}
+assert(editorHtml.includes('id="completionDialog"')&&editorHtml.includes('id="completionConfetti"'),'cartão de confetes continua presente');
+
 
 // Persistência e proteção dos objetos individuais em ambos os motores.
 for(const editor of [js,mobileAppJs]){
