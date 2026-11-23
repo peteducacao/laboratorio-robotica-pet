@@ -484,7 +484,9 @@ function mistakeExplanation(w){
 }
 function ready(){
  const switched=assemblyMode()==='switched';
- return state.parts.length===requiredParts()&&missing().length===0&&mistakes().length===0&&
+ // Use a mesma regra do indicador verde: os componentes obrigatórios devem
+ // estar presentes, sem rejeitar peças adicionais que não invalidam o circuito.
+ return state.parts.length>=requiredParts()&&missing().length===0&&mistakes().length===0&&
  Math.abs(state.voltage-5)<.01&&!voltageAdjusting&&(!switched||(state.switches.s1&&state.switches.s2));
 }
 // Modelo pedagógico: cada circuito acende e funciona somente quando recebe
@@ -802,7 +804,8 @@ function renderProgress(){
  const wiringComplete=!inAssembly&&!invalid.length&&missing().length===0;
  const voltageValid=Math.abs(state.voltage-5)<.01;
  const switchesValid=!switched||(state.switches.s1&&state.switches.s2);
- const fullyValid=wiringComplete&&voltageValid&&switchesValid&&!voltageAdjusting;
+ // A barra verde e os parabéns devem usar a MESMA validação.
+ const fullyValid=ready();
  const badge=Q('validationBadge');
  badge.className='validation-badge'+(fullyValid?' ok':errors||wiringComplete&&!voltageValid?' error':'');
  badge.textContent=fullyValid?'✓ Montagem concluída ('+(switched?'com gangorras':'sem gangorras')+')':
@@ -827,30 +830,10 @@ function renderProgress(){
  else if(Math.abs(state.voltage-5)>.01||(switched&&(!state.switches.s1||!state.switches.s2))){Q('stepNumber').textContent='03';missionTitle.textContent='Ligações concluídas! Ative a alimentação';missionText.textContent='Ajuste a saída do LM2596 para 5,0 V'+(switched?' e ligue as duas gangorras.':'.');}
  else {Q('stepNumber').textContent='04';missionTitle.textContent='Circuito completo!';missionText.textContent='Parabéns! Montagem '+(switched?'com':'sem')+' gangorras validada. Inicie a simulação e abra a pista.';}
 }
-// Celebra somente quando uma edição transforma um circuito incompleto em
-// completo. A primeira renderização após F5 estabelece o estado inicial e
-// nunca abre a mensagem. Toda edição posterior pode rearmar a celebração.
+// Celebra cada conclusão (inclusive ao reconectar o último fio).
 // Os 5,0 V só são confirmados depois de soltar o controle e estabilizar.
 let voltageAdjusting=false,voltageSettleTimer=0;
 const VOLTAGE_SETTLE_MS=450;
-// O cartão de parabéns aparece na primeira conclusão e ao abrir uma
-// montagem já concluída que ainda não foi celebrada neste circuito.
-// Armazena só a assinatura elétrica, sem modificar o circuito salvo.
-const COMPLETION_SEEN_KEY='tinkerpet-celebration-v2:'+(EDITOR_PROJECT_ID||STORAGE_KEY);
-function completionStamp(){
- return JSON.stringify({
-  parts:state.parts.map(p=>p.id).sort(),
-  wires:state.wires.filter(w=>!w.loose).map(w=>electricalKey(w.a,w.b)).sort(),
-  voltage:Number(state.voltage.toFixed(2)),
-  switches:assemblyMode()==='switched'?[!!state.switches.s1,!!state.switches.s2]:[]
- });
-}
-function completionAlreadyShown(){
- try{return localStorage.getItem(COMPLETION_SEEN_KEY)===completionStamp()}catch{return false;}
-}
-function markCompletionShown(){
- try{localStorage.setItem(COMPLETION_SEEN_KEY,completionStamp())}catch{}
-}
 let completionKnown=false,completionWasValid=false;
 const COMPLETION_DURATION_MS=10000;
 let completionCloseTimer=0,completionCountTimer=0,completionLastFocus=null;
@@ -899,7 +882,6 @@ function showCompletionCelebration(){
  if(count)count.textContent=String(COMPLETION_DURATION_MS/1000);
  completionLastFocus=document.activeElement;
  try{dialog.showModal()}catch{return;}
- markCompletionShown();
  Q('completionClose')?.focus({preventScroll:true});
  const end=performance.now()+COMPLETION_DURATION_MS;
  clearTimeout(completionCloseTimer);clearInterval(completionCountTimer);
@@ -916,11 +898,12 @@ function syncCompletionCelebration(){
  const correct=ready();
  if(!completionKnown){
   completionKnown=true;completionWasValid=correct;
-  // Não repetir em F5, mas recuperar a mensagem de um circuito concluído
-  // cuja celebração anterior nunca apareceu.
-  if(correct&&!completionAlreadyShown())showCompletionCelebration();
+  // Ao abrir um circuito já concluído, a conquista também é reconhecida.
+  if(correct)showCompletionCelebration();
   return;
  }
+ // Sempre comemore cada transição de incompleto -> completo, mesmo que
+ // o mesmo fio tenha sido removido e reconectado várias vezes.
  if(!completionWasValid&&correct)showCompletionCelebration();
  completionWasValid=correct;
 }
