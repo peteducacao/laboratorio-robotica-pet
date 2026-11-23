@@ -3,6 +3,16 @@
  const W=1798,H=875;
  const scene=document.getElementById('welcome');
  const art=document.getElementById('welcomeArt');
+ const fallback=document.getElementById('identityFallback');
+ art.addEventListener('error',()=>{
+  scene.classList.add('brand-unavailable');
+  fallback.hidden=false;
+  scheduleLayout();
+ });
+ if(art.complete&&!art.naturalWidth){
+  scene.classList.add('brand-unavailable');
+  fallback.hidden=false;
+ }
  const button=document.getElementById('enterProjects');
  const robot=document.getElementById('robotInteract');
  const blink=document.getElementById('robotBlink');
@@ -54,6 +64,7 @@
   }
   // A área clicável coincide com a placa azul ilustrada, sem outro botão duplicado.
   place(button,585,591,604,130);
+  place(fallback,520,166,760,420);
   place(robot,748,166,305,256);
   place(blink,831,315,43,34);
   place(glint,851,306,9,9);
