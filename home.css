@@ -9,10 +9,10 @@ body{min-width:280px;background:#061a34;color:#fff;font-family:'Trebuchet MS','A
  width:100%;min-height:300px;height:100vh;height:100svh;height:100dvh;
  overflow:hidden;
  background:
-  radial-gradient(ellipse 90% 65% at 50% 48%,#0b4e83 0%,#093861 40%,transparent 78%),
-  radial-gradient(ellipse 58% 48% at 7% 2%,#0089a9b9 0%,transparent 82%),
-  radial-gradient(ellipse 62% 42% at 97% 100%,#007f98a8 0%,transparent 78%),
-  linear-gradient(150deg,#07182f 0%,#092c56 55%,#061b38 100%);
+  radial-gradient(ellipse 68% 49% at 50% 47%,#0a65cbcc 0%,#0b4087a9 48%,transparent 89%),
+  radial-gradient(ellipse 58% 48% at 7% 2%,#00b4db6b 0%,transparent 82%),
+  radial-gradient(ellipse 62% 42% at 97% 100%,#0b5dc2a8 0%,transparent 78%),
+  linear-gradient(155deg,#051333 0%,#082862 48%,#061d4f 100%);
 }
 .welcome::before{
  content:"";position:absolute;inset:0;z-index:0;pointer-events:none;
@@ -145,3 +145,21 @@ body{min-width:280px;background:#061a34;color:#fff;font-family:'Trebuchet MS','A
 @media(prefers-reduced-motion:reduce){
  .robot-antenna,.robot-rays,.mascot,.mascot-reaction,.main-action{animation:none!important;transition:none!important}
 }
+/* Brilho azul da proposta aprovada sem sobrepor fotografias ou recortar cenas.
+   Símbolos e conteúdo continuam elementos independentes responsivos. */
+.welcome .mascot{filter:drop-shadow(0 11px 15px #001436) drop-shadow(0 0 15px #05ccff58)}
+.welcome .brand-title{filter:drop-shadow(0 5px 5px #03102fa6) drop-shadow(0 0 10px #0c75c86b)}
+.welcome .main-action{
+ background:linear-gradient(160deg,#13aef8 0%,#0755df 44%,#0841a7 100%);
+ border-color:#3af5ff;
+ box-shadow:0 0 0 2px #042e6a,0 0 24px #00dfff92,inset 0 1px 22px #88faff38;
+}
+.welcome .main-action .arrow-icon{background:linear-gradient(145deg,#05dafe,#0776e8)}
+.welcome .robotics-detail{opacity:.36}
+.welcome .floor-light{bottom:9%;box-shadow:0 0 22px #00dafa54,0 0 48px #0067fb36}
+@media(max-width:600px){
+ .welcome .robotics-detail{opacity:.18}
+ .welcome .brand-stage{width:min(96vw,770px)}
+ .welcome .main-action{width:min(95%,515px)}
+}
+@media(max-height:540px){.welcome .floor-light{bottom:5%}}
