@@ -1,7 +1,7 @@
 /* TinkerPET PWA. Escopo estático: nunca acessa nem apaga projetos do navegador. */
 'use strict';
 const PREFIX='tinkerpet-offline-shell-';
-const BOOT='20261122-robotics-css-only-splash-v13';
+const BOOT='20261122-clear-tinkerpet-wordmark-v14';
 const BOOT_CACHE=PREFIX+BOOT;
 const META_CACHE='tinkerpet-offline-meta-v1';
 const ACTIVE_URL=new URL('__active-shell__',self.registration.scope).href;
