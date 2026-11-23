@@ -670,6 +670,7 @@ function renderParts(){
 function chooseWireColor(color){
  if(!COLORS.includes(color))return;
  const selected=Number.isInteger(state.selectedWire)?state.wires[state.selectedWire]:null;
+ if(selected?.locked){message('Fio bloqueado. Desbloqueie para alterar sua cor.',true);return;}
  if(selected&&selected.color!==color){
   snapshot(); // Ctrl+Z restaura a cor anterior do fio.
   selected.color=color;
@@ -917,8 +918,8 @@ function addPart(kind,x,y){
  return true;
 }
 // Gira em passos de 90° mantendo o centro visual e os fios nos mesmos pinos.
-function rotatePart(id){
- const p=byPart(id);if(!p)return false;
+function rotatePart(id){const p=byPart(id);if(!p)return false;
+ if(partMovementLocked(id)){message('Peça ou fio ligado está bloqueado.',true);return false;}
  if(reconnectPending)cancelReconnect();
  if(state.startPort)cancelPendingWire();
  const attached=state.wires.filter(w=>(w.loose?.end!=='a'&&w.a.split('.')[0]===id)||(w.loose?.end!=='b'&&w.b.split('.')[0]===id));
@@ -952,8 +953,8 @@ function rotateSelectedPart(){
 }
 // Espelha a peça visualmente na horizontal local, sem trocar os nomes dos pinos
 // nem apagar conexões já criadas. Reverte com outro clique ou Ctrl+Z.
-function flipPart(id){
- const p=byPart(id);if(!p||selectedParts.size>1)return false;
+function flipPart(id){const p=byPart(id);if(!p||selectedParts.size>1)return false;
+ if(partMovementLocked(id)){message('Peça ou fio ligado está bloqueado.',true);return false;}
  if(reconnectPending)cancelReconnect();
  if(state.startPort)cancelPendingWire();
  const attached=state.wires.filter(w=>(w.loose?.end!=='a'&&w.a.split('.')[0]===id)||(w.loose?.end!=='b'&&w.b.split('.')[0]===id));
@@ -985,8 +986,8 @@ function flipSelectedPart(){
  if(!p||selectedParts.size>1){message('Selecione uma peça por vez para inverter.',true);return false;}
  return flipPart(p.id);
 }
-function removePart(id,skipSnapshot=false){
- if(!exists(id))return;
+function removePart(id,skipSnapshot=false){if(!exists(id))return;
+ if(partMovementLocked(id)){message('Peça ou fio ligado está bloqueado.',true);return;}
  if(reconnectPending)cancelReconnect();
  if(!skipSnapshot)snapshot();
  selectedBend=null;selectedParts.delete(id);
@@ -1088,7 +1089,8 @@ function connect(id){
  snapshot();
  state.startPort=null;state.bends=[];wireTipActive=false;previewPoint=null;previewSnapPort=null;pendingAlignment=null;
  const index=state.wires.findIndex(w=>electricalKey(w.a,w.b)===electricalKey(first,id));
- if(index>=0){state.wires.splice(index,1);message('Ligação existente removida.');}
+ if(index>=0){if(state.wires[index].locked){message('Fio bloqueado. Desbloqueie para remover.',true);return;}
+ state.wires.splice(index,1);message('Ligação existente removida.');}
  else{
   state.wires.push({a:first,b:id,color:state.wireColor,via,manual:true});
   const correctWire=acceptedConnectionSet().has(electricalKey(first,id));
@@ -1127,8 +1129,8 @@ function removeBendFromRoute(points,vertex){
  }
  return result;
 }
-function removeSelectedBend(){
- if(!selectedBend)return false;
+function removeSelectedBend(){if(!selectedBend)return false;
+ if(wireIsLocked(selectedBend.index)){message('Fio bloqueado. Desbloqueie para editar.',true);return true;}
  const {index,vertex}=selectedBend,w=state.wires[index];
  if(!w){selectedBend=null;updateHistoryButtons();return false;}
  const points=wirePoints(w),route=removeBendFromRoute(points,vertex);
@@ -1140,7 +1142,7 @@ function removeSelectedBend(){
  message(route.length<points.length?'Ponto removido. Fio e conexões preservados.':'Ponto removido e curva ajustada para manter o fio reto.',true);
  return true;
 }
-function removeWire(i){if(!state.wires[i])return;snapshot();reconnectPending=null;selectedBend=null;state.wires.splice(i,1);state.selectedWire=null;state.completed=false;refresh();message('Fio removido.');}
+function removeWire(i){if(!state.wires[i])return;if(wireIsLocked(i)){message('Fio bloqueado. Desbloqueie para excluir.',true);return;}snapshot();reconnectPending=null;selectedBend=null;state.wires.splice(i,1);state.selectedWire=null;state.completed=false;refresh();message('Fio removido.');}
 function getPortPos(id){
  const [partId,pinId]=id.split('.');
  const p=byPart(partId);if(!p)return null;
@@ -1268,8 +1270,8 @@ function bendAt(clientX,clientY){
  });
  return best;
 }
-function beginBendDrag(e,index,vertex){
- const wire=state.wires[index];if(!wire||state.startPort||reconnectPending)return false;
+function beginBendDrag(e,index,vertex){const wire=state.wires[index];if(!wire||state.startPort||reconnectPending)return false;
+ if(wire.locked){selectWire(index);startPan(e);return true;}
  const original=wirePoints(wire);
  if(!Number.isInteger(vertex)||vertex<1||vertex>=original.length-1)return false;
  if(e.cancelable!==false)e.preventDefault();
@@ -1451,7 +1453,7 @@ function addReconnectCorner(x,y){
 function renderWireHandles(){
  const layer=Q('wireHandles');if(!layer)return;
  const w=Number.isInteger(state.selectedWire)?state.wires[state.selectedWire]:null;
- if(!w||state.startPort){layer.replaceChildren();layer.dataset.index='';return;}
+ if(!w||w.locked||state.startPort){layer.replaceChildren();layer.dataset.index='';return;}
  const selected=String(state.selectedWire);
  if(layer.dataset.index!==selected||layer.children.length!==2){
   layer.replaceChildren();
@@ -1490,6 +1492,7 @@ function renderWireHandles(){
 function beginReconnect(e,index,end){
  if(e.button!==undefined&&e.button!==0)return;
  const wire=state.wires[index];if(!wire||state.startPort||!['a','b'].includes(end))return;
+ if(wire.locked){message('Fio bloqueado. Toque no cadeado para desbloquear.',true);return;}
  if(wire.loose&&wire.loose.end!==end){message('Reconecte primeiro a ponta solta deste jumper.',true);return;}
  if(e.cancelable)e.preventDefault();
  e.stopPropagation?.();
@@ -1532,6 +1535,7 @@ function leaveReconnectLoose(clientX,clientY){
  const pending=reconnectPending;
  if(!pending)return false;
  const wire=state.wires[pending.index];if(!wire){cancelReconnect();return false;}
+ if(wire.locked){cancelReconnect();return false;}
  const box=Q('viewport').getBoundingClientRect();
  const inside=clientX>=box.left&&clientX<=box.right&&clientY>=box.top&&clientY<=box.bottom;
  const point=pending.touchRoute?.length>=2?pending.touchRoute.at(-1):
@@ -1552,6 +1556,7 @@ function finishReconnect(newPort){
  const pending=reconnectPending;
  if(!pending)return false;
  const wire=state.wires[pending.index];if(!wire){cancelReconnect();return false;}
+ if(wire.locked){cancelReconnect();return false;}
  const fixed=wire[pending.end==='a'?'b':'a'];
  if(!exists(newPort.split('.')[0])||!getPortPos(newPort)||newPort===fixed){
   message('Escolha outro pino, diferente da ponta que continua conectada.',true);return false;
@@ -1972,9 +1977,8 @@ function libraryOpen(open){
  Q('drawerHandle').setAttribute('aria-label',yes?'Fechar componentes':'Abrir componentes');
  Q('drawerHandle').classList.toggle('open',yes);
 }
-function beginWireDrag(e,index,segment){
- selectedBend=null;
- const wire=state.wires[index];if(!wire||state.startPort||reconnectPending)return false;
+function beginWireDrag(e,index,segment){selectedBend=null;const wire=state.wires[index];if(!wire||state.startPort||reconnectPending)return false;
+ if(wire.locked){selectWire(index);startPan(e);return true;}
  const original=wirePoints(wire);
  if(segment<0||segment>=original.length-1)return false;
  // Não é possível deslocar um trecho ligado diretamente a um pino sem criar
@@ -2054,8 +2058,7 @@ function elasticWireBends(original,from,to,moveA,moveB,dx,dy){
 }
 function anchoredWireBends(part,dx,dy,anchors){
  for(const item of anchors||[]){
-  const wire=state.wires[item.i];
-  if(!wire||!wire.manual)continue;
+  const wire=state.wires[item.i];if(!wire||!wire.manual||wire.locked)continue;
   wire.via=elasticWireBends(item.via,item.start,item.end,item.a,item.b,dx,dy);
  }
 }
@@ -2102,8 +2105,8 @@ function multiSelectCapture(e){
   else toggleComponentSelection(id);
  }
 }
-function beginGroupMove(e,id){
- if(selectedParts.size<2||!selectedParts.has(id))return false;
+function beginGroupMove(e,id){if(selectedParts.size<2||!selectedParts.has(id))return false;
+ if([...selectedParts].some(partMovementLocked)){message('Uma peça ou fio do grupo está bloqueado.',true);startPan(e);return true;}
  if(e.cancelable)e.preventDefault();
  const parts=[...selectedParts].map(key=>byPart(key)).filter(Boolean).map(p=>({id:p.id,x:p.x,y:p.y}));
  const wires=state.wires.map((w,i)=>{
@@ -2124,7 +2127,7 @@ function translateGroup(group,dx,dy){
   const p=byPart(item.id);if(p){p.x=item.x+x;p.y=item.y+y;}
  }
  for(const item of group.wires){
-  const w=state.wires[item.i];if(!w||!w.manual)continue;
+  const w=state.wires[item.i];if(!w||!w.manual||w.locked)continue;
   w.via=elasticWireBends(item.via,item.start,item.end,item.moveA,item.moveB,x,y);
  }
 }
@@ -2135,6 +2138,10 @@ function partDown(e){
  const el=e.target.closest('.part');if(!el)return;
  const p=byPart(el.dataset.part);if(!p)return;
  e.preventDefault();
+ if(partMovementLocked(p.id)){
+ singleComponentSelection(p.id);state.selected=p.id;state.selectedWire=null;state.inspector='parts';
+ renderParts();renderInspector();updateHistoryButtons();startPan(e);return;
+ }
  if(e.shiftKey){toggleComponentSelection(p.id);return;}
  if(selectionToolActive&&!selectedParts.has(p.id)){toggleComponentSelection(p.id);return;}
  if(selectedParts.size>1&&selectedParts.has(p.id)){beginGroupMove(e,p.id);return;}
@@ -3136,7 +3143,7 @@ function bind(){
   else if(state.startPort)cancelPendingWire();
   else message('Toque em uma peça ou em um fio para selecionar e excluir.',true);
  });
- Q('clearBtn').addEventListener('click',()=>{if(!state.parts.length)return;if(confirm('Apagar todas as peças e fios da bancada?')){snapshot();selectedParts.clear();state.parts=[];state.wires=[];state.selected=null;state.startPort=null;state.bends=[];previewPoint=null;state.switches={s1:false,s2:false};state.voltage=4;refresh();message('Bancada limpa. Comece de novo!');}});
+ Q('clearBtn').addEventListener('click',()=>{if(!state.parts.length)return;if(state.parts.some(p=>p.locked)||state.wires.some(w=>w.locked)){message('Desbloqueie os itens antes de limpar a bancada.',true);return;}if(confirm('Apagar todas as peças e fios da bancada?')){snapshot();selectedParts.clear();state.parts=[];state.wires=[];state.selected=null;state.startPort=null;state.bends=[];previewPoint=null;state.switches={s1:false,s2:false};state.voltage=4;refresh();message('Bancada limpa. Comece de novo!');}});
  Q('downloadBtn').addEventListener('click',downloadWorkspace);
  Q('exportConfirmDownload').addEventListener('click',confirmExportDownload);
  Q('exportDownloadSvg').addEventListener('click',downloadExportVector);
