@@ -26,7 +26,10 @@ assert(homeJs.includes("robot.addEventListener('click'")&&homeJs.includes('sched
 for(const mood of ['happy','curious','excited','sleepy'])
  assert(homeJs.includes("id:'"+mood+"'")&&homeCss.includes('data-mood'),"expressão do robô: "+mood);
 assert(!homeJs.includes('window.requestAnimationFrame')&&!homeJs.includes('drawImage'),'sem pintura ou distorção de imagem por JS');
-assert(homeHtml.includes('home.css?v=18')&&homeHtml.includes('home.js?v=15'),'CSS/JS da nova abertura mudaram de versão');
+assert(homeHtml.includes('home.css?v=19')&&homeHtml.includes('home.js?v=15'),'CSS/JS da nova abertura mudaram de versão');
+assert(homeCss.includes('letter-spacing:0;')&&homeCss.includes('.brand-title>span{display:block;flex:none;white-space:nowrap}'),'nome TinkerPET não sobrepõe letras no Android');
+assert(!homeCss.includes('letter-spacing:-.065em')&&!homeCss.includes('font-weight:1000'),'fontes pesadas e espaçamento excessivamente negativo foram removidos');
+assert(!homeCss.includes('drop-shadow(0 7px 0 #061b3b)'),'não duplica a marca com sombra deslocada');
 // O robô responde aos toques sem criar sobreposições ou depender de uma imagem.
 {
  const handlers={},attrs={};
