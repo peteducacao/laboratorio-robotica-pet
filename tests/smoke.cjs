@@ -30,7 +30,7 @@ assert(homeHtml.includes('home.css?v=23')&&homeHtml.includes('home.js?v=15'),'CS
 assert(homeCss.includes('.brand-wordmark{')&&homeCss.includes('width:min(83vw,560px)'),'marca original fica centralizada e proporcional');
 assert(homeCss.includes('font-family:"Fredoka"')&&homeHtml.includes('family=Fredoka'),'fonte arredondada do logotipo carregada com fallback');
 assert(homeCss.includes('-webkit-text-stroke:2.7px #061635'),'contorno azul-escuro da identidade presente');
-assert(homeHtml.includes('fill="#042657"')&&homeHtml.includes('rx="31" fill="#06214b"'),'moldura e testa azul-marinho do rosto restauradas');
+assert(homeHtml.includes('assets/tinkerpet-original-robot-transparent.svg'),'rosto original da referência preservado na abertura');
 assert(fs.readFileSync(path.join(base,'assets/tinkerpet-mascot.svg'),'utf8').includes('fill="#042657"'),'tela de carregamento usa o mesmo rosto detalhado');
 assert(!homeCss.includes('letter-spacing:-.065em')&&!homeCss.includes('font-weight:1000'),'fontes pesadas e espaçamento excessivamente negativo foram removidos');
 assert(!homeCss.includes('drop-shadow(0 7px 0 #061b3b)'),'não duplica a marca com sombra deslocada');
