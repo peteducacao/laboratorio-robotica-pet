@@ -52,6 +52,21 @@ assert(fs.readFileSync(path.join(base,'sw.js'),'utf8').includes('assets/l298n-de
 const mobileAppJs=fs.readFileSync(path.join(base,'app-mobile.js'),'utf8');
 const mobileEditorJs=fs.readFileSync(path.join(base,'mobile-editor.js'),'utf8');
 const editorHtml=fs.readFileSync(path.join(base,'editor.html'),'utf8');
+const seriesPacks=vm.runInNewContext(js.match(/const SERIES_PACK_TYPES=\[([\s\S]*?)\];/)[0]+'\nSERIES_PACK_TYPES');
+assert.deepEqual([...seriesPacks].map(p=>p.kind),['batteryPack4','batteryPack2'],'catálogo contém os dois suportes de AA');
+assert.deepEqual([...seriesPacks].map(p=>p.ids[0]),['aa4','aa2'],'IDs dos suportes são distintos do antigo b2');
+for(const [quantity,kind] of [[4,'batteryPack4'],[2,'batteryPack2']]){
+ const svg=fs.readFileSync(path.join(base,'assets/suporte-'+quantity+'-pilhas.svg'),'utf8');
+ assert.equal((svg.match(/<g transform="translate\(/g)||[]).length,quantity,'desenha somente '+quantity+' pilhas AA');
+ assert(svg.includes(quantity+' × AA'),'quantidade e tensão aparecem no SVG');
+ assert(mobileAppJs.includes("kind:'"+kind+"'"),'suporte de '+quantity+' AA também existe no editor móvel');
+}
+assert(js.includes("source:'aa2.POS',negative:'aa4.NEG',bridge:['aa4.POS','aa2.NEG']"),'série 4AA+ → 2AA− com terminais livres de alimentação');
+assert(js.includes("source:'aa4.POS',negative:'aa2.NEG',bridge:['aa2.POS','aa4.NEG']"),'suportes em ordem inversa reconhecidos');
+assert(js.includes("motorSupplyPairs(supply).every(([a,b])=>has(a,b))"),'alimentação exige negativo e jumper da série');
+assert(mobileAppJs.includes("motorSupplyPairs(supply).every(([a,b])=>has(a,b))"),'o celular também exige a série');
+assert(editorHtml.includes('4 pilhas AA e 2 pilhas AA'),'guia explica montagem em série');
+
 assert(editorHtml.includes("const TOUCH_EDITOR=window.matchMedia('(pointer:coarse)')"),'paisagem continua com motor de toque');
 assert(mobileEditorJs.includes("const isTouchEditor=()=>"),'captura do dedo permanece ativa na paisagem');
 assert(editorLayoutCss.includes('width:36px!important;min-width:36px!important;max-width:36px!important'),'seta compacta não invade a bancada');
