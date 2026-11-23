@@ -701,9 +701,17 @@
  font:700 10px/1.4 'DM Sans',sans-serif;
 }
 .preview-studio.editor-layout .completion-footer{
- display:flex;align-items:center;justify-content:space-between;
- width:100%;gap:12px;padding-top:17px;
+ /* Colunas simétricas mantêm o botão no centro, com o cronômetro à esquerda. */
+ display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);
+ align-items:center;justify-items:center;
+ width:100%;gap:8px;padding-top:17px;
  border-top:1px solid #e9efed;
+}
+.preview-studio.editor-layout .completion-footer::after{content:"";grid-column:3}
+.preview-studio.editor-layout .completion-footer .completion-timer{grid-column:1;justify-self:start}
+.preview-studio.editor-layout .completion-footer .completion-close{
+ grid-column:2;justify-self:center;
+ max-width:min(100%,260px);white-space:nowrap;
 }
 .preview-studio.editor-layout .completion-timer{
  position:relative;flex:none;
