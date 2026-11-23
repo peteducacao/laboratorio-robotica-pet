@@ -193,3 +193,55 @@ body{min-width:280px;background:#061a34;color:#fff;font-family:'Trebuchet MS','A
 @media(max-height:400px){
  .welcome .brand-title{width:min(58vw,390px)}
 }
+
+/* FIDELIDADE À IMAGEM 2: original recortado, sem cenário em retângulo.
+   A arte do rosto e a tipografia vêm diretamente da imagem aprovada. */
+.welcome .mascot{
+ width:clamp(155px,44vw,330px);max-width:46dvh;
+ aspect-ratio:324/242;height:auto;flex-shrink:0;overflow:visible;
+}
+.welcome .mascot-reference{
+ width:100%;height:100%;display:block;object-fit:contain;
+ pointer-events:none;user-select:none;-webkit-user-select:none;
+ filter:drop-shadow(0 5px 8px #041631aa);
+}
+.welcome .mascot-blink-lid{
+ position:absolute;pointer-events:none;
+ left:33%;top:60%;width:12.8%;height:17%;
+ background:linear-gradient(#f3f5fd,#c6daf0);
+ border-radius:50%;opacity:0;
+ transform:scaleY(.05);transform-origin:50% 50%;
+}
+.welcome .mascot-blink-lid::after{
+ content:"";position:absolute;left:11%;top:44%;width:78%;height:23%;
+ border-top:2.5px solid #0a2958;border-radius:50%;
+}
+.welcome .mascot.is-blinking .mascot-blink-lid{opacity:1;transform:scaleY(1)}
+.welcome .mascot[data-mood="excited"] .mascot-reference{animation:tinkerpet-mascot-bounce .4s ease}
+@keyframes tinkerpet-mascot-bounce{50%{transform:translateY(-5px)}}
+.welcome .brand-title{
+ width:min(83vw,560px);max-width:calc(100vw - 16px);
+ margin:-15px 0 0;
+}
+.welcome .brand-wordmark{aspect-ratio:578/148;filter:drop-shadow(0 4px 7px #04163675)}
+.welcome .brand-swoosh{display:none!important}
+.welcome .brand-subtitle{display:none!important}
+.welcome .main-action{
+ width:min(80%,490px);min-height:clamp(57px,8vh,83px);
+ margin-top:clamp(15px,2vh,26px);
+}
+@media(max-width:600px){
+ .welcome .mascot{width:min(44vw,330px)}
+ .welcome .brand-title{width:min(83vw,560px);margin:-15px 0 0}
+ .welcome .main-action{width:min(79%,450px);padding:9px 12px}
+ .welcome .brand-stage{max-width:100%;padding-inline:0}
+}
+@media(max-height:540px){
+ .welcome .mascot{width:min(32vh,155px)}
+ .welcome .brand-title{width:min(53vw,435px);margin:0}
+ .welcome .main-action{width:min(70vw,385px);margin-top:3px}
+}
+@media(prefers-reduced-motion:reduce){
+ .welcome .mascot-reference{animation:none!important}
+ .welcome .mascot-blink-lid{transition:none!important}
+}
