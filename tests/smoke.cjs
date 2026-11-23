@@ -30,7 +30,7 @@ assert(homeHtml.includes('home.css?v=25')&&homeHtml.includes('home.js?v=15'),'CS
 assert(homeCss.includes('.brand-composite{')&&homeCss.includes('width:min(88vw,575px)'),'marca unificada escala sem recorte');
 assert(homeCss.includes('font-family:"Fredoka"')&&homeHtml.includes('family=Fredoka'),'fonte arredondada do logotipo carregada com fallback');
 assert(homeCss.includes('-webkit-text-stroke:2.7px #061635'),'contorno azul-escuro da identidade presente');
-assert(homeHtml.includes('assets/tinkerpet-original-robot-transparent.svg'),'rosto original da referência preservado na abertura');
+assert(homeHtml.includes('assets/tinkerpet-brand-tested.svg'),'rosto original da referência preservado na abertura unificada');
 assert(fs.readFileSync(path.join(base,'assets/tinkerpet-mascot.svg'),'utf8').includes('fill="#042657"'),'tela de carregamento usa o mesmo rosto detalhado');
 assert(!homeCss.includes('letter-spacing:-.065em')&&!homeCss.includes('font-weight:1000'),'fontes pesadas e espaçamento excessivamente negativo foram removidos');
 assert(!homeCss.includes('drop-shadow(0 7px 0 #061b3b)'),'não duplica a marca com sombra deslocada');
@@ -81,10 +81,10 @@ const originalWordmark=fs.readFileSync(path.join(base,'assets/tinkerpet-original
 assert(originalWordmark.startsWith('<svg')&&originalWordmark.includes('fill-rule="evenodd"'),'marca original vetorizada preserva letras e seus vazados');
 assert(originalWordmark.includes('viewBox="0 0 578 127"'),'proporções originais da tipografia preservadas');
 assert(homeHtml.includes('assets/tinkerpet-brand-tested.svg'),'tipografia da referência permanece inteira na abertura');
-assert(homeHtml.includes('assets/tinkerpet-original-robot-transparent.svg'),'rosto da imagem aprovada usado na abertura');
+assert(homeHtml.includes('assets/tinkerpet-brand-tested.svg'),'rosto da imagem aprovada usado na abertura');
 assert(!homeHtml.includes('class="mascot-art"'),'não renderiza o desenho simplificado sobre a carinha original');
-assert(homeCss.includes('.welcome .mascot-blink-lid'),'olho do robô continua piscando');
-assert(homeCss.includes('.welcome .brand-swoosh{display:none!important}'),'não duplica o sublinhado da marca');
+assert(homeCss.includes('.welcome .brand-hit-target .mascot-blink-lid'),'olho do robô continua piscando');
+assert(homeCss.includes('.welcome .brand-swoosh,.welcome .brand-subtitle{display:none!important}'),'não duplica o sublinhado da marca');
 for(const entry of ['index.html','projects.html','editor.html']){
  const markup=fs.readFileSync(path.join(base,entry),'utf8');
  assert(!markup.includes('class="tinkerpet-loading-wordmark"')&&markup.includes('assets/tinkerpet-brand-tested.svg'),'carregamento sem duplicação de logotipo em '+entry);
