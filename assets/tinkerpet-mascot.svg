@@ -26,8 +26,12 @@
      <rect x="250" y="135" width="45" height="81" rx="22" fill="url(#robot-ear)" stroke="#f9c334" stroke-width="3"/>
      <rect x="47" y="85" width="226" height="183" rx="62" fill="url(#robot-casing)" stroke="#05d5fd" stroke-width="5"/>
      <rect x="57" y="93" width="207" height="167" rx="54" fill="url(#robot-shell)" stroke="#fbffff" stroke-width="8"/>
-     <rect x="81" y="121" width="161" height="111" rx="29" fill="#0a2d59" stroke="#3d71a3" stroke-width="4"/>
-     <rect x="90" y="140" width="143" height="85" rx="22" fill="url(#robot-glass)" stroke="#c6e8f7" stroke-width="3"/>
+     <!-- Detalhes restaurados: aro escuro, testa azul-marinho e visor recortado. -->
+     <rect x="79" y="118" width="165" height="117" rx="31" fill="#06214b" stroke="#1f5b95" stroke-width="5"/>
+     <path d="M89 164v-12c0-14 11-25 25-25h95c14 0 25 11 25 25v12Z" fill="#042657"/>
+     <path d="M93 150c0-11 9-20 20-20h97c11 0 20 9 20 20" fill="none" stroke="#0b467c" stroke-width="5" stroke-linecap="round"/>
+     <rect x="90" y="149" width="143" height="79" rx="23" fill="url(#robot-glass)" stroke="#d8eafb" stroke-width="3"/>
+     <path d="M91 171v30c0 13 10 24 23 24h96c14 0 23-11 23-24v-30" fill="none" stroke="#95bce2" stroke-opacity=".45" stroke-width="2.5"/>
      <ellipse cx="129" cy="179" rx="15" ry="18" fill="#08254c"/>
      <circle cx="123" cy="171" r="5" fill="#fff"/>
      <circle cx="135" cy="181" r="2" fill="#84d7ff"/>
@@ -39,6 +43,7 @@
      <path class="robot-smile" d="M147 203q15 20 33-1" fill="none" stroke="#092b51" stroke-width="8" stroke-linecap="round"/>
      <path class="robot-happy-smile" d="M141 199q20 30 43-1" fill="none" stroke="#092b51" stroke-width="8" stroke-linecap="round"/>
      <g class="robot-blush"><ellipse cx="109" cy="208" rx="12" ry="6" fill="#ff9b95" opacity=".66"/><ellipse cx="216" cy="208" rx="12" ry="6" fill="#ff9b95" opacity=".66"/></g>
-     <path d="M104 112h112" stroke="#ffffff82" stroke-width="4" stroke-linecap="round"/>
+     <path d="M104 112h112" stroke="#ffffffb5" stroke-width="4" stroke-linecap="round"/>
+     <path d="M112 102h99" stroke="#e8faff73" stroke-width="2.5" stroke-linecap="round"/>
     </g>
    </svg>
