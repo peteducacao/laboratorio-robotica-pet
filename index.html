@@ -18,6 +18,7 @@
 <main class="welcome" id="welcome" aria-label="Bem-vindo ao TinkerPET Studio">
  <!-- O cenário cobre a tela; a identidade original mantém proporção própria. -->
  <img id="welcomeArt" class="welcome-art" src="assets/welcome-clean-2026.svg" alt="Mascote TinkerPET, marca TinkerPET e botão Meus circuitos" decoding="async" fetchpriority="high">
+ <div id="identityFallback" class="identity-fallback" hidden aria-hidden="true"><span class="fallback-robot">🤖</span><strong>Tinker<span>PET</span></strong></div>
  <span class="welcome-softlight" aria-hidden="true"></span>
  <span class="robot-blink" id="robotBlink" aria-hidden="true"></span>
  <span class="robot-eye-glint" id="robotGlint" aria-hidden="true"></span>
@@ -35,7 +36,7 @@
   <span class="light-dust gold"></span><span class="light-dust cyan"></span>
  </div>
  <a id="enterProjects" class="main-action" href="projects.html?release=20261031-gpio18-mobile-fix-v2" aria-label="Abrir Meus circuitos">
-  <span class="cta-focus" aria-hidden="true"></span><span class="visually-hidden">Meus circuitos</span>
+  <span class="cta-focus" aria-hidden="true"></span><span class="cta-native" aria-hidden="true"><span>▢</span> Meus circuitos <span>➜</span></span><span class="visually-hidden">Meus circuitos</span>
  </a>
  <footer class="site-credit-home">© 2026 TinkerPET Studio · Desenvolvido por Sérgio R. Santos </footer>
 </main>
