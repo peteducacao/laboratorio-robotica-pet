@@ -1572,7 +1572,7 @@ function finishReconnect(newPort){
  snapshot();
  wire[pending.end]=newPort;wire.via=route.slice(1,-1);
  wire.loose=null;wire.manual=true;
- state.selectedWire=pending.index;state.selected=null;state.inspector='wires';
+ state.selectedWire=null;state.selected=null;state.inspector='wires';
  state.wireColor=wire.color;state.completed=false;
  reconnectPending=null;pendingAlignment=null;wireAlignment=null;
  hintDelay?.record(!acceptedConnectionSet().has(electricalKey(wire.a,wire.b)));
@@ -2166,6 +2166,8 @@ function paletteDown(e){
 }
 function captureBendNearComponents(e){
  if(!state.startPort&&!reconnectPending)return;
+ // Um fio solto que já saiu do dedo não deve bloquear gestos de câmera.
+ if(e.pointerType==='touch'&&reconnectPending)return;
  if(pinch||activeTouches.size>=2||Date.now()<gestureBlockedUntil||spaceHeld)return;
  if(e.button!==undefined&&e.button!==0)return;
  if(e.target.closest('.wire-end-handle'))return;
@@ -2193,7 +2195,7 @@ function captureNearbyWireEnd(e){
    Date.now()<gestureBlockedUntil||spaceHeld||!Number.isInteger(state.selectedWire))return;
  if(e.target.closest?.('[data-port],.wire-end-handle,button,input,select,textarea,.canvas-zoom-button,.canvas-zoom-panel'))return;
  const wire=state.wires[state.selectedWire],viewport=Q('viewport');
- if(!wire||!viewport)return;
+ if(!wire||wire.locked||!viewport)return;
  const rect=viewport.getBoundingClientRect();
  if(e.clientX<rect.left||e.clientX>rect.right||e.clientY<rect.top||e.clientY>rect.bottom)return;
  let closestEnd=null,closestDistance=31;
@@ -2506,6 +2508,7 @@ function pointerUp(e){
  if(gesture?.pointer===e.pointerId)stopDragEdgePan();
  if(e.type==='pointercancel'&&gesture?.pointer===e.pointerId){
   if(gesture.type==='wire-end')cancelReconnect();
+  if(gesture.type==='wire'&&state.startPort)cancelPendingWire();
   gesture=null;Q('dragGhost').hidden=true;Q('viewport').classList.remove('component-drop-ready');
   wireAlignment=null;partDragAlignment=null;highlightDropZone(false);trackingTouchEnd(e);requestDraw();return;
  }
@@ -2606,7 +2609,7 @@ function pointerUp(e){
        state.selectedWire=null;state.selected=null;state.inspector='wires';
  state.completed=false;refresh();
        message('Ponta solta fixada na bancada. Arraste o quadradinho para curvar ou conectar.',true);
-     }else{previewPoint=null;requestDraw();}
+     }else{if(e.pointerType==='touch'&&state.startPort)cancelPendingWire();previewPoint=null;requestDraw();}
    }
   }
   // O preventDefault do touch suprime o click sintético em alguns celulares.
