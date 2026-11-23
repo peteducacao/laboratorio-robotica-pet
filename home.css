@@ -1,166 +1,156 @@
-/* TinkerPET Studio — abertura com a arte aprovada, intacta e proporcional */
+/* TinkerPET • nova abertura responsiva com cenário independente da identidade.
+   Nenhuma distorção de logo/botão nem canvas de estiramento de pixels. */
+:root{color-scheme:dark}
 *{box-sizing:border-box}
 html,body{width:100%;height:100%;margin:0}
-body{overflow:hidden;background:#091e39;font-family:'DM Sans',Arial,sans-serif}
+html{background:#071a37}
+body{min-width:280px;min-height:100%;background:#071a37;font-family:'DM Sans',Arial,sans-serif;overflow:hidden}
 .welcome{
- position:relative;isolation:isolate;overflow:hidden;width:100%;min-height:350px;
- height:100vh;height:100dvh;background:#091e39;
+ position:relative;isolation:isolate;
+ width:100%;height:100vh;height:100svh;height:100dvh;min-height:280px;
+ overflow:hidden;overflow:clip;
+ background-color:#071a37;
+ background-image:url('assets/welcome-lab-responsive.svg'),
+  linear-gradient(165deg,#071a37 0%,#064a82 55%,#082448 100%);
+ background-size:cover,cover;
+ background-position:center center,center;
+ background-repeat:no-repeat;
 }
-/* Apenas em telas verticais: a mesma oficina desfocada complementa a
-   imagem central sem esticar letras, robô ou botão e sem barras vazias. */
-.welcome::before{
- content:"";position:absolute;inset:-26px;z-index:0;pointer-events:none;
- background:url('assets/welcome-clean-2026.svg') center / cover no-repeat;
- filter:blur(19px) brightness(.66) saturate(.9);
- transform:scale(1.04);
+/* Camada de luz leve, sem faixas ou máscaras horizontais. */
+.welcome-softlight{
+ position:absolute;inset:0;z-index:1;pointer-events:none;
+ background:
+  radial-gradient(ellipse 42% 34% at 50% 44%,rgba(30,169,239,.11),transparent 86%),
+  linear-gradient(180deg,rgba(2,17,39,.08),transparent 30%,rgba(1,30,67,.06));
 }
 .welcome-art{
- position:absolute;z-index:1;display:block;max-width:none;max-height:none;
- object-fit:fill;user-select:none;pointer-events:none;
+ position:absolute;z-index:2;display:block;max-width:none;max-height:none;
+ width:1798px;height:875px;object-fit:fill;
+ user-select:none;-webkit-user-select:none;pointer-events:none;
+ /* Apenas o robô, logo e botão da arte aprovada são mantidos.
+    A oficina antiga ao redor desvanece dentro do novo cenário. */
+ -webkit-mask-image:
+  radial-gradient(ellipse 23% 42% at 50% 36%,#000 62%,transparent 99%),
+  radial-gradient(ellipse 37% 26% at 50% 55%,#000 64%,transparent 99%),
+  radial-gradient(ellipse 31% 15% at 50% 76%,#000 70%,transparent 99%);
+ mask-image:
+  radial-gradient(ellipse 23% 42% at 50% 36%,#000 62%,transparent 99%),
+  radial-gradient(ellipse 37% 26% at 50% 55%,#000 64%,transparent 99%),
+  radial-gradient(ellipse 31% 15% at 50% 76%,#000 70%,transparent 99%);
 }
 .main-action{
- position:absolute;z-index:10;display:block;cursor:pointer;touch-action:manipulation;
- border-radius:34px;outline:0;transition:filter .25s ease,transform .2s ease;
- animation:buttonGlow 3.7s ease-in-out infinite;
+ position:absolute;z-index:11;display:block;
+ border-radius:28px;cursor:pointer;touch-action:manipulation;
+ background:transparent;outline:0;
+ transition:filter .18s ease,transform .15s ease;
 }
-.main-action:hover{filter:brightness(1.09)}
-.main-action:active{transform:scale(.987)}
-.main-action:focus-visible{outline:3px solid #fff;outline-offset:4px}
-.main-action .cta-energy{width:100%;height:100%;position:absolute;inset:0;pointer-events:none;overflow:visible}
-.main-action .cta-energy rect{fill:none;vector-effect:non-scaling-stroke}
-.main-action .cta-track{stroke:#91faff;stroke-width:1.9;opacity:.18}
-.main-action .cta-trace{
- stroke:#ccffff;stroke-width:3.3;stroke-linecap:round;
- stroke-linejoin:round;stroke-dasharray:112 888;
- filter:drop-shadow(0 0 4px #b9ffff);
- animation:energyLap 4.1s linear infinite;
+.main-action:hover{filter:brightness(1.1)}
+.main-action:active{transform:scale(.98)}
+.main-action:focus-visible{outline:3px solid #f7efc4;outline-offset:5px}
+.cta-focus{
+ position:absolute;inset:0;border-radius:inherit;pointer-events:none;
+ box-shadow:0 0 15px 4px rgba(12,208,255,.16);
+ animation:ctaBreathe 4.3s ease-in-out infinite;
 }
-.main-action .cta-trace.gold{
- stroke:#f9d97f;stroke-width:2.8;stroke-dasharray:51 949;
- animation-duration:5.6s;animation-direction:reverse;animation-delay:-2.1s;
- filter:drop-shadow(0 0 4px #f5dc8e);
+.robot-interaction{
+ position:absolute;z-index:10;display:block;padding:0;
+ appearance:none;-webkit-appearance:none;border:0;background:transparent;
+ border-radius:34%;touch-action:manipulation;
+ -webkit-tap-highlight-color:transparent;cursor:pointer;
 }
-.side-energy{
- position:absolute;top:12%;width:2px;height:20%;border-radius:7px;
- background:linear-gradient(180deg,transparent,#e4ffff,#8fe6ff,transparent);
- filter:drop-shadow(0 0 4px #7feaff);
- pointer-events:none;animation:sideFlow 3.5s ease-in-out infinite alternate;
-}
-.side-left{left:1.5%}.side-right{right:1.5%;animation-delay:-1.7s}
+.robot-interaction:focus-visible{outline:3px solid #77e7ff;outline-offset:4px}
 .robot-blink{
- position:absolute;z-index:4;opacity:0;pointer-events:none;
+ position:absolute;z-index:7;pointer-events:none;opacity:0;border-radius:50%;
  transform:translate(-50%,-50%);
- background:radial-gradient(ellipse at center,#e9f3ff 54%,#d8e7fe 91%,transparent 100%);
- border-radius:50%;animation:blink 4.7s steps(1,end) infinite;
+ background:radial-gradient(ellipse at center,#edf6ff 56%,#cde1f8 89%,transparent 100%);
 }
 .robot-blink::after{
- content:"";position:absolute;left:15%;top:44%;width:70%;height:25%;
- border-top:4px solid #0b2553;border-radius:50%;transform:rotate(1deg);
+ content:'';position:absolute;left:16%;top:46%;width:68%;height:22%;
+ border-top:3px solid #0b2553;border-radius:50%;transform:rotate(1deg);
+}
+.robot-blink.is-blinking{animation:eyeBlink .21s ease-in-out 1}
+.robot-eye-glint{
+ position:absolute;z-index:7;pointer-events:none;opacity:.7;
+ background:#efffff;border-radius:50%;
+ box-shadow:0 0 5px 2px #a9f4ff87;
+ transform:translate(var(--look-x,0px),var(--look-y,0px));
+ transition:transform .27s ease;
+}
+.robot-brow{
+ position:absolute;z-index:7;pointer-events:none;opacity:0;
+ height:4px;border-radius:5px;background:#0a2b57;
+ transform:rotate(-13deg);transition:opacity .18s,transform .18s;
+}
+.robot-cheek{
+ position:absolute;z-index:7;pointer-events:none;opacity:0;
+ border-radius:50%;background:radial-gradient(ellipse,#ff9da084,transparent 72%);
+ transition:opacity .2s ease;
+}
+.robot-expression{
+ position:absolute;z-index:8;pointer-events:none;opacity:0;
+ transform:translateY(10px) scale(.75);transform-origin:center;
+ font-size:31px;line-height:1;filter:drop-shadow(0 2px 5px #001f4e99);
+ transition:opacity .18s,transform .25s;
+}
+.welcome[data-robot-mood] .robot-expression{
+ opacity:1;transform:translateY(-7px) scale(1);
+}
+.welcome[data-robot-mood="happy"] .robot-cheek,
+.welcome[data-robot-mood="excited"] .robot-cheek{opacity:1}
+.welcome[data-robot-mood="curious"] .robot-brow{
+ opacity:1;transform:rotate(-24deg) translateY(-3px);
+}
+.welcome[data-robot-mood="sleepy"] .robot-blink{opacity:1}
+.welcome[data-robot-mood="excited"] .robot-eye-glint{
+ box-shadow:0 0 9px 4px #fffec0dd;
 }
 .antenna-beacon{
- position:absolute;z-index:5;pointer-events:none;border-radius:50%;
- background:radial-gradient(circle,#ffe89c7d,#ffdf5743 26%,#28bafb20 56%,transparent 76%);
- mix-blend-mode:screen;animation:antennaPulse 3.2s ease-in-out infinite;
+ position:absolute;z-index:6;pointer-events:none;border-radius:50%;
+ background:radial-gradient(circle,#ffe2ac7a,#ffde643f 24%,#38e5fb00 72%);
+ mix-blend-mode:screen;animation:antennaPulse 3.1s ease-in-out infinite;
 }
-.shine{position:absolute;z-index:2;pointer-events:none;border-radius:50%;filter:blur(17px);
- width:48px;height:48px;background:#30c4ff21;animation:shimmer 9s ease-in-out infinite alternate}
-.shine.one{top:15%;left:10%}
-.shine.two{bottom:16%;right:12%;background:#ffd07425;animation-delay:-4s}
-.ambient-particles{position:absolute;inset:0;z-index:3;pointer-events:none}
-.light-dust{position:absolute;display:block;width:5px;height:5px;border-radius:50%;
- background:#a2f2ff;box-shadow:0 0 9px 3px #38bdff80;opacity:.3;
- animation:drift 6s ease-in-out infinite alternate}
-.light-dust.gold{background:#ffd793;box-shadow:0 0 9px 3px #ffb95570}
+.ambient-particles{position:absolute;inset:0;z-index:5;pointer-events:none}
+.light-dust{
+ position:absolute;width:5px;height:5px;border-radius:50%;
+ background:#a2f2ff;box-shadow:0 0 10px 3px #38bdff80;opacity:.27;
+ animation:drift 6s ease-in-out infinite alternate;
+}
+.light-dust.gold{background:#ffdb8e;box-shadow:0 0 10px 3px #ffb95577}
 .light-dust:nth-child(2){animation-delay:-1.5s;animation-duration:7s}
 .light-dust:nth-child(3){animation-delay:-3.6s;animation-duration:6.4s}
 .light-dust:nth-child(4){animation-delay:-2.2s;animation-duration:8s}
 .light-dust:nth-child(5){animation-delay:-4.6s;animation-duration:7.5s}
 .light-dust:nth-child(6){animation-delay:-3s;animation-duration:6.9s}
 .visually-hidden{position:absolute!important;width:1px!important;height:1px!important;padding:0!important;margin:-1px!important;overflow:hidden!important;clip:rect(0,0,0,0)!important;white-space:nowrap!important;border:0!important}
-@keyframes energyLap{to{stroke-dashoffset:-1000}}
-@keyframes buttonGlow{0%,100%{box-shadow:0 0 7px 2px #43d9fc1f}50%{box-shadow:0 0 15px 5px #42e4ff65}}
-@keyframes sideFlow{0%{top:13%;opacity:.22}100%{top:68%;opacity:.79}}
-@keyframes blink{0%,36%,39%,100%{opacity:0}37%,38%{opacity:1}}
-@keyframes antennaPulse{0%,100%{opacity:.2;transform:scale(.84)}50%{opacity:.65;transform:scale(1.1)}}
-@keyframes shimmer{0%{transform:translateY(-6px);opacity:.2}100%{transform:translateY(9px);opacity:.5}}
-@keyframes drift{0%{opacity:.08;transform:translate3d(-5px,6px,0)}100%{opacity:.4;transform:translate3d(5px,-11px,0)}}
-@media(min-aspect-ratio:12/10) and (min-width:901px){
- /* A arte ocupa toda a largura com cover SEM deformação e sem esticar. */
- .welcome::before{display:none}
-}
-@media(max-width:900px){
- /* A imagem central desaparece suavemente no cenário de fundo, sem faixas. */
- .welcome-art{
-  -webkit-mask-image:linear-gradient(to bottom,transparent 0%,#000 7%,#000 89%,transparent 100%);
-  mask-image:linear-gradient(to bottom,transparent 0%,#000 7%,#000 89%,transparent 100%);
- }
- .main-action .cta-track{opacity:.15}
- .main-action .cta-trace{stroke-width:2.5;filter:drop-shadow(0 0 2px #adf7ff)}
- .main-action .cta-trace.gold{stroke-width:2.1}
- .side-energy{width:2px}
-}
-@media(prefers-reduced-motion:reduce){
- .main-action,.main-action .cta-trace,.side-energy,.robot-blink,
- .antenna-beacon,.shine,.light-dust{animation:none!important;transition:none!important}
- .robot-blink{opacity:0!important}
-}
-
-/* v11: composição fiel, redimensionada apenas no centro. As bordas da
-   própria oficina são prolongadas sem desfoque CSS (nem barras verticais). */
-.welcome::before{display:none!important;filter:none!important}
-.welcome-backdrop{
- position:absolute;inset:0;z-index:1;display:none;width:100%;height:100%;
- pointer-events:none;
-}
-.welcome.composed .welcome-backdrop{display:block}
-.welcome.composed .welcome-art{visibility:hidden}
-.welcome-art{
- -webkit-mask-image:none!important;mask-image:none!important;
- max-width:none!important;max-height:none!important;
-}
-.main-action .cta-track{opacity:0!important}
-.main-action .cta-energy rect{vector-effect:non-scaling-stroke}
-@media(max-width:900px){
- .welcome-art{-webkit-mask-image:none!important;mask-image:none!important}
-}
-
-/* v12 — Correção somente de telas verticais. Sem faixas turvas no
-   topo e rodapé: os pixels naturais da arte permanecem proporcionais. */
-.welcome.mobile-clean::before{display:none!important}
-.welcome.mobile-clean .welcome-backdrop{display:block}
-.welcome.mobile-clean .welcome-art{visibility:hidden}
-
-/* v13 — A bancada de fundo continua no canvas, mas o primeiro plano
-   usa o próprio SVG original. O canvas não rasteriza mais o texto,
-   nem a pasta, nem a seta "Meus circuitos" no celular. */
-@media(max-width:900px), (max-aspect-ratio:4/5){
- .welcome.mobile-clean .welcome-art{
-  visibility:visible!important;
-  -webkit-mask-image:linear-gradient(to bottom,transparent 0%,#000 6%,#000 94%,transparent 100%)!important;
-  mask-image:linear-gradient(to bottom,transparent 0%,#000 6%,#000 94%,transparent 100%)!important;
-  image-rendering:auto!important;
- }
-}
-
-/* Assinatura discreta no rodapé da página de abertura. */
 .site-credit-home{
  position:absolute;z-index:12;left:12px;right:12px;
- bottom:calc(11px + env(safe-area-inset-bottom,0px));
- color:rgba(191,209,225,.64);font-size:10px;font-weight:400;
- line-height:1.4;letter-spacing:.015em;text-align:center;
- pointer-events:none;
+ bottom:calc(9px + env(safe-area-inset-bottom,0px));
+ color:rgba(209,230,241,.67);font-size:10px;line-height:1.4;
+ letter-spacing:.01em;text-align:center;pointer-events:none;
+ text-shadow:0 1px 3px #03254b;
 }
-
-/* No celular, remover somente a moldura SVG deslocada; o botão nativo
-   permanece visível na arte e totalmente clicável. Desktop não muda. */
-@media(max-width:900px), (max-aspect-ratio:4/5){
- .main-action .cta-energy,.main-action .side-energy{display:none!important}
- /* Brilho do botão preservado; apenas a moldura deslocada fica oculta. */
+.site-credit-home .site-admin-link{
+ pointer-events:auto;color:inherit;opacity:.72;text-decoration:none;
+ margin-left:4px;font-weight:500;
 }
-
-/* No aplicativo instalado, o contorno duplicado permanece oculto. */
-.welcome.installed-pwa .main-action .cta-energy{display:none!important}
-
-/* Acesso administrativo quase invisível junto ao crédito da abertura. */
-.site-credit-home .site-admin-link{pointer-events:auto;color:inherit;opacity:.65;text-decoration:none;margin-left:4px;font-weight:500}
-.site-credit-home .site-admin-link:focus-visible,.site-credit-home .site-admin-link:hover{opacity:1;text-decoration:underline}
+.site-credit-home .site-admin-link:hover,
+.site-credit-home .site-admin-link:focus-visible{opacity:1;text-decoration:underline}
+@keyframes ctaBreathe{50%{box-shadow:0 0 22px 6px rgba(43,211,255,.35)}}
+@keyframes eyeBlink{0%,100%{opacity:0}27%,70%{opacity:1}}
+@keyframes antennaPulse{0%,100%{opacity:.23;transform:scale(.85)}50%{opacity:.65;transform:scale(1.08)}}
+@keyframes drift{from{opacity:.06;transform:translate(-5px,6px)}to{opacity:.39;transform:translate(5px,-9px)}}
+/* Proporção é controlada por home.js, sem breakpoint que corta o logo.
+   A oficina é "cover" e perde somente elementos DECORATIVOS nas bordas. */
+@media(max-width:420px){
+ .site-credit-home{font-size:9px;bottom:calc(7px + env(safe-area-inset-bottom,0px))}
+}
+@media(max-height:480px) and (orientation:landscape){
+ .site-credit-home{bottom:3px;font-size:9px}
+}
+@media(prefers-reduced-motion:reduce){
+ .main-action,.cta-focus,.robot-blink,.antenna-beacon,.light-dust,
+ .robot-expression,.robot-eye-glint,.robot-brow,.robot-cheek{
+  animation:none!important;transition:none!important
+ }
+ .robot-blink{opacity:0}
+}
