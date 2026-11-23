@@ -1503,7 +1503,7 @@ function leaveReconnectLoose(clientX,clientY){
  snapshot();
  wire.loose={end:pending.end,point:{x:Math.round(point.x),y:Math.round(point.y)}};
  wire.via=route.slice(1,-1);wire.manual=true;
- state.selectedWire=pending.index;state.selected=null;state.inspector='wires';state.completed=false;
+ state.selectedWire=null;state.selected=null;state.inspector='wires';state.completed=false;
  reconnectPending=null;pendingAlignment=null;wireAlignment=null;
  refresh();
  message('Ponta solta posicionada. Arraste o quadradinho para fazer curvas ou conectar a um pino.',true);
@@ -2154,9 +2154,11 @@ function viewportDown(e){
  if(e.button!==undefined&&e.button!==0&&e.button!==1)return;
  if(e.target.closest('.canvas-zoom-button,.canvas-zoom-panel,button,input'))return;
  if(reconnectPending){
-  if(e.target.closest('.part,.wire-end-handle'))return;
-  e.preventDefault();gesture={type:'reconnect-bend',pointer:e.pointerId,startX:e.clientX,startY:e.clientY,moved:false};
-  return;
+ // No celular, um toque na bancada não deve continuar movendo um fio solto.
+ if(e.pointerType==='touch'&&!e.target.closest('.part,.wire-end-handle')){cancelReconnect();startPan(e);return;}
+ if(e.target.closest('.part,.wire-end-handle'))return;
+ e.preventDefault();gesture={type:'reconnect-bend',pointer:e.pointerId,startX:e.clientX,startY:e.clientY,moved:false};
+ return;
  }
  if(spaceHeld||e.button===1){startPan(e);return;}
  if(e.target.closest('.part'))return;
@@ -2479,9 +2481,8 @@ function pointerUp(e){
   }else{
    const pending=reconnectPending,wire=pending&&state.wires[pending.index];
    if(e.pointerType==='touch'&&wire?.loose?.end===pending.end){
-    // Um toque curto abre a edição; o próximo arraste continua o traçado.
-    message('Ponta selecionada. Arraste o dedo para curvar ou toque em um pino.',true);
-   }else cancelReconnect()
+ cancelReconnect();message('Fio selecionado. Arraste sua ponta novamente para editar.',true);
+ }else cancelReconnect()
   }
   requestDraw();
  }else if(g.type==='catalog'){
@@ -2531,8 +2532,8 @@ function pointerUp(e){
         position.x-originPoint.x,position.y-originPoint.y)<8){
         previewPoint=null;previewSnapPort=null;pendingAlignment=null;
         requestDraw();
-        message('Pino selecionado. Arraste mais o fio antes de soltar.',true);
-        return;
+        cancelPendingWire();message('Arraste um pouco mais para iniciar o fio.',true);
+ return;
        }
        state.wires.push({
         a:origin,b:origin,color:state.wireColor,
@@ -2541,8 +2542,8 @@ function pointerUp(e){
        });
        state.startPort=null;state.bends=[];wireTipActive=false;
        previewPoint=null;previewSnapPort=null;pendingAlignment=null;
-       state.selectedWire=state.wires.length-1;state.selected=null;state.inspector='wires';
-       state.completed=false;refresh();
+       state.selectedWire=null;state.selected=null;state.inspector='wires';
+ state.completed=false;refresh();
        message('Ponta solta fixada na bancada. Arraste o quadradinho para curvar ou conectar.',true);
      }else{previewPoint=null;requestDraw();}
    }
