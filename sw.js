@@ -1,7 +1,7 @@
 /* TinkerPET PWA. Escopo estático: nunca acessa nem apaga projetos do navegador. */
 'use strict';
 const PREFIX='tinkerpet-offline-shell-';
-const BOOT='20261122-android-native-rotation-wire-tip-v4';
+const BOOT='20261122-two-aa-four-aa-series-v5';
 const BOOT_CACHE=PREFIX+BOOT;
 const META_CACHE='tinkerpet-offline-meta-v1';
 const ACTIVE_URL=new URL('__active-shell__',self.registration.scope).href;
@@ -50,6 +50,8 @@ const PRECACHE=[
  "assets/mx1508-desenhado.svg",
  "assets/l298n-desenhado.svg",
  "assets/suporte-6-pilhas.svg",
+  "assets/suporte-4-pilhas.svg",
+  "assets/suporte-2-pilhas.svg",
  "assets/tinkerpet-app-192.png",
  "assets/tinkerpet-app-512.png",
  "preview-melhorias.html",
