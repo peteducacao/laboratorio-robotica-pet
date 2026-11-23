@@ -150,3 +150,21 @@ html.tinkerpet-booting .tinkerpet-loading{
  .tinkerpet-loading-track::before{transition:none!important;animation:none!important}
  .tinkerpet-loading-track::before{width:65%;transform:none}
 }
+/* A tipografia do carregamento e da abertura reutiliza o mesmo vetor original. */
+.tinkerpet-loading-brand{font-size:0;line-height:0}
+.tinkerpet-loading-wordmark{
+ display:block;width:min(90%,530px);height:auto;max-width:100%;
+ aspect-ratio:578/127;object-fit:contain;
+ filter:drop-shadow(0 4px 5px #0313319a);
+}
+.tinkerpet-loading-brand small{
+ display:block;font-family:"Fredoka",system-ui,sans-serif;
+ font-size:clamp(13px,2.7vw,21px);line-height:1.2;
+ letter-spacing:.18em;font-weight:700;margin-top:3px;
+}
+@media(max-height:560px){
+ .tinkerpet-loading-brand{width:min(45vw,400px);max-width:100%}
+ .tinkerpet-loading-wordmark{width:100%}
+ .tinkerpet-loading-brand small{font-size:12px}
+}
+@media(max-height:380px){.tinkerpet-loading-brand small{display:none}}
