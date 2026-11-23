@@ -32,47 +32,28 @@
 </div>
 
 <main class="welcome" aria-label="Bem-vindo ao TinkerPET Studio">
- <div class="ambient ambient-left" aria-hidden="true"></div>
- <div class="ambient ambient-right" aria-hidden="true"></div>
- <div class="signal-lines" aria-hidden="true"></div>
- <!-- Apenas ilustrações vetoriais pequenas nas bordas. O fundo em si é CSS. -->
- <svg class="robotics-detail robotics-detail-left" viewBox="0 0 285 285" aria-hidden="true">
-  <g fill="none" stroke="#23ceef" stroke-width="5" stroke-linecap="round" stroke-linejoin="round">
-   <rect x="44" y="58" width="184" height="158" rx="18"/>
-   <rect x="81" y="89" width="109" height="75" rx="10" stroke-width="3"/>
-   <path d="M59 43v15m28-28v28m30-29v29m30-29v29m30-29v29m30-14v14M59 216v19m28-19v29m30-29v29m30-29v29m30-29v29m30-29v21M28 92h16M28 120h16M28 150h16M28 180h16m184-88h26m-26 28h26m-26 30h26m-26 30h26" opacity=".8"/>
-   <path d="M92 179h89m-70-62h49m-24-23v46" stroke="#ffce4b" stroke-width="4"/>
-  </g>
-  <circle cx="136" cy="124" r="16" fill="none" stroke="#34dcff" stroke-width="4"/>
+ <svg class="circuit-trace circuit-trace-top" viewBox="0 0 230 105" aria-hidden="true">
+  <path d="M7 30H123Q137 30 147 18L159 8H230M49 76H122Q134 76 144 66L159 54H230"/><circle cx="7" cy="30" r="6"/><circle cx="49" cy="76" r="6"/>
  </svg>
- <svg class="robotics-detail robotics-detail-right" viewBox="0 0 300 250" aria-hidden="true">
-  <g stroke-linecap="round" stroke-linejoin="round" fill="none">
-   <path d="M49 199V80m0 0h81m-81 0 35-37m46 37 38-25m3 6 45 55m-14 0 51 23" stroke="#ffc744" stroke-width="20"/>
-   <path d="M49 199V80m0 0h81m-81 0 35-37m46 37 38-25m3 6 45 55m-14 0 51 23" stroke="#f69a2d" stroke-width="12"/>
-   <g stroke="#163b69" stroke-width="8" fill="#ffd46e"><circle cx="49" cy="199" r="17"/><circle cx="49" cy="80" r="18"/><circle cx="130" cy="80" r="16"/><circle cx="168" cy="55" r="13"/><circle cx="216" cy="116" r="12"/></g>
-   <path d="m251 139 24-20m-24 20 30 10m-31-10-9 27" stroke="#c6e6f7" stroke-width="10"/>
-   <path d="M20 215h115" stroke="#39dfff" stroke-width="6"/>
-  </g>
+ <svg class="circuit-trace circuit-trace-bottom" viewBox="0 0 230 105" aria-hidden="true">
+  <path d="M7 30H123Q137 30 147 18L159 8H230M49 76H122Q134 76 144 66L159 54H230"/><circle cx="7" cy="30" r="6"/><circle cx="49" cy="76" r="6"/>
  </svg>
- <div class="pin-decoration pin-decoration-left" aria-hidden="true"><span></span><span></span><span></span></div>
- <div class="pin-decoration pin-decoration-right" aria-hidden="true"><span></span><span></span><span></span></div>
  <section class="brand-stage" aria-label="Identidade do TinkerPET">
-  <div class="brand-art">
-   <img class="brand-composite" src="assets/tinkerpet-brand-tested.svg" width="616" height="363" alt="Mascote e logotipo TinkerPET" draggable="false">
-   <button class="mascot brand-hit-target" id="robotInteract" type="button" aria-label="Interagir com o robô TinkerPET" title="Toque no robô para ver suas reações">
-    <span class="mascot-blink-lid" aria-hidden="true"></span>
-    <span class="mascot-reaction" id="robotExpression" aria-hidden="true"></span>
-   </button>
+  <button class="mascot" id="robotInteract" type="button" aria-label="Interagir com o robô TinkerPET" title="Toque para ver as reações do robô">
+   <img class="mascot-reference" src="assets/tinkerpet-original-robot-transparent.svg" alt="" width="324" height="242" draggable="false">
+   <span class="mascot-blink-lid" aria-hidden="true"></span>
+   <span class="mascot-reaction" id="robotExpression" aria-hidden="true"></span>
+  </button>
+  <div class="brand-sign">
+   <h1 class="brand-title"><img class="brand-wordmark" src="assets/tinkerpet-original-wordmark.svg" width="578" height="127" alt="TinkerPET"></h1>
   </div>
-  <h1 class="brand-title sr-only">TinkerPET</h1>
   <a class="main-action" id="enterProjects" href="projects.html?release=20261031-gpio18-mobile-fix-v2" aria-label="Abrir Meus circuitos">
    <svg class="folder-icon" viewBox="0 0 28 28" aria-hidden="true"><path d="M3 6h9l3 4h10v14H3z" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linejoin="round"/></svg>
-   <span>Meus circuitos</span>
+   <span class="main-action-label">Meus circuitos</span>
    <span class="arrow-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M5 12h14m-6-6 6 6-6 6" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
   </a>
   <span id="robotFeedback" class="sr-only" role="status" aria-live="polite"></span>
  </section>
- <div class="floor-light" aria-hidden="true"></div>
  <footer class="site-credit-home">© 2026 TinkerPET Studio · Desenvolvido por Sérgio R. Santos</footer>
 </main>
 </body>
