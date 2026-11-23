@@ -10,10 +10,26 @@
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="stylesheet" href="local-sync.css?v=1">
 <script src="local-sync.js?v=1" defer></script>
-<link rel="stylesheet" href="home.css?v=19">
+<link rel="stylesheet" href="home.css?v=20">
 <script src="home.js?v=15" defer></script>
+<link rel="stylesheet" href="loading.css?v=1">
+<script src="loading.js?v=1"></script>
 </head>
 <body>
+<div id="tinkerpetLoading" class="tinkerpet-loading" role="status" aria-live="polite" aria-label="TinkerPET carregando">
+ <div class="tinkerpet-loading-pattern" aria-hidden="true"></div>
+ <div class="tinkerpet-loading-body">
+  <img class="tinkerpet-loading-mascot" src="assets/tinkerpet-mascot.svg" width="320" height="312" alt="Robô TinkerPET sorrindo">
+  <div class="tinkerpet-loading-brand"><strong>Tinker<span class="tinkerpet-pet">PET</span></strong><small>STUDIO</small></div>
+  <span class="tinkerpet-loading-swirl" aria-hidden="true"></span>
+  <span class="tinkerpet-loading-spacer" aria-hidden="true"></span>
+  <span class="tinkerpet-loading-gear" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M19.5 13.4a7.6 7.6 0 0 0 0-2.8l2-1.55-2-3.46-2.36.94a7.6 7.6 0 0 0-2.4-1.4L14.4 2h-4.8l-.34 3.13a7.6 7.6 0 0 0-2.4 1.4l-2.36-.94-2 3.46 2 1.55a7.6 7.6 0 0 0 0 2.8l-2 1.55 2 3.46 2.36-.94a7.6 7.6 0 0 0 2.4 1.4L9.6 22h4.8l.34-3.13a7.6 7.6 0 0 0 2.4-1.4l2.36.94 2-3.46-2-1.55ZM12 15.5a3.5 3.5 0 1 1 0-7 3.5 3.5 0 0 1 0 7Z"/></svg></span>
+  <h2 class="tinkerpet-loading-title">Carregando...</h2>
+  <p class="tinkerpet-loading-subtitle">Preparando seus circuitos</p>
+  <div class="tinkerpet-loading-track" aria-hidden="true"></div>
+ </div>
+</div>
+
 <main class="welcome" aria-label="Bem-vindo ao TinkerPET Studio">
  <div class="ambient ambient-left" aria-hidden="true"></div>
  <div class="ambient ambient-right" aria-hidden="true"></div>
@@ -45,7 +61,7 @@
     <defs>
      <linearGradient id="robot-shell" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#f9fdff"/><stop offset=".50" stop-color="#d8e5f1"/><stop offset="1" stop-color="#8eb3d7"/></linearGradient>
      <linearGradient id="robot-casing" x1="0" x2="1" y1="0" y2="1"><stop stop-color="#0d2854"/><stop offset=".55" stop-color="#0a1637"/><stop offset="1" stop-color="#071d46"/></linearGradient>
-     <linearGradient id="robot-glass" x1="0" x2="0" y1="0" y2="1"><stop stop-color="#effdff"/><stop offset="1" stop-color="#f8fcff"/></linearGradient>
+     <linearGradient id="robot-glass" x1="0" x2="0" y1="0" y2="1"><stop stop-color="#ffffff"/><stop offset=".52" stop-color="#f3f8ff"/><stop offset="1" stop-color="#c8e0f5"/></linearGradient>
      <linearGradient id="robot-ear" x1="0" x2="1" y1="0" y2="1"><stop stop-color="#fff874"/><stop offset=".50" stop-color="#ffbd18"/><stop offset="1" stop-color="#ff8900"/></linearGradient>
      <radialGradient id="antenna-light"><stop stop-color="#fff8b4"/><stop offset=".49" stop-color="#ffd834"/><stop offset=".8" stop-color="#ff9b0a"/><stop offset="1" stop-color="#ff7400"/></radialGradient>
      <filter id="robot-glow" x="-60%" y="-60%" width="220%" height="220%"><feGaussianBlur stdDeviation="6"/></filter>
@@ -73,6 +89,8 @@
      <ellipse cx="129" cy="179" rx="15" ry="18" fill="#08254c"/>
      <circle cx="123" cy="171" r="5" fill="#fff"/>
      <circle cx="135" cy="181" r="2" fill="#84d7ff"/>
+     <path d="M95 158q50-19 133-4" fill="none" stroke="#ffffff" stroke-opacity=".44" stroke-width="3" stroke-linecap="round"/>
+     <circle cx="125" cy="170" r="2.3" fill="#b5eaff"/>
      <g class="eye-blink"><path d="M112 182q16-14 31 0" fill="none" stroke="#08254c" stroke-width="8" stroke-linecap="round"/></g>
      <g class="eye-open"><path d="M186 175q12-17 27-3" fill="none" stroke="#08254c" stroke-width="10" stroke-linecap="round"/><path d="m190 178q10-3 19 5" fill="none" stroke="#08254c" stroke-width="7" stroke-linecap="round"/></g>
      <circle class="eye-alternative" cx="199" cy="177" r="14" fill="#09264c"/>
