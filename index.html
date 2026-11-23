@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="theme-color" content="#0b1c3c">
+<meta name="theme-color" content="#071a37">
 <meta name="description" content="TinkerPET Studio: monte, aprenda e salve circuitos de robótica em seu laboratório.">
 <title>TinkerPET • Laboratório de Robótica</title>
 <link rel="stylesheet" href="local-sync.css?v=1">
@@ -10,31 +10,34 @@
 <link rel="icon" href="assets/logo-pet.svg" type="image/svg+xml">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="preload" as="image" href="assets/welcome-clean-2026.svg" type="image/svg+xml">
-<link rel="stylesheet" href="home.css?v=15">
-<script src="home.js?v=12" defer></script>
+<link rel="preload" as="image" href="assets/welcome-lab-responsive.svg" type="image/svg+xml">
+<link rel="stylesheet" href="home.css?v=16">
+<script src="home.js?v=13" defer></script>
 </head>
 <body>
-<main class="welcome" aria-label="Bem-vindo ao TinkerPET">
- <img id="welcomeArt" class="welcome-art" src="assets/welcome-clean-2026.svg" alt="Mascote TinkerPET, nome do laboratório e botão Meus circuitos">
- <canvas id="welcomeBackdrop" class="welcome-backdrop" aria-hidden="true"></canvas>
- <span class="shine one" aria-hidden="true"></span><span class="shine two" aria-hidden="true"></span>
- <span id="robotBlink" class="robot-blink" aria-hidden="true"></span>
- <span id="antennaGlow" class="antenna-beacon" aria-hidden="true"></span>
+<main class="welcome" id="welcome" aria-label="Bem-vindo ao TinkerPET Studio">
+ <!-- O cenário cobre a tela; a identidade original mantém proporção própria. -->
+ <img id="welcomeArt" class="welcome-art" src="assets/welcome-clean-2026.svg" alt="Mascote TinkerPET, marca TinkerPET e botão Meus circuitos" decoding="async" fetchpriority="high">
+ <span class="welcome-softlight" aria-hidden="true"></span>
+ <span class="robot-blink" id="robotBlink" aria-hidden="true"></span>
+ <span class="robot-eye-glint" id="robotGlint" aria-hidden="true"></span>
+ <span class="robot-brow" id="robotBrow" aria-hidden="true"></span>
+ <span class="robot-cheek left" id="robotCheekLeft" aria-hidden="true"></span>
+ <span class="robot-cheek right" id="robotCheekRight" aria-hidden="true"></span>
+ <span class="antenna-beacon" id="antennaGlow" aria-hidden="true"></span>
+ <span class="robot-expression" id="robotExpression" aria-hidden="true"></span>
+ <button class="robot-interaction" id="robotInteract" type="button"
+    aria-label="Interagir com o mascote TinkerPET" title="Toque no robô para ver suas reações"></button>
+ <span class="visually-hidden" id="robotFeedback" role="status" aria-live="polite"></span>
  <div class="ambient-particles" aria-hidden="true">
   <span class="light-dust gold"></span><span class="light-dust cyan"></span>
   <span class="light-dust cyan"></span><span class="light-dust gold"></span>
   <span class="light-dust gold"></span><span class="light-dust cyan"></span>
  </div>
  <a id="enterProjects" class="main-action" href="projects.html?release=20261031-gpio18-mobile-fix-v2" aria-label="Abrir Meus circuitos">
-  <svg class="cta-energy" viewBox="0 0 604 133" preserveAspectRatio="none" aria-hidden="true">
-   <rect class="cta-track" x="1" y="1" width="602" height="131" rx="33" pathLength="1000"/>
-   <rect class="cta-trace cyan" x="1" y="1" width="602" height="131" rx="33" pathLength="1000"/>
-   <rect class="cta-trace gold" x="1" y="1" width="602" height="131" rx="33" pathLength="1000"/>
-  </svg>
-  <span class="side-energy side-left" aria-hidden="true"></span>
-  <span class="side-energy side-right" aria-hidden="true"></span>
-  <span class="visually-hidden">Meus circuitos</span>
+  <span class="cta-focus" aria-hidden="true"></span><span class="visually-hidden">Meus circuitos</span>
  </a>
  <footer class="site-credit-home">© 2026 TinkerPET Studio · Desenvolvido por Sérgio R. Santos </footer>
 </main>
-</body></html>
+</body>
+</html>
