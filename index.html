@@ -13,8 +13,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="home.css?v=25">
-<script src="home.js?v=15" defer></script>
+<link rel="stylesheet" href="home.css?v=26">
 <link rel="stylesheet" href="loading.css?v=6">
 <script src="loading.js?v=1"></script>
 </head>
@@ -39,21 +38,14 @@
   <path d="M7 30H123Q137 30 147 18L159 8H230M49 76H122Q134 76 144 66L159 54H230"/><circle cx="7" cy="30" r="6"/><circle cx="49" cy="76" r="6"/>
  </svg>
  <section class="brand-stage" aria-label="Identidade do TinkerPET">
-  <button class="mascot" id="robotInteract" type="button" aria-label="Interagir com o robô TinkerPET" title="Toque para ver as reações do robô">
+  <div class="mascot" aria-hidden="true">
    <img class="mascot-reference" src="assets/tinkerpet-original-robot-transparent.svg" alt="" width="324" height="242" draggable="false">
-   <span class="mascot-blink-lid" aria-hidden="true"></span>
-   <span class="mascot-reaction" id="robotExpression" aria-hidden="true"></span>
-  </button>
+  </div>
   <div class="brand-sign">
    <h1 class="brand-title"><img class="brand-wordmark" src="assets/tinkerpet-original-wordmark.svg" width="578" height="127" alt="TinkerPET"></h1>
   </div>
-  <a class="main-action" id="enterProjects" href="projects.html?release=20261031-gpio18-mobile-fix-v2" aria-label="Abrir Meus circuitos">
-   <svg class="folder-icon" viewBox="0 0 28 28" aria-hidden="true"><path d="M3 6h9l3 4h10v14H3z" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linejoin="round"/></svg>
-   <span class="main-action-label">Meus circuitos</span>
-   <span class="arrow-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M5 12h14m-6-6 6 6-6 6" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
-  </a>
-  <span id="robotFeedback" class="sr-only" role="status" aria-live="polite"></span>
  </section>
+ <a class="welcome-activation" href="projects.html?release=20261031-gpio18-mobile-fix-v2" aria-label="Abrir circuitos do TinkerPET"></a>
  <footer class="site-credit-home">© 2026 TinkerPET Studio · Desenvolvido por Sérgio R. Santos</footer>
 </main>
 </body>
