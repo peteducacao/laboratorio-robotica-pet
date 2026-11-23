@@ -17,6 +17,9 @@ assert(homeHtml.includes('id="welcomeArt"')&&homeHtml.includes('assets/welcome-c
 assert(homeHtml.includes('id="enterProjects"')&&homeHtml.includes('href="projects.html'),'CTA abre Meus circuitos');
 assert(homeHtml.includes('id="robotInteract"')&&homeHtml.includes('aria-label="Interagir com o mascote TinkerPET"'),'robô também funciona por teclado e leitor de tela');
 assert(homeHtml.includes('id="robotFeedback"')&&homeHtml.includes('aria-live="polite"'),'interações têm feedback acessível');
+assert(homeHtml.includes('id="identityFallback"')&&homeHtml.includes('class="cta-native"'),'imagem ausente não esconde a marca e CTA');
+assert(homeCss.includes('.welcome.brand-unavailable .main-action')&&homeJs.includes("art.addEventListener('error'"),'fallback é acionado se a arte falhar');
+assert(homeHtml.includes('home.css?v=17')&&homeHtml.includes('home.js?v=14'),'nova versão invalida caches antigos da abertura');
 assert(homeCss.includes("url('assets/welcome-lab-responsive.svg')")&&homeCss.includes('background-size:cover,cover'),'fundo cobre a tela independentemente da proporção');
 assert(homeCss.includes('height:100dvh')&&homeCss.includes('height:100svh'),'suporte a viewport móvel dinâmico');
 assert(homeCss.includes('-webkit-mask-image:')&&homeCss.includes('mask-image:'),'a identidade mantém proporção sem fundo antigo quadrado');
