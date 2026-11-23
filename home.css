@@ -70,12 +70,20 @@ body{min-width:280px;background:#061a34;color:#fff;font-family:'Trebuchet MS','A
  opacity:0;transform:translateY(8px) scale(.75);pointer-events:none;
  transition:opacity .2s ease,transform .2s ease;filter:drop-shadow(0 3px 6px #01203b)}
 .mascot[data-mood] .mascot-reaction{opacity:1;transform:translateY(-5px) scale(1)}
-.brand-title{display:flex;gap:0;align-items:baseline;justify-content:center;
- margin:-6px 0 0;white-space:nowrap;
- font-size:clamp(44px,min(12vw,10dvh),110px);font-weight:1000;line-height:1.04;
- letter-spacing:-.065em;filter:drop-shadow(0 7px 0 #061b3b) drop-shadow(0 11px 7px #001124)}
-.brand-tinker{color:#fff;text-shadow:-2px -2px 0 #fff,2px 3px 0 #10244c,0 0 10px #b4e5fc66}
-.brand-pet{color:#13dafa;text-shadow:2px 3px 0 #083c7e,0 0 11px #03daff77}
+/* Identidade: letras individuais NÃO podem encostar ou sobrepor no Android.
+   Sem sombras duplicadas nem tracking negativo; marca não é imagem de fundo. */
+.brand-title{
+ display:flex;align-items:baseline;justify-content:center;gap:.035em;
+ margin:1px 0 0;max-width:100%;white-space:nowrap;
+ font-family:system-ui,-apple-system,"Segoe UI",Arial,sans-serif;
+ font-size:clamp(38px,min(10.5vw,9.2dvh),100px);
+ font-weight:850;line-height:1.13;letter-spacing:0;
+ text-rendering:optimizeLegibility;
+ filter:drop-shadow(0 5px 4px rgba(1,16,39,.65));
+}
+.brand-title>span{display:block;flex:none;white-space:nowrap}
+.brand-tinker{color:#fff;text-shadow:0 3px 0 #183c69,0 4px 9px #061a3b99}
+.brand-pet{color:#0fdaff;text-shadow:0 3px 0 #07508f,0 4px 9px #061a3b99}
 .brand-swoosh{display:block;width:min(47%,320px);height:auto;margin:4px 0 0;
  filter:drop-shadow(0 2px 5px #07d9ff80)}
 .brand-subtitle{margin:clamp(10px,2vh,19px) 0 clamp(18px,3.7vh,37px);
@@ -120,7 +128,7 @@ body{min-width:280px;background:#061a34;color:#fff;font-family:'Trebuchet MS','A
  .brand-stage{flex-direction:row;flex-wrap:wrap;column-gap:14px;row-gap:3px;
   max-width:780px;width:min(94vw,780px);transform:none}
  .mascot{width:min(26vh,135px)}
- .brand-title{font-size:clamp(36px,7vw,72px);margin:0}
+ .brand-title{font-size:clamp(30px,6.5vw,66px);margin:0;letter-spacing:0}
  .brand-swoosh{display:none}
  .brand-subtitle{width:100%;margin:0 0 8px;font-size:10px}
  .main-action{width:min(410px,86vw);min-height:49px;font-size:16px;padding:6px 15px}
