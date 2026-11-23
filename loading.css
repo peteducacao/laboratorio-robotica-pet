@@ -168,3 +168,12 @@ html.tinkerpet-booting .tinkerpet-loading{
  .tinkerpet-loading-brand small{font-size:12px}
 }
 @media(max-height:380px){.tinkerpet-loading-brand small{display:none}}
+
+/* Carregamento e abertura compartilham os recortes da mesma identidade original. */
+.tinkerpet-loading-mascot{aspect-ratio:324/242;width:clamp(140px,min(37vw,30dvh),275px);height:auto}
+.tinkerpet-loading-wordmark{aspect-ratio:578/148;width:min(85%,510px)}
+.tinkerpet-loading-swirl{display:none!important}
+@media(max-height:560px){
+ .tinkerpet-loading-mascot{width:min(28vh,120px)}
+ .tinkerpet-loading-wordmark{width:100%}
+}
