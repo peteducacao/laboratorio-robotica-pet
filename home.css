@@ -75,15 +75,18 @@ body{min-width:280px;background:#061a34;color:#fff;font-family:'Trebuchet MS','A
 .brand-title{
  display:flex;align-items:baseline;justify-content:center;gap:.035em;
  margin:1px 0 0;max-width:100%;white-space:nowrap;
- font-family:system-ui,-apple-system,"Segoe UI",Arial,sans-serif;
- font-size:clamp(38px,min(10.5vw,9.2dvh),100px);
- font-weight:850;line-height:1.13;letter-spacing:0;
+ font-family:"Fredoka","Trebuchet MS",system-ui,Arial,sans-serif;
+ font-size:clamp(42px,14.6vw,104px);
+ font-weight:700;line-height:1.13;letter-spacing:0;
  text-rendering:optimizeLegibility;
  filter:drop-shadow(0 5px 4px rgba(1,16,39,.65));
 }
-.brand-title>span{display:block;flex:none;white-space:nowrap}
-.brand-tinker{color:#fff;text-shadow:0 3px 0 #183c69,0 4px 9px #061a3b99}
-.brand-pet{color:#0fdaff;text-shadow:0 3px 0 #07508f,0 4px 9px #061a3b99}
+.brand-title>span{
+ display:block;flex:none;white-space:nowrap;
+ -webkit-text-stroke:2.7px #061635;paint-order:stroke fill;
+}
+.brand-tinker{color:#fff;text-shadow:0 4px 0 #082754,0 7px 8px #001533af,0 -1px 0 #ffffff}
+.brand-pet{color:#10d9fc;text-shadow:0 4px 0 #063b80,0 7px 8px #001533af,0 -1px 0 #a6faff}
 .brand-swoosh{display:block;width:min(47%,320px);height:auto;margin:4px 0 0;
  filter:drop-shadow(0 2px 5px #07d9ff80)}
 .brand-subtitle{margin:clamp(10px,2vh,19px) 0 clamp(18px,3.7vh,37px);
@@ -128,7 +131,7 @@ body{min-width:280px;background:#061a34;color:#fff;font-family:'Trebuchet MS','A
  .brand-stage{flex-direction:row;flex-wrap:wrap;column-gap:14px;row-gap:3px;
   max-width:780px;width:min(94vw,780px);transform:none}
  .mascot{width:min(26vh,135px)}
- .brand-title{font-size:clamp(30px,6.5vw,66px);margin:0;letter-spacing:0}
+ .brand-title{font-size:clamp(29px,8vw,68px);margin:0;letter-spacing:0}
  .brand-swoosh{display:none}
  .brand-subtitle{width:100%;margin:0 0 8px;font-size:10px}
  .main-action{width:min(410px,86vw);min-height:49px;font-size:16px;padding:6px 15px}
@@ -163,3 +166,8 @@ body{min-width:280px;background:#061a34;color:#fff;font-family:'Trebuchet MS','A
  .welcome .main-action{width:min(95%,515px)}
 }
 @media(max-height:540px){.welcome .floor-light{bottom:5%}}
+
+@media(max-width:600px){
+ .welcome .brand-title{gap:0;max-width:calc(100vw - 24px)}
+ .welcome .brand-title>span{-webkit-text-stroke:2px #061635}
+}
