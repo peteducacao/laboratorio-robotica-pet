@@ -171,3 +171,25 @@ body{min-width:280px;background:#061a34;color:#fff;font-family:'Trebuchet MS','A
  .welcome .brand-title{gap:0;max-width:calc(100vw - 24px)}
  .welcome .brand-title>span{-webkit-text-stroke:2px #061635}
 }
+
+/* Formas originais da marca, vetorizadas da identidade aprovada.
+   A arte fica transparente: nenhuma imagem de fundo pode reaparecer. */
+.welcome .brand-title{
+ width:min(97vw,700px);
+ max-width:calc(100vw - 10px);
+ height:auto;display:block;flex:none;
+ margin:-10px 0 -3px;line-height:0;white-space:normal;
+ font-size:0;letter-spacing:normal;filter:none;
+}
+.welcome .brand-wordmark{
+ display:block;width:100%;height:auto;max-width:100%;
+ aspect-ratio:578/127;object-fit:contain;overflow:visible;
+ filter:drop-shadow(0 4px 5px #03102f75);
+ user-select:none;-webkit-user-select:none;pointer-events:none;
+}
+@media(max-height:540px){
+ .welcome .brand-title{width:min(62vw,470px);margin:0}
+}
+@media(max-height:400px){
+ .welcome .brand-title{width:min(58vw,390px)}
+}
