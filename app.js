@@ -946,6 +946,24 @@ function renderProgress(){
 // Os 5,0 V só são confirmados depois de soltar o controle e estabilizar.
 let voltageAdjusting=false,voltageSettleTimer=0;
 const VOLTAGE_SETTLE_MS=450;
+// O cartão de parabéns aparece na primeira conclusão e ao abrir uma
+// montagem já concluída que ainda não foi celebrada neste circuito.
+// Armazena só a assinatura elétrica, sem modificar o circuito salvo.
+const COMPLETION_SEEN_KEY='tinkerpet-celebration-v2:'+(EDITOR_PROJECT_ID||STORAGE_KEY);
+function completionStamp(){
+ return JSON.stringify({
+  parts:state.parts.map(p=>p.id).sort(),
+  wires:state.wires.filter(w=>!w.loose).map(w=>electricalKey(w.a,w.b)).sort(),
+  voltage:Number(state.voltage.toFixed(2)),
+  switches:assemblyMode()==='switched'?[!!state.switches.s1,!!state.switches.s2]:[]
+ });
+}
+function completionAlreadyShown(){
+ try{return localStorage.getItem(COMPLETION_SEEN_KEY)===completionStamp()}catch{return false;}
+}
+function markCompletionShown(){
+ try{localStorage.setItem(COMPLETION_SEEN_KEY,completionStamp())}catch{}
+}
 let completionKnown=false,completionWasValid=false;
 const COMPLETION_DURATION_MS=10000;
 let completionCloseTimer=0,completionCountTimer=0,completionLastFocus=null;
@@ -994,6 +1012,7 @@ function showCompletionCelebration(){
  if(count)count.textContent=String(COMPLETION_DURATION_MS/1000);
  completionLastFocus=document.activeElement;
  try{dialog.showModal()}catch{return;}
+ markCompletionShown();
  Q('completionClose')?.focus({preventScroll:true});
  const end=performance.now()+COMPLETION_DURATION_MS;
  clearTimeout(completionCloseTimer);clearInterval(completionCountTimer);
@@ -1009,7 +1028,11 @@ function syncCompletionCelebration(){
  // A exigência de 5 V e todas as ligações certas faz parte de ready().
  const correct=ready();
  if(!completionKnown){
-  completionKnown=true;completionWasValid=correct;return;
+  completionKnown=true;completionWasValid=correct;
+  // Não repetir em F5, mas recuperar a mensagem de um circuito concluído
+  // cuja celebração anterior nunca apareceu.
+  if(correct&&!completionAlreadyShown())showCompletionCelebration();
+  return;
  }
  if(!completionWasValid&&correct)showCompletionCelebration();
  completionWasValid=correct;
@@ -3133,6 +3156,8 @@ function bind(){
  const progressDetails=Q('editorToolbarProgress');
  if(progressDetails){
   const explain=()=>{
+   // O progresso verde também permite rever a conquista a qualquer momento.
+   if(ready()){showCompletionCelebration();return;}
    const advice=contextualWrongAdvice();
    if(advice){message('Existe uma ligação incorreta. Use o botão Dicas para receber ajuda específica.',true);return;}
    const loose=state.wires.filter(w=>w.loose).length;
