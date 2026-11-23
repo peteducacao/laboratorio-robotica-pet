@@ -13,8 +13,8 @@
 <link rel="stylesheet" href="styles.css?v=39">
 <link rel="stylesheet" href="answer-key.css?v=37">
 <link rel="stylesheet" href="studio-preview.css?v=19">
-<link rel="stylesheet" href="editor-layout.css?v=18">
-<link rel="stylesheet" href="mobile-editor.css?v=7" media="(max-width:700px)">
+<link rel="stylesheet" href="editor-layout.css?v=19">
+<link rel="stylesheet" href="mobile-editor.css?v=8" media="(max-width:700px)">
 <link rel="stylesheet" href="step-hints.css?v=3">
 <script src="step-hints.js?v=3"></script>
 <script>
@@ -26,8 +26,8 @@
 const TOUCH_EDITOR=window.matchMedia('(pointer:coarse)').matches||
  (navigator.maxTouchPoints>0&&window.matchMedia('(hover:none)').matches);
 document.write(TOUCH_EDITOR
- ? '<script defer src="app-mobile.js?v=26"><\/script>'
- : '<script defer src="app.js?v=96"><\/script>');
+ ? '<script defer src="app-mobile.js?v=27"><\/script>'
+ : '<script defer src="app.js?v=97"><\/script>');
 </script>
 <script defer src="answer-key.js?v=37"></script>
 <script defer src="studio-preview.js?v=2"></script>
@@ -70,6 +70,7 @@ if(window.matchMedia('(pointer:coarse)').matches||
           <button id="rotateBtn" class="control-btn" type="button" title="Girar 90° (R)" aria-label="Girar componente 90 graus" disabled><svg class="rotate-icon" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M17.65 6.35A7.95 7.95 0 0 0 12 4a8 8 0 1 0 7.93 9h-2.02A6 6 0 1 1 12 6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35Z"/></svg></button>
           <button id="pasteBtn" class="control-btn" type="button" title="Colar peça copiada (Ctrl+V)" aria-label="Colar peça"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="3.5" width="14" height="17" rx="1.7"/><path d="M9 8h6M9 11h6M9 14h3m3-1v7m-3-3 3 3 3-3"/></svg></button>
           <button id="deleteBtn" class="control-btn delete-btn" type="button" title="Excluir selecionado (Delete)" aria-label="Excluir peça ou fio selecionado"><svg viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7h16M9 4h6m-9 3 1 13h10l1-13M10 10v7m4-7v7"/></svg></button>
+          <button id="lockSelectionBtn" class="control-btn selection-lock-btn" type="button" title="Selecione um fio ou peça para bloquear" aria-label="Bloquear ou desbloquear objeto selecionado" aria-pressed="false" data-lock-state="unlocked"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.85" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="6" y="11" width="12" height="10" rx="2"/><path class="lock-closed-icon" d="M8 11V8a4 4 0 0 1 8 0v3"/><path class="lock-open-icon" d="M8 11V8a4 4 0 0 1 7-2"/></svg></button>
         </div>
         <button id="clearBtn" class="legacy-control" hidden>Limpar</button>
         <button id="wireColorButton" class="wire-color-picker" type="button" aria-label="Escolher cor do fio" aria-haspopup="true" aria-expanded="false" aria-controls="wireColorMenu" title="Escolher cor do fio"><span class="wire-color-preview" id="wireColorPreview" aria-hidden="true"></span><svg viewBox="0 0 12 12" width="12" height="12" aria-hidden="true"><path d="m2.5 4.5 3.5 3.5 3.5-3.5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></button>
