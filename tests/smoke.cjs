@@ -6,47 +6,48 @@ const path=require('node:path');
 const base=path.join(__dirname,'..');
 const js=fs.readFileSync(path.join(base,'app.js'),'utf8');
 
-// A abertura preserva a identidade, usa um cenário separado de ponta a ponta
-// e não rasteriza/estica a arte em canvas para completar faixas na tela.
+// Abertura usa fundo exclusivamente CSS (sem fotos, camadas duplicadas nem canvas).
 const homeHtml=fs.readFileSync(path.join(base,'index.html'),'utf8');
 const homeCss=fs.readFileSync(path.join(base,'home.css'),'utf8');
 const homeJs=fs.readFileSync(path.join(base,'home.js'),'utf8');
-const homeScene=fs.readFileSync(path.join(base,'assets/welcome-lab-responsive.svg'),'utf8');
 new vm.Script(homeJs);
-assert(homeHtml.includes('id="welcomeArt"')&&homeHtml.includes('assets/welcome-clean-2026.svg'),'robô/nome e botão originais preservados');
-assert(homeHtml.includes('id="enterProjects"')&&homeHtml.includes('href="projects.html'),'CTA abre Meus circuitos');
-assert(homeHtml.includes('id="robotInteract"')&&homeHtml.includes('aria-label="Interagir com o mascote TinkerPET"'),'robô também funciona por teclado e leitor de tela');
-assert(homeHtml.includes('id="robotFeedback"')&&homeHtml.includes('aria-live="polite"'),'interações têm feedback acessível');
-assert(homeHtml.includes('id="identityFallback"')&&homeHtml.includes('class="cta-native"'),'imagem ausente não esconde a marca e CTA');
-assert(homeCss.includes('.welcome.brand-unavailable .main-action')&&homeJs.includes("art.addEventListener('error'"),'fallback é acionado se a arte falhar');
-assert(homeHtml.includes('home.css?v=17')&&homeHtml.includes('home.js?v=14'),'nova versão invalida caches antigos da abertura');
-assert(homeCss.includes("url('assets/welcome-lab-responsive.svg')")&&homeCss.includes('background-size:cover,cover'),'fundo cobre a tela independentemente da proporção');
-assert(homeCss.includes('height:100dvh')&&homeCss.includes('height:100svh'),'suporte a viewport móvel dinâmico');
-assert(homeCss.includes('-webkit-mask-image:')&&homeCss.includes('mask-image:'),'a identidade mantém proporção sem fundo antigo quadrado');
-assert(!homeJs.includes("getContext('2d'")&&!homeJs.includes('renderScene(')&&!homeHtml.includes('id="welcomeBackdrop"'),'sem canvas antigo que criava faixas ou imagem distorcida');
-assert(homeCss.includes('@media(prefers-reduced-motion:reduce)')&&homeJs.includes("reduce.matches"),'animações respeitam movimento reduzido');
-assert(homeJs.includes("robot.addEventListener('click'")&&homeJs.includes("robot.addEventListener('pointermove'"),'robo reage a toque e acompanha o cursor');
+assert(homeHtml.includes('class="brand-stage"'),'identidade fica em bloco central independente do fundo');
+assert(homeHtml.includes('class="mascot"')&&homeHtml.includes('class="mascot-art"'),'robô é vetor isolado e interativo');
+assert(homeHtml.includes('class="brand-title"')&&homeHtml.includes('Tinker</span><span class="brand-pet">PET'),'TinkerPET continua com o nome e suas cores');
+assert(homeHtml.includes('id="enterProjects"')&&homeHtml.includes('href="projects.html'),'CTA acessível abre Meus circuitos');
+assert(homeHtml.includes('id="robotFeedback"')&&homeHtml.includes('aria-live="polite"'),'reações têm feedback acessível');
+assert(!homeHtml.includes('id="welcomeArt"')&&!homeHtml.includes('welcomeBackdrop'),'não há imagem da oficina antiga sobrepondo o fundo');
+assert(!homeCss.includes("background-image:url(")&&!homeCss.includes("url('assets/"),'nenhuma imagem de fundo causa recorte entre telas');
+assert(homeCss.includes('height:100dvh')&&homeCss.includes('height:100svh'),'viewport do PWA móvel respeitada');
+assert(homeCss.includes('background:')&&homeCss.includes('radial-gradient(')&&homeCss.includes('linear-gradient('),'fundo construído somente com degradês CSS');
+assert(homeCss.includes('.brand-stage')&&homeCss.includes('@media(max-height:540px)'),'interface ajusta disposição na horizontal');
+assert(homeCss.includes('@media(prefers-reduced-motion:reduce)')&&homeJs.includes('reduced?.matches'),'redução de movimento respeitada');
+assert(homeJs.includes("robot.addEventListener('click'")&&homeJs.includes('scheduleBlink()')&&homeJs.includes('scheduleMood()'),'clique, piscar e expressões têm ciclos separados');
 for(const mood of ['happy','curious','excited','sleepy'])
- assert(homeJs.includes("id:'"+mood+"'")&&homeCss.includes('robot-mood'),"expressão de robô: "+mood);
-assert(homeScene.startsWith('<svg')&&homeScene.includes('viewBox="0 0 1798 1000"'),'fundo é arte vetorial responsiva');
-assert(homeScene.includes('Floor')||homeScene.includes('Floor sits behind logo'),'cenário contém piso tecnológico e perspectiva');
-assert(fs.readFileSync(path.join(base,'sw.js'),'utf8').includes('assets/welcome-lab-responsive.svg'),'PWA salva novo fundo offline');
-const computeSource=homeJs.slice(homeJs.indexOf('function computeLayout('),homeJs.indexOf('function applyLayout(){'));
-assert(computeSource.includes('function computeLayout('),'escala proporcional identificada');
-const getLayout=vm.runInNewContext(computeSource+'\ncomputeLayout');
-for(const [width,height] of [
- [280,350],[320,568],[393,873],[600,960],[800,1280],[873,393],
- [1024,768],[1280,600],[1366,768],[1920,1080],[3440,1440]
-]){
- const {s,left,top}=getLayout(width,height);
- const button={x:left+585*s,y:top+591*s,w:604*s,h:130*s};
- const logo={x:left+520*s,y:top+380*s,w:760*s,h:190*s};
- assert(button.x>=0&&button.y>=0&&button.x+button.w<=width&&button.y+button.h<=height,
-  'CTA sem corte em '+width+'×'+height);
- assert(logo.x>=-1&&logo.x+logo.w<=width+1,'nome não corta nas laterais em '+width+'×'+height);
- assert(s>0&&Number.isFinite(s)&&Number.isFinite(left)&&Number.isFinite(top),'escala finita em '+width+'×'+height);
+ assert(homeJs.includes("id:'"+mood+"'")&&homeCss.includes('data-mood'),"expressão do robô: "+mood);
+assert(!homeJs.includes('window.requestAnimationFrame')&&!homeJs.includes('drawImage'),'sem pintura ou distorção de imagem por JS');
+assert(homeHtml.includes('home.css?v=18')&&homeHtml.includes('home.js?v=15'),'CSS/JS da nova abertura mudaram de versão');
+// O robô responde aos toques sem criar sobreposições ou depender de uma imagem.
+{
+ const handlers={},attrs={};
+ const robot={
+  dataset:{},classList:{add(){},remove(){}},
+  get offsetWidth(){return 1},
+  addEventListener(type,fn){handlers[type]=fn}
+ };
+ const reaction={textContent:''},status={textContent:''};
+ const documentStub={hidden:false,activeElement:null,getElementById(id){
+  return id==='robotInteract'?robot:id==='robotExpression'?reaction:status;
+ },addEventListener(){}};
+ const timers=[];
+ const win={matchMedia(){return {matches:false,addEventListener(){}}},addEventListener(){}};
+ vm.runInNewContext(homeJs,{window:win,document:documentStub,
+  setTimeout(fn){timers.push(fn);return timers.length},clearTimeout(){},Math});
+ assert.equal(typeof handlers.click,'function','interação do robô registrada');
+ for(const expected of ['💙','💡','✨','💤']){
+  handlers.click();assert.equal(reaction.textContent,expected,'cada toque produz a próxima reação');
+ }
 }
-
 const html=fs.readFileSync(path.join(base,'index.html'),'utf8');
 const css=fs.readFileSync(path.join(base,'styles.css'),'utf8');
 const answerKey=fs.readFileSync(path.join(base,'answer-key.js'),'utf8');
