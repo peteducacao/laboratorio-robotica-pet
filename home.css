@@ -53,3 +53,14 @@ body{min-width:280px;color:#fff;font-family:'Fredoka','Trebuchet MS',system-ui,s
 /* A tela inteira é um único link nativo (toque, mouse e teclado). */
 .welcome-activation{position:absolute;inset:0;z-index:5;display:block;cursor:pointer;touch-action:manipulation;-webkit-tap-highlight-color:transparent}
 .welcome-activation:focus-visible{outline:4px solid #ffe36c;outline-offset:-7px;border-radius:8px}
+
+/* Somente identidade visual da primeira imagem: robô e fonte originais + traço. */
+.brand-stage{width:min(100%,730px)}
+.brand-composite{display:flex;flex-direction:column;align-items:center;width:min(92vw,660px);max-width:100%;margin:0;padding:0;font-size:0;line-height:0}
+.brand-original{display:block;width:100%;height:auto;aspect-ratio:616/363;object-fit:contain;pointer-events:none;user-select:none;-webkit-user-select:none;filter:drop-shadow(0 5px 7px #00172d66)}
+.brand-underline{display:block;width:47%;height:auto;margin-top:-5px;overflow:visible;filter:drop-shadow(0 2px 4px #03d7ff77)}
+@media (orientation:landscape) and (max-height:620px){
+ .brand-stage{display:flex;flex-direction:column;align-items:center;justify-content:center;width:min(94vw,780px);transform:none}
+ .brand-composite{width:min(78vw,144dvh,620px)}
+ .brand-underline{margin-top:-4px}
+}
