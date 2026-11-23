@@ -154,3 +154,29 @@ body{min-width:280px;min-height:100%;background:#071a37;font-family:'DM Sans',Ar
  }
  .robot-blink{opacity:0}
 }
+
+/* O CTA continua acessível mesmo se a arte antiga não conseguir carregar. */
+.cta-native{display:none}
+.identity-fallback[hidden]{display:none!important}
+.welcome.brand-unavailable .welcome-art{visibility:hidden}
+.welcome.brand-unavailable .identity-fallback{
+ position:absolute;z-index:4;display:flex;flex-direction:column;align-items:center;
+ justify-content:center;text-align:center;gap:12px;color:white;
+ text-shadow:0 5px 12px #051a3899;
+ font:800 clamp(20px,5vw,76px)/1.05 'DM Sans',Arial,sans-serif;
+}
+.welcome.brand-unavailable .identity-fallback strong span{color:#19d7ff}
+.welcome.brand-unavailable .identity-fallback .fallback-robot{
+ font-size:clamp(50px,12vw,150px);line-height:1;
+ filter:drop-shadow(0 5px 14px #06254d);
+}
+.welcome.brand-unavailable .main-action{
+ background:linear-gradient(120deg,#0478ee,#00c8ed);
+ box-shadow:0 0 20px #00deff88,inset 0 0 0 2px #b5f8ff;
+}
+.welcome.brand-unavailable .cta-native{
+ display:flex;align-items:center;justify-content:space-around;gap:12px;
+ width:100%;height:100%;padding:0 14px;
+ font:800 clamp(12px,2.4vw,30px)/1.1 'DM Sans',Arial,sans-serif;
+ color:white;white-space:nowrap;text-shadow:0 2px 4px #00326a;
+}
