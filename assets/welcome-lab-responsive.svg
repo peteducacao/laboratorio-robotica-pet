@@ -1,0 +1,85 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1798" height="1000" viewBox="0 0 1798 1000" preserveAspectRatio="xMidYMid slice" aria-label="Laboratório futurista de robótica TinkerPET">
+<defs>
+ <linearGradient id="wall" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#071a37"/><stop offset=".53" stop-color="#08447a"/><stop offset="1" stop-color="#08649a"/></linearGradient>
+ <radialGradient id="spot"><stop stop-color="#008dd8" stop-opacity=".58"/><stop offset=".45" stop-color="#0877ce" stop-opacity=".22"/><stop offset="1" stop-color="#002b64" stop-opacity="0"/></radialGradient>
+ <radialGradient id="warm"><stop stop-color="#ffc36d" stop-opacity=".47"/><stop offset="1" stop-color="#ffb45a" stop-opacity="0"/></radialGradient>
+ <linearGradient id="floor" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#0b4782"/><stop offset=".65" stop-color="#083460"/><stop offset="1" stop-color="#071a37"/></linearGradient>
+ <linearGradient id="cabinet" x1="0" y1="0" x2=".85" y2="1"><stop stop-color="#134775"/><stop offset="1" stop-color="#08294e"/></linearGradient>
+ <linearGradient id="arm" x1="0" y1="0" x2=".9" y2="1"><stop stop-color="#ffd55b"/><stop offset="1" stop-color="#df8032"/></linearGradient>
+ <linearGradient id="line" x1="0" y1="0" x2="1" y2="0"><stop stop-color="#0178e6" stop-opacity="0"/><stop offset=".5" stop-color="#00c8fa"/><stop offset="1" stop-color="#0178e6" stop-opacity="0"/></linearGradient>
+ <pattern id="smallgrid" width="62" height="62" patternUnits="userSpaceOnUse"><path d="M62 0H0V62" fill="none" stroke="#36c6ff" stroke-opacity=".08"/></pattern>
+ <filter id="glow" x="-60%" y="-60%" width="220%" height="220%"><feGaussianBlur stdDeviation="8"/></filter>
+ <filter id="shadow" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="17"/></filter>
+</defs>
+<rect width="1798" height="1000" fill="url(#wall)"/>
+<rect width="1798" height="1000" fill="url(#smallgrid)"/>
+<ellipse cx="950" cy="305" rx="760" ry="500" fill="url(#spot)"/>
+<ellipse cx="0" cy="440" rx="390" ry="360" fill="url(#warm)"/>
+<ellipse cx="1785" cy="450" rx="440" ry="350" fill="url(#spot)"/>
+<!-- Perimeter circuit traces: decorative and intentionally outside of the central brand safe-zone -->
+<g fill="none" stroke="#22caff" stroke-width="3" stroke-opacity=".40" stroke-linejoin="round" stroke-linecap="round">
+ <path d="M-8 135h140l80-82h171l38-38h90"/><path d="M0 174h91l96-65h169"/><path d="M1235 0v49h196l69 66h170l128 75"/>
+ <path d="M1460 0v38h170l40 38h130"/><path d="M0 610h100l55-51h155"/><path d="M1798 624h-115l-59-73h-150"/>
+</g>
+<g fill="#35e7ff">
+ <circle cx="383" cy="53" r="7"/><circle cx="356" cy="109" r="7"/><circle cx="1431" cy="49" r="7"/><circle cx="1670" cy="115" r="7"/><circle cx="310" cy="559" r="6"/><circle cx="1474" cy="551" r="6"/>
+</g>
+<!-- Subtle gear outlines -->
+<g fill="none" stroke="#169ce8" stroke-opacity=".24">
+ <circle cx="415" cy="218" r="66" stroke-width="24" stroke-dasharray="26 14"/><circle cx="415" cy="218" r="27" stroke-width="12"/>
+ <circle cx="513" cy="161" r="30" stroke-width="13" stroke-dasharray="15 10"/><circle cx="513" cy="161" r="10" stroke-width="5"/>
+ <circle cx="1503" cy="296" r="53" stroke-width="14" stroke-dasharray="22 11"/><circle cx="1503" cy="296" r="21" stroke-width="7"/>
+</g>
+<!-- Left work shelf, lighting, plant -->
+<g opacity=".88">
+ <rect x="0" y="266" width="346" height="22" rx="5" fill="#122a56"/><rect x="0" y="286" width="352" height="9" rx="4" fill="#104f88"/>
+ <rect x="35" y="200" width="65" height="65" rx="6" fill="#32518d"/><rect x="43" y="216" width="48" height="3" fill="#80b4ed" opacity=".6"/>
+ <rect x="119" y="208" width="68" height="57" rx="6" fill="#33477d"/><rect x="127" y="226" width="49" height="4" fill="#8fbbec" opacity=".65"/>
+ <rect x="208" y="184" width="76" height="80" rx="9" fill="#214674"/><rect x="219" y="199" width="52" height="4" fill="#72c5ff" opacity=".48"/>
+ <rect x="35" y="291" width="260" height="8" rx="4" fill="#ffb84f"/><rect x="35" y="289" width="260" height="14" rx="5" fill="#ffbd61" opacity=".25" filter="url(#glow)"/>
+ <rect x="0" y="534" width="410" height="24" rx="6" fill="#1d5a8a"/><rect x="0" y="548" width="410" height="12" fill="#0b2a54"/>
+ <rect x="24" y="561" width="333" height="137" rx="8" fill="url(#cabinet)"/>
+ <path d="M165 563V696M24 608H355" stroke="#32a3df" stroke-opacity=".45" stroke-width="3"/>
+ <path d="M66 582h63m79 0h87m-228 48h62m77 0h87" stroke="#82dcff" stroke-opacity=".35" stroke-width="4" stroke-linecap="round"/>
+ <!-- Robotic arm silhouette -->
+ <rect x="159" y="509" width="122" height="19" rx="9" fill="#14395f"/>
+ <path d="M219 515l-35-81 50-69 76 38" fill="none" stroke="#995b38" stroke-width="37" stroke-linejoin="round" stroke-linecap="round"/>
+ <path d="M219 515l-35-81 50-69 76 38" fill="none" stroke="url(#arm)" stroke-width="28" stroke-linejoin="round" stroke-linecap="round"/>
+ <g fill="#184473" stroke="#ffc75b" stroke-width="7"><circle cx="219" cy="515" r="16"/><circle cx="184" cy="434" r="16"/><circle cx="234" cy="365" r="15"/></g>
+ <path d="M306 393l24-22 16 18m-16-18 12-28" stroke="#bbd2df" stroke-width="11" fill="none" stroke-linecap="round"/>
+ <!-- Plant silhouette tucked left -->
+ <rect x="47" y="470" width="61" height="55" rx="11" fill="#c48753"/>
+ <path d="M76 471v-87m0 51-51-34m51 16 55-55m-55 24-37-63" stroke="#4eb388" stroke-width="7" fill="none"/>
+ <g fill="#36996f"><ellipse cx="38" cy="408" rx="26" ry="11" transform="rotate(25 38 408)"/><ellipse cx="122" cy="371" rx="29" ry="12" transform="rotate(-34 122 371)"/><ellipse cx="47" cy="331" rx="25" ry="12" transform="rotate(40 47 331)"/><ellipse cx="82" cy="379" rx="23" ry="12" transform="rotate(-50 82 379)"/></g>
+</g>
+<!-- Right blueprints, tool panel, tiny warm bench light -->
+<g opacity=".88">
+ <rect x="1427" y="166" width="350" height="253" rx="18" fill="#08224d" stroke="#177ad9" stroke-width="9"/>
+ <rect x="1445" y="184" width="314" height="217" rx="9" fill="#064281" stroke="#13c6ff" stroke-width="3" stroke-opacity=".64"/>
+ <path d="M1461 220H1740M1461 264H1740M1461 309H1740M1461 354H1740M1515 196V388M1580 196V388M1644 196V388M1708 196V388" stroke="#5bdcfb" stroke-opacity=".14"/>
+ <rect x="1531" y="248" width="117" height="112" rx="32" fill="none" stroke="#42d4fa" stroke-width="5" stroke-opacity=".7"/>
+ <path d="M1555 239v-18h69v18M1549 301h-17m134 0h-17" stroke="#41d3fb" stroke-opacity=".7" stroke-width="5" fill="none"/>
+ <circle cx="1565" cy="294" r="7" fill="#55ddff"/><path d="M1603 295q13-15 25 0m-56 23q19 19 45 0" fill="none" stroke="#55dfff" stroke-width="5" stroke-linecap="round"/>
+ <g fill="#8be8ff" opacity=".65"><rect x="1472" y="241" width="38" height="4" rx="2"/><rect x="1472" y="255" width="26" height="3" rx="2"/><rect x="1675" y="242" width="53" height="4" rx="2"/><rect x="1675" y="256" width="45" height="3" rx="2"/></g>
+ <rect x="1410" y="516" width="388" height="26" rx="6" fill="#1b5b95"/><rect x="1410" y="541" width="388" height="162" fill="url(#cabinet)"/>
+ <path d="M1510 544V704M1620 544V704M1411 626H1798" stroke="#37acf0" stroke-opacity=".34" stroke-width="3"/>
+ <path d="M1462 573h38m60 0h38m60 0h38m-233 85h38m60 0h38m60 0h38" stroke="#62cdf4" opacity=".45" stroke-width="4"/>
+ <rect x="1512" y="497" width="87" height="14" rx="7" fill="#ffb751"/>
+ <rect x="1498" y="487" width="110" height="34" rx="11" fill="#ffbe59" opacity=".30" filter="url(#glow)"/>
+ <rect x="1679" y="477" width="61" height="42" rx="11" fill="#b88759"/>
+ <path d="M1708 477v-67m0 44-48-34m48 13 52-39" stroke="#50b487" stroke-width="7" fill="none"/>
+ <ellipse cx="1663" cy="422" rx="27" ry="11" fill="#41a875" transform="rotate(24 1663 422)"/><ellipse cx="1757" cy="399" rx="27" ry="11" fill="#54b983" transform="rotate(-30 1757 399)"/>
+</g>
+<!-- Floor sits behind logo. Perspective grid extends without seam to the bottom edge. -->
+<path d="M0 656H1798V1000H0Z" fill="url(#floor)"/>
+<path d="M0 657H1798" stroke="#17a9f1" stroke-opacity=".40" stroke-width="5"/>
+<g stroke="#45cbff" stroke-opacity=".31" stroke-width="1.6">
+ <path d="M898 657L-190 1000M898 657L80 1000M898 657L360 1000M898 657L540 1000M898 657L675 1000M898 657L790 1000M898 657L900 1000M898 657L1000 1000M898 657L1125 1000M898 657L1265 1000M898 657L1440 1000M898 657L1705 1000M898 657L2000 1000"/>
+ <path d="M0 685H1798M0 719H1798M0 760H1798M0 810H1798M0 870H1798M0 940H1798"/>
+</g>
+<ellipse cx="898" cy="752" rx="500" ry="70" fill="#00bfff" opacity=".16" filter="url(#glow)"/>
+<ellipse cx="898" cy="760" rx="430" ry="56" fill="none" stroke="#00dcff" stroke-width="5" stroke-opacity=".60"/>
+<ellipse cx="898" cy="760" rx="330" ry="40" fill="none" stroke="#1dc8ff" stroke-width="3" stroke-opacity=".50" stroke-dasharray="80 30"/>
+<!-- Decorative light particles -->
+<g fill="#48edff" opacity=".75"><circle cx="563" cy="379" r="4"/><circle cx="1277" cy="347" r="5"/><circle cx="1401" cy="481" r="3"/><circle cx="375" cy="371" r="3"/><circle cx="682" cy="163" r="3"/><circle cx="1207" cy="196" r="3"/></g>
+</svg>
