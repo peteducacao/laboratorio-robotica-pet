@@ -41,7 +41,14 @@ body{min-width:280px;color:#fff;font-family:'Fredoka','Trebuchet MS',system-ui,s
  .site-credit-home{font-size:9px;bottom:4px}
 }
 @media (max-width:340px){.brand-sign{width:96vw}.brand-title{font-size:14.7vw}}
-@media (prefers-reduced-motion:reduce){.mascot-reference{animation:none!important;transition:none!important}}
+/* Abertura estática: nenhuma peça, texto, brilho ou detalhe se anima.
+   Não altera as animações didáticas dos circuitos dentro do editor. */
+.welcome,.welcome *, .welcome::before,.welcome::after,
+.welcome *::before,.welcome *::after{
+ animation:none!important;
+ transition:none!important;
+ scroll-behavior:auto!important;
+}
 
 /* A tela inteira é um único link nativo (toque, mouse e teclado). */
 .welcome-activation{position:absolute;inset:0;z-index:5;display:block;cursor:pointer;touch-action:manipulation;-webkit-tap-highlight-color:transparent}
