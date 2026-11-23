@@ -7,7 +7,7 @@
  width:100%;height:100vh;height:100svh;height:100dvh;min-height:250px;
  padding:18px 18px max(18px,env(safe-area-inset-bottom,0px));
  color:#fff;
- font-family:system-ui,-apple-system,"Segoe UI",sans-serif;
+ font-family:"Fredoka","Trebuchet MS",system-ui,sans-serif;
  overflow:hidden;isolation:isolate;
  background:
   radial-gradient(ellipse 75% 56% at 50% 38%,rgba(4,105,230,.72),transparent 82%),
@@ -63,10 +63,13 @@ html.tinkerpet-booting .tinkerpet-loading{
 .tinkerpet-loading-brand{
  margin:-4px 0 0;display:flex;flex-direction:column;align-items:center;
  width:100%;font-size:clamp(32px,min(10.2vw,8.3dvh),76px);
- font-weight:850;line-height:1.15;letter-spacing:0;white-space:nowrap;
+ font-weight:700;line-height:1.15;letter-spacing:0;white-space:nowrap;
  filter:drop-shadow(0 5px 6px #041a3e);
 }
-.tinkerpet-loading-brand strong{font-weight:850;white-space:nowrap}
+.tinkerpet-loading-brand strong{
+ font-weight:700;white-space:nowrap;-webkit-text-stroke:2px #061b43;
+ paint-order:stroke fill;text-shadow:0 4px 0 #082754,0 7px 9px #031330a8;
+}
 .tinkerpet-loading-brand .tinkerpet-pet{color:#08ddff}
 .tinkerpet-loading-brand small{
  margin-top:3px;color:#e5f9ff;font-size:.42em;font-weight:750;
