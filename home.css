@@ -223,8 +223,8 @@ body{min-width:280px;background:#061a34;color:#fff;font-family:'Trebuchet MS','A
  width:min(83vw,560px);max-width:calc(100vw - 16px);
  margin:-15px 0 0;
 }
-.welcome .brand-wordmark{aspect-ratio:578/148;filter:drop-shadow(0 4px 7px #04163675)}
-.welcome .brand-swoosh{display:none!important}
+.welcome .brand-wordmark{aspect-ratio:578/181;filter:drop-shadow(0 4px 7px #04163675)}
+.welcome .brand-swoosh{display:block!important}
 .welcome .brand-subtitle{display:none!important}
 .welcome .main-action{
  width:min(80%,490px);min-height:clamp(57px,8vh,83px);
@@ -237,6 +237,7 @@ body{min-width:280px;background:#061a34;color:#fff;font-family:'Trebuchet MS','A
  .welcome .brand-stage{max-width:100%;padding-inline:0}
 }
 @media(max-height:540px){
+ .welcome .brand-swoosh{display:none!important}
  .welcome .mascot{width:min(32vh,155px)}
  .welcome .brand-title{width:min(53vw,435px);margin:0}
  .welcome .main-action{width:min(70vw,385px);margin-top:3px}
