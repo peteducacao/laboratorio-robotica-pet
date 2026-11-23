@@ -1,7 +1,7 @@
 /* TinkerPET PWA. Escopo estático: nunca acessa nem apaga projetos do navegador. */
 'use strict';
 const PREFIX='tinkerpet-offline-shell-';
-const BOOT='20261123-tap-anywhere-entry-v21';
+const BOOT='20261123-home-vector-no-loader-v22';
 const BOOT_CACHE=PREFIX+BOOT;
 const META_CACHE='tinkerpet-offline-meta-v1';
 const ACTIVE_URL=new URL('__active-shell__',self.registration.scope).href;
@@ -13,8 +13,6 @@ const PRECACHE=[
  "como-funciona.html",
  "home.css",
  "home.js",
- "loading.css",
- "loading.js",
  "projects.css",
  "projects.js",
  "styles.css",
