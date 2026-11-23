@@ -26,7 +26,7 @@ assert(homeJs.includes("robot.addEventListener('click'")&&homeJs.includes('sched
 for(const mood of ['happy','curious','excited','sleepy'])
  assert(homeJs.includes("id:'"+mood+"'")&&homeCss.includes('data-mood'),"expressão do robô: "+mood);
 assert(!homeJs.includes('window.requestAnimationFrame')&&!homeJs.includes('drawImage'),'sem pintura ou distorção de imagem por JS');
-assert(homeHtml.includes('home.css?v=19')&&homeHtml.includes('home.js?v=15'),'CSS/JS da nova abertura mudaram de versão');
+assert(homeHtml.includes('home.css?v=20')&&homeHtml.includes('home.js?v=15'),'CSS/JS da nova abertura mudaram de versão');
 assert(homeCss.includes('letter-spacing:0;')&&homeCss.includes('.brand-title>span{display:block;flex:none;white-space:nowrap}'),'nome TinkerPET não sobrepõe letras no Android');
 assert(!homeCss.includes('letter-spacing:-.065em')&&!homeCss.includes('font-weight:1000'),'fontes pesadas e espaçamento excessivamente negativo foram removidos');
 assert(!homeCss.includes('drop-shadow(0 7px 0 #061b3b)'),'não duplica a marca com sombra deslocada');
@@ -51,6 +51,55 @@ assert(!homeCss.includes('drop-shadow(0 7px 0 #061b3b)'),'não duplica a marca c
   handlers.click();assert.equal(reaction.textContent,expected,'cada toque produz a próxima reação');
  }
 }
+
+/* Carregamento aprovado nas três entradas do TinkerPET. */
+const loadingJs=fs.readFileSync(path.join(base,'loading.js'),'utf8');
+const loadingCss=fs.readFileSync(path.join(base,'loading.css'),'utf8');
+const loadingMascot=fs.readFileSync(path.join(base,'assets/tinkerpet-mascot.svg'),'utf8');
+const libraryHtml=fs.readFileSync(path.join(base,'projects.html'),'utf8');
+const editorSplashHtml=fs.readFileSync(path.join(base,'editor.html'),'utf8');
+new vm.Script(loadingJs);
+for(const [entry,markup] of [['início',homeHtml],['Meus circuitos',libraryHtml],['bancada',editorSplashHtml]]){
+ assert(markup.includes('id="tinkerpetLoading"'),'tela de carregamento presente em '+entry);
+ assert(markup.includes('loading.css?v=1')&&markup.includes('loading.js?v=1'),'estilos e script do carregamento em '+entry);
+ assert(markup.includes('assets/tinkerpet-mascot.svg'),'robô detalhado do carregamento em '+entry);
+ assert(markup.includes('Carregando...')&&markup.includes('Preparando seus circuitos'),'mensagens do carregamento em '+entry);
+}
+assert(loadingMascot.startsWith('<svg xmlns=')&&loadingMascot.includes('eye-open'),'rosto detalhado e piscadinha preservados em SVG');
+assert(loadingCss.includes('height:100dvh')&&loadingCss.includes('@media(max-height:560px)'),'carregamento cobre tela e adapta no modo paisagem');
+assert(loadingCss.includes('prefers-reduced-motion:reduce'),'respeita movimento reduzido');
+assert(loadingCss.includes('tinkerpet-loading-progress')&&!loadingCss.includes('url('),'barra animada sem cenário rasterizado');
+assert(loadingJs.includes('DOMContentLoaded')&&loadingJs.includes('setTimeout(hide,6500)'),'carregamento termina mesmo em inicialização difícil');
+assert(loadingJs.includes('pageshow')&&loadingJs.includes('event.persisted'),'retorno pelo histórico fecha o carregamento');
+assert(fs.readFileSync(path.join(base,'projects.js'),'utf8').includes('window.TinkerPETLoading?.show()'),'abrir circuito mostra tela de transição');
+assert(fs.readFileSync(path.join(base,'sw.js'),'utf8').includes('assets/tinkerpet-mascot.svg'),'mascote armazenado offline');
+for(const asset of ['loading.css','loading.js'])assert(fs.readFileSync(path.join(base,'sw.js'),'utf8').includes('"'+asset+'"'),asset+' armazenado offline');
+// Simula a inicialização e garante que a interface nunca fique travada no overlay.
+{
+ const events={},timers=[],rootClasses=new Set(),attrs={};
+ const root={classList:{add(x){rootClasses.add(x)},remove(x){rootClasses.delete(x)}}};
+ const overlay={setAttribute(k,v){attrs[k]=v},removeAttribute(k){delete attrs[k]}};
+ const doc={documentElement:root,readyState:'loading',
+  getElementById(id){return id==='tinkerpetLoading'?overlay:null},
+  addEventListener(type,cb){events[type]=cb}};
+ const win={setTimeout(fn){timers.push(fn);return timers.length},
+  addEventListener(type,cb){events[type]=cb}};
+ vm.runInNewContext(loadingJs,{
+  document:doc,window:win,performance:{now(){return 0}},location:{href:'https://example.com/index.html',origin:'https://example.com',pathname:'/index.html',search:''},
+  URL,setTimeout(fn){timers.push(fn);return timers.length},clearTimeout(){},Math
+ });
+ assert(rootClasses.has('tinkerpet-booting'),'carregamento abre no primeiro quadro');
+ events.DOMContentLoaded();
+ assert(timers.length>=2,'controle de duração e plano B presentes');
+ timers.at(-1)();
+ assert(!rootClasses.has('tinkerpet-booting'),'ao terminar o DOM o carregamento desaparece');
+ assert.equal(attrs['aria-hidden'],'true','overlay não prende leitor de tela após carregar');
+ win.TinkerPETLoading.show();
+ assert(rootClasses.has('tinkerpet-booting'),'a transição apresenta o carregamento');
+ win.TinkerPETLoading.hide();
+ assert(!rootClasses.has('tinkerpet-booting'),'transição pode ser encerrada a qualquer momento');
+}
+
 const html=fs.readFileSync(path.join(base,'index.html'),'utf8');
 const css=fs.readFileSync(path.join(base,'styles.css'),'utf8');
 const answerKey=fs.readFileSync(path.join(base,'answer-key.js'),'utf8');
