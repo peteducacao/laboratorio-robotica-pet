@@ -52,6 +52,19 @@ assert(fs.readFileSync(path.join(base,'sw.js'),'utf8').includes('assets/l298n-de
 const mobileAppJs=fs.readFileSync(path.join(base,'app-mobile.js'),'utf8');
 const mobileEditorJs=fs.readFileSync(path.join(base,'mobile-editor.js'),'utf8');
 const editorHtml=fs.readFileSync(path.join(base,'editor.html'),'utf8');
+
+// Persistência e proteção dos objetos individuais em ambos os motores.
+for(const editor of [js,mobileAppJs]){
+ assert(editor.includes('function toggleSelectionLock()'),'cadeado ativa/desativa o bloqueio');
+ assert(editor.includes('locked:p.locked===true')&&editor.includes('locked:w.locked===true'),'reabre travas salvas');
+ assert(editor.includes('function partMovementLocked(id)'),'componente e fios bloqueados são protegidos');
+ assert(editor.includes('if(wire.locked){selectWire(index);startPan(e);return true;}'),'fio travado permite mover a câmera');
+ assert(editor.includes('if(!w||w.locked||state.startPort)'),'fio travado oculta alças móveis');
+}
+assert(editorHtml.includes('id="lockSelectionBtn"'),'cadeado visível na barra');
+assert(fs.readFileSync(path.join(base,'mobile-editor.css'),'utf8').includes('repeat(7,minmax(0,1fr))'),'barra móvel acomoda 7 controles');
+assert(mobileAppJs.includes('state.selectedWire=null;state.selected=null;state.inspector=\'wires\';'),'ao largar ponta solta não mantém seleção pendente');
+
 const seriesPacks=vm.runInNewContext(js.match(/const SERIES_PACK_TYPES=\[([\s\S]*?)\];/)[0]+'\nSERIES_PACK_TYPES');
 assert.deepEqual([...seriesPacks].map(p=>p.kind),['batteryPack4','batteryPack2'],'catálogo contém os dois suportes de AA');
 assert.deepEqual([...seriesPacks].map(p=>p.ids[0]),['aa4','aa2'],'IDs dos suportes são distintos do antigo b2');
