@@ -64,6 +64,9 @@ for(const editor of [js,mobileAppJs]){
 assert(editorHtml.includes('id="lockSelectionBtn"'),'cadeado visível na barra');
 assert(fs.readFileSync(path.join(base,'mobile-editor.css'),'utf8').includes('repeat(7,minmax(0,1fr))'),'barra móvel acomoda 7 controles');
 assert(mobileAppJs.includes('state.selectedWire=null;state.selected=null;state.inspector=\'wires\';'),'ao largar ponta solta não mantém seleção pendente');
+assert(mobileAppJs.includes("if(gesture.type==='wire'&&state.startPort)cancelPendingWire()"),'cancelamento de toque abandona fio pendente');
+assert(mobileAppJs.includes('if(!wire||wire.locked||!viewport)return;'),'cadeado não captura a área de proximidade do fio');
+assert(mobileAppJs.includes("if(e.pointerType==='touch'&&reconnectPending)return;"),'fundo da bancada volta a aceitar gesto de câmera');
 
 const seriesPacks=vm.runInNewContext(js.match(/const SERIES_PACK_TYPES=\[([\s\S]*?)\];/)[0]+'\nSERIES_PACK_TYPES');
 assert.deepEqual([...seriesPacks].map(p=>p.kind),['batteryPack4','batteryPack2'],'catálogo contém os dois suportes de AA');
