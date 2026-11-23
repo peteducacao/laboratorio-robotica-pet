@@ -261,7 +261,11 @@ body{min-width:280px;background:#061a34;color:#fff;font-family:'Trebuchet MS','A
 .welcome .brand-hit-target:active{transform:scale(.99)}
 .welcome .brand-hit-target .mascot-blink-lid{left:32%;top:55%;width:17%;height:19%;border-radius:50%}
 .welcome .brand-hit-target .mascot-reaction{right:-3%;top:13%}
-.welcome .brand-title.sr-only{display:none}
+.welcome .brand-title.sr-only{
+ display:block;position:absolute!important;width:1px!important;height:1px!important;
+ padding:0!important;margin:-1px!important;overflow:hidden!important;
+ clip:rect(0,0,0,0)!important;white-space:nowrap!important;
+}
 .welcome .brand-swoosh,.welcome .brand-subtitle{display:none!important}
 .welcome .main-action{width:min(80vw,500px);min-height:clamp(60px,8dvh,86px);margin-top:clamp(12px,2dvh,24px)}
 @media(max-width:600px){.welcome .brand-art{width:min(88vw,575px)}.welcome .main-action{width:min(80vw,500px)}}
