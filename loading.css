@@ -171,7 +171,7 @@ html.tinkerpet-booting .tinkerpet-loading{
 
 /* Carregamento e abertura compartilham os recortes da mesma identidade original. */
 .tinkerpet-loading-mascot{aspect-ratio:324/242;width:clamp(140px,min(37vw,30dvh),275px);height:auto}
-.tinkerpet-loading-wordmark{aspect-ratio:578/181;width:min(85%,510px)}
+.tinkerpet-loading-wordmark{aspect-ratio:578/127;width:min(85%,510px)}
 .tinkerpet-loading-swirl{display:none!important}
 @media(max-height:560px){
  .tinkerpet-loading-mascot{width:min(28vh,120px)}
