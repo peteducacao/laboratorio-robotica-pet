@@ -5,18 +5,22 @@
  const ROOT='tinkerpet-v2', LIB='tinkerpet-library-v1', ACTIVE='tinkerpet-active-v1', NICK='tinkerpet-nickname-v1';
  const $=id=>document.getElementById(id);
  const nickRegistry=window.TinkerpetNickRegistry;
- const typeKinds={esp:'esp',drv:'driver',lm:'buck',b1:'battery',b2:'batteryPack',s1:'switch',s2:'switch',ml:'motor',mr:'motor'};
+ const typeKinds={esp:'esp',drv:'driver',drvL298n:'l298n',lm:'buck',b1:'battery',b2:'batteryPack',aa4:'batteryPack4',aa2:'batteryPack2',s1:'switch',s2:'switch',ml:'motor',mr:'motor'};
  const geometry={
   esp:[790,365,'assets/esp32-devkit-v1-30p.svg?v=29'],driver:[250,317,'assets/mx1508-desenhado.svg?v=38'],
-  buck:[288,180,'assets/lm2596-desenhado.svg'],battery:[170,228,'assets/bateria-9v-desenhada.svg'],
-  batteryPack:[265,255,'assets/suporte-6-pilhas.svg'],switch:[205,165,'assets/gangorra-desenhada.svg?v=3'],
+  l298n:[500,486,'assets/l298n-desenhado.svg?v=1'],
+   buck:[288,180,'assets/lm2596-desenhado.svg'],battery:[170,228,'assets/bateria-9v-desenhada.svg'],
+  batteryPack:[265,255,'assets/suporte-6-pilhas.svg'],
+   batteryPack4:[265,194,'assets/suporte-4-pilhas.svg'],batteryPack2:[265,134,'assets/suporte-2-pilhas.svg'],
+   switch:[205,165,'assets/gangorra-desenhada.svg?v=3'],
   motor:[190,405,'assets/motor-frontal.svg']
  };
  const pins={
   esp:{"VIN":[14.4,18.5],"GND":[19.43,18.5],"D13":[24.46,18.5],"D12":[29.49,18.5],"D14":[34.52,18.5],"D27":[39.55,18.5],"D26":[44.58,18.5],"D25":[49.61,18.5],"D33":[54.64,18.5],"D32":[59.67,18.5],"D35":[64.7,18.5],"D34":[69.73,18.5],"VN":[74.76,18.5],"VP":[79.79,18.5],"EN":[84.82,18.5],"3V3":[14.4,85.7],"GND2":[19.43,85.7],"D15":[24.46,85.7],"D2":[29.49,85.7],"D4":[34.52,85.7],"RX2":[39.55,85.7],"TX2":[44.58,85.7],"D5":[49.61,85.7],"D18":[54.64,85.7],"D19":[59.67,85.7],"D21":[64.7,85.7],"RX0":[69.73,85.7],"TX0":[74.76,85.7],"D22":[79.79,85.7],"D23":[84.82,85.7]},
   driver:{VCC:[24.3,84.5],GND:[34.7,84.5],IN1:[45,84.5],IN2:[55.3,84.5],IN3:[65.7,84.5],IN4:[76,84.5],OUT1:[70.7,16.5],OUT2:[85.7,16.5],OUT3:[24.3,16.5],OUT4:[39.3,16.5]},
+  l298n:{V12:[24.03,77.29],GND:[33.47,77.29],IN1:[59.17,78],IN2:[64.44,78],IN3:[69.72,78],IN4:[75,78],OUT1:[15.9,33.57],OUT2:[15.9,44.29],OUT3:[84.24,33.57],OUT4:[84.24,44.29]},
   buck:{INP:[14.72,35.1],INN:[14.72,63.1],OUTP:[85,35.1],OUTN:[85,63.1]},
-  battery:{POS:[30.6,4.7],NEG:[68.6,6.2]},batteryPack:{POS:[16.1,7.7],NEG:[84.7,7.7]},
+  battery:{POS:[30.6,4.7],NEG:[68.6,6.2]},batteryPack:{POS:[16.1,7.7],NEG:[84.7,7.7]},batteryPack4:{POS:[16.1,10],NEG:[84.7,10]},batteryPack2:{POS:[16.1,14.3],NEG:[84.7,14.3]},
   switch:{IN:[25,89.8],OUT:[50,89.8],LEDG:[75,89.8]},motor:{A:[18,85],B:[18,80]}
  };
  const clone=obj=>JSON.parse(JSON.stringify(obj));
@@ -29,7 +33,7 @@
   if(!valid(c))throw Error('O arquivo não contém uma montagem válida.');
   const out=clone(c);
   out.parts=out.parts.filter(p=>p&&typeKinds[p.id]===p.kind&&Number.isFinite(p.x)&&Number.isFinite(p.y));
-  if(out.parts.length>9)out.parts=out.parts.slice(0,9);
+  if(out.parts.length>80)out.parts=out.parts.slice(0,80);
   const names=new Set(out.parts.map(p=>p.id));
   out.wires=out.wires.filter(w=>w&&typeof w.a==='string'&&typeof w.b==='string'&&
    names.has(w.a.split('.')[0])&&names.has(w.b.split('.')[0])&&Array.isArray(w.via||[])&&
@@ -284,7 +288,10 @@
   ctx.fillStyle='#f4f8f9';ctx.fillRect(0,0,W,H);
   ctx.fillStyle='#d5e4e8';for(let x=10;x<W;x+=17)for(let y=9;y<H;y+=17){ctx.beginPath();ctx.arc(x,y,.8,0,7);ctx.fill()}
   if(!parts.length){ctx.fillStyle='#91a9b3';ctx.font='bold 25px Arial';ctx.textAlign='center';ctx.fillText('Bancada vazia',W/2,H/2);return}
-  const bounds=parts.map(p=>{const g=geometry[p.kind],sz=p.kind==='motor'&&p.view==='side'?[340,170]:g;
+  // A miniatura nunca deve falhar quando um projeto usa componentes novos.
+  const visibleParts=parts.filter(p=>p&&geometry[p.kind]&&Number.isFinite(p.x)&&Number.isFinite(p.y));
+  if(!visibleParts.length){ctx.fillStyle='#708c97';ctx.font='bold 20px Arial';ctx.textAlign='center';ctx.fillText('Abra o circuito para visualizar',W/2,H/2);return;}
+  const bounds=visibleParts.map(p=>{const g=geometry[p.kind],sz=p.kind==='motor'&&p.view==='side'?[340,170]:g;
    return {x:p.x,y:p.y,w:sz[0],h:sz[1]};});
   const x0=Math.min(...bounds.map(b=>b.x)),y0=Math.min(...bounds.map(b=>b.y));
   const x1=Math.max(...bounds.map(b=>b.x+b.w)),y1=Math.max(...bounds.map(b=>b.y+b.h));
@@ -292,7 +299,7 @@
   const scale=Math.min((W-56)/spanX,(H-40)/spanY,1.8);
   const map=(x,y)=>({x:W/2+(x-midX)*scale,y:H/2+(y-midY)*scale});
   const getPort=port=>{
-   const [pid,name]=port.split('.'),p=parts.find(p=>p.id===pid);if(!p)return null;
+   const [pid,name]=port.split('.'),p=visibleParts.find(p=>p.id===pid);if(!p||!geometry[p.kind])return null;
    const side=p.kind==='motor'&&p.view==='side';
    const sz=side?[340,170]:geometry[p.kind];
    const pos=side?({A:[96,42],B:[96,63]})[name]:pins[p.kind]?.[name];
@@ -313,7 +320,7 @@
     ctx.lineTo(end.x,end.y);ctx.strokeStyle=String(wire.color).toLowerCase()==='#ed654d'?'#df1724':wire.color||'#df1724';ctx.stroke();
    }
   };
-  let loaded=0;const sprites=parts.map(p=>{
+  const sprites=visibleParts.map(p=>{
    const g=geometry[p.kind];if(!g)return null;
    const img=new Image();img.src=p.kind==='motor'&&p.view==='side'?'assets/motor-lateral.svg':g[2];
    return {p,img,w:p.kind==='motor'&&p.view==='side'?340:g[0],h:p.kind==='motor'&&p.view==='side'?170:g[1]};
