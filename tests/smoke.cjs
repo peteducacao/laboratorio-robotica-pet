@@ -12,8 +12,8 @@ const homeCss=fs.readFileSync(path.join(base,'home.css'),'utf8');
 const homeJs=fs.readFileSync(path.join(base,'home.js'),'utf8');
 new vm.Script(homeJs);
 assert(homeHtml.includes('class="brand-stage"'),'identidade fica em bloco central independente do fundo');
-assert(homeHtml.includes('class="mascot"')&&homeHtml.includes('class="mascot-reference"'),'robô original permanece isolado e interativo');
-assert(homeHtml.includes('class="brand-title"')&&homeHtml.includes('class="brand-wordmark"'),'TinkerPET usa o desenho vetorial da marca original');
+assert(homeHtml.includes('id="robotInteract"')&&homeHtml.includes('class="brand-composite"'),'robô mantém interação no logotipo unificado');
+assert(homeHtml.includes('class="brand-title sr-only"')&&homeHtml.includes('assets/tinkerpet-brand-tested.svg'),'nome acessível e identidade unificada');
 assert(homeHtml.includes('id="enterProjects"')&&homeHtml.includes('href="projects.html'),'CTA acessível abre Meus circuitos');
 assert(homeHtml.includes('id="robotFeedback"')&&homeHtml.includes('aria-live="polite"'),'reações têm feedback acessível');
 assert(!homeHtml.includes('id="welcomeArt"')&&!homeHtml.includes('welcomeBackdrop'),'não há imagem da oficina antiga sobrepondo o fundo');
@@ -26,8 +26,8 @@ assert(homeJs.includes("robot.addEventListener('click'")&&homeJs.includes('sched
 for(const mood of ['happy','curious','excited','sleepy'])
  assert(homeJs.includes("id:'"+mood+"'")&&homeCss.includes('data-mood'),"expressão do robô: "+mood);
 assert(!homeJs.includes('window.requestAnimationFrame')&&!homeJs.includes('drawImage'),'sem pintura ou distorção de imagem por JS');
-assert(homeHtml.includes('home.css?v=23')&&homeHtml.includes('home.js?v=15'),'CSS/JS da abertura atualizados');
-assert(homeCss.includes('.brand-wordmark{')&&homeCss.includes('width:min(83vw,560px)'),'marca original fica centralizada e proporcional');
+assert(homeHtml.includes('home.css?v=25')&&homeHtml.includes('home.js?v=15'),'CSS/JS da abertura atualizados');
+assert(homeCss.includes('.brand-composite{')&&homeCss.includes('width:min(88vw,575px)'),'marca unificada escala sem recorte');
 assert(homeCss.includes('font-family:"Fredoka"')&&homeHtml.includes('family=Fredoka'),'fonte arredondada do logotipo carregada com fallback');
 assert(homeCss.includes('-webkit-text-stroke:2.7px #061635'),'contorno azul-escuro da identidade presente');
 assert(homeHtml.includes('assets/tinkerpet-original-robot-transparent.svg'),'rosto original da referência preservado na abertura');
@@ -65,8 +65,8 @@ const editorSplashHtml=fs.readFileSync(path.join(base,'editor.html'),'utf8');
 new vm.Script(loadingJs);
 for(const [entry,markup] of [['início',homeHtml],['Meus circuitos',libraryHtml],['bancada',editorSplashHtml]]){
  assert(markup.includes('id="tinkerpetLoading"'),'tela de carregamento presente em '+entry);
- assert(markup.includes('loading.css?v=4')&&markup.includes('loading.js?v=1'),'estilos e script do carregamento em '+entry);
- assert(markup.includes('assets/tinkerpet-original-robot-transparent.svg'),'robô original do carregamento em '+entry);
+ assert(markup.includes('loading.css?v=6')&&markup.includes('loading.js?v=1'),'estilos e script do carregamento em '+entry);
+ assert(markup.includes('assets/tinkerpet-brand-tested.svg'),'carregamento usa a marca unificada em '+entry);
  assert(markup.includes('Carregando...')&&markup.includes('Preparando seus circuitos'),'mensagens do carregamento em '+entry);
 }
 assert(loadingMascot.startsWith('<svg xmlns=')&&loadingMascot.includes('mask="url(#silhouette)"'),'rosto original recortado da imagem de referência');
@@ -80,14 +80,14 @@ assert(fs.readFileSync(path.join(base,'sw.js'),'utf8').includes('assets/tinkerpe
 const originalWordmark=fs.readFileSync(path.join(base,'assets/tinkerpet-original-wordmark.svg'),'utf8');
 assert(originalWordmark.startsWith('<svg')&&originalWordmark.includes('fill-rule="evenodd"'),'marca original vetorizada preserva letras e seus vazados');
 assert(originalWordmark.includes('viewBox="0 0 578 127"'),'proporções originais da tipografia preservadas');
-assert(homeHtml.includes('assets/tinkerpet-original-letters-transparent.svg'),'tipografia da imagem aprovada usada na abertura');
+assert(homeHtml.includes('assets/tinkerpet-brand-tested.svg'),'tipografia da referência permanece inteira na abertura');
 assert(homeHtml.includes('assets/tinkerpet-original-robot-transparent.svg'),'rosto da imagem aprovada usado na abertura');
 assert(!homeHtml.includes('class="mascot-art"'),'não renderiza o desenho simplificado sobre a carinha original');
 assert(homeCss.includes('.welcome .mascot-blink-lid'),'olho do robô continua piscando');
 assert(homeCss.includes('.welcome .brand-swoosh{display:none!important}'),'não duplica o sublinhado da marca');
 for(const entry of ['index.html','projects.html','editor.html']){
  const markup=fs.readFileSync(path.join(base,entry),'utf8');
- assert(markup.includes('class="tinkerpet-loading-wordmark"')&&markup.includes('assets/tinkerpet-original-letters-transparent.svg'),'carregamento usa a marca da referência em '+entry);
+ assert(!markup.includes('class="tinkerpet-loading-wordmark"')&&markup.includes('assets/tinkerpet-brand-tested.svg'),'carregamento sem duplicação de logotipo em '+entry);
 }
 assert(fs.readFileSync(path.join(base,'sw.js'),'utf8').includes('assets/tinkerpet-original-wordmark.svg'),'marca original disponibilizada offline');
 for(const asset of ['tinkerpet-original-robot-transparent.svg','tinkerpet-original-letters-transparent.svg']){
@@ -1030,3 +1030,6 @@ assert(js.includes("if(!g.moved&&e.pointerType==='touch')"),'pointerup liga o pi
 assert(!js.includes("Q('componentSearch').focus?.()"),'abrir catálogo não ativa teclado automaticamente');
 
 console.log('PASS: bancada vazia, 9 peças, catálogo, limite, 17 fios, erro, 5 V, duas gangorras, pista e salvamento.');
+
+assert(homeHtml.includes('class="brand-composite"')&&!homeHtml.includes('class="mascot-reference"'),'abertura não usa recortes separados');
+assert(fs.readFileSync(path.join(base,'sw.js'),'utf8').includes('assets/tinkerpet-brand-tested.svg'),'marca unificada no cache offline');
