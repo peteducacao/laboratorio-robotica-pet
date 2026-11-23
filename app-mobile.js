@@ -37,7 +37,12 @@ const L298N_TYPES=[{
  info:'Ponte H dupla L298N para dois motores DC. O suporte de pilhas vai ao borne 12V e ao GND. O GND da ponte também deve ser ligado ao ESP32. Os pinos 5V e ENA/ENB aparecem na placa, mas não precisam de fios nesta atividade.',
  tip:'Pilhas (+) → 12V; pilhas (−) → GND; ESP32 GND → GND. GPIO27→IN1, GPIO26→IN2, GPIO32→IN3, GPIO18→IN4. Motor A em OUT1/OUT2 e B em OUT3/OUT4. Não ligue 5V, ENA ou ENB; mantenha os jumpers de habilitação do módulo instalados.'
 }];
-const CATALOG_TYPES=[TYPES[0],TYPES[1],...L298N_TYPES,...TYPES.slice(2)];
+/* Suportes AA opcionais para montagem 4 + 2 em série. */
+const SERIES_PACK_TYPES=[
+ {kind:'batteryPack4',name:'Suporte de 4 pilhas AA',img:'assets/suporte-4-pilhas.svg',ids:['aa4'],pins:[['POS','+'],['NEG','−']],info:'Quatro pilhas AA de 1,5 V totalizam 6 V nominais neste suporte.',tip:'Ligue o + do suporte 4 AA ao − do suporte 2 AA; o − livre do 4 AA vai ao GND da ponte H.'},
+ {kind:'batteryPack2',name:'Suporte de 2 pilhas AA',img:'assets/suporte-2-pilhas.svg',ids:['aa2'],pins:[['POS','+'],['NEG','−']],info:'Duas pilhas AA de 1,5 V totalizam 3 V nominais; em série com quatro AA somam 9 V.',tip:'Ligue o − do suporte 2 AA ao + do suporte 4 AA; o + livre do 2 AA vai ao borne 12V de alimentação da L298N.'}
+];
+const CATALOG_TYPES=[TYPES[0],TYPES[1],...L298N_TYPES,...TYPES.slice(2,5),...SERIES_PACK_TYPES,...TYPES.slice(5)];
 const byKind=Object.fromEntries(CATALOG_TYPES.map(p=>[p.kind,p]));
 const PART_LAYOUTS={
  esp:{w:790,h:365,pins:{"VIN":[14.4,18.5],"GND":[19.43,18.5],"D13":[24.46,18.5],"D12":[29.49,18.5],"D14":[34.52,18.5],"D27":[39.55,18.5],"D26":[44.58,18.5],"D25":[49.61,18.5],"D33":[54.64,18.5],"D32":[59.67,18.5],"D35":[64.7,18.5],"D34":[69.73,18.5],"VN":[74.76,18.5],"VP":[79.79,18.5],"EN":[84.82,18.5],"3V3":[14.4,85.7],"GND2":[19.43,85.7],"D15":[24.46,85.7],"D2":[29.49,85.7],"D4":[34.52,85.7],"RX2":[39.55,85.7],"TX2":[44.58,85.7],"D5":[49.61,85.7],"D18":[54.64,85.7],"D19":[59.67,85.7],"D21":[64.7,85.7],"RX0":[69.73,85.7],"TX0":[74.76,85.7],"D22":[79.79,85.7],"D23":[84.82,85.7]}},
@@ -46,6 +51,8 @@ const PART_LAYOUTS={
  buck:{w:288,h:180,pins:{INP:[14.72,35.1],INN:[14.72,63.1],OUTP:[85,35.1],OUTN:[85,63.1]}},
  battery:{w:170,h:228,pins:{POS:[30.6,4.7],NEG:[68.6,6.2]}},
  batteryPack:{w:265,h:255,pins:{POS:[16.1,7.7],NEG:[84.7,7.7]}},
+ batteryPack4:{w:265,h:194,pins:{POS:[16.1,10],NEG:[84.7,10]}},
+ batteryPack2:{w:265,h:134,pins:{POS:[16.1,14.3],NEG:[84.7,14.3]}},
  switch:{w:205,h:165,pins:{IN:[25,89.8],OUT:[50,89.8],LEDG:[75,89.8]}},
  motor:{w:190,h:405,pins:{A:[18,85],B:[18,80]}},
  motorSide:{w:340,h:170,pins:{A:[96,42],B:[96,63]}}
@@ -268,8 +275,27 @@ function partBounds(p){
  return side?{x:p.x+(d.w-d.h)/2,y:p.y+(d.h-d.w)/2,w:d.h,h:d.w}:{x:p.x,y:p.y,w:d.w,h:d.h};
 }
 function message(msg,toast=false){Q('statusText').textContent=msg;if(toast){const el=Q('toast');el.textContent=msg;el.classList.add('show');clearTimeout(toastTimer);toastTimer=setTimeout(()=>el.classList.remove('show'),2600);}}
+// A ponte deve reconhecer ambas as ordens corretas da associação em série.
+const SERIES_POWER_VARIANTS=[
+ {source:'aa2.POS',negative:'aa4.NEG',bridge:['aa4.POS','aa2.NEG']},
+ {source:'aa4.POS',negative:'aa2.NEG',bridge:['aa2.POS','aa4.NEG']}
+];
+function seriesPowerMode(){return exists('aa4')||exists('aa2');}
+function selectedMotorSupply(){
+ if(!seriesPowerMode())return {source:'b2.POS',negative:'b2.NEG',bridge:null};
+ const has=(a,b)=>state.wires.some(w=>!w.loose&&electricalKey(w.a,w.b)===electricalKey(a,b));
+ let best=SERIES_POWER_VARIANTS[0],bestScore=-1;
+ for(const supply of SERIES_POWER_VARIANTS){
+  let score=(has(...supply.bridge)?9:0)+(has(supply.negative,'drv.GND')?6:0)+(has(supply.source,'drv.VCC')?8:0);
+  for(const s of ['s1','s2'])for(const terminal of ['IN','OUT'])if(has(supply.source,s+'.'+terminal))score+=8;
+  if(score>bestScore){best=supply;bestScore=score;}
+ }
+ return best;
+}
+function motorSupplyPairs(supply){return [...(supply.bridge?[supply.bridge]:[]),[supply.negative,'drv.GND']];}
 function assemblyMode(){return exists('s1')||exists('s2')?'switched':'direct';}
-function requiredParts(){return assemblyMode()==='switched'?9:7;}
+function requiredParts(){if(seriesPowerMode())return assemblyMode()==='switched'?10:8;
+ return assemblyMode()==='switched'?9:7;}
 // Gabarito com gangorras: cada fonte interrompe SOMENTE seu positivo.
 // Chave 1: bateria 9 V (+) → terminal 1 → terminal 2 → IN+ do LM2596.
 // Chave 2: suporte AA (+) → terminal 1 → terminal 2 → + da MX1508.
@@ -283,12 +309,12 @@ function switchPositiveConnections(from,to,id,reversed){
 }
 const SWITCH_WIRING_VARIANTS=(()=>{
  const variants=[];
- for(const espId of ['s1','s2']){
+ for(const motorSource of ['b2.POS','aa2.POS','aa4.POS'])for(const espId of ['s1','s2']){
   const motorId=espId==='s1'?'s2':'s1';
   for(const espReversed of [false,true])for(const motorReversed of [false,true]){
    const esp=switchPositiveConnections('b1.POS','lm.INP',espId,espReversed);
-   const motor=switchPositiveConnections('b2.POS','drv.VCC',motorId,motorReversed);
-   variants.push({espId,motorId,esp,motor,pairs:[...esp,...motor]});
+   const motor=switchPositiveConnections(motorSource,'drv.VCC',motorId,motorReversed);
+   variants.push({motorSource,espId,motorId,esp,motor,pairs:[...esp,...motor]});
   }
  }
  return variants;
@@ -301,6 +327,7 @@ function switchWiringCandidates(){
  const placed=state.wires.filter(w=>!w.loose&&
   [w.a,w.b].some(p=>p.startsWith('s1.')||p.startsWith('s2.')));
  return SWITCH_WIRING_VARIANTS.filter(variant=>{
+  if(variant.motorSource!==selectedMotorSupply().source)return false;
   const allowed=new Set(variant.pairs.map(([a,b])=>electricalKey(a,b)));
   return placed.every(w=>allowed.has(electricalKey(w.a,w.b)));
  });
@@ -311,8 +338,9 @@ function selectedSwitchConnections(){
  // Quando já há uma ligação contraditória, mantém a melhor hipótese
  // apenas para indicar o que falta, sem aceitar o conflito como correto.
  const actual=new Set(state.wires.filter(w=>!w.loose).map(w=>electricalKey(w.a,w.b)));
- let best=SWITCH_WIRING_VARIANTS[0],score=-1;
- for(const variant of SWITCH_WIRING_VARIANTS){
+ const variants=SWITCH_WIRING_VARIANTS.filter(v=>v.motorSource===selectedMotorSupply().source);
+ let best=variants[0],score=-1;
+ for(const variant of variants){
   const matches=variant.pairs.filter(([a,b])=>actual.has(electricalKey(a,b))).length;
   if(matches>score){score=matches;best=variant;}
  }
@@ -366,13 +394,22 @@ function selectedControlConnections(){
  });
 }
 function expectedConnections(){
- const baseline=assemblyMode()==='switched'
-  ?[...COMMON_CONNECTIONS,...selectedSwitchConnections().pairs]:DIRECT_CONNECTIONS;
- return baseline.filter(([a,b])=>!a.startsWith('drv.OUT')&&!CONTROL_INPUTS.some(pin=>b==='drv.'+pin))
+ const switched=assemblyMode()==='switched';
+ const baseline=switched?[...COMMON_CONNECTIONS,...selectedSwitchConnections().pairs]:DIRECT_CONNECTIONS;
+ const supply=selectedMotorSupply();
+ const powered=seriesPowerMode()
+  ?baseline.filter(([a,b])=>!a.startsWith('b2.')&&!b.startsWith('b2.'))
+    .concat(motorSupplyPairs(supply),switched?[]:[[supply.source,'drv.VCC']])
+  :baseline;
+ return powered.filter(([a,b])=>!a.startsWith('drv.OUT')&&!CONTROL_INPUTS.some(pin=>b==='drv.'+pin))
   .concat(selectedControlConnections(),selectedMotorConnections());
 }
 function acceptedConnectionSet(){
  const allowed=new Set(expectedConnections().map(([a,b])=>electricalKey(a,b)));
+ if(seriesPowerMode())for(const supply of SERIES_POWER_VARIANTS){
+  for(const [a,b] of motorSupplyPairs(supply))allowed.add(electricalKey(a,b));
+  if(assemblyMode()!=='switched')allowed.add(electricalKey(supply.source,'drv.VCC'));
+ }
  if(assemblyMode()==='switched'){
   // Enquanto as duas gangorras ainda estão sendo ligadas, não mostrar
   // erro por escolher a segunda como chave do LM2596 (ou vice-versa).
@@ -431,11 +468,13 @@ function powerStatus(){
  const motorPositive=switched
   ?exists(switchWiring.motorId)&&state.switches[switchWiring.motorId]&&
    switchWiring.motor.every(([a,b])=>has(a,b))
-  :has('b2.POS','drv.VCC');
+  :has(selectedMotorSupply().source,'drv.VCC');
  const buck=exists('b1')&&exists('lm')&&espPositive&&has('b1.NEG','lm.INN');
  const esp=buck&&exists('esp')&&Math.abs(state.voltage-5)<.01
   &&has('lm.OUTP','esp.VIN')&&has('lm.OUTN','esp.GND');
- const driver=exists('b2')&&(exists('drv')||exists('drvL298n'))&&motorPositive&&has('b2.NEG','drv.GND');
+ const supply=selectedMotorSupply();
+ const available=seriesPowerMode()?exists('aa4')&&exists('aa2'):exists('b2');
+ const driver=available&&(exists('drv')||exists('drvL298n'))&&motorPositive&&motorSupplyPairs(supply).every(([a,b])=>has(a,b));
  const common=esp&&has('esp.GND','drv.GND');
  const assigned=selectedMotorConnections();
  const motorOn=(id)=>{
@@ -473,7 +512,7 @@ function updateLiveSimulation(){
   if(id==='s1'||id==='s2'){
    const isEspSwitch=id===selectedSwitchConnections().espId;
    const source=isEspSwitch?live.buck:live.driver;
-   const negative=isEspSwitch?'b1.NEG':'b2.NEG';
+   const negative=isEspSwitch?'b1.NEG':selectedMotorSupply().negative;
    const indicator=enabled&&source&&state.wires.some(w=>!w.loose&&electricalKey(w.a,w.b)===electricalKey(negative,id+'.LEDG'));
    card.dataset.indicator=indicator?'on':'off';
   }
@@ -512,8 +551,8 @@ function renderParts(){
   if(p.kind==='esp')card.dataset.boardModel='devkit30';
   if(p.kind==='switch'){
     card.dataset.powered=state.switches[p.id]?'on':'off';
-    const battery=p.id===selectedSwitchConnections().espId?'b1':'b2';
-    const ledConnected=state.wires.some(w=>!w.loose&&electricalKey(w.a,w.b)===electricalKey(battery+'.NEG',p.id+'.LEDG'));
+    const negative=p.id===selectedSwitchConnections().espId?'b1.NEG':selectedMotorSupply().negative;
+ const ledConnected=state.wires.some(w=>!w.loose&&electricalKey(w.a,w.b)===electricalKey(negative,p.id+'.LEDG'));
     card.dataset.indicator=state.switches[p.id]&&ledConnected?'on':'off';
   }
   card.className='part'+(state.selected===p.id||selectedParts.has(p.id)?' selected':'')+(selectedParts.has(p.id)?' multi-selected':'');
@@ -742,7 +781,7 @@ function renderProgress(){
  const progressDetails=Q('editorToolbarProgress');
  if(progressDetails)progressDetails.title=badge.title;
  const missionTitle=Q('missionTitle'),missionText=Q('missionText');
- if(!partsDone){Q('stepNumber').textContent='01';missionTitle.textContent='Sua bancada está vazia';missionText.textContent='Monte a versão direta com 7 peças ou adicione duas gangorras para a versão com chaves (9 peças).';}
+ if(!partsDone){Q('stepNumber').textContent='01';missionTitle.textContent='Sua bancada está vazia';missionText.textContent='Use 6 pilhas AA num suporte ou 4 + 2 AA em série (8 peças). As gangorras são opcionais.';}
  else if(inAssembly){Q('stepNumber').textContent='01';missionTitle.textContent='Monte seu conjunto de peças';missionText.textContent='Modo '+(switched?'com gangorras':'sem gangorras')+': você colocou '+partsDone+' de '+required+' peças.';}
  else if(missing().length||errors){Q('stepNumber').textContent='02';missionTitle.textContent='Conecte os terminais';missionText.textContent=total+' das '+expected.length+' ligações corretas. Monte por etapas: alimentação do LM2596, Ponte H e motores, depois confira o ESP32.';}
  else if(Math.abs(state.voltage-5)>.01||(switched&&(!state.switches.s1||!state.switches.s2))){Q('stepNumber').textContent='03';missionTitle.textContent='Ligações concluídas! Ative a alimentação';missionText.textContent='Ajuste a saída do LM2596 para 5,0 V'+(switched?' e ligue as duas gangorras.':'.');}
