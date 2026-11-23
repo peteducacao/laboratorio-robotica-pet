@@ -13,17 +13,17 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="home.css?v=22">
+<link rel="stylesheet" href="home.css?v=23">
 <script src="home.js?v=15" defer></script>
-<link rel="stylesheet" href="loading.css?v=3">
+<link rel="stylesheet" href="loading.css?v=4">
 <script src="loading.js?v=1"></script>
 </head>
 <body>
 <div id="tinkerpetLoading" class="tinkerpet-loading" role="status" aria-live="polite" aria-label="TinkerPET carregando">
  <div class="tinkerpet-loading-pattern" aria-hidden="true"></div>
  <div class="tinkerpet-loading-body">
-  <img class="tinkerpet-loading-mascot" src="assets/tinkerpet-mascot.svg" width="320" height="312" alt="Robô TinkerPET sorrindo">
-  <div class="tinkerpet-loading-brand"><img class="tinkerpet-loading-wordmark" src="assets/tinkerpet-original-wordmark.svg" width="578" height="127" alt="TinkerPET"><small>STUDIO</small></div>
+  <img class="tinkerpet-loading-mascot" src="assets/tinkerpet-original-robot-transparent.svg" width="320" height="312" alt="Robô TinkerPET sorrindo">
+  <div class="tinkerpet-loading-brand"><img class="tinkerpet-loading-wordmark" src="assets/tinkerpet-original-letters-transparent.svg" width="578" height="148" alt="TinkerPET"><small>STUDIO</small></div>
   <span class="tinkerpet-loading-swirl" aria-hidden="true"></span>
   <span class="tinkerpet-loading-spacer" aria-hidden="true"></span>
   <span class="tinkerpet-loading-gear" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M19.5 13.4a7.6 7.6 0 0 0 0-2.8l2-1.55-2-3.46-2.36.94a7.6 7.6 0 0 0-2.4-1.4L14.4 2h-4.8l-.34 3.13a7.6 7.6 0 0 0-2.4 1.4l-2.36-.94-2 3.46 2 1.55a7.6 7.6 0 0 0 0 2.8l-2 1.55 2 3.46 2.36-.94a7.6 7.6 0 0 0 2.4 1.4L9.6 22h4.8l.34-3.13a7.6 7.6 0 0 0 2.4-1.4l2.36.94 2-3.46-2-1.55ZM12 15.5a3.5 3.5 0 1 1 0-7 3.5 3.5 0 0 1 0 7Z"/></svg></span>
@@ -60,57 +60,11 @@
  <div class="pin-decoration pin-decoration-right" aria-hidden="true"><span></span><span></span><span></span></div>
  <section class="brand-stage" aria-label="Identidade do TinkerPET">
   <button class="mascot" id="robotInteract" type="button" aria-label="Interagir com o robô TinkerPET" title="Toque para ver as reações do robô">
-   <svg class="mascot-art" viewBox="0 0 320 312" role="img" aria-label="Robô TinkerPET sorrindo e piscando um olho">
-    <defs>
-     <linearGradient id="robot-shell" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#f9fdff"/><stop offset=".50" stop-color="#d8e5f1"/><stop offset="1" stop-color="#8eb3d7"/></linearGradient>
-     <linearGradient id="robot-casing" x1="0" x2="1" y1="0" y2="1"><stop stop-color="#0d2854"/><stop offset=".55" stop-color="#0a1637"/><stop offset="1" stop-color="#071d46"/></linearGradient>
-     <linearGradient id="robot-glass" x1="0" x2="0" y1="0" y2="1"><stop stop-color="#ffffff"/><stop offset=".52" stop-color="#f3f8ff"/><stop offset="1" stop-color="#c8e0f5"/></linearGradient>
-     <linearGradient id="robot-ear" x1="0" x2="1" y1="0" y2="1"><stop stop-color="#fff874"/><stop offset=".50" stop-color="#ffbd18"/><stop offset="1" stop-color="#ff8900"/></linearGradient>
-     <radialGradient id="antenna-light"><stop stop-color="#fff8b4"/><stop offset=".49" stop-color="#ffd834"/><stop offset=".8" stop-color="#ff9b0a"/><stop offset="1" stop-color="#ff7400"/></radialGradient>
-     <filter id="robot-glow" x="-60%" y="-60%" width="220%" height="220%"><feGaussianBlur stdDeviation="6"/></filter>
-     <filter id="robot-shadow" x="-35%" y="-35%" width="170%" height="180%"><feDropShadow dx="0" dy="8" stdDeviation="6" flood-color="#04112a" flood-opacity=".72"/></filter>
-    </defs>
-    <g class="robot-rays" stroke-width="10" stroke-linecap="round">
-     <path d="m76 58-14-23m-7 52-28-12" stroke="#ffce21"/>
-     <path d="m245 57 16-25m9 52 27-13" stroke="#08e9fb"/>
-    </g>
-    <g class="robot-antenna">
-     <rect x="150" y="38" width="20" height="54" rx="8" fill="#edf9ff" stroke="#09204a" stroke-width="7"/>
-     <circle cx="160" cy="31" r="29" fill="#08234c" stroke="#f3f8ff" stroke-width="6"/>
-     <circle cx="160" cy="31" r="18" fill="url(#antenna-light)" stroke="#ffc963" stroke-width="3"/>
-     <circle cx="155" cy="25" r="6" fill="#ffffffb0"/>
-    </g>
-    <g filter="url(#robot-shadow)">
-     <rect x="16" y="125" width="58" height="103" rx="28" fill="#071a3b" stroke="#13bcfd" stroke-width="4"/>
-     <rect x="24" y="135" width="47" height="81" rx="22" fill="url(#robot-ear)" stroke="#f9c334" stroke-width="3"/>
-     <rect x="247" y="125" width="58" height="103" rx="28" fill="#071a3b" stroke="#14bbed" stroke-width="4"/>
-     <rect x="250" y="135" width="45" height="81" rx="22" fill="url(#robot-ear)" stroke="#f9c334" stroke-width="3"/>
-     <rect x="47" y="85" width="226" height="183" rx="62" fill="url(#robot-casing)" stroke="#05d5fd" stroke-width="5"/>
-     <rect x="57" y="93" width="207" height="167" rx="54" fill="url(#robot-shell)" stroke="#fbffff" stroke-width="8"/>
-     <!-- Detalhes restaurados: aro escuro, testa azul-marinho e visor recortado. -->
-     <rect x="79" y="118" width="165" height="117" rx="31" fill="#06214b" stroke="#1f5b95" stroke-width="5"/>
-     <path d="M89 164v-12c0-14 11-25 25-25h95c14 0 25 11 25 25v12Z" fill="#042657"/>
-     <path d="M93 150c0-11 9-20 20-20h97c11 0 20 9 20 20" fill="none" stroke="#0b467c" stroke-width="5" stroke-linecap="round"/>
-     <rect x="90" y="149" width="143" height="79" rx="23" fill="url(#robot-glass)" stroke="#d8eafb" stroke-width="3"/>
-     <path d="M91 171v30c0 13 10 24 23 24h96c14 0 23-11 23-24v-30" fill="none" stroke="#95bce2" stroke-opacity=".45" stroke-width="2.5"/>
-     <ellipse cx="129" cy="179" rx="15" ry="18" fill="#08254c"/>
-     <circle cx="123" cy="171" r="5" fill="#fff"/>
-     <circle cx="135" cy="181" r="2" fill="#84d7ff"/>
-     <path d="M95 158q50-19 133-4" fill="none" stroke="#ffffff" stroke-opacity=".44" stroke-width="3" stroke-linecap="round"/>
-     <circle cx="125" cy="170" r="2.3" fill="#b5eaff"/>
-     <g class="eye-blink"><path d="M112 182q16-14 31 0" fill="none" stroke="#08254c" stroke-width="8" stroke-linecap="round"/></g>
-     <g class="eye-open"><path d="M186 175q12-17 27-3" fill="none" stroke="#08254c" stroke-width="10" stroke-linecap="round"/><path d="m190 178q10-3 19 5" fill="none" stroke="#08254c" stroke-width="7" stroke-linecap="round"/></g>
-     <circle class="eye-alternative" cx="199" cy="177" r="14" fill="#09264c"/>
-     <path class="robot-smile" d="M147 203q15 20 33-1" fill="none" stroke="#092b51" stroke-width="8" stroke-linecap="round"/>
-     <path class="robot-happy-smile" d="M141 199q20 30 43-1" fill="none" stroke="#092b51" stroke-width="8" stroke-linecap="round"/>
-     <g class="robot-blush"><ellipse cx="109" cy="208" rx="12" ry="6" fill="#ff9b95" opacity=".66"/><ellipse cx="216" cy="208" rx="12" ry="6" fill="#ff9b95" opacity=".66"/></g>
-     <path d="M104 112h112" stroke="#ffffffb5" stroke-width="4" stroke-linecap="round"/>
-     <path d="M112 102h99" stroke="#e8faff73" stroke-width="2.5" stroke-linecap="round"/>
-    </g>
-   </svg>
+   <img class="mascot-reference" src="assets/tinkerpet-original-robot-transparent.svg" alt="" width="324" height="242" draggable="false">
+   <span class="mascot-blink-lid" aria-hidden="true"></span>
    <span class="mascot-reaction" id="robotExpression" aria-hidden="true"></span>
   </button>
-  <h1 class="brand-title"><img class="brand-wordmark" src="assets/tinkerpet-original-wordmark.svg" width="578" height="127" alt="TinkerPET"></h1>
+  <h1 class="brand-title"><img class="brand-wordmark" src="assets/tinkerpet-original-letters-transparent.svg" width="578" height="148" alt="TinkerPET"></h1>
   <svg class="brand-swoosh" viewBox="0 0 330 22" aria-hidden="true"><defs><linearGradient id="swoosh" x1="0" y1="0" x2="1" y2="0"><stop stop-color="#ffcf13"/><stop offset=".5" stop-color="#ffff71"/><stop offset="1" stop-color="#00e5fe"/></linearGradient></defs><path d="M8 15Q155-15 320 15" fill="none" stroke="url(#swoosh)" stroke-width="9" stroke-linecap="round"/></svg>
   <p class="brand-subtitle">LABORATÓRIO VIRTUAL DE ROBÓTICA</p>
   <a class="main-action" id="enterProjects" href="projects.html?release=20261031-gpio18-mobile-fix-v2" aria-label="Abrir Meus circuitos">
