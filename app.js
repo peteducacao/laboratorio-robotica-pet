@@ -244,8 +244,8 @@ function safeRestore(){
   const s=IS_PROJECT_EDITOR?activeCircuitFromLibrary():JSON.parse(localStorage.getItem(STORAGE_KEY)||'null');
   if(!s||!Array.isArray(s.parts)||!Array.isArray(s.wires))return;
   const names=new Set();
-  state.parts=s.parts.filter(p=>p&&byId[p.id]&&!names.has(p.id)&&names.add(p.id)&&Number.isFinite(p.x)&&Number.isFinite(p.y)).map(p=>({id:p.id,kind:byId[p.id].kind,x:p.x,y:p.y,view:byId[p.id].kind==='motor'&&p.view==='side'?'side':'front',rotation:normalizePartRotation(p.rotation),flipped:p.flipped===true}));
-  state.wires=s.wires.filter(w=>w&&allPorts.has(w.a)&&allPorts.has(w.b)&&(w.a!==w.b||!!w.loose)&&exists(w.a.split('.')[0])&&exists(w.b.split('.')[0])).slice(0,80).map(w=>({a:w.a,b:w.b,color:String(w.color).toLowerCase()==='#ed654d'?'#df1724':COLORS.includes(w.color)?w.color:COLORS[0],via:Array.isArray(w.via)?w.via.filter(p=>p&&Number.isFinite(p.x)&&Number.isFinite(p.y)).slice(0,48).map(p=>({x:p.x,y:p.y})):[],manual:w.manual===true,loose:(['a','b'].includes(w.loose?.end)&&Number.isFinite(w.loose?.point?.x)&&Number.isFinite(w.loose?.point?.y))?{end:w.loose.end,point:{x:w.loose.point.x,y:w.loose.point.y}}:null}));
+  state.parts=s.parts.filter(p=>p&&byId[p.id]&&!names.has(p.id)&&names.add(p.id)&&Number.isFinite(p.x)&&Number.isFinite(p.y)).map(p=>({id:p.id,kind:byId[p.id].kind,x:p.x,y:p.y,view:byId[p.id].kind==='motor'&&p.view==='side'?'side':'front',rotation:normalizePartRotation(p.rotation),flipped:p.flipped===true,locked:p.locked===true}));
+  state.wires=s.wires.filter(w=>w&&allPorts.has(w.a)&&allPorts.has(w.b)&&(w.a!==w.b||!!w.loose)&&exists(w.a.split('.')[0])&&exists(w.b.split('.')[0])).slice(0,80).map(w=>({a:w.a,b:w.b,color:String(w.color).toLowerCase()==='#ed654d'?'#df1724':COLORS.includes(w.color)?w.color:COLORS[0],via:Array.isArray(w.via)?w.via.filter(p=>p&&Number.isFinite(p.x)&&Number.isFinite(p.y)).slice(0,48).map(p=>({x:p.x,y:p.y})):[],manual:w.manual===true,locked:w.locked===true,loose:(['a','b'].includes(w.loose?.end)&&Number.isFinite(w.loose?.point?.x)&&Number.isFinite(w.loose?.point?.y))?{end:w.loose.end,point:{x:w.loose.point.x,y:w.loose.point.y}}:null}));
   if(Number.isFinite(s.voltage))state.voltage=limit(s.voltage,3,6);
   if(s.switches)state.switches={s1:!!s.switches.s1,s2:!!s.switches.s2};
   if(String(s.wireColor).toLowerCase()==='#ed654d')state.wireColor='#df1724';
@@ -323,6 +323,39 @@ function historyState(){return JSON.stringify({
  parts:state.parts,wires:state.wires,voltage:state.voltage,switches:state.switches,
  startPort:state.startPort,bends:state.bends
 });}
+// Cadeado persistente por objeto. Bloquear um fio também ancora suas extremidades.
+const wireIsLocked=i=>!!state.wires[i]?.locked;
+function partMovementLocked(id){
+ const p=byPart(id);if(!p)return false;
+ return !!p.locked||state.wires.some(w=>w.locked&&
+  ((w.loose?.end!=='a'&&w.a.split('.')[0]===id)||
+   (w.loose?.end!=='b'&&w.b.split('.')[0]===id)));
+}
+function updateLockButton(){
+ const btn=Q('lockSelectionBtn');if(!btn)return;
+ const w=Number.isInteger(state.selectedWire)?state.wires[state.selectedWire]:null;
+ const p=byPart(state.selected),chosen=selectedParts.size>1?null:(w||p);
+ const locked=!!chosen?.locked;
+ btn.classList.toggle('is-locked',locked);
+ btn.dataset.lockState=locked?'locked':'unlocked';
+ btn.setAttribute('aria-pressed',String(locked));
+ const label=selectedParts.size>1?'Selecione um item por vez':
+  !chosen?'Selecione um fio ou peça para usar o cadeado':
+  locked?'Desbloquear '+(w?'fio':'componente'):'Bloquear '+(w?'fio':'componente');
+ btn.title=label;btn.setAttribute('aria-label',label);
+}
+function toggleSelectionLock(){
+ const w=Number.isInteger(state.selectedWire)?state.wires[state.selectedWire]:null;
+ const p=byPart(state.selected);
+ if(selectedParts.size>1||(!w&&!p)){message('Selecione um fio ou componente para usar o cadeado.',true);return;}
+ const object=w||p;
+ snapshot();object.locked=!object.locked;
+ if(reconnectPending)cancelReconnect();
+ if(state.startPort)cancelPendingWire();
+ gesture=null;selectedBend=null;
+ renderParts();renderInspector();updateHistoryButtons();requestDraw();persist();
+ message((w?'Fio':'Componente')+(object.locked?' bloqueado. Toque no cadeado para desbloquear.':' desbloqueado. Pode mover novamente.'),true);
+}
 function updateHistoryButtons(){
  const undoBtn=Q('undoBtn'),redoBtn=Q('redoBtn'),delBtn=Q('deleteBtn');
  const rotateBtn=Q('rotateBtn'),flipBtn=Q('flipBtn'),p=byPart(state.selected);
@@ -335,7 +368,7 @@ function updateHistoryButtons(){
   flipBtn.setAttribute('aria-label',flipBtn.title);
   flipBtn.setAttribute('aria-pressed',String(!!p?.flipped));
  }
- updateMultiSelectionTool();
+ updateMultiSelectionTool();updateLockButton();
  if(undoBtn)undoBtn.disabled=history.length===0;
  if(redoBtn)redoBtn.disabled=future.length===0;
  if(delBtn){
@@ -657,6 +690,7 @@ function renderCatalog(){
  });
 }
 function renderParts(){
+ updateLockButton();
  const layer=Q('partsLayer');layer.replaceChildren();
  for(const p of state.parts){
   const t=byKind[p.kind],layout=partLayout(p),card=document.createElement('article');
@@ -668,7 +702,7 @@ function renderParts(){
  const ledConnected=state.wires.some(w=>!w.loose&&electricalKey(w.a,w.b)===electricalKey(negative,p.id+'.LEDG'));
     card.dataset.indicator=state.switches[p.id]&&ledConnected?'on':'off';
   }
-  card.className='part'+(state.selected===p.id||selectedParts.has(p.id)?' selected':'')+(selectedParts.has(p.id)?' multi-selected':'');
+  card.className='part'+(state.selected===p.id||selectedParts.has(p.id)?' selected':'')+(selectedParts.has(p.id)?' multi-selected':'')+(p.locked?' part-locked':'');
   card.dataset.part=p.id;card.dataset.kind=p.kind;card.style.left=p.x+'px';card.style.top=p.y+'px';
   if(selectedParts.has(p.id)){
    const badge=document.createElement('span');badge.className='component-selection-badge';
@@ -680,6 +714,10 @@ function renderParts(){
   card.style.transformOrigin='50% 50%';
   card.dataset.rotation=String(normalizePartRotation(p.rotation));card.dataset.flipped=String(!!p.flipped);
   card.style.zIndex=selectedParts.has(p.id)?'6':state.selected===p.id?'5':'3';
+  if(p.locked){
+   const badge=document.createElement('span');badge.className='component-lock-marker';
+   badge.textContent='🔒';badge.setAttribute('aria-hidden','true');card.append(badge);
+  }
   const head=document.createElement('div');head.className='part-head';
   card.setAttribute('aria-label',partName(p.id));
   const del=document.createElement('button');del.type='button';del.className='part-remove';del.dataset.remove=p.id;
@@ -806,7 +844,7 @@ function toggleWireColorMenu(){
 function inspectorPart(p){
  const t=byId[p.id];const body=Q('inspectorBody');body.replaceChildren();
  const img=document.createElement('img');img.className='inspect-image';img.src=p.kind==='motor'?motorImage(p):imageUrl(t);img.alt=partName(p.id);
- const name=document.createElement('div');name.className='inspect-name';name.textContent=partName(p.id);
+ const name=document.createElement('div');name.className='inspect-name';name.textContent=partName(p.id)+(p.locked?' · 🔒 Bloqueado':'');
  const tag=document.createElement('p');tag.className='inspect-type';tag.textContent='COMPONENTE SELECIONADO';
  const para=document.createElement('p');para.className='inspect-paragraph';para.textContent=t.info;
  const note=document.createElement('div');note.className='inspect-pins';note.textContent='✳ '+t.tip;
@@ -831,7 +869,7 @@ function inspectorWires(){
  const body=Q('inspectorBody');body.replaceChildren();
  if(!state.wires.length){body.innerHTML='<div class="inspect-empty"><span>〰</span><h3>Nenhum fio ainda</h3><p>Toque num terminal, marque as curvas na bancada e finalize no outro terminal.</p></div>';return;}
  state.wires.forEach((w,i)=>{
-  const row=document.createElement('div');row.className='wire-item'+(state.selectedWire===i?' is-selected':'');row.dataset.selectWire=String(i);row.tabIndex=0;row.title='Selecionar jumper para trocar sua cor';
+  const row=document.createElement('div');row.className='wire-item'+(state.selectedWire===i?' is-selected':'')+(w.locked?' wire-item-locked':'');row.dataset.selectWire=String(i);row.tabIndex=0;row.title='Selecionar jumper para trocar sua cor';
   const dot=document.createElement('span');dot.className='wire-dot';dot.style.background=w.color;
   const names=document.createElement('div');names.className='wire-names';names.textContent=(w.loose?.end==='a'?'Ponta solta':portName(w.a))+' → '+(w.loose?.end==='b'?'Ponta solta':portName(w.b))+(w.via&&w.via.length?' · '+w.via.length+' curva(s)':'')+(!w.loose&&acceptedConnectionSet().has(electricalKey(w.a,w.b))?' · ✓':w.loose?' · Ponta solta':' · Rever');
   const btn=document.createElement('button');btn.type='button';btn.dataset.removeWire=String(i);btn.title='Remover fio';btn.textContent='×';
@@ -839,6 +877,7 @@ function inspectorWires(){
  });
 }
 function renderInspector(){
+ updateLockButton();
  Q('inspectorPartsTab').classList.toggle('active',state.inspector==='parts');
  Q('inspectorWiresTab').classList.toggle('active',state.inspector==='wires');
  Q('wiresBadge').textContent=state.wires.length;
@@ -1667,6 +1706,21 @@ function drawWires(){
   line.setAttribute('d',d);
   line.setAttribute('class','wire-line'+(!w.loose&&acceptedConnectionSet().has(electricalKey(w.a,w.b))?'':' wire-error')+(state.selectedWire===i?' wire-selected':''));
   line.setAttribute('stroke',w.color);svg.append(line);
+  if(w.locked){
+   let pos=null,max=0;
+   for(let j=0;j<points.length-1;j++){
+    const p=points[j],q=points[j+1],length=Math.hypot(q.x-p.x,q.y-p.y);
+    if(length>max){max=length;pos={x:(p.x+q.x)/2,y:(p.y+q.y)/2};}
+   }
+   if(pos){
+    const mark=document.createElementNS(ns,'text');
+    mark.setAttribute('x',String(pos.x));mark.setAttribute('y',String(pos.y));
+    mark.setAttribute('text-anchor','middle');
+    mark.setAttribute('font-size',String(Math.min(65,Math.max(15,16/zoom))));
+    mark.setAttribute('class','wire-lock-marker');
+    mark.textContent='🔒';svg.append(mark);
+   }
+  }
   // O traço termina no furo do pino; nenhum círculo fica sobre o componente.
   // Um alvo por segmento, inclusive para fios retos sem curvas intermediárias.
   // Encurta o trecho perto dos bornes para não bloquear os cliques nos pinos.
@@ -3032,6 +3086,7 @@ function bind(){
  Q('redoBtn').addEventListener('click',redo);
  Q('copyBtn').addEventListener('click',copySelection);
  Q('rotateBtn').addEventListener('click',rotateSelectedPart);
+ Q('lockSelectionBtn')?.addEventListener('click',toggleSelectionLock);
  const flipButton=document.createElement('button');
  flipButton.id='flipBtn';flipButton.className='control-btn flip-component-btn';flipButton.type='button';
  flipButton.disabled=true;flipButton.title='Selecione um componente para inverter esquerda e direita';
