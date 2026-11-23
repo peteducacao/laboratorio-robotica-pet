@@ -246,3 +246,28 @@ body{min-width:280px;background:#061a34;color:#fff;font-family:'Trebuchet MS','A
  .welcome .mascot-reference{animation:none!important}
  .welcome .mascot-blink-lid{transition:none!important}
 }
+
+/* Elementos visuais unificados: sem máscaras duplas que cortavam o logotipo. */
+.welcome .brand-stage{width:min(96vw,690px);max-height:calc(100% - 40px);transform:translateY(-1vh)}
+.welcome .brand-art{position:relative;width:min(88vw,575px);max-width:calc(100vw - 16px);flex:none;aspect-ratio:616/363}
+.welcome .brand-composite{display:block;width:100%;height:auto;max-height:min(48dvh,480px);object-fit:contain;pointer-events:none;user-select:none;filter:drop-shadow(0 8px 12px #03152e65)}
+.welcome .brand-hit-target{
+ position:absolute;left:28%;top:2%;width:44%;height:63%;min-height:0;
+ max-width:none;max-height:none;aspect-ratio:auto;margin:0;padding:0;
+ transform:none;background:transparent;border:0;box-shadow:none;filter:none;
+ z-index:3;touch-action:manipulation
+}
+.welcome .brand-hit-target:hover{transform:none}
+.welcome .brand-hit-target:active{transform:scale(.99)}
+.welcome .brand-hit-target .mascot-blink-lid{left:32%;top:55%;width:17%;height:19%;border-radius:50%}
+.welcome .brand-hit-target .mascot-reaction{right:-3%;top:13%}
+.welcome .brand-title.sr-only{display:none}
+.welcome .brand-swoosh,.welcome .brand-subtitle{display:none!important}
+.welcome .main-action{width:min(80vw,500px);min-height:clamp(60px,8dvh,86px);margin-top:clamp(12px,2dvh,24px)}
+@media(max-width:600px){.welcome .brand-art{width:min(88vw,575px)}.welcome .main-action{width:min(80vw,500px)}}
+@media(max-height:540px){
+ .welcome .brand-stage{flex-direction:row;flex-wrap:wrap;gap:6px;transform:none}
+ .welcome .brand-art{width:min(48vw,380px);max-height:60dvh}
+ .welcome .main-action{width:min(43vw,320px);min-height:50px;margin-top:0}
+}
+@media(prefers-reduced-motion:reduce){.welcome .brand-composite,.welcome .brand-hit-target{animation:none!important;transition:none!important}}
