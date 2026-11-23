@@ -1,7 +1,7 @@
 /* TinkerPET PWA. Escopo estático: nunca acessa nem apaga projetos do navegador. */
 'use strict';
 const PREFIX='tinkerpet-offline-shell-';
-const BOOT='20261122-fluid-lab-interactive-robot-fallback-v12';
+const BOOT='20261122-robotics-css-only-splash-v13';
 const BOOT_CACHE=PREFIX+BOOT;
 const META_CACHE='tinkerpet-offline-meta-v1';
 const ACTIVE_URL=new URL('__active-shell__',self.registration.scope).href;
@@ -38,7 +38,6 @@ const PRECACHE=[
  "pwa.js", "local-sync.js", "local-sync.css",
  "assets/logo-pet.svg",
  "assets/welcome-clean-2026.svg",
- "assets/welcome-lab-responsive.svg",
  "assets/welcome-approved.avif",
  "assets/bateria-9v-desenhada.svg",
  "assets/esp32-devkit-v1-30p.svg",
