@@ -13,7 +13,7 @@ const homeJs=fs.readFileSync(path.join(base,'home.js'),'utf8');
 new vm.Script(homeJs);
 assert(homeHtml.includes('class="brand-stage"'),'identidade fica em bloco central independente do fundo');
 assert(homeHtml.includes('class="mascot"')&&homeHtml.includes('class="mascot-art"'),'robô é vetor isolado e interativo');
-assert(homeHtml.includes('class="brand-title"')&&homeHtml.includes('Tinker</span><span class="brand-pet">PET'),'TinkerPET continua com o nome e suas cores');
+assert(homeHtml.includes('class="brand-title"')&&homeHtml.includes('class="brand-wordmark"'),'TinkerPET usa o desenho vetorial da marca original');
 assert(homeHtml.includes('id="enterProjects"')&&homeHtml.includes('href="projects.html'),'CTA acessível abre Meus circuitos');
 assert(homeHtml.includes('id="robotFeedback"')&&homeHtml.includes('aria-live="polite"'),'reações têm feedback acessível');
 assert(!homeHtml.includes('id="welcomeArt"')&&!homeHtml.includes('welcomeBackdrop'),'não há imagem da oficina antiga sobrepondo o fundo');
@@ -26,8 +26,8 @@ assert(homeJs.includes("robot.addEventListener('click'")&&homeJs.includes('sched
 for(const mood of ['happy','curious','excited','sleepy'])
  assert(homeJs.includes("id:'"+mood+"'")&&homeCss.includes('data-mood'),"expressão do robô: "+mood);
 assert(!homeJs.includes('window.requestAnimationFrame')&&!homeJs.includes('drawImage'),'sem pintura ou distorção de imagem por JS');
-assert(homeHtml.includes('home.css?v=21')&&homeHtml.includes('home.js?v=15'),'CSS/JS da nova abertura mudaram de versão');
-assert(homeCss.includes('letter-spacing:0;')&&homeCss.includes('.brand-title>span{'),'nome TinkerPET não sobrepõe letras no Android');
+assert(homeHtml.includes('home.css?v=22')&&homeHtml.includes('home.js?v=15'),'CSS/JS da nova abertura mudaram de versão');
+assert(homeCss.includes('.brand-wordmark{')&&homeCss.includes('width:min(97vw,700px)'),'marca original fica centralizada e proporcional');
 assert(homeCss.includes('font-family:"Fredoka"')&&homeHtml.includes('family=Fredoka'),'fonte arredondada do logotipo carregada com fallback');
 assert(homeCss.includes('-webkit-text-stroke:2.7px #061635'),'contorno azul-escuro da identidade presente');
 assert(homeHtml.includes('fill="#042657"')&&homeHtml.includes('rx="31" fill="#06214b"'),'moldura e testa azul-marinho do rosto restauradas');
@@ -65,7 +65,7 @@ const editorSplashHtml=fs.readFileSync(path.join(base,'editor.html'),'utf8');
 new vm.Script(loadingJs);
 for(const [entry,markup] of [['início',homeHtml],['Meus circuitos',libraryHtml],['bancada',editorSplashHtml]]){
  assert(markup.includes('id="tinkerpetLoading"'),'tela de carregamento presente em '+entry);
- assert(markup.includes('loading.css?v=2')&&markup.includes('loading.js?v=1'),'estilos e script do carregamento em '+entry);
+ assert(markup.includes('loading.css?v=3')&&markup.includes('loading.js?v=1'),'estilos e script do carregamento em '+entry);
  assert(markup.includes('assets/tinkerpet-mascot.svg'),'robô detalhado do carregamento em '+entry);
  assert(markup.includes('Carregando...')&&markup.includes('Preparando seus circuitos'),'mensagens do carregamento em '+entry);
 }
@@ -77,6 +77,15 @@ assert(loadingJs.includes('DOMContentLoaded')&&loadingJs.includes('setTimeout(hi
 assert(loadingJs.includes('pageshow')&&loadingJs.includes('event.persisted'),'retorno pelo histórico fecha o carregamento');
 assert(fs.readFileSync(path.join(base,'projects.js'),'utf8').includes('window.TinkerPETLoading?.show()'),'abrir circuito mostra tela de transição');
 assert(fs.readFileSync(path.join(base,'sw.js'),'utf8').includes('assets/tinkerpet-mascot.svg'),'mascote armazenado offline');
+const originalWordmark=fs.readFileSync(path.join(base,'assets/tinkerpet-original-wordmark.svg'),'utf8');
+assert(originalWordmark.startsWith('<svg')&&originalWordmark.includes('fill-rule="evenodd"'),'marca original vetorizada preserva letras e seus vazados');
+assert(originalWordmark.includes('viewBox="0 0 578 127"'),'proporções originais da tipografia preservadas');
+assert(homeHtml.includes('assets/tinkerpet-original-wordmark.svg'),'imagem SVG original usada na abertura');
+for(const entry of ['index.html','projects.html','editor.html']){
+ const markup=fs.readFileSync(path.join(base,entry),'utf8');
+ assert(markup.includes('class="tinkerpet-loading-wordmark"'),'carregamento usa a mesma marca original em '+entry);
+}
+assert(fs.readFileSync(path.join(base,'sw.js'),'utf8').includes('assets/tinkerpet-original-wordmark.svg'),'marca original disponibilizada offline');
 for(const asset of ['loading.css','loading.js'])assert(fs.readFileSync(path.join(base,'sw.js'),'utf8').includes('"'+asset+'"'),asset+' armazenado offline');
 // Simula a inicialização e garante que a interface nunca fique travada no overlay.
 {
