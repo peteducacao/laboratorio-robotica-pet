@@ -861,3 +861,37 @@
   min-height:140px!important;
  }
 }
+
+/* Cadeado: aberto por padrão; fechamento animado indica que a seleção está fixa. */
+.preview-studio.editor-layout .selection-lock-btn{
+ position:relative!important;display:inline-grid!important;place-items:center!important;
+ color:#56717c!important;transition:background-color .18s ease,color .18s ease,box-shadow .18s ease!important;
+}
+.preview-studio.editor-layout .selection-lock-btn svg{width:21px;height:21px;display:block;overflow:visible}
+.preview-studio.editor-layout .selection-lock-btn .lock-closed-icon{display:none}
+.preview-studio.editor-layout .selection-lock-btn .lock-open-icon{display:block}
+.preview-studio.editor-layout .selection-lock-btn.is-locked{
+ background:#e4f4ed!important;color:#08775f!important;
+ box-shadow:inset 0 0 0 1.5px #3ca589!important;
+}
+.preview-studio.editor-layout .selection-lock-btn.is-locked .lock-closed-icon{display:block;animation:tinkerpet-lock-click .24s ease both}
+.preview-studio.editor-layout .selection-lock-btn.is-locked .lock-open-icon{display:none}
+.preview-studio.editor-layout .selection-lock-btn:not(.is-locked) .lock-open-icon{animation:tinkerpet-unlock-click .24s ease both}
+@keyframes tinkerpet-lock-click{from{transform:translateY(-3px);opacity:.5}to{transform:translateY(0);opacity:1}}
+@keyframes tinkerpet-unlock-click{from{transform:translateY(1px);opacity:.5}to{transform:translateY(0);opacity:1}}
+@media(prefers-reduced-motion:reduce){
+ .preview-studio.editor-layout .selection-lock-btn .lock-closed-icon,
+ .preview-studio.editor-layout .selection-lock-btn .lock-open-icon{animation:none!important}
+}
+.preview-studio.editor-layout #partsLayer .component-lock-marker{
+ position:absolute;right:5px;bottom:4px;z-index:30;pointer-events:none;
+ font-size:17px;line-height:1;background:#fffef4e8;border:1px solid #b8d3ca;
+ border-radius:6px;padding:3px;box-shadow:0 2px 6px #123a4433;
+}
+.preview-studio.editor-layout #wireSvg .wire-lock-marker{
+ pointer-events:none!important;stroke:none!important;paint-order:normal!important;
+ filter:drop-shadow(0 1px 3px #102e3455);
+}
+.preview-studio.editor-layout .wire-item.wire-item-locked::after{
+ content:"🔒";font-size:13px;pointer-events:none;flex:none;
+}
