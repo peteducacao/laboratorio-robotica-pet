@@ -1,7 +1,7 @@
 'use strict';
 (async()=>{
  const $=id=>document.getElementById(id);
- const KEY='petquiz-session-v1';
+ const KEY='petquiz-active-tab-v2';
  const FAST=window.__PETQUIZ_TEST_SPEED__===true;
  const DUR={read:FAST?300:5000,answer:FAST?2500:20000,result:FAST?850:4000,bonusIntro:FAST?420:2500,bonus:FAST?5000:35000,bonusResult:FAST?450:1900};
  let QUESTIONS=[
@@ -450,13 +450,51 @@
    visualChoice:null,visualOptions:[],
    score:0,correct:0,wrong:0,timeout:0,last:null,deadline:0,finishedReason:null};
  };
- // A partida existe somente enquanto a página estiver aberta. Não salvar pontuação,
- // rodada, perguntas ou bônus: ao voltar, sempre abrir a tela inicial.
- try{localStorage.removeItem(KEY)}catch{}
- let state=fresh();
+ // Guardar apenas partidas em andamento nesta aba, sem placar permanente.
+ // Uma alteração do banco invalida snapshots com índices de perguntas antigos.
+ const sessionBank=JSON.stringify([QUESTIONS,BONUS,GAME_SETTINGS,FAST]);
+ const activePhases=['read','answer','result','bonusIntro','bonus','bonusResult'];
+ const bonusControls=['bonusA','bonusB','bonusVoltage'];
+ function clearSession(){try{sessionStorage.removeItem(KEY)}catch{}}
+ function restoreSession(){
+  try{
+   const saved=JSON.parse(sessionStorage.getItem(KEY)||'null');
+   if(saved?.bank===sessionBank&&activePhases.includes(saved.state?.phase)&&
+      Number.isFinite(saved.remaining)&&saved.remaining>=0&&
+      Array.isArray(saved.controls))return saved;
+  }catch{}
+  clearSession();return null;
+ }
+ try{localStorage.removeItem('petquiz-session-v1')}catch{}
+ const restored=restoreSession();
+ let state=restored?.state||fresh();
+ let pausedRemaining=restored&&document.hidden?restored.remaining:null;
+ if(restored){
+  state.deadline=Date.now()+restored.remaining;
+  bonusControls.forEach((id,i)=>{$(id).value=restored.controls[i]});
+ }
  let advancing=false;
+ function remainingTime(){return pausedRemaining??Math.max(0,state.deadline-Date.now())}
+ function saveSession(){
+  if(!activePhases.includes(state.phase)){clearSession();return}
+  try{sessionStorage.setItem(KEY,JSON.stringify({bank:sessionBank,state,
+    remaining:remainingTime(),controls:bonusControls.map(id=>$(id).value),soundOn}));}catch{}
+ }
+ function pauseSession(){
+  if(!activePhases.includes(state.phase)||pausedRemaining!==null)return;
+  pausedRemaining=remainingTime();
+  saveSession();
+  if(audio?.state==='running')audio.suspend().catch(()=>{});
+ }
+ function resumeSession(){
+  if(document.hidden||pausedRemaining===null)return;
+  state.deadline=Date.now()+pausedRemaining;
+  pausedRemaining=null;
+  nextMusicTime=0;
+  tickDisplay();saveSession();
+ }
  const fmt=n=>Math.round(n).toLocaleString('pt-BR');
- let audio=null,soundOn=true,lastWarning=-1;
+ let audio=null,soundOn=restored?.soundOn!==false,lastWarning=-1;
  function audioReady(){
   if(!soundOn)return null;
   try{
@@ -493,7 +531,7 @@
  const notes=[261.63,329.63,392,493.88,440,392,329.63,293.66,
   261.63,329.63,392,523.25,493.88,392,329.63,293.66];
  function musicTick(){
-  if(!soundOn||state.phase==='intro'||state.phase==='finished')return;
+  if(!soundOn||document.hidden||pausedRemaining!==null||state.phase==='intro'||state.phase==='finished')return;
   const ac=audioReady();if(!ac||ac.state!=='running')return;
   if(nextMusicTime<ac.currentTime)nextMusicTime=ac.currentTime+.08;
   while(nextMusicTime<ac.currentTime+.35){
@@ -530,8 +568,10 @@
  function setPhase(phase,duration){
   state.phase=phase;
   state.deadline=duration?Date.now()+duration:0;
+  pausedRemaining=duration&&document.hidden?duration:null;
   lastWarning=-1;
   draw();
+  saveSession();
   if(['read','bonusIntro','bonus','finished'].includes(phase)){
    if(document.fullscreenElement)$('main').scrollTo({top:0,behavior:'instant'});
    else window.scrollTo({top:0,behavior:'instant'});
@@ -619,7 +659,7 @@
    button.append(letter,img);
    button.addEventListener('click',()=>{
     if(state.phase!=='bonus')return;
-    state.visualChoice=id;state.bonusFeedback=null;
+    state.visualChoice=id;state.bonusFeedback=null;saveSession();
     grid.querySelectorAll('.bonus-image-choice').forEach(card=>{
      const selected=card.dataset.component===id;
      card.classList.toggle('selected',selected);
@@ -731,7 +771,7 @@
  }
  function tickDisplay(){
   if(!state.deadline)return;
-  const phase=state.phase,remaining=Math.max(0,state.deadline-Date.now());
+  const phase=state.phase,remaining=remainingTime();
   const total=DUR[phase]||1000,frac=Math.max(0,Math.min(1,remaining/total));
   if(phase==='bonus'||phase==='bonusResult'){
    $('bonusTimerValue').textContent=Math.ceil(remaining/1000)+'s';
@@ -754,7 +794,7 @@
   else draw();
  }
  function answer(choice){
-  if(state.phase!=='answer'||Date.now()>=state.deadline)return;
+  if(document.hidden||pausedRemaining!==null||state.phase!=='answer'||Date.now()>=state.deadline)return;
   const q=activeQuestion(),remaining=Math.max(0,state.deadline-Date.now()),correct=choice===q.correct;
   const elapsed=Math.max(0,DUR.answer-remaining);
   const delta=correct?(elapsed<500?1000:Math.round(1000*(1-elapsed/(2*DUR.answer)))):0;
@@ -807,7 +847,7 @@
   setPhase('bonusResult',DUR.bonusResult);
  }
  function bonusTry(){
-  if(state.phase!=='bonus')return;
+  if(document.hidden||pausedRemaining!==null||state.phase!=='bonus')return;
   const type=BONUS[state.currentBonus];
   const a=Number($('bonusA').value),b=Number($('bonusB').value),v=Number($('bonusVoltage').value);
   if(type.kind==='identify'&&!state.visualChoice){
@@ -819,7 +859,7 @@
    !!checks[type.id]?.(a,b);
   if(ok)completeBonus(true);
   else{
-   state.bonusFeedback='wrong';
+   state.bonusFeedback='wrong';saveSession();
    if(type.kind!=='identify')setBonusCarMood('fail');
    $('bonusMessage').textContent=type.kind==='identify'?
     'Essa não é a peça. Experimente outra imagem.':
@@ -834,7 +874,7 @@
   setPhase('read',DUR.read);
  }
  function clockTick(){
-  if(!state.deadline)return;
+  if(document.hidden||pausedRemaining!==null||!state.deadline)return;
   const remaining=state.deadline-Date.now();
   if(remaining>0){tickDisplay();return}
   if(state.phase==='read')setPhase('answer',DUR.answer);
@@ -846,7 +886,9 @@
  }
  function reset(){
   state=fresh();
+  pausedRemaining=null;
   advancing=false;
+  clearSession();
   draw();
  }
  function abandonQuiz(){
@@ -860,7 +902,7 @@
  function bind(){
   $('startQuiz').addEventListener('click',start);
   $('quitQuiz').addEventListener('click',abandonQuiz);
-  $('soundToggle').addEventListener('click',()=>{soundOn=!soundOn;syncSoundButton();if(soundOn){audioReady();nextMusicTime=0;sound('start')}});
+  $('soundToggle').addEventListener('click',()=>{soundOn=!soundOn;syncSoundButton();if(soundOn){audioReady();nextMusicTime=0;sound('start')}saveSession()});
   $('fullscreenToggle').addEventListener('click',toggleFullscreen);
   document.addEventListener('fullscreenchange',syncFullscreenButton);
   syncSoundButton();syncFullscreenButton();
@@ -874,7 +916,7 @@
    state.bonusFeedback=null;
    $('bonusMessage').classList.remove('ok');
    $('bonusMessage').textContent='Ajuste os controles e teste o resultado.';
-   drawBonusControls();
+   drawBonusControls();saveSession();
   }));
   document.addEventListener('keydown',e=>{
    if(e.target instanceof HTMLInputElement)return;
@@ -892,31 +934,33 @@
     if(state.phase==='intro')requestAnimationFrame(()=>window.scrollTo({top:0,behavior:'instant'}));
    }
   });
-  // Se sair da aba, trocar de aplicativo ou navegar para fora, encerrar a partida.
+  // Ocultação temporária (bloqueio, troca de app, tela cheia) não encerra a partida.
   document.addEventListener('visibilitychange',()=>{
-   if(document.hidden&&state.phase!=='intro')reset();
+   if(document.hidden)pauseSession();else resumeSession();
   });
-  window.addEventListener('pagehide',()=>{
-   if(state.phase!=='intro')reset();
-  });
-  // Ao voltar pelo histórico do navegador, inclusive pelo bfcache, recomeçar.
-  window.addEventListener('pageshow',event=>{
-   if(event.persisted&&state.phase!=='intro')reset();
+  window.addEventListener('pagehide',pauseSession);
+  window.addEventListener('pageshow',resumeSession);
+  // Voltar pelos links do próprio jogo é uma saída explícita.
+  document.querySelectorAll('.topbar a[href="projects.html"]').forEach(link=>{
+   link.addEventListener('click',event=>{
+    if(event.button===0&&!event.ctrlKey&&!event.metaKey&&!event.shiftKey&&!event.altKey)reset();
+   });
   });
  }
- // Nenhum dado de partida é recuperado ou armazenado entre visitas.
- bind();draw();setInterval(clockTick,100);setInterval(musicTick,180);
+ bind();draw();saveSession();setInterval(clockTick,100);setInterval(musicTick,180);
+ // Checkpoint adicional caso o sistema encerre a aba sem emitir pagehide.
+ setInterval(()=>{if(!document.hidden&&pausedRemaining===null&&activePhases.includes(state.phase))saveSession()},1000);
  window.PetQuiz={getStatus:()=>({
    phase:state.phase,index:state.idx,score:state.score,correct:state.correct,wrong:state.wrong,
    timeout:state.timeout,bonusCount:state.shownBonus.length,bonusSolved:state.solvedBonus,deadline:state.deadline,
    bonusAt:[...state.bonusAt],questionTotal:state.order.length,
    bonusCatalogTotal:BONUS.length,visualOptions:[...state.visualOptions],visualChoice:state.visualChoice,
-   finishedReason:state.finishedReason,answered:state.correct+state.wrong+state.timeout,
+   paused:pausedRemaining!==null,finishedReason:state.finishedReason,answered:state.correct+state.wrong+state.timeout,
    plan:state.order.map(i=>({id:QUESTIONS[i].id,stage:QUESTIONS[i].stage,topic:QUESTIONS[i].topic||null,requires:QUESTIONS[i].requires||[]})),
    activeBonusId:state.currentBonus===null?null:BONUS[state.currentBonus].id,
    bonusIds:BONUS.map(b=>b.id),
    soundEnabled:soundOn,fullscreen:!!document.fullscreenElement
- }),version:'2.1'};
+ }),version:'2.2'};
  // Ferramenta de regressão disponível apenas no modo de teste automatizado.
  // Não é exibida nem executável durante o uso normal do PETQuiz.
  if(FAST)window.PetQuiz.testBonus=(id)=>{

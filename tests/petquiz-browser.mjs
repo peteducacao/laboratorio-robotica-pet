@@ -322,7 +322,31 @@ try{
   assert.equal(await p.evaluate(()=>window.PetQuiz.getStatus().phase),'read');
   assert.equal(await p.evaluate(()=>window.PetQuiz.getStatus().score),0);
   await phase(p,'answer',3500);
-  const first=(await p.evaluate(()=>window.PetQuiz.getStatus())).plan[0];
+  // Reproduzir a ocultação no tablet sem depender do sistema operacional do CI.
+  const beforePause=await p.evaluate(()=>{
+   Object.defineProperty(document,'hidden',{configurable:true,value:true});
+   document.dispatchEvent(new Event('visibilitychange'));
+   return window.PetQuiz.getStatus();
+  });
+  assert.equal(beforePause.paused,true,'Ocultar deve pausar sem reiniciar');
+  await p.waitForTimeout(2800);
+  const whilePaused=await p.evaluate(()=>window.PetQuiz.getStatus());
+  assert.equal(whilePaused.phase,'answer');
+  assert.equal(whilePaused.index,beforePause.index);
+  assert.equal(whilePaused.score,beforePause.score);
+  assert.equal(whilePaused.deadline,beforePause.deadline);
+  await p.evaluate(()=>{
+   delete document.hidden;
+   document.dispatchEvent(new Event('visibilitychange'));
+  });
+  assert.equal(await p.evaluate(()=>window.PetQuiz.getStatus().paused),false);
+  await p.reload({waitUntil:'domcontentloaded'});await p.waitForFunction(()=>!!window.PetQuiz);
+  const restored=await p.evaluate(()=>window.PetQuiz.getStatus());
+  assert.equal(restored.phase,'answer','Recarregar deve restaurar a partida em andamento');
+  assert.deepEqual(restored.plan,beforePause.plan,'Manter o sorteio original');
+  assert.equal(restored.index,beforePause.index);
+  assert.equal(restored.score,beforePause.score);
+  const first=restored.plan[0];
   const gabarito=answers[first.id];
   const firstOptions=await p.locator('.answer-btn').allTextContents();
   const rightIndex=firstOptions.findIndex(t=>t.includes(gabarito));
@@ -347,7 +371,7 @@ try{
   await p.locator('.back-link').click();
   await p.goBack({waitUntil:'domcontentloaded'});await p.waitForFunction(()=>!!window.PetQuiz);
   assert.equal(await p.evaluate(()=>window.PetQuiz.getStatus().phase),'intro',
-   'Navegar para fora continua sem salvar progresso');
+   'Sair pelos links do quiz encerra a sessão');
   await p.locator('#startQuiz').click();
   const plan=(await p.evaluate(()=>window.PetQuiz.getStatus())).plan;
   validatePlan(plan);
