@@ -90,3 +90,10 @@
 - **Teste automatizado feito nos motores PC e celular:** 3.868 verificações, com todos os subconjuntos parciais das quatro ligações das gangorras, 24 ordens de ligação por configuração, trocas s1↔s2, orientação inversa dos terminais, tensão de 3,0 a 6,0 V, gabarito direto, gangorras desligadas e ligações contraditórias. **0 falhas na lógica testada.**
 - **Arquivos do editor:** `app.js?v=83` PC e `app-mobile.js?v=9` celular. **Navegação/cache:** `release=20261031switches-dynamic-v3`, `projects.js?v=18`, `mobile-editor.js?v=7`. Sem alterar os projetos salvos nem o modo de desenhar os fios.
 - **Limite do teste:** os testes de lógica e de integridade não substituem um ensaio visual no Chrome Android e no desktop; não anunciar isso como testado sem acesso ao navegador real.
+
+
+## 27/11/2026 — abertura aprovada do TinkerPET
+- Abertura isolada em `loading.css` e `loading.js`, com marca SVG original, azul-marinho, detalhes ciano e três pontos pulsantes. Preservar ícone original instalado, telas de boas-vindas, editor e quiz.
+- A tela aparece na entrada direta da página inicial ou da biblioteca no aplicativo instalado, não intercepta navegação interna, e tem saída de segurança após 4 segundos. Respeita redução de movimento.
+- Cache estático atualizado; nenhuma mudança nos dados locais nem no mecanismo de atualização manual do PWA.
+- Validação visual no Android/desktop e publicação real ainda pendentes.

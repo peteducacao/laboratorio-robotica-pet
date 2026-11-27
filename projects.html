@@ -16,8 +16,19 @@
 <script defer src="projects.js?v=33"></script><script defer src="site-access.js?v=3"></script>
 <script defer src="pwa.js?v=2"></script>
 <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="loading.css?v=20261127-splash-v1">
+<script src="loading.js?v=20261127-splash-v1"></script>
 </head>
 <body>
+<div id="tinkerpetLoading" class="tinkerpet-loading" role="status" aria-live="polite" aria-label="TinkerPET — Carregando" aria-hidden="true">
+ <div class="tinkerpet-loading-pattern" aria-hidden="true"><svg class="tinkerpet-loading-circuit top" viewBox="0 0 220 165" aria-hidden="true"><path d="M0 164 56 108V65L121 0M88 66l37-37h52l29-29M0 94l28-28V0" /><circle cx="87" cy="67" r="5" fill="#052047"/><path d="M0 132 39 93V51" opacity=".35"/></svg><svg class="tinkerpet-loading-circuit bottom" viewBox="0 0 220 165" aria-hidden="true"><path d="M0 164 56 108V65L121 0M88 66l37-37h52l29-29M0 94l28-28V0" /><circle cx="87" cy="67" r="5" fill="#052047"/><path d="M0 132 39 93V51" opacity=".35"/></svg></div>
+ <div class="tinkerpet-loading-body">
+  <img class="tinkerpet-loading-mascot" src="assets/tinkerpet-brand-tested.svg" width="616" height="363" alt="TinkerPET">
+  <p class="tinkerpet-loading-title">Carregando...</p>
+  <div class="tinkerpet-loading-dots" aria-hidden="true"><span></span><span></span><span></span></div>
+ </div>
+</div>
+
 <header class="top">
  <a class="brand" href="./" aria-label="Ir para o início do TinkerPET"><span class="symbol"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3v3m8-3v3M5 8H3m18 0h-2M8 17v4m8-4v4M6 7h12v10H6zM9 11l2 2 4-4"/></svg></span><span>TinkerPET <span>Studio</span></span></a>
  <label class="search"><svg viewBox="0 0 24 24" fill="none" stroke-width="2"><circle cx="10" cy="10" r="7"/><path d="m15 15 6 6"/></svg><input id="searchCircuits" type="search" placeholder="Buscar circuito..." aria-label="Buscar circuito"></label>

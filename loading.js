@@ -1,46 +1,34 @@
-/* Carregamento de abertura e navegação: sem alterar armazenamento ou circuitos. */
+/* Apenas abertura: não intercepta links, nem toca em circuitos ou quiz. */
 'use strict';
 (()=>{
  const root=document.documentElement;
- const started=performance.now();
- const MIN_VISIBLE_MS=650;
- let done=false,deadline=0;
+ const path=location.pathname;
+ const home=path.endsWith('/')||path.endsWith('/index.html');
+ const projects=path.endsWith('/projects.html');
+ const standalone=matchMedia('(display-mode: standalone)').matches||
+   matchMedia('(display-mode: fullscreen)').matches||navigator.standalone===true;
+ let internal=false;
+ try{const previous=new URL(document.referrer);internal=previous.origin===location.origin&&previous.pathname!==path;}catch{}
+ // Entrada pelo site ou lançamento direto do aplicativo instalado. Sem tela nas navegações internas.
+ if(internal||(!home&&!(projects&&standalone)))return;
+ const start=performance.now();
  root.classList.add('tinkerpet-booting');
+ let hidden=false,timer=0;
  function hide(){
-  if(done)return;
-  done=true;
-  clearTimeout(deadline);
-  root.classList.remove('tinkerpet-booting');
-  const overlay=document.getElementById('tinkerpetLoading');
-  if(overlay)overlay.setAttribute('aria-hidden','true');
+   if(hidden)return;
+   hidden=true;clearTimeout(timer);root.classList.remove('tinkerpet-booting');
+   document.getElementById('tinkerpetLoading')?.setAttribute('aria-hidden','true');
  }
- function afterReady(){
-  const remain=Math.max(0,MIN_VISIBLE_MS-(performance.now()-started));
-  window.setTimeout(hide,remain);
+ function ready(){
+   const overlay=document.getElementById('tinkerpetLoading');
+   if(!overlay){hide();return;}
+   overlay.removeAttribute('aria-hidden');
+   const image=overlay.querySelector('img');
+   function finish(){setTimeout(hide,Math.max(0,1400-(performance.now()-start)));}
+   if(image&&!image.complete){image.addEventListener('load',finish,{once:true});image.addEventListener('error',finish,{once:true});}
+   else finish();
  }
- if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',afterReady,{once:true});
- else afterReady();
- deadline=window.setTimeout(hide,6500);
- function show(){
-  done=false;
-  clearTimeout(deadline);
-  root.classList.add('tinkerpet-booting');
-  const overlay=document.getElementById('tinkerpetLoading');
-  if(overlay)overlay.removeAttribute('aria-hidden');
-  // Falha de navegação não pode manter o usuário preso na tela de carregamento.
-  deadline=window.setTimeout(hide,8000);
- }
- document.addEventListener('click',event=>{
-  if(event.defaultPrevented||event.button!==0||event.metaKey||event.ctrlKey||event.shiftKey||event.altKey)return;
-  const link=event.target.closest?.('a[href]');
-  if(!link||link.download||link.target&&link.target!=='_self')return;
-  try{
-   const url=new URL(link.href,location.href);
-   if(url.origin!==location.origin||url.pathname===location.pathname&&url.search===location.search)return;
-   if(!url.pathname.endsWith('.html')&&!url.pathname.endsWith('/'))return;
-   show();
-  }catch{}
- },true);
- window.addEventListener('pageshow',event=>{if(event.persisted)hide()});
- window.TinkerPETLoading=Object.freeze({show,hide});
+ timer=setTimeout(hide,4000);
+ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',ready,{once:true});else ready();
+ window.addEventListener('pageshow',event=>{if(event.persisted)hide();});
 })();

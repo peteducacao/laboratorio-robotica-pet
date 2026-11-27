@@ -6,8 +6,8 @@
   "start_url": "./projects.html",
   "scope": "./",
   "display": "standalone",
-  "background_color": "#f8fbfb",
-  "theme_color": "#008c7e",
+  "background_color": "#061a34",
+  "theme_color": "#061a34",
   "icons": [
     {
       "src": "assets/tinkerpet-app-192.png?v=mascote-tinkerpet-20261101",
