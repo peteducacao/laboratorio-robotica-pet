@@ -10,15 +10,15 @@
   "theme_color": "#061a34",
   "icons": [
     {
-      "src": "assets/tinkerpet-app-192.png?v=mascote-tinkerpet-20261101",
+      "src": "assets/tinkerpet-app-approved-192.png",
       "sizes": "192x192",
       "type": "image/png",
       "purpose": "any"
     },
     {
-      "src": "assets/tinkerpet-app-512.png?v=mascote-tinkerpet-20261101",
+      "src": "assets/tinkerpet-app-approved-512.webp",
       "sizes": "512x512",
-      "type": "image/png",
+      "type": "image/webp",
       "purpose": "any"
     }
   ]

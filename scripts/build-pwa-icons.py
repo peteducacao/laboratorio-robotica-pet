@@ -1,11 +1,11 @@
 from pathlib import Path
-from PIL import Image, ImageOps
+from PIL import Image
 root=Path(__file__).resolve().parents[1]
-source=root/'assets/tinkerpet-app-192.png'
+source=root/'assets/tinkerpet-app-approved-512.webp'
 with Image.open(source) as im:
     im.load()
-    if im.size!=(192,192):
-        raise RuntimeError('Ícone de origem precisa de 192 por 192 pixels')
-    image=ImageOps.fit(im.convert('RGB'),(512,512),method=Image.Resampling.LANCZOS)
-    image.save(root/'assets/tinkerpet-app-512.png',format='PNG',optimize=True)
-print('Ícone TinkerPET de 512 pixels produzido a partir da arte aprovada')
+    if im.size!=(512,512):
+        raise RuntimeError('A arte aprovada precisa de 512 por 512 pixels')
+    # Reduzir a partir da arte maior; jamais ampliar o ícone pequeno.
+    im.convert('RGB').resize((192,192),Image.Resampling.LANCZOS).save(root/'assets/tinkerpet-app-approved-192.png',format='PNG',optimize=True)
+print('Ícone de 192 pixels produzido a partir da logo aprovada de 512 pixels')

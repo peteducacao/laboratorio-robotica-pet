@@ -99,3 +99,9 @@
 - Validação visual no Android/desktop e publicação real ainda pendentes.
 
 - Correção da abertura: `.top` compartilhava o fundo branco do cabeçalho; substituído por fundo SVG independente. O recorte antigo `tinkerpet-brand-tested.svg` não representa a arte aprovada; abertura passa a usar ilustração vetorial própria baseada na proposta, título separado e animação isolada. Sem alterações no ícone instalado ou demais páginas.
+
+
+## 27/11/2026 — ícone aprovado do aplicativo
+- Aplicar a própria arte aprovada (cabeça do robô, fundo azul-marinho, nome TinkerPET e traço amarelo), sem redesenhar nem reutilizar a marca antiga. Arquivos independentes de 512x512 WebP e 192x192 PNG, reduzidos da imagem original, verificados por SHA de blob.
+- Manifesto, ícone de aba, apple-touch-icon e cache apontam para os arquivos novos. Preservadas a tela de carregamento, a tela inicial, o editor, o quiz e os dados locais.
+- Publicação e atualização do ícone de um PWA já instalado dependem da atualização pelo navegador/sistema operacional.
