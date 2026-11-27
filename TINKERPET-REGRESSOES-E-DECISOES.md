@@ -105,3 +105,9 @@
 - Aplicar a própria arte aprovada (cabeça do robô, fundo azul-marinho, nome TinkerPET e traço amarelo), sem redesenhar nem reutilizar a marca antiga. Arquivos independentes de 512x512 WebP e 192x192 PNG, reduzidos da imagem original, verificados por SHA de blob.
 - Manifesto, ícone de aba, apple-touch-icon e cache apontam para os arquivos novos. Preservadas a tela de carregamento, a tela inicial, o editor, o quiz e os dados locais.
 - Publicação e atualização do ícone de um PWA já instalado dependem da atualização pelo navegador/sistema operacional.
+
+
+## 27/11/2026 — tela inicial aprovada
+- Usar a própria arte de boas-vindas aprovada, otimizada em WebP, sem redesenho, recorte ou distorção. Toda a tela é um link nativo para Meus circuitos. A imagem é exibida inteira inclusive em orientação horizontal.
+- O manifesto passa a iniciar em index.html, preservando o id existente. A tela de carregamento aprovada continua na biblioteca, ao entrar a partir das boas-vindas ou abrir a biblioteca diretamente em modo instalado; nenhuma mudança visual em loading.css nem no ícone. Cache estático inclui a nova arte.
+- Verificação visual no dispositivo e propagação do manifesto no PWA instalado ainda pendentes.

@@ -10,7 +10,9 @@
  let internal=false;
  try{const previous=new URL(document.referrer);internal=previous.origin===location.origin&&previous.pathname!==path;}catch{}
  // Entrada pelo site ou lançamento direto do aplicativo instalado. Sem tela nas navegações internas.
- if(internal||(!home&&!(projects&&standalone)))return;
+ let fromWelcome=false;
+ try{const previous=new URL(document.referrer);const scope=new URL('./',location.href);fromWelcome=previous.origin===scope.origin&&(previous.pathname===scope.pathname||previous.pathname===scope.pathname+'index.html');}catch{}
+ if(!projects||(!fromWelcome&&(internal||!standalone)))return;
  const start=performance.now();
  const theme=document.querySelector('meta[name="theme-color"]');
  const previousTheme=theme?.content;

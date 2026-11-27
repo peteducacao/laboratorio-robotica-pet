@@ -3,7 +3,7 @@
   "short_name": "TinkerPET",
   "description": "Monte, simule e salve circuitos educativos de robótica.",
   "id": "./projects.html",
-  "start_url": "./projects.html",
+  "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",
   "background_color": "#061a34",
