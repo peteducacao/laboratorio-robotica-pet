@@ -1,35 +1,59 @@
-/* Abertura TinkerPET: identidade original, azul-marinho e ciano.
-   Isolada da bancada e das telas de atividades. */
-.tinkerpet-loading,.tinkerpet-loading *{box-sizing:border-box}
-.tinkerpet-loading{
- position:fixed;inset:0;z-index:2147483000;display:grid;place-items:center;
- width:100%;height:100vh;height:100dvh;padding:24px;
- padding-top:max(24px,env(safe-area-inset-top));padding-bottom:max(24px,env(safe-area-inset-bottom));
- overflow:hidden;isolation:isolate;color:#fff;
- font-family:"Fredoka","Trebuchet MS",system-ui,sans-serif;
- background:radial-gradient(ellipse at 0% 88%,#07539b85,transparent 40%),radial-gradient(ellipse at 100% 4%,#0759a280,transparent 33%),linear-gradient(150deg,#03132e,#052047 57%,#061936);
- opacity:0;visibility:hidden;pointer-events:none;
- transition:opacity .25s ease,visibility .25s ease;
+/* Abertura isolada: nenhuma classe genérica compartilhada com o site. */
+#tinkerpetLoading,#tinkerpetLoading *{box-sizing:border-box}
+#tinkerpetLoading{
+ position:fixed!important;inset:0!important;z-index:2147483000!important;
+ width:100%!important;height:100vh;height:100dvh;min-height:0;
+ display:block!important;margin:0!important;padding:0!important;border:0!important;
+ background:#041a3b url("assets/tinkerpet-splash-background.svg") center/100% 100% no-repeat!important;
+ color:#fff!important;overflow:hidden!important;isolation:isolate;
+ font-family:"Fredoka","Trebuchet MS",system-ui,sans-serif!important;
+ opacity:0;visibility:hidden;pointer-events:none;transition:opacity .22s ease,visibility .22s ease;
 }
-html.tinkerpet-booting .tinkerpet-loading{opacity:1;visibility:visible;pointer-events:auto}
-.tinkerpet-loading::before,.tinkerpet-loading::after{
- content:"";position:absolute;z-index:-1;width:min(85vw,640px);height:min(28vh,260px);
- background:linear-gradient(145deg,#0578b6,#023368 56%,#021b43);
- border:2px solid #04d8ff99;box-shadow:0 0 24px #03bcfa55;pointer-events:none;
+html.tinkerpet-booting #tinkerpetLoading{opacity:1;visibility:visible;pointer-events:auto}
+#tinkerpetLoading .tpboot-scene{
+ position:absolute;left:50%;top:22%;transform:translateX(-50%);
+ width:min(72vw,540px,43dvh);display:flex;flex-direction:column;align-items:center;
+ text-align:center;margin:0;padding:0;border:0;background:none;
 }
-.tinkerpet-loading::before{right:-25%;top:-13%;border-radius:0 0 0 95%;transform:rotate(16deg)}
-.tinkerpet-loading::after{left:-28%;bottom:-14%;border-radius:0 90% 0 0;transform:rotate(13deg)}
-.tinkerpet-loading-pattern{position:absolute;inset:0;pointer-events:none;z-index:-1}
-.tinkerpet-loading-circuit{position:absolute;width:min(38vw,235px);height:auto;overflow:visible;fill:none;stroke:#05d8fa;stroke-width:2.5;stroke-linejoin:round;stroke-linecap:round;filter:drop-shadow(0 0 4px #00c8ff70)}
-.tinkerpet-loading-circuit.top{left:0;top:0}
-.tinkerpet-loading-circuit.bottom{right:0;bottom:0;transform:rotate(180deg)}
-.tinkerpet-loading-body{display:flex;flex-direction:column;align-items:center;text-align:center;width:min(100%,480px);transform:translateY(-1%);position:relative}
-.tinkerpet-loading-mascot{display:block;width:min(100%,440px,76vw);max-height:49dvh;aspect-ratio:616/363;object-fit:contain;filter:drop-shadow(0 8px 14px #00102f66)}
-.tinkerpet-loading-title{margin:clamp(34px,7.5dvh,65px) 0 0;font-size:clamp(18px,4.6vw,25px);line-height:1.3;font-weight:600;color:#fff}
-.tinkerpet-loading-dots{display:flex;align-items:center;justify-content:center;gap:clamp(12px,3.6vw,21px);margin-top:20px}
-.tinkerpet-loading-dots span{width:clamp(10px,3.2vw,15px);height:clamp(10px,3.2vw,15px);background:#00cbea;border-radius:50%;animation:tinkerpet-dot 1.25s ease-in-out infinite both}
-.tinkerpet-loading-dots span:nth-child(2){animation-delay:.18s}
-.tinkerpet-loading-dots span:nth-child(3){animation-delay:.36s}
-@keyframes tinkerpet-dot{0%,80%,100%{opacity:.34;transform:scale(.88)}40%{opacity:1;transform:scale(1.08)}}
-@media(max-height:560px){.tinkerpet-loading-mascot{width:min(55vw,340px);max-height:53dvh}.tinkerpet-loading-title{margin-top:17px;font-size:18px}.tinkerpet-loading-dots{margin-top:12px;gap:12px}.tinkerpet-loading-dots span{width:10px;height:10px}}
-@media(prefers-reduced-motion:reduce){.tinkerpet-loading{transition:none}.tinkerpet-loading-dots span{animation:none;opacity:.5}.tinkerpet-loading-dots span:nth-child(2){opacity:1}}
+#tinkerpetLoading .tpboot-robot{
+ display:block;width:64%;height:auto;aspect-ratio:440/490;max-width:none;margin:0 0 1.8%;padding:0;border:0;
+ background:transparent;object-fit:contain;
+}
+#tinkerpetLoading .tpboot-wordmark{
+ display:block;width:100%;margin:0;padding:0;color:#fff;font-weight:700;white-space:nowrap;
+ font-family:"Fredoka","Trebuchet MS",system-ui,sans-serif;line-height:1;
+ font-size:clamp(26px,min(12vw,7.16dvh),90px);letter-spacing:-.035em;
+ text-shadow:0 3px 0 #04234a;overflow:visible;
+}
+#tinkerpetLoading .tpboot-wordmark span{color:#00d7ee}
+#tinkerpetLoading .tpboot-swoosh{
+ display:block;width:68%;height:auto;margin:3% 0 0;overflow:visible;background:transparent;
+}
+#tinkerpetLoading .tpboot-status{
+ position:absolute;top:68%;left:0;right:0;display:flex;flex-direction:column;align-items:center;
+ margin:0;padding:0;background:transparent;border:0;text-align:center;
+}
+#tinkerpetLoading .tpboot-label{
+ margin:0!important;padding:0!important;color:#fff!important;
+ font:600 clamp(18px,min(5.6vw,3.25dvh),35px)/1.2 "Fredoka","Trebuchet MS",system-ui,sans-serif!important;
+ letter-spacing:.005em;
+}
+#tinkerpetLoading .tpboot-dots{display:flex;justify-content:center;gap:clamp(14px,3vw,25px);margin-top:clamp(16px,3dvh,32px)}
+#tinkerpetLoading .tpboot-dots span{
+ display:block;width:clamp(12px,2.8vw,20px);height:clamp(12px,2.8vw,20px);
+ background:#00d8f2;border-radius:50%;animation:tpboot-pulse 1.25s ease-in-out infinite both;
+}
+#tinkerpetLoading .tpboot-dots span:nth-child(2){animation-delay:.18s}
+#tinkerpetLoading .tpboot-dots span:nth-child(3){animation-delay:.36s}
+@keyframes tpboot-pulse{0%,80%,100%{opacity:.36}40%{opacity:1}}
+@media(orientation:landscape){
+ #tinkerpetLoading .tpboot-scene{top:9%;width:min(50vw,65dvh,540px)}
+ #tinkerpetLoading .tpboot-robot{width:48%}
+ #tinkerpetLoading .tpboot-wordmark{font-size:clamp(24px,10dvh,76px)}
+ #tinkerpetLoading .tpboot-swoosh{width:64%;margin-top:1.5%}
+ #tinkerpetLoading .tpboot-status{top:73%}
+ #tinkerpetLoading .tpboot-label{font-size:clamp(16px,4.3dvh,25px)!important}
+ #tinkerpetLoading .tpboot-dots{margin-top:10px;gap:12px}
+ #tinkerpetLoading .tpboot-dots span{width:10px;height:10px}
+}
+@media(prefers-reduced-motion:reduce){#tinkerpetLoading{transition:none}#tinkerpetLoading .tpboot-dots span{animation:none;opacity:.4}#tinkerpetLoading .tpboot-dots span:nth-child(2){opacity:1}}

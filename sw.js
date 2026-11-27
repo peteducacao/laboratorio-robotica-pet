@@ -1,7 +1,7 @@
 /* TinkerPET PWA. Escopo estático: nunca acessa nem apaga projetos do navegador. */
 'use strict';
 const PREFIX='tinkerpet-offline-shell-';
-const BOOT='20261127-original-splash-v1';
+const BOOT='20261127-approved-splash-v2';
 const BOOT_CACHE=PREFIX+BOOT;
 const META_CACHE='tinkerpet-offline-meta-v1';
 const ACTIVE_URL=new URL('__active-shell__',self.registration.scope).href;
@@ -44,6 +44,8 @@ const PRECACHE=[
  "assets/tinkerpet-original-robot-transparent.svg",
  "assets/tinkerpet-original-letters-transparent.svg",
  "assets/tinkerpet-brand-tested.svg",
+ "assets/tinkerpet-splash-background.svg",
+ "assets/tinkerpet-splash-robot.svg",
  "assets/welcome-clean-2026.svg",
  "assets/welcome-approved.avif",
  "assets/bateria-9v-desenhada.svg",

@@ -12,11 +12,15 @@
  // Entrada pelo site ou lançamento direto do aplicativo instalado. Sem tela nas navegações internas.
  if(internal||(!home&&!(projects&&standalone)))return;
  const start=performance.now();
+ const theme=document.querySelector('meta[name="theme-color"]');
+ const previousTheme=theme?.content;
+ if(theme)theme.content='#041a3b';
  root.classList.add('tinkerpet-booting');
  let hidden=false,timer=0;
  function hide(){
    if(hidden)return;
    hidden=true;clearTimeout(timer);root.classList.remove('tinkerpet-booting');
+   if(theme&&previousTheme)theme.content=previousTheme;
    document.getElementById('tinkerpetLoading')?.setAttribute('aria-hidden','true');
  }
  function ready(){
@@ -24,7 +28,7 @@
    if(!overlay){hide();return;}
    overlay.removeAttribute('aria-hidden');
    const image=overlay.querySelector('img');
-   function finish(){setTimeout(hide,Math.max(0,1400-(performance.now()-start)));}
+   function finish(){setTimeout(hide,Math.max(0,1500-(performance.now()-start)));}
    if(image&&!image.complete){image.addEventListener('load',finish,{once:true});image.addEventListener('error',finish,{once:true});}
    else finish();
  }

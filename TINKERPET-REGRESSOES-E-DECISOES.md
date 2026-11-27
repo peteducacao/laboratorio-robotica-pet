@@ -97,3 +97,5 @@
 - A tela aparece na entrada direta da página inicial ou da biblioteca no aplicativo instalado, não intercepta navegação interna, e tem saída de segurança após 4 segundos. Respeita redução de movimento.
 - Cache estático atualizado; nenhuma mudança nos dados locais nem no mecanismo de atualização manual do PWA.
 - Validação visual no Android/desktop e publicação real ainda pendentes.
+
+- Correção da abertura: `.top` compartilhava o fundo branco do cabeçalho; substituído por fundo SVG independente. O recorte antigo `tinkerpet-brand-tested.svg` não representa a arte aprovada; abertura passa a usar ilustração vetorial própria baseada na proposta, título separado e animação isolada. Sem alterações no ícone instalado ou demais páginas.
