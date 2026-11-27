@@ -111,3 +111,5 @@
 - Usar a própria arte de boas-vindas aprovada, otimizada em WebP, sem redesenho, recorte ou distorção. Toda a tela é um link nativo para Meus circuitos. A imagem é exibida inteira inclusive em orientação horizontal.
 - O manifesto passa a iniciar em index.html, preservando o id existente. A tela de carregamento aprovada continua na biblioteca, ao entrar a partir das boas-vindas ou abrir a biblioteca diretamente em modo instalado; nenhuma mudança visual em loading.css nem no ícone. Cache estático inclui a nova arte.
 - Verificação visual no dispositivo e propagação do manifesto no PWA instalado ainda pendentes.
+
+- Correção de qualidade: o WebP anterior tinha 480×853 px. A arte aprovada agora tem AVIF em 941×1672 px (resolução nativa), hash verificado, mantendo WebP antigo apenas como fallback. Enquadramento cover em proporções seguras de celular (0,49–0,72); contain com fundo contínuo nos demais tamanhos. Prévia local em 691×1380 confirmou preservação do robô, nome e instrução; teste no dispositivo e publicação ainda pendentes. Sem alterações em loading.css, loading.js ou ícones.

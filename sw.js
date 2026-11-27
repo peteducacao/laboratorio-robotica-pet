@@ -1,7 +1,7 @@
 /* TinkerPET PWA. Escopo estático: nunca acessa nem apaga projetos do navegador. */
 'use strict';
 const PREFIX='tinkerpet-offline-shell-';
-const BOOT='20261127-approved-welcome-v1';
+const BOOT='20261127-approved-welcome-hd-v2';
 const BOOT_CACHE=PREFIX+BOOT;
 const META_CACHE='tinkerpet-offline-meta-v1';
 const ACTIVE_URL=new URL('__active-shell__',self.registration.scope).href;
@@ -62,6 +62,7 @@ const PRECACHE=[
   "assets/suporte-4-pilhas.svg",
   "assets/suporte-2-pilhas.svg",
  "assets/tinkerpet-welcome-approved.webp",
+ "assets/tinkerpet-welcome-hd.avif",
  "assets/tinkerpet-app-approved-192.png",
  "assets/tinkerpet-app-approved-512.webp",
  "preview-melhorias.html",
